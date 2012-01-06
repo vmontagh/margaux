@@ -54,6 +54,7 @@ import edu.mit.csail.sdg.alloy4.ErrorType;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
 import edu.mit.csail.sdg.alloy4compiler.ast.Decl;
@@ -132,7 +133,15 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.max = pair.a.max();
         this.a2k = null;
         this.s2k = null;
+        System.out.println("----------BEFORE--------------");
+        System.out.println("rep="+rep+"\nfarme="+frame+"\npair.b="+pair.b+"\nsigs="+sigs);
         BoundsComputer.compute(rep, frame, pair.b, sigs);
+        System.out.println("-----------AFTER-------------");
+        System.out.println("rep="+rep+"\nfarme="+frame+"\npair.b="+pair.b+"\nsigs="+sigs);
+        System.out.println("-----------END-------------");
+
+        
+
     }
 
     /** Construct a translator based on a already-fully-constructed association map.
@@ -164,6 +173,11 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     /** Returns the expression corresponding to the given sig. */
     private Expression a2k(Sig x)     throws Err { if (a2k!=null) return a2k.get(x); else return frame.a2k(x); }
 
+    //[VM]
+    /** Returns the expression corresponding to the given Bounds. */
+    private Expression a2k(Bounds x)     throws Err { if (a2k!=null) return a2k.get(x); else return frame.a2k(x); }
+
+    
     /** Returns the expression corresponding to the given field. */
     private Expression a2k(Field x)   throws Err { if (a2k!=null) return a2k.get(x); else return frame.a2k(x); }
 
@@ -662,6 +676,17 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         return ans;
     }
 
+    //[VM]
+    /*=======================*/
+    /* Evaluates a Bounds node. */
+    /*=======================*/
+    
+    /** {@inheritDoc} */
+    @Override public Object visit(Bounds x) throws Err {
+        Expression ans = a2k(x);
+        if (ans==null) throw new ErrorFatal(x.pos, "Bounds \""+x+"\" is not bound to a legal value during translation.\n");
+        return ans;
+    }
     /*=============================*/
     /* Evaluates an ExprCall node. */
     /*=============================*/

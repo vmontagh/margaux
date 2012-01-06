@@ -55,6 +55,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
+//[VM]
+import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
 
 //===========================================================================//
 
@@ -220,6 +222,8 @@ parser code {:
     ch.put(CompSym.ID, "NAME");
     ch.put(CompSym.NUMBER, "NUMBER");
     ch.put(CompSym.STR, "STRING");
+    ch.put(CompSym.BOUND, "bounds");
+    
     TreeSet<String> list = new TreeSet<String>();
     Pos p=Pos.UNKNOWN;
     if (x!=null && x.value instanceof Pos) p=(Pos)(x.value);
@@ -330,6 +334,7 @@ action code {:
         if (names!=null) for(ExprVar n:names) if (n!=null && n.label.indexOf('$')>=0) throw new ErrorSyntax(n.pos, "The name cannot contain the '$' symbol.");
     }
     private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c) throws Err {
+    	System.out.println("In c("+follow+","+o+","+","+x+","+n+","+e+","+s+","+c+")");
         if (n!=null) nod(n);
         int bitwidth=(-1), maxseq=(-1), overall=(-1), expects=(c==null ? -1 : c.num);
         Pos p = o.pos.merge(n!=null ? n.span() : e.span());
@@ -398,6 +403,7 @@ terminal Pos ASSERT;           //  assert
 terminal Pos AT;               //  @
 terminal Pos BAR;              //  |
 terminal Pos BUT;              //  but
+terminal Pos BOUND;				//	bounds
 terminal Pos CARET;            //  ^
 terminal Pos CHECK;            //  check
 terminal Pos COLON;            //  :
@@ -564,6 +570,13 @@ nonterminal Expr                       UnopExprA;
 nonterminal Expr                       UnopExprB;
 nonterminal Pos                        Vis;
 
+nonterminal	Bounds						Bounds;
+nonterminal								ExprBb;
+nonterminal 							ExprB;
+nonterminal CommandScope				DeclsBb;
+nonterminal List<CommandScope>			DeclsB;
+
+
 //===========================================================================//
 
 File ::= Spec {: parser.alloymodule.doneParsing(); :};
@@ -587,6 +600,7 @@ Spec ::= Spec Function        ;
 Spec ::= Spec Predicate       ;
 Spec ::= Spec Macro           ;
 Spec ::= Spec Command         ;
+Spec ::= Spec Bounds		  ;
 Spec ::= ;
 
 CommandPrefix ::= CHECK:c  {: RESULT = ExprVar.make(c, "c"); :};
@@ -601,6 +615,16 @@ Command ::=                 CommandPrefix:o        Name:n   Scope:s  Expects:c {
 Command ::= Command IMPLIES CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(true ,o,x   ,n   ,null,s,c); :};
 Command ::= Command IMPLIES CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(true ,o,null,n   ,null,s,c); :};
 
+//[VM]
+Command ::=                 CommandPrefix:o        Name:n 	FOR	Name:nb {: 
+	for(Bounds b: parser.alloymodule.getAllBounds()){
+	System.out.println((b.label == nb.label) + " "+ b.label + " " + nb.label );
+		if(b.label.compareTo(nb.label) == 0)
+			c(false ,o,null,n   ,null,b.scope,null); 
+
+	}
+:};
+
 Expects    ::=                 {: RESULT=null; :};
 Expects    ::= EXPECT NUMBER:a {: RESULT=a;    :};
 
@@ -608,6 +632,8 @@ Scope      ::= FOR NUMBER:a                  {: RESULT=new ArrayList<CommandScop
 Scope      ::= FOR NUMBER:a BUT Typescopes:b {: RESULT=b;                                  b.add(new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1)); :};
 Scope      ::= FOR              Typescopes:b {: RESULT=b;                                                                                                                     :};
 Scope      ::=                               {: RESULT=new ArrayList<CommandScope>();                                                                                         :};
+
+
 
 Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);                                  :};
@@ -681,6 +707,12 @@ Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n                           Super:v
 
 Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
+
+//[VM]
+Bounds ::= BOUND Name:a LBRACE DeclsB:b RBRACE {: 
+		//What is pos?
+		parser.alloymodule.addBounds(null,a.label,b);
+:};
 
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
@@ -782,6 +814,36 @@ Decls ::=                        {: RESULT=new ArrayList<Decl>();               
 Decls ::= Declb:x                {: RESULT=new ArrayList<Decl>(); RESULT.add(x);  :};
 Decls ::= Declb:x COMMA Decls:y  {: RESULT=y; RESULT.add(0,x);                    :};
 Decls ::=         COMMA Decls:y  {: RESULT=y;                                     :};
+
+ExprBb	::= Name:a	{:System.out.println("Name in ExprB->"+a);:};
+
+ExprB	::= ExprBb:a	{:System.out.println("In ExprB->"+a);:};
+
+ExprB	::= ExprB:a PLUS:o ExprBb:b	{:System.out.println("Union in ExprB->"+a+" "+o+" "+b );:};
+
+ExprB	::= ExprB:a ARROW:o ExprBb:b	{:System.out.println("Field in ExprB->"+a+" "+o+" "+b );:};
+
+ExprBb	::= LPAREN ExprB:a RPAREN	{:System.out.println("Paran in ExprB->"+a );:};
+
+
+//Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
+//Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);     
+
+
+DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1);  :};
+DeclsBb ::= TypeNumber:a Name:b  {:
+   nod(b);
+   RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
+:};
+DeclsBb ::= Name:a EQUALS:o ExprB:b				{: //RESULT = new CommandScope(null,false,-1); 
+:};
+
+
+DeclsB ::= DeclsBb:a 				{: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
+DeclsB ::= DeclsB:a COMMA DeclsBb:b  {: RESULT=a; a.add(b);                    :};
+//DeclsB ::= 			COMMA DeclsB:y  {: System.out.println("In the DeclsB->"+y);                    :};
+
+
 
 Let ::= Name:a EQUALS:o Expr:b SuperOrBar:x {:
   nod(a);
