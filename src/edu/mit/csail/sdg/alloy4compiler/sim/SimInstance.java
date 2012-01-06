@@ -36,6 +36,7 @@ import edu.mit.csail.sdg.alloy4.ErrorType;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
+import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
 import edu.mit.csail.sdg.alloy4compiler.ast.Decl;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary;
@@ -600,6 +601,14 @@ public final class SimInstance extends VisitReturn<Object> {
         return ans;
     }
 
+    //[VM]
+    /** {@inheritDoc} */
+    @Override public SimTupleset visit(Bounds x) throws Err {
+    	//TODO: Need to be figured out and implemmented
+
+    	return cacheSTRING;
+    }
+    
     /** {@inheritDoc} */
     @Override public SimTupleset visit(Sig x) throws Err {
        if (x.isSame(Sig.NONE)) return SimTupleset.EMPTY;

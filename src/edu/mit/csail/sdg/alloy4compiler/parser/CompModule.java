@@ -56,6 +56,7 @@ import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.Version;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 import edu.mit.csail.sdg.alloy4compiler.ast.Attr;
+import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
 import edu.mit.csail.sdg.alloy4compiler.ast.Browsable;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
@@ -154,6 +155,10 @@ public final class CompModule extends Browsable implements Module {
    /** Each sig name is mapped to its corresponding SigAST. */
    private final Map<String,Sig> sigs = new LinkedHashMap<String,Sig>();
 
+   
+   /**[VM] Each Bounds name is mapped to its corresponding BoundsAST. */
+   private final Map<String,Bounds> bounds = new LinkedHashMap<String,Bounds>();   
+   
    /** The list of params in this module whose scope shall be deemed "exact" */
    private final List<String> exactParams = new ArrayList<String>();
 
@@ -466,6 +471,9 @@ public final class CompModule extends Browsable implements Module {
 
       /** {@inheritDoc} */
       @Override public Expr visit(Field x) { return x; }
+      
+      /** {@inheritDoc} */
+      @Override public Expr visit(Bounds x) { return x; }
 
    }
    
@@ -959,8 +967,16 @@ public final class CompModule extends Browsable implements Module {
        sigs.put(Sig.GHOST.label, Sig.GHOST);
    }
    
+   /**[VM] This adds a bounds block to the bounds list*/
+   Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes)throws Err{
+	   Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
+	   bounds.put(name, obj);
+	   return obj;
+   }
+   
    Sig addSig(String name, ExprVar par, List<ExprVar> parents, List<Decl> fields, Expr fact, Attr... attributes) throws Err {
-      Sig obj;
+      System.out.println("In addSig->"+"name="+name+",par="+par+",parents="+parents+",fields="+fields+",fact="+fact+",attributes="+attributes);
+	   Sig obj;
       Pos pos = Pos.UNKNOWN.merge(WHERE.find(attributes));
       status = 3;
       dup(pos, name, true);
@@ -1048,6 +1064,11 @@ public final class CompModule extends Browsable implements Module {
       return x.dup();
    }
 
+   public SafeList<Bounds> getAllBounds(){
+	      SafeList<Bounds> x = new SafeList<Bounds>(bounds.values());
+	      return x.dup();
+   }
+   
    //============================================================================================================================//
 
    /** Add a MACRO declaration. */

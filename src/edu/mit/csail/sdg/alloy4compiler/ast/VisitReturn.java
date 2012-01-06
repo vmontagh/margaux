@@ -69,4 +69,7 @@ public abstract class VisitReturn<T> {
 
     /** Visits a Field node. */
     public abstract T visit(Field x) throws Err;
+    
+    /** Visit a Bounds node.*/
+	public abstract T visit(Bounds bounds) throws Err;
 }
