@@ -190,6 +190,7 @@ public final class Command extends Browsable {
            for(Expr e: s.getFacts()) e.accept(findString);
            for(Decl d: s.getFieldDecls()) d.expr.accept(findString);
         }
+        System.out.println("set in getAllStringConstants->"+set);
         return set;
     }
 

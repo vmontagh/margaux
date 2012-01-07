@@ -15,6 +15,12 @@
 
 package edu.mit.csail.sdg.alloy4compiler.ast;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
@@ -45,6 +51,11 @@ public class CommandScope {
 
     /** The scope increment; if this sig is not a growing sig, then this.increment is ignored. */
     public final int increment;
+    
+    //[VM]
+    public final List<ExprVar> pAtoms;
+    
+    public final boolean isPartial;
 
     /** Construct a new CommandScope object.
      * @param sig - the sig for this scope
@@ -79,11 +90,38 @@ public class CommandScope {
         this.startingScope = startingScope;
         this.endingScope = endingScope;
         this.increment = increment;
+        this.isPartial = false;
+        this.pAtoms = new ArrayList<ExprVar>();
     }
+    
+    public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment, List<ExprVar> atoms) throws ErrorSyntax {
+        if (pos == null) pos = Pos.UNKNOWN;
+        if (sig == null) throw new NullPointerException();
+        if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
+        if (endingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative ending scope ("+endingScope+")");
+        if (endingScope < startingScope) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have an ending scope ("+endingScope+") smaller than its starting scope ("+startingScope+")");
+        if (startingScope == endingScope) increment = 1;
+        if (increment < 1) throw new ErrorSyntax(pos, "Sig "+sig+"'s increment value cannot be "+increment+".\nThe increment must be 1 or greater.");
+        this.pos = pos;
+        this.sig = sig;
+        this.isExact = isExact;
+        this.startingScope = startingScope;
+        this.endingScope = endingScope;
+        this.increment = increment;
+        System.out.println("I have some value>"+atoms);
+    	if(atoms != null  && atoms.size() > 0){
+    		this.isPartial = true;
+    		this.pAtoms = new ArrayList<ExprVar>(atoms);
+    	}else{
+    		this.isPartial = false;
+    		this.pAtoms = new ArrayList<ExprVar>();    		
+    	}
+    }
+    
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return (isExact ? "exactly " : "")
+        return (isExact ? "exactly " : "") + (isPartial ? " partial " : "")
           + startingScope
           + (endingScope!=startingScope ? (".."+endingScope) : "")
           + (increment > 1 ? (":"+increment) : "")

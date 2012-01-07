@@ -37,6 +37,7 @@ import edu.mit.csail.sdg.alloy4.UniqueNameGenerator;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
@@ -89,6 +90,10 @@ final class ScopeComputer {
     /** The scope for each sig. */
     private final IdentityHashMap<PrimSig,Integer> sig2scope = new IdentityHashMap<PrimSig,Integer>();
 
+    //[VM]
+    /** The partial scope for each sig. */
+    private final IdentityHashMap<PrimSig,List<String>> sig2Pscope = new IdentityHashMap<PrimSig,List<String>>();
+        
     /** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
     private final IdentityHashMap<Sig,Sig> exact = new IdentityHashMap<Sig,Sig>();
 
@@ -107,8 +112,20 @@ final class ScopeComputer {
         return (y==null) ? (-1) : y;
     }
 
+    //[VM]
+    /** Returns the scope for a sig (or -1 if we don't know). */
+    public int sig2PScope(Sig sig) {
+        if (sig==SIGINT) return 1<<bitwidth;
+        if (sig==SEQIDX) return maxseq;
+        if (sig==STRING) return maxstring;
+        List y = sig2Pscope.get(sig);
+        return (y==null) ? (-1) : y.size();
+    }
+    
     /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
     private void sig2scope(Sig sig, int newValue) throws Err {
+    	//[VM]
+    	System.out.println("In sig2scope->"+sig);
         if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
         if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
         if (newValue<0)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a negative scope for sig \""+sig+"\"");
@@ -119,6 +136,19 @@ final class ScopeComputer {
         rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
     }
 
+    //[VM]
+    /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
+    private void sig2Pscope(Sig sig, List<String> newValue) throws Err {
+        if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
+        if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
+        if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
+        int old=sig2scope(sig);
+        if (old==newValue.size()) return;
+        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+        sig2Pscope.put((PrimSig)sig, newValue);
+        rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
+    }
+    
     /** Returns whether the scope of a sig is exact or not. */
     public boolean isExact(Sig sig) {
         return sig==SIGINT || sig==SEQIDX || sig==STRING || ((sig instanceof PrimSig) && exact.containsKey(sig));
@@ -160,7 +190,9 @@ final class ScopeComputer {
      * if A is abstract, scoped, and every child except one is scoped, then set that child's scope to be the difference.
      */
     private boolean derive_abstract_scope (Iterable<Sig> sigs) throws Err {
-       boolean changed=false;
+       //[VM]
+    	System.out.println("In derive_abstract_scope");
+    	boolean changed=false;
        again:
        for(Sig s:sigs) if (!s.builtin && (s instanceof PrimSig) && s.isAbstract!=null) {
           SafeList<PrimSig> subs = ((PrimSig)s).children();
@@ -190,14 +222,22 @@ final class ScopeComputer {
 
     /** If A is toplevel, and we haven't been able to derive its scope yet, then let it get the "overall" scope. */
     private boolean derive_overall_scope (Iterable<Sig> sigs) throws Err {
-        boolean changed=false;
+        //[VM]
+     	System.out.println("In derive_overall_scope");
+
+    	boolean changed=false;
         final int overall = (cmd.overall<0 && cmd.scope.size()==0) ? 3 : cmd.overall;
-        for(Sig s:sigs) if (!s.builtin && s.isTopLevel() && sig2scope(s)<0) {
-            if (s.isEnum!=null) { sig2scope(s, 0); continue; } // enum without children should get the empty set
-            if (overall<0) throw new ErrorSyntax(cmd.pos, "You must specify a scope for sig \""+s+"\"");
-            sig2scope(s, overall);
-            changed=true;
-        }
+        for(Sig s:sigs) 
+        	if (!s.builtin && s.isTopLevel() && sig2scope(s)<0 && sig2PScope(s) < 0) {
+        		if (s.isEnum!=null) { 
+        			sig2scope(s, 0); 
+        			continue; 
+        		} // enum without children should get the empty set
+        		if (overall<0) 
+        			throw new ErrorSyntax(cmd.pos, "You must specify a scope for sig \""+s+"\"");
+        		sig2scope(s, overall);
+        		changed=true;
+        	}
         return changed;
     }
 
@@ -205,9 +245,12 @@ final class ScopeComputer {
 
     /** If A is not toplevel, and we haven't been able to derive its scope yet, then give it its parent's scope. */
     private boolean derive_scope_from_parent (Iterable<Sig> sigs) throws Err {
-        boolean changed=false;
+        //[VM]
+     	System.out.println("In derive_scope_from_parent");
+
+    	boolean changed=false;
         Sig trouble=null;
-        for(Sig s:sigs) if (!s.builtin && !s.isTopLevel() && sig2scope(s)<0 && (s instanceof PrimSig)) {
+        for(Sig s:sigs) if (!s.builtin && !s.isTopLevel() && sig2scope(s)<0 && sig2PScope(s) < 0 && (s instanceof PrimSig)) {
            PrimSig p = ((PrimSig)s).parent;
            int pb = sig2scope(p);
            if (pb>=0) {sig2scope(s,pb); changed=true;} else {trouble=s;}
@@ -221,6 +264,7 @@ final class ScopeComputer {
 
     /** Computes the number of atoms needed for each sig (and add these atoms to this.atoms) */
     private int computeLowerBound(final PrimSig sig) throws Err {
+    	System.out.println("sig->"+sig);
         if (sig.builtin) return 0;
         int n=sig2scope(sig), lower=0;
         boolean isExact = isExact(sig);
@@ -239,6 +283,19 @@ final class ScopeComputer {
         if (!isExact && cmd.additionalExactScopes.contains(sig)) {
             isExact=true; rep.scope("Sig "+sig+" forced to have exactly "+n+" atoms.\n"); makeExact(Pos.UNKNOWN, sig);
         }
+        //[VM] 
+        //int j = 0;
+        StringBuilder sb2=new StringBuilder();
+
+        if(sig2Pscope.containsKey(sig)){
+        	for(String str: sig2Pscope.get(sig)){
+        		if (str.startsWith("this/")) 
+        			str=str.substring(5);
+                	str=un.make(str);
+                	atoms.add(sb2.delete(0, sb2.length()).append(str).append('%').toString());
+                	lower++;
+        	}
+        }
         // Create atoms
         if (n>lower && (isExact || sig.isTopLevel())) {
             // Figure out how many new atoms to make
@@ -251,10 +308,15 @@ final class ScopeComputer {
             // By prepending the index with 0 so that they're the same width, we ensure they sort lexicographically.
             StringBuilder sb=new StringBuilder();
             for(int i=0; i<n; i++) {
+            	//[VM]
                String x = sb.delete(0, sb.length()).append(name).append('$').append(i).toString();
+               System.out.println("In computeLowerBound->"+x);
+
                atoms.add(x);
                lower++;
             }
+            //[VM]
+            System.out.println("atoms->"+atoms);
         }
         return lower;
     }
@@ -263,11 +325,15 @@ final class ScopeComputer {
 
     /** Compute the scopes, based on the settings in the "cmd", then log messages to the reporter. */
     private ScopeComputer(A4Reporter rep, Iterable<Sig> sigs, Command cmd) throws Err {
-        this.rep = rep;
+        //[VM]
+     	System.out.println("In ScopeComputer");
+
+    	this.rep = rep;
         this.cmd = cmd;
         boolean shouldUseInts = areIntsUsed(sigs);
         // Process each sig listed in the command
         for(CommandScope entry:cmd.scope) {
+        	System.out.print("entry>"+entry);
             Sig s = entry.sig;
             int scope = entry.startingScope;
             boolean exact = entry.isExact;
@@ -293,9 +359,23 @@ final class ScopeComputer {
                 "Sig \""+s+"\" has the multiplicity of \"lone\", so its scope must 0 or 1, and cannot be "+scope);
             if (s.isSome!=null && scope<1) throw new ErrorSyntax(cmd.pos,
                 "Sig \""+s+"\" has the multiplicity of \"some\", so its scope must 1 or above, and cannot be "+scope);
-            sig2scope(s, scope);
+            
+            //[VM]
+            System.out.println("---------------------------s="+s+" scope="+scope+" "+entry.isPartial);
+            if(entry.isPartial){
+            	List<String> list = new ArrayList<String>();
+            	for(ExprVar var: entry.pAtoms)
+            			list.add(var.label);
+            	sig2Pscope(s,list);
+            	sig2scope(s, list.size());
+            	
+            
+            }else{
+            	sig2scope(s, scope);
+            }
             if (exact) makeExact(cmd.pos, s);
         }
+        //[VM] if in "value = a + b + c", the value should not be "one" or ...
         // Force "one" sigs to be exactly one, and "lone" to be at most one
         for(Sig s:sigs) if (s instanceof PrimSig) {
             if (s.isOne!=null) { makeExact(cmd.pos, s); sig2scope(s,1); } else if (s.isLone!=null && sig2scope(s)!=0) sig2scope(s,1);
@@ -366,9 +446,12 @@ final class ScopeComputer {
      */
     static Pair<A4Solution,ScopeComputer> compute (A4Reporter rep, A4Options opt, Iterable<Sig> sigs, Command cmd) throws Err {
         ScopeComputer sc = new ScopeComputer(rep, sigs, cmd);
+        System.out.println("sigs->"+sigs);
         Set<String> set = cmd.getAllStringConstants(sigs);
         if (sc.maxstring>=0 && set.size()>sc.maxstring) rep.scope("Sig String expanded to contain all "+set.size()+" String constant(s) referenced by this command.\n");
         for(int i=0; set.size()<sc.maxstring; i++) set.add("\"String" + i + "\"");
+        System.out.println("set->"+set);
+        System.out.println("sc.atoms->"+sc.atoms);
         sc.atoms.addAll(set);
         A4Solution sol = new A4Solution(cmd.toString(), sc.bitwidth, sc.maxseq, set, sc.atoms, rep, opt, cmd.expects);
         return new Pair<A4Solution,ScopeComputer>(sol, sc);

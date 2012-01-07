@@ -70,7 +70,7 @@ public final class ExampleUsingTheCompiler {
                 System.out.println("============ Command "+command+": ============");
                 A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
                 // Print the outcome
-                System.out.println(ans);
+                System.out.println("------------------ans->---------\n"+ans);
                 // If satisfiable...
                 if (ans.satisfiable()) {
                     // You can query "ans" to find out the values of each set or type.

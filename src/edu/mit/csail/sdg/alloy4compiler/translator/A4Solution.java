@@ -234,10 +234,14 @@ public final class A4Solution {
         kAtoms = ConstList.make(atoms);
         bounds = new Bounds(new Universe(kAtoms));
         factory = bounds.universe().factory();
+        System.out.println("factory->"+factory);
+
         TupleSet sigintBounds = factory.noneOf(1);
         TupleSet seqidxBounds = factory.noneOf(1);
         TupleSet stringBounds = factory.noneOf(1);
         final TupleSet next = factory.noneOf(2);
+        System.out.println("factory.next->"+stringBounds);
+
         int min=min(), max=max();
         if (max >= min) for(int i=min; i<=max; i++) { // Safe since we know 1 <= bitwidth <= 30
            Tuple ii = factory.tuple(""+i);
@@ -255,6 +259,8 @@ public final class A4Solution {
         bounds.boundExactly(KK_NEXT, next);
         bounds.boundExactly(KK_SEQIDX, this.seqidxBounds);
         Map<String,Expression> s2k = new HashMap<String,Expression>();
+        System.out.println("s2k->"+s2k);
+        System.out.println("stringAtoms->"+stringAtoms);
         for(String e: stringAtoms) {
             Relation r = Relation.unary("");
             Tuple t = factory.tuple(e);
@@ -262,8 +268,10 @@ public final class A4Solution {
             bounds.boundExactly(r, factory.range(t, t));
             stringBounds.add(t);
         }
+        System.out.println("stringBounds->"+stringBounds);
         this.s2k = ConstMap.make(s2k);
         this.stringBounds = stringBounds.unmodifiableView();
+        System.out.println("stringBounds->"+this.stringBounds);
         bounds.boundExactly(KK_STRING, this.stringBounds);
         int sym = (expected==1 ? 0 : opt.symmetry);
         solver = new Solver();
@@ -551,7 +559,9 @@ public final class A4Solution {
     public Iterable<ExprVar> getAllAtoms() { return atoms.dup(); }
 
     /** Returns the short unique name corresponding to the given atom if the problem is solved and is satisfiable; else returns atom.toString(). */
-    String atom2name(Object atom) { String ans=atom2name.get(atom); return ans==null ? atom.toString() : ans; }
+    String atom2name(Object atom) { 
+    	String ans=atom2name.get(atom); return ans==null ? atom.toString() : ans; 
+    	}
 
     /** Returns the most specific sig corresponding to the given atom if the problem is solved and is satisfiable; else returns UNIV. */
     PrimSig atom2sig(Object atom) { PrimSig sig=atom2sig.get(atom); return sig==null ? UNIV : sig; }
@@ -759,7 +769,14 @@ public final class A4Solution {
 
     /** Helper method that chooses a name for each atom based on its most specific sig; (external caller should call this method with s==null and nexts==null) */
     private static void rename (A4Solution frame, PrimSig s, Map<Sig,List<Tuple>> nexts, UniqueNameGenerator un) throws Err {
-        if (s==null) {
+    	System.out.println("---------Why Rename----------");
+    	System.out.println("frame="+frame);
+    	System.out.println("s="+s);
+    	System.out.println("nexts="+nexts);
+    	System.out.println("un="+un);
+    	System.out.println("-----------------------------");   	
+
+    	if (s==null) {
             for(ExprVar sk:frame.skolems) un.seen(sk.label);
             // Store up the skolems
             List<Object> skolems = new ArrayList<Object>();
@@ -814,15 +831,25 @@ public final class A4Solution {
                }
             }
             // Assign atom->name and atom->MostSignificantSig
-            for(Tuple t:frame.eval.evaluate(Relation.INTS)) { frame.atom2sig.put(t.atom(0), SIGINT); }
-            for(Tuple t:frame.eval.evaluate(KK_SEQIDX))     { frame.atom2sig.put(t.atom(0), SEQIDX); }
-            for(Tuple t:frame.eval.evaluate(KK_STRING))     { frame.atom2sig.put(t.atom(0), STRING); }
-            for(Sig sig:frame.sigs) if (sig instanceof PrimSig && !sig.builtin && ((PrimSig)sig).isTopLevel()) rename(frame, (PrimSig)sig, nexts, un);
+            for(Tuple t:frame.eval.evaluate(Relation.INTS)) {
+            	frame.atom2sig.put(t.atom(0), SIGINT); 
+            	}
+            for(Tuple t:frame.eval.evaluate(KK_SEQIDX))     { 
+            	frame.atom2sig.put(t.atom(0), SEQIDX); 
+            	}
+            for(Tuple t:frame.eval.evaluate(KK_STRING))     { 
+            	frame.atom2sig.put(t.atom(0), STRING); 
+            	}
+            for(Sig sig:frame.sigs) 
+            	if (sig instanceof PrimSig && !sig.builtin && ((PrimSig)sig).isTopLevel()) 
+            		rename(frame, (PrimSig)sig, nexts, un);
             // These are redundant atoms that were not chosen to be in the final instance
             int unused=0;
             for(Tuple tuple:frame.eval.evaluate(Relation.UNIV)) {
                Object atom = tuple.atom(0);
-               if (!frame.atom2sig.containsKey(atom)) { frame.atom2name.put(atom, "unused"+unused); unused++; }
+               if (!frame.atom2sig.containsKey(atom)) { 
+            	   frame.atom2name.put(atom, "unused"+unused); unused++; 
+            	   }
             }
             // Add the skolems
             for(int num=skolems.size(), i=0; i<num-2; i=i+3) {
@@ -843,10 +870,11 @@ public final class A4Solution {
         int i = 0;
         for(Tuple t: list) {
            if (frame.atom2sig.containsKey(t.atom(0))) continue; // This means one of the subsig has already claimed this atom.
-           String x = signame + "$" + i;
+           String x = t.atom(0).toString();//signame + "$" + i;
            i++;
            frame.atom2sig.put(t.atom(0), s);
-           frame.atom2name.put(t.atom(0), x);
+           //[VM]
+           frame.atom2name.put(t.atom(0),x);
            ExprVar v = ExprVar.make(null, x, s.type());
            TupleSet ts = t.universe().factory().range(t, t);
            Relation r = Relation.unary(x);
@@ -1001,6 +1029,7 @@ public final class A4Solution {
         sb.append("}\n");
         try {
             for(Sig s:sigs) {
+            	System.out.println("s in ->"+eval(s));
                 sb.append(s.label).append("=").append(eval(s)).append("\n");
                 for(Field f:s.getFields()) sb.append(s.label).append("<:").append(f.label).append("=").append(eval(f)).append("\n");
             }
