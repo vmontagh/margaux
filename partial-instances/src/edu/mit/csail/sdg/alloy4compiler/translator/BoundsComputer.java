@@ -78,7 +78,8 @@ final class BoundsComputer {
         for(PrimSig c:sig.children()) lower.addAll(computeLowerBound(atoms, c));
         TupleSet upper = lower.clone();
         boolean isExact = sc.isExact(sig);
-        if (isExact || sig.isTopLevel()) for(n=n-upper.size(); n>0; n--) {
+        if (isExact || sig.isTopLevel()) 
+        	for(n=n-upper.size(); n>0; n--) {
            Tuple atom = atoms.remove(atoms.size()-1);
            // If MUST<SCOPE and s is exact, then add fresh atoms to both LOWERBOUND and UPPERBOUND.
            // If MUST<SCOPE and s is inexact but toplevel, then add fresh atoms to the UPPERBOUND.
@@ -231,8 +232,12 @@ final class BoundsComputer {
         for(Sig s:sigs) if (!s.builtin && s.isTopLevel()) computeLowerBound(atoms, (PrimSig)s);
         for(Sig s:sigs) if (!s.builtin && s.isTopLevel()) computeUpperBound((PrimSig)s);
         // Bound the sigs
-        for(Sig s:sigs) if (!s.builtin && s.isTopLevel()) allocatePrimSig((PrimSig)s);
-        for(Sig s:sigs) if (s instanceof SubsetSig) allocateSubsetSig((SubsetSig)s);
+        for(Sig s:sigs) 
+        	if (!s.builtin && s.isTopLevel()) 
+        		allocatePrimSig((PrimSig)s);
+        for(Sig s:sigs) 
+        	if (s instanceof SubsetSig) 
+        		allocateSubsetSig((SubsetSig)s);
         // Bound the fields
         again:
         for(Sig s:sigs) {

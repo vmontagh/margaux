@@ -118,6 +118,7 @@ public final class AlloyInstance {
          }
          this.atom2sets = Collections.unmodifiableMap(a2s);
       }
+      System.out.println("this.atom2sets->"+this.atom2sets);
       // Next, construct set2atoms
       {
          Map<AlloySet,List<AlloyAtom>> s2a = new LinkedHashMap<AlloySet,List<AlloyAtom>>();
@@ -134,6 +135,8 @@ public final class AlloyInstance {
          }
          this.set2atoms = Collections.unmodifiableMap(s2a);
       }
+      System.out.println("this.set2atoms->"+this.set2atoms);
+
       // Next, construct type2atoms
       {
          Map<AlloyType,List<AlloyAtom>> t2a = new LinkedHashMap<AlloyType,List<AlloyAtom>>();
@@ -151,6 +154,8 @@ public final class AlloyInstance {
             t2a.put(t, Collections.unmodifiableList(atoms));
          }
          this.type2atoms = Collections.unmodifiableMap(t2a);
+         System.out.println("this.type2atoms->"+this.type2atoms);
+
       }
       // Finally, construct rel2tuples
       Map<AlloyRelation,Set<AlloyTuple>> r2t = new LinkedHashMap<AlloyRelation,Set<AlloyTuple>>();
@@ -170,6 +175,8 @@ public final class AlloyInstance {
          if (tuples.size()!=0) r2t.put(rel, Collections.unmodifiableSet(tuples));
       }
       this.rel2tuples = Collections.unmodifiableMap(r2t);
+      System.out.println("this.rel2tuples->"+this.type2atoms);
+
    }
 
    /** Returns an unmodifiable sorted set of all AlloyAtoms in this AlloyInstance. */

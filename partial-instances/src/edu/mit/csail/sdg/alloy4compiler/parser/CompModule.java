@@ -1306,7 +1306,7 @@ public final class CompModule extends Browsable implements Module {
 
    /** Resolve a particular command. */
    private Command resolveCommand(Command cmd, ConstList<Sig> exactSigs, Expr globalFacts) throws Err {
-      Command parent = cmd.parent==null ? null : resolveCommand(cmd.parent, exactSigs, globalFacts);
+	   Command parent = cmd.parent==null ? null : resolveCommand(cmd.parent, exactSigs, globalFacts);
       String cname = ((ExprVar)(cmd.formula)).label;
       Expr e;
       if (cmd.check) {
@@ -1330,7 +1330,10 @@ public final class CompModule extends Browsable implements Module {
       for(CommandScope et: cmd.scope) {
          Sig s = getRawSIG(et.sig.pos, et.sig.label);
          if (s==null) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
-         sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
+         if(et.isPartial)
+             sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms));
+         else
+        	 sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
       }
       return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent);
    }
@@ -1346,7 +1349,10 @@ public final class CompModule extends Browsable implements Module {
    }
 
    /** Return an unmodifiable list of all commands in this module. */
-   public ConstList<Command> getAllCommands() { return ConstList.make(commands); }
+   public ConstList<Command> getAllCommands() {
+	   //[VM]
+	   System.out.println("getAllCommands>"+commands);
+	   return ConstList.make(commands); }
 
    //============================================================================================================================//
 

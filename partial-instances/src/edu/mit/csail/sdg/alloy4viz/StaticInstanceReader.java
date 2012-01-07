@@ -166,13 +166,28 @@ public final class StaticInstanceReader {
    /** Constructs the atoms corresponding to the given sig. */
    private void atoms(A4Solution sol, PrimSig s) throws Err {
       Expr sum=Sig.NONE;
-      for(PrimSig c:s.children()) { sum=sum.plus(c); atoms(sol, c); }
+      for(PrimSig c:s.children()) { 
+    	  sum=sum.plus(c); 
+    	  atoms(sol, c); 
+    	  }
       A4TupleSet ts = (A4TupleSet) (sol.eval(s.minus(sum))); // This ensures that atoms will be associated with the most specific sig
       for(A4Tuple z: ts) {
          String atom = z.atom(0);
-         int i, dollar = atom.lastIndexOf('$');
-         try { i = Integer.parseInt(dollar>=0 ? atom.substring(dollar+1) : atom); } catch(NumberFormatException ex) { i = Integer.MAX_VALUE; }
-         AlloyAtom at = new AlloyAtom(sig(s), ts.size()==1 ? Integer.MAX_VALUE : i, atom);
+         int i, dollar = atom.lastIndexOf('$'), partial = atom.lastIndexOf('%');
+         try { 
+        	 i = Integer.parseInt(dollar>=0 ? atom.substring(dollar+1) : atom); 
+        	 } catch(NumberFormatException ex) {
+        		 i = Integer.MAX_VALUE; 
+        		 }
+        //[VM] I don't know why they changes the name?!!!
+         AlloyAtom at ;
+         
+         if(partial >= 0){
+        	 at = new AlloyAtom(sig(s), Integer.MAX_VALUE - 1, atom.substring(0, partial));
+         }else{
+        	 at = new AlloyAtom(sig(s), ts.size()==1 ? Integer.MAX_VALUE : i, atom);
+         }
+
          atom2sets.put(at, new LinkedHashSet<AlloySet>());
          string2atom.put(atom, at);
       }

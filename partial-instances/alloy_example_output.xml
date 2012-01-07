@@ -1,0 +1,47 @@
+<alloy builddate="unknown">
+
+<instance bitwidth="0" maxseq="0" command="Run predicateName for 4 but exactly 3 Variable,  partial 7 Value" filename="">
+
+<sig label="seq/Int" ID="0" parentID="1" builtin="yes">
+</sig>
+
+<sig label="Int" ID="1" parentID="2" builtin="yes">
+</sig>
+
+<sig label="String" ID="3" parentID="2" builtin="yes">
+</sig>
+
+<sig label="this/Value" ID="4" parentID="2" abstract="yes">
+   <atom label="sparse%"/>
+   <atom label="list_ds%"/>
+   <atom label="array_ds%"/>
+   <atom label="list_alg%"/>
+   <atom label="array_alg%"/>
+   <atom label="other%"/>
+</sig>
+
+<sig label="this/Variable" ID="5" parentID="2" abstract="yes">
+   <atom label="Variable$0"/>
+   <atom label="Variable$1"/>
+   <atom label="Variable$2"/>
+</sig>
+
+<field label="domain" ID="6" parentID="5">
+   <tuple> <atom label="Variable$0"/> <atom label="array_alg%"/> </tuple>
+   <tuple> <atom label="Variable$0"/> <atom label="other%"/> </tuple>
+   <tuple> <atom label="Variable$1"/> <atom label="array_alg%"/> </tuple>
+   <tuple> <atom label="Variable$1"/> <atom label="other%"/> </tuple>
+   <tuple> <atom label="Variable$2"/> <atom label="sparse%"/> </tuple>
+   <tuple> <atom label="Variable$2"/> <atom label="list_ds%"/> </tuple>
+   <tuple> <atom label="Variable$2"/> <atom label="array_ds%"/> </tuple>
+   <tuple> <atom label="Variable$2"/> <atom label="list_alg%"/> </tuple>
+   <tuple> <atom label="Variable$2"/> <atom label="other%"/> </tuple>
+   <types> <type ID="5"/> <type ID="4"/> </types>
+</field>
+
+<sig label="univ" ID="2" builtin="yes">
+</sig>
+
+</instance>
+
+</alloy>
