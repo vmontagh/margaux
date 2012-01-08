@@ -97,6 +97,11 @@ final class ScopeComputer {
     /** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
     private final IdentityHashMap<Sig,Sig> exact = new IdentityHashMap<Sig,Sig>();
 
+    //[VM] To support Lower bound and include keyword
+    /** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
+    private final IdentityHashMap<Sig,Sig> lower = new IdentityHashMap<Sig,Sig>();
+    
+    
     /** The list of atoms. */
     private final List<String> atoms = new ArrayList<String>();
 
@@ -131,7 +136,8 @@ final class ScopeComputer {
         if (newValue<0)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a negative scope for sig \""+sig+"\"");
         int old=sig2scope(sig);
         if (old==newValue) return;
-        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+        //[VM] Not a good condition
+        if (old>=0 && !hasLower(sig))        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
         sig2scope.put((PrimSig)sig, newValue);
         rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
     }
@@ -154,12 +160,26 @@ final class ScopeComputer {
         return sig==SIGINT || sig==SEQIDX || sig==STRING || ((sig instanceof PrimSig) && exact.containsKey(sig));
     }
 
+    //[VM] I don't know whether we need to check (sig instanceof PrimSig)
+    /** Returns whether the scope of a sig is exact or not. */
+    public boolean hasLower(Sig sig) {
+        return ((sig instanceof PrimSig) && lower.containsKey(sig));
+    }
+    
     /** Make the given sig "exact". */
     private void makeExact(Pos pos, Sig sig) throws Err {
         if (!(sig instanceof PrimSig)) throw new ErrorSyntax(pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
         exact.put(sig, sig);
     }
 
+    //[VM]
+    /** Make the given sig "lower bound". */
+    private void makeLower(Pos pos, Sig sig) throws Err {
+    	//Do we need to have a prime number?!
+        if (!(sig instanceof PrimSig)) throw new ErrorSyntax(pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
+        lower.put(sig, sig);
+    }
+    
     /** Modifies the integer bitwidth of this solution's model (and sets the max sequence length to 0) */
     private void setBitwidth(Pos pos, int newBitwidth) throws ErrorAPI, ErrorSyntax {
         if (newBitwidth<0)  throw new ErrorSyntax(pos, "Cannot specify a bitwidth less than 0");
@@ -227,7 +247,20 @@ final class ScopeComputer {
 
     	boolean changed=false;
         final int overall = (cmd.overall<0 && cmd.scope.size()==0) ? 3 : cmd.overall;
-        for(Sig s:sigs) 
+        for(Sig s:sigs) {
+        	
+        	//[VM] Insert the rest.
+        	if(!s.builtin && s.isTopLevel() && sig2PScope(s) > 0 && hasLower(s)){
+        		int rest = overall - sig2PScope(s);
+        		if (sig2scope(s) == overall)
+        			continue;
+        		if(rest > 0){
+            		sig2scope(s, overall);
+            		changed=true;
+            		continue;
+        		}
+        	}else
+        	
         	if (!s.builtin && s.isTopLevel() && sig2scope(s)<0 && sig2PScope(s) < 0) {
         		if (s.isEnum!=null) { 
         			sig2scope(s, 0); 
@@ -238,6 +271,7 @@ final class ScopeComputer {
         		sig2scope(s, overall);
         		changed=true;
         	}
+        }
         return changed;
     }
 
@@ -286,7 +320,6 @@ final class ScopeComputer {
         //[VM] 
         //int j = 0;
         StringBuilder sb2=new StringBuilder();
-
         if(sig2Pscope.containsKey(sig)){
         	for(String str: sig2Pscope.get(sig)){
         		if (str.startsWith("this/")) 
@@ -294,6 +327,19 @@ final class ScopeComputer {
                 	str=un.make(str);
                 	atoms.add(sb2.delete(0, sb2.length()).append(str).append('%').toString());
                 	lower++;
+        	}
+        	int rest = sig2scope.get(sig) != null ? sig2scope.get(sig) : lower;
+        	
+        	if( rest > lower){
+                String name=sig.label;
+        		StringBuilder sb=new StringBuilder();
+                for(int i=0; i<(rest-lower)+1; i++) {
+                	//[VM]
+                	System.out.println("i------->"+i);
+                   String x = sb.delete(0, sb.length()).append(name).append('$').append(i).toString();
+                   atoms.add(x);
+                   lower++;
+                }        		
         	}
         }
         // Create atoms
@@ -337,6 +383,7 @@ final class ScopeComputer {
             Sig s = entry.sig;
             int scope = entry.startingScope;
             boolean exact = entry.isExact;
+            boolean lower = entry.hasLower;
             if (s==UNIV) throw new ErrorSyntax(cmd.pos, "You cannot set a scope on \"univ\".");
             if (s==SIGINT) throw new ErrorSyntax(cmd.pos,
                     "You can no longer set a scope on \"Int\". "
@@ -374,6 +421,8 @@ final class ScopeComputer {
             	sig2scope(s, scope);
             }
             if (exact) makeExact(cmd.pos, s);
+            //[VM]
+            if (lower) makeLower(cmd.pos, s);
         }
         //[VM] if in "value = a + b + c", the value should not be "one" or ...
         // Force "one" sigs to be exactly one, and "lone" to be at most one

@@ -1331,7 +1331,7 @@ public final class CompModule extends Browsable implements Module {
          Sig s = getRawSIG(et.sig.pos, et.sig.label);
          if (s==null) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
          if(et.isPartial)
-             sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms));
+             sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms,et.hasLower));
          else
         	 sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
       }

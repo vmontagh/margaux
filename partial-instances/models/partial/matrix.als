@@ -45,7 +45,8 @@ bounds BoundsName {
  	4,
 	//exactly 1 Value,
 	exactly 3 Variable//,
-	,Value in dense + sparse + list_ds + array_ds + list_alg + array_alg + other/*,
+	,Value include dense + sparse 
+/*+ list_ds + array_ds + list_alg + array_alg + other/*,
 	exactly 2 Binding,
 	exactly 4 Assignment,
 	exactly 3 Transition,

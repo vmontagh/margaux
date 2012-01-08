@@ -428,6 +428,7 @@ terminal Pos IDEN;             //  iden
 terminal Pos IFF;              //  <=> iff
 terminal Pos IMPLIES;          //  => implies
 terminal Pos IN;               //  in
+terminal Pos INCLUDE;			//include
 terminal Pos INT;              //  int
 terminal Pos LBRACE;           //  {
 terminal Pos LBRACKET;         //  [
@@ -838,11 +839,15 @@ DeclsBb ::= TypeNumber:a Name:b  {:
    RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
 :};
 DeclsBb ::= Name:a EQUALS:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, false); 
 :};
 
 DeclsBb ::= Name:a IN:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,false); 
+:};
+
+DeclsBb ::= Name:a INCLUDE:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,true); 
 :};
 
 DeclsB ::= DeclsBb:a 				{: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
