@@ -56,6 +56,8 @@ public class CommandScope {
     public final List<ExprVar> pAtoms;
     
     public final boolean isPartial;
+    
+    public final boolean hasLower;
 
     /** Construct a new CommandScope object.
      * @param sig - the sig for this scope
@@ -92,9 +94,11 @@ public class CommandScope {
         this.increment = increment;
         this.isPartial = false;
         this.pAtoms = new ArrayList<ExprVar>();
+        this.hasLower = false;
     }
     
-    public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment, List<ExprVar> atoms) throws ErrorSyntax {
+    //[VM]
+    public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment, List<ExprVar> atoms, boolean lower) throws ErrorSyntax {
         if (pos == null) pos = Pos.UNKNOWN;
         if (sig == null) throw new NullPointerException();
         if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
@@ -112,10 +116,13 @@ public class CommandScope {
     	if(atoms != null  && atoms.size() > 0){
     		this.isPartial = true;
     		this.pAtoms = new ArrayList<ExprVar>(atoms);
+    		this.hasLower = lower;
     	}else{
+    		this.hasLower = false;
     		this.isPartial = false;
     		this.pAtoms = new ArrayList<ExprVar>();    		
     	}
+    	
     }
     
 

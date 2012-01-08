@@ -78,16 +78,38 @@ final class BoundsComputer {
         for(PrimSig c:sig.children()) lower.addAll(computeLowerBound(atoms, c));
         TupleSet upper = lower.clone();
         boolean isExact = sc.isExact(sig);
+        boolean hasLower = sc.hasLower(sig);
+        if (hasLower ) 
+        	for(n=n-upper.size(); n>0; n--) {
+           Tuple atom = atoms.remove(atoms.size()-1);
+           // If MUST<SCOPE and s is exact, then add fresh atoms to both LOWERBOUND and UPPERBOUND.
+           // If MUST<SCOPE and s is inexact but toplevel, then add fresh atoms to the UPPERBOUND.
+           System.out.println("atom.toString()->"+atom.toString());
+           if(atom.toString().lastIndexOf('%') >=0){
+        	   lower.add(atom);
+           }
+           upper.add(atom);
+        }else
+        	
+        
         if (isExact || sig.isTopLevel()) 
         	for(n=n-upper.size(); n>0; n--) {
            Tuple atom = atoms.remove(atoms.size()-1);
            // If MUST<SCOPE and s is exact, then add fresh atoms to both LOWERBOUND and UPPERBOUND.
            // If MUST<SCOPE and s is inexact but toplevel, then add fresh atoms to the UPPERBOUND.
            if (isExact) lower.add(atom);
+           //[VM]
+           //if (hasLower) lower.add(atom);
            upper.add(atom);
         }
+        //[VM]
+        System.out.println("lb->"+lb);
+        System.out.println("up->"+ub);
         lb.put(sig, lower);
         ub.put(sig, upper);
+        System.out.println("lb->"+lb);
+        System.out.println("up->"+ub);
+
         return lower;
     }
 

@@ -174,6 +174,7 @@ import java_cup.runtime.*;
 "Int"                 { return alloy_sym(yytext(), CompSym.SIGINT      );}
 "int"                 { return alloy_sym(yytext(), CompSym.INT         );}
 "in"                  { return alloy_sym(yytext(), CompSym.IN          );}
+"include"             { return alloy_sym(yytext(), CompSym.INCLUDE     );}
 "let"                 { return alloy_sym(yytext(), CompSym.LET         );}
 "lone"                { return alloy_sym(yytext(), CompSym.LONE        );}
 "module"              { return alloy_sym(yytext(), CompSym.MODULE      );}
