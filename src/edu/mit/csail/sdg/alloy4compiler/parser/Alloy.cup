@@ -573,7 +573,7 @@ nonterminal Pos                        Vis;
 //[VM]
 nonterminal	Bounds						Bounds;
 nonterminal	ExprVar						ExprBb;
-nonterminal List<ExprVar>				ExprB;
+nonterminal List						ExprB;
 nonterminal CommandScope				DeclsBb;
 nonterminal List<CommandScope>			DeclsB;
 
@@ -824,7 +824,13 @@ ExprB	::= ExprBb:a	{:RESULT = new ArrayList<ExprVar>(); RESULT.add(a);:};
 
 ExprB	::= ExprB:a PLUS:o ExprBb:b	{:a.add(b); RESULT=a;:};
 
-ExprB	::= ExprB:a ARROW:o ExprBb:b	{:System.out.println("Field in ExprB->"+a+" "+o+" "+b );:};
+ExprB	::= ExprB:a ARROW:o ExprBb:b	{:
+		ArrayList tmp = new ArrayList();
+		if(a.size() > 0)
+			tmp.add( a.get(a.size()-1)  );
+		a.add(new Pair<ArrayList<ExprVar>,ExprVar>(tmp,b)); 
+		RESULT =  a;
+		:};
 
 ExprB	::= LPAREN ExprB:a RPAREN	{:RESULT = a; :};
 
@@ -839,15 +845,15 @@ DeclsBb ::= TypeNumber:a Name:b  {:
    RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
 :};
 DeclsBb ::= Name:a EQUALS:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, false); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, false,false); 
 :};
 
 DeclsBb ::= Name:a IN:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,false); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,false,true); 
 :};
 
 DeclsBb ::= Name:a INCLUDE:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,true); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,true,false); 
 :};
 
 DeclsB ::= DeclsBb:a 				{: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};

@@ -93,14 +93,22 @@ final class ScopeComputer {
     //[VM]
     /** The partial scope for each sig. */
     private final IdentityHashMap<PrimSig,List<String>> sig2Pscope = new IdentityHashMap<PrimSig,List<String>>();
-        
+
+    //[VM]
+    /** The partial scope for each field. */
+    private final IdentityHashMap<String,List<Pair<String,String>>> field2Pscope = new IdentityHashMap<String,List<Pair<String,String>>>();
+
+    
     /** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
     private final IdentityHashMap<Sig,Sig> exact = new IdentityHashMap<Sig,Sig>();
 
     //[VM] To support Lower bound and include keyword
-    /** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
+    /** The sig's scope has lower iff it is in exact.keySet() (the value is irrelevant). */
     private final IdentityHashMap<Sig,Sig> lower = new IdentityHashMap<Sig,Sig>();
-    
+ 
+    //[VM] To support Lower bound and include keyword
+    /** The sig's scope has upper iff it is in exact.keySet() (the value is irrelevant). */
+    private final IdentityHashMap<Sig,Sig> upper = new IdentityHashMap<Sig,Sig>();    
     
     /** The list of atoms. */
     private final List<String> atoms = new ArrayList<String>();
@@ -126,6 +134,24 @@ final class ScopeComputer {
         List y = sig2Pscope.get(sig);
         return (y==null) ? (-1) : y.size();
     }
+
+    //[VM]
+    /** Returns the scope for a sig (or -1 if we don't know). */
+    public List<Pair<String, String>> field2Pscope(Sig sig) {
+        return field2Pscope.get(sig.label);
+    }    
+    
+    //[VM]
+    /** Returns the scope for a sig (or -1 if we don't know). */
+    public List<Pair<String, String>> field2Pscope(String label) {
+    	//
+    	for(String l: field2Pscope.keySet()){
+    		if(l.equals(label))
+    			return field2Pscope.get(l);
+    	}
+    	return null;
+        //return field2Pscope.get(label);
+    }  
     
     /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
     private void sig2scope(Sig sig, int newValue) throws Err {
@@ -155,6 +181,38 @@ final class ScopeComputer {
         rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
     }
     
+    //[VM]
+    /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
+    private void field2Pscope(Sig sig, List<Pair<String,String>> newValue) throws Err {
+        if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
+        int old = field2Pscope(sig)== null ? -1 : field2Pscope(sig).size();
+        if (old==newValue.size()) return;
+        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+        field2Pscope.put(((PrimSig)sig).label, newValue);
+        rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
+    }
+
+    /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
+    private void field2Pscope(String label, List<Pair<String,String>> newValue) throws Err {
+        if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for field's label \""+label+"\"");
+        int old = field2Pscope(label)== null ? -1 : field2Pscope(label).size();
+        if (old==newValue.size()) return;
+        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Fields's label \""+label+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+        field2Pscope.put(label, newValue);
+        rep.scope("Filed's label "+label+" scope <= "+newValue+"\n");
+    }
+    
+    //[VM] It is sloppy, but the filed is not field, so I need to think in a better way. 
+    /** Returns whether the scope of a sig is exact or not. */
+    public boolean isExact(String label) {
+    	for(Sig field: exact.keySet()){
+    		if(field.label.equals(label)){
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+    
     /** Returns whether the scope of a sig is exact or not. */
     public boolean isExact(Sig sig) {
         return sig==SIGINT || sig==SEQIDX || sig==STRING || ((sig instanceof PrimSig) && exact.containsKey(sig));
@@ -162,9 +220,36 @@ final class ScopeComputer {
 
     //[VM] I don't know whether we need to check (sig instanceof PrimSig)
     /** Returns whether the scope of a sig is exact or not. */
+    public boolean hasLower(String label) {
+    	for(Sig field: lower.keySet()){
+    		if(field.label.equals(label)){
+    			return true;
+    		}
+    	}
+    	return false;    
+    }
+    
+    /** Returns whether the scope of a sig is exact or not. */
     public boolean hasLower(Sig sig) {
         return ((sig instanceof PrimSig) && lower.containsKey(sig));
     }
+    
+    /** Returns whether the scope of a sig is exact or not. */
+    public boolean hasUpper(Sig sig) {
+        return ((sig instanceof PrimSig) && upper.containsKey(sig));
+    }
+    
+    //[VM] I don't know whether we need to check (sig instanceof PrimSig)
+    /** Returns whether the scope of a sig is exact or not. */
+    public boolean hasUpper(String label) {
+    	for(Sig field: upper.keySet()){
+    		if(field.label.equals(label)){
+    			return true;
+    		}
+    	}
+    	return false;    
+    }
+    
     
     /** Make the given sig "exact". */
     private void makeExact(Pos pos, Sig sig) throws Err {
@@ -178,6 +263,14 @@ final class ScopeComputer {
     	//Do we need to have a prime number?!
         if (!(sig instanceof PrimSig)) throw new ErrorSyntax(pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
         lower.put(sig, sig);
+    }
+    
+    //[VM]
+    /** Make the given sig "lower bound". */
+    private void makeUpper(Pos pos, Sig sig) throws Err {
+    	//Do we need to have a prime number?!
+        if (!(sig instanceof PrimSig)) throw new ErrorSyntax(pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
+        upper.put(sig, sig);
     }
     
     /** Modifies the integer bitwidth of this solution's model (and sets the max sequence length to 0) */
@@ -379,11 +472,13 @@ final class ScopeComputer {
         boolean shouldUseInts = areIntsUsed(sigs);
         // Process each sig listed in the command
         for(CommandScope entry:cmd.scope) {
-        	System.out.print("entry>"+entry);
+        	System.out.println("entry>"+entry);
             Sig s = entry.sig;
             int scope = entry.startingScope;
             boolean exact = entry.isExact;
             boolean lower = entry.hasLower;
+            boolean upper = entry.hasUpper;
+
             if (s==UNIV) throw new ErrorSyntax(cmd.pos, "You cannot set a scope on \"univ\".");
             if (s==SIGINT) throw new ErrorSyntax(cmd.pos,
                     "You can no longer set a scope on \"Int\". "
@@ -410,12 +505,19 @@ final class ScopeComputer {
             //[VM]
             System.out.println("---------------------------s="+s+" scope="+scope+" "+entry.isPartial);
             if(entry.isPartial){
+            	if(entry.pFields.size() > 0){
+            		List<Pair<String,String>> list = new ArrayList<Pair<String,String>>();
+            		for(Pair<ExprVar,ExprVar> pair: entry.pFields ){
+            			list.add(new Pair(pair.a.label+"%", pair.b.label+"%"));
+            		}
+            		field2Pscope(s,list);
+            	}else{
             	List<String> list = new ArrayList<String>();
             	for(ExprVar var: entry.pAtoms)
             			list.add(var.label);
             	sig2Pscope(s,list);
             	sig2scope(s, list.size());
-            	
+            	}
             
             }else{
             	sig2scope(s, scope);
@@ -423,6 +525,8 @@ final class ScopeComputer {
             if (exact) makeExact(cmd.pos, s);
             //[VM]
             if (lower) makeLower(cmd.pos, s);
+            
+            if(upper) makeUpper(cmd.pos, s);
         }
         //[VM] if in "value = a + b + c", the value should not be "one" or ...
         // Force "one" sigs to be exactly one, and "lone" to be at most one

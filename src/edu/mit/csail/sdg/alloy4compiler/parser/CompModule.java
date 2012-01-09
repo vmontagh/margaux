@@ -1304,8 +1304,21 @@ public final class CompModule extends Browsable implements Module {
       if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
    }
 
+   private boolean isField(String name){
+ 	  for(Object o: old2fields.values()){
+ 		  if( o instanceof List && ((List)o).size() >0){
+ 			  if(((List)o).get(0) instanceof Decl &&
+ 					 ((Decl)((List)o).get(0)).hasName(name)){
+ 				   return true;
+ 			  }
+ 		  }
+	  }
+	   return false;
+   }
+   
    /** Resolve a particular command. */
    private Command resolveCommand(Command cmd, ConstList<Sig> exactSigs, Expr globalFacts) throws Err {
+	   System.out.println("cmd->"+cmd+", exactSigs->"+exactSigs+", globalFacts->"+globalFacts);
 	   Command parent = cmd.parent==null ? null : resolveCommand(cmd.parent, exactSigs, globalFacts);
       String cname = ((ExprVar)(cmd.formula)).label;
       Expr e;
@@ -1328,10 +1341,16 @@ public final class CompModule extends Browsable implements Module {
       if (e==null) e = ExprConstant.TRUE;
       TempList<CommandScope> sc=new TempList<CommandScope>(cmd.scope.size());
       for(CommandScope et: cmd.scope) {
+    	  System.out.println("et->"+et.pFields);
+    	  
          Sig s = getRawSIG(et.sig.pos, et.sig.label);
-         if (s==null) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
+         //[VM]
+         if ((s==null) && !(isField(et.sig.label) && et.isPartial) ) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
          if(et.isPartial)
-             sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms,et.hasLower));
+        	 if(isField(et.sig.label) && et.isPartial)
+                 sc.add(new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope, et.endingScope, et.increment,et.pFields,et.hasLower,et.hasUpper,true));
+        	 else
+        		 sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms,et.hasLower,et.hasUpper));
          else
         	 sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
       }
