@@ -26,7 +26,7 @@ abstract sig Value {}
 abstract sig Variable {
 	domain: set Value,
 } {
-	not lone domain
+//	not lone domain
 }
 
 pred predicateName{}
@@ -43,9 +43,11 @@ pred predicateName{}
 
 bounds BoundsName {
  	4,
-	//exactly 1 Value,
-	exactly 3 Variable//,
-	,Value include dense + sparse 
+//	exactly 1 Value,
+	 Variable = a + b + c//,
+	,Value = z + x + y + w 
+ 
+	,domain include a->z + a->x + c->x + b->z + b->x  //+c->z
 /*+ list_ds + array_ds + list_alg + array_alg + other/*,
 	exactly 2 Binding,
 	exactly 4 Assignment,
