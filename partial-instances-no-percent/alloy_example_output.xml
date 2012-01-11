@@ -1,0 +1,41 @@
+<alloy builddate="unknown">
+
+<instance bitwidth="0" maxseq="0" command="Run predicateName for 4 but exactly  partial 3 Variable, exactly  partial 4 Value,  partial 5 domain" filename="">
+
+<sig label="seq/Int" ID="0" parentID="1" builtin="yes">
+</sig>
+
+<sig label="Int" ID="1" parentID="2" builtin="yes">
+</sig>
+
+<sig label="String" ID="3" parentID="2" builtin="yes">
+</sig>
+
+<sig label="this/Value" ID="4" parentID="2" abstract="yes">
+   <atom label="z%"/>
+   <atom label="x%"/>
+   <atom label="y%"/>
+   <atom label="w%"/>
+</sig>
+
+<sig label="this/Variable" ID="5" parentID="2" abstract="yes">
+   <atom label="a%"/>
+   <atom label="b%"/>
+   <atom label="c%"/>
+</sig>
+
+<field label="domain" ID="6" parentID="5">
+   <tuple> <atom label="a%"/> <atom label="z%"/> </tuple>
+   <tuple> <atom label="a%"/> <atom label="x%"/> </tuple>
+   <tuple> <atom label="b%"/> <atom label="z%"/> </tuple>
+   <tuple> <atom label="b%"/> <atom label="x%"/> </tuple>
+   <tuple> <atom label="c%"/> <atom label="x%"/> </tuple>
+   <types> <type ID="5"/> <type ID="4"/> </types>
+</field>
+
+<sig label="univ" ID="2" builtin="yes">
+</sig>
+
+</instance>
+
+</alloy>
