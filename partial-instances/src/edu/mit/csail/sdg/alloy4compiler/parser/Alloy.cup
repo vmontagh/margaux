@@ -711,10 +711,12 @@ Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
 
 //[VM]
-Bounds ::= BOUND Name:a LBRACE DeclsB:b RBRACE {: 
-		//What is pos?
-		parser.alloymodule.addBounds(null,a.label,b);
+Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {: 
+
+		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,e);
 :};
+
+
 
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
@@ -859,7 +861,6 @@ DeclsBb ::= Name:a INCLUDE:o ExprB:b				{:  //RESULT = new CommandScope(null,fal
 DeclsB ::= DeclsBb:a 				{: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 DeclsB ::= DeclsB:a COMMA DeclsBb:b  {: RESULT=a; a.add(b);                    :};
 //DeclsB ::= 			COMMA DeclsB:y  {: System.out.println("In the DeclsB->"+y);                    :};
-
 
 
 Let ::= Name:a EQUALS:o Expr:b SuperOrBar:x {:

@@ -168,6 +168,7 @@ final class BoundsComputer {
 		if (sum!=null && sum!=Expression.NONE) return sum;
 		// Recursively form the union of all parent expressions
 		TupleSet ts = factory.noneOf(1);
+		System.out.println("ts-->"+ts);
 		for(Sig parent:sig.parents) {
 			Expression p = (parent instanceof PrimSig) ? sol.a2k(parent) : allocateSubsetSig((SubsetSig)parent);
 			ts.addAll(sol.query(true, p, false));
@@ -176,7 +177,17 @@ final class BoundsComputer {
 		// If subset is exact, then just use the "sum" as is
 		if (sig.exact) { sol.addSig(sig, sum); return sum; }
 		// Allocate a relation for this subset sig, then bound it
+		String label = (sig.label.startsWith("this/") ?
+			sig.label.substring(5):
+			sig.label)+"%";
+
+		for(Tuple t: ts){
+			if( !t.atom(0).equals(label)){
+				ts.remove(t);
+			}
+		}
 		rep.bound("Sig "+sig+" in "+ts+"\n");
+		System.out.println("ts->"+ts);
 		Relation r = sol.addRel(sig.label, null, ts);
 		sol.addSig(sig, r);
 		// Add a constraint that it is INDEED a subset of the union of its parents

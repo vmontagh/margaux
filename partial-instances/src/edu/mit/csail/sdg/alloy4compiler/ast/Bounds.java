@@ -16,21 +16,37 @@ public class Bounds extends Expr {
 
     //public final ConstList<CommandScope> scope;
     public final ArrayList<CommandScope> scope;
+    
+    public final ArrayList<ExprVar> funcs;
 	
     public Bounds(String label){
         super(Pos.UNKNOWN, null);
         this.label = label;
         //scope = ConstList.make();
         scope = new ArrayList<CommandScope>();
+        funcs = new ArrayList<ExprVar>();
+
         
     }
 
-    public Bounds(Pos pos, String label, ArrayList<CommandScope> list /*Iterable<CommandScope> list*/){
+    public Bounds(Pos pos, String label, List<CommandScope> list  /*Iterable<CommandScope> list*/){
     	super( Pos.UNKNOWN,Type.FORMULA);
         this.label = label;
         //this.scope = ConstList.make(list);
         this.scope = new ArrayList<CommandScope>(list);
+        funcs = new ArrayList<ExprVar>();
+
     }
+
+    public Bounds(Pos pos, String label, List<CommandScope> list, List<ExprVar> funcs /*Iterable<CommandScope> list*/){
+    	super( Pos.UNKNOWN,Type.FORMULA);
+        this.label = label;
+        //this.scope = ConstList.make(list);
+        this.scope = new ArrayList<CommandScope>(list);
+        this.funcs = new ArrayList<ExprVar>(funcs);
+
+    }
+
     
 	@Override
 	public void toString(StringBuilder out, int indent) {
