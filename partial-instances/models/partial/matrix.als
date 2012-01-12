@@ -47,7 +47,7 @@ bounds BoundsName {
 	 Variable = a + b + c//,
 	,Value = z + x + y + w 
  
-	,domain include a->z + a->x + c->x + b->z + b->x  //+c->z
+	,domain in a->z + a->x + c->x + b->z + b->x  //+c->z
 /*+ list_ds + array_ds + list_alg + array_alg + other/*,
 	exactly 2 Binding,
 	exactly 4 Assignment,
