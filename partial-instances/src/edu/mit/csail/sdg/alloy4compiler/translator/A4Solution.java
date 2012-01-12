@@ -234,13 +234,11 @@ public final class A4Solution {
         kAtoms = ConstList.make(atoms);
         bounds = new Bounds(new Universe(kAtoms));
         factory = bounds.universe().factory();
-        System.out.println("factory->"+factory);
 
         TupleSet sigintBounds = factory.noneOf(1);
         TupleSet seqidxBounds = factory.noneOf(1);
         TupleSet stringBounds = factory.noneOf(1);
         final TupleSet next = factory.noneOf(2);
-        System.out.println("factory.next->"+stringBounds);
 
         int min=min(), max=max();
         if (max >= min) for(int i=min; i<=max; i++) { // Safe since we know 1 <= bitwidth <= 30
@@ -259,8 +257,6 @@ public final class A4Solution {
         bounds.boundExactly(KK_NEXT, next);
         bounds.boundExactly(KK_SEQIDX, this.seqidxBounds);
         Map<String,Expression> s2k = new HashMap<String,Expression>();
-        System.out.println("s2k->"+s2k);
-        System.out.println("stringAtoms->"+stringAtoms);
         for(String e: stringAtoms) {
             Relation r = Relation.unary("");
             Tuple t = factory.tuple(e);
@@ -268,10 +264,8 @@ public final class A4Solution {
             bounds.boundExactly(r, factory.range(t, t));
             stringBounds.add(t);
         }
-        System.out.println("stringBounds->"+stringBounds);
         this.s2k = ConstMap.make(s2k);
         this.stringBounds = stringBounds.unmodifiableView();
-        System.out.println("stringBounds->"+this.stringBounds);
         bounds.boundExactly(KK_STRING, this.stringBounds);
         int sym = (expected==1 ? 0 : opt.symmetry);
         solver = new Solver();
@@ -769,13 +763,6 @@ public final class A4Solution {
 
     /** Helper method that chooses a name for each atom based on its most specific sig; (external caller should call this method with s==null and nexts==null) */
     private static void rename (A4Solution frame, PrimSig s, Map<Sig,List<Tuple>> nexts, UniqueNameGenerator un) throws Err {
-    	System.out.println("---------Why Rename----------");
-    	System.out.println("frame="+frame);
-    	System.out.println("s="+s);
-    	System.out.println("nexts="+nexts);
-    	System.out.println("un="+un);
-    	System.out.println("-----------------------------");   	
-
     	if (s==null) {
             for(ExprVar sk:frame.skolems) un.seen(sk.label);
             // Store up the skolems
@@ -1029,7 +1016,6 @@ public final class A4Solution {
         sb.append("}\n");
         try {
             for(Sig s:sigs) {
-            	System.out.println("s in ->"+eval(s));
                 sb.append(s.label).append("=").append(eval(s)).append("\n");
                 for(Field f:s.getFields()) sb.append(s.label).append("<:").append(f.label).append("=").append(eval(f)).append("\n");
             }

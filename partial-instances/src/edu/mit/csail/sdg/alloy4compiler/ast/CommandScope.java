@@ -109,9 +109,6 @@ public class CommandScope {
     
     //[VM]
     public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment, List<ExprVar> atoms, boolean lower,boolean hasUpper) throws ErrorSyntax {
-        System.out.println("In CommandScope->"+"pos="+pos+",\n\t\t sig="+sig+", isExact="+isExact+", startingScope="+startingScope+", endingScope="+endingScope+", atoms="+atoms+", lower="+lower);
-    	
-    	
     	if (pos == null) pos = Pos.UNKNOWN;
         if (sig == null) throw new NullPointerException();
         if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
@@ -126,7 +123,6 @@ public class CommandScope {
         this.increment = increment;
         this.pFields = new ArrayList<Pair<ExprVar,ExprVar>>();
         boolean isRelation = false;
-        System.out.println("I have some value>"+atoms);
         
     	if(atoms != null  && atoms.size() > 0){
     		this.isPartial = true;
@@ -169,9 +165,7 @@ public class CommandScope {
     public CommandScope(Pos pos, Sig sig, boolean isExact,
 			int startingScope, int endingScope, int increment,
 			List<Pair<ExprVar, ExprVar>> fields, boolean lower,boolean hasUpper, boolean isField/*This is a dummy field*/) throws ErrorSyntax {
-        System.out.println("In CommandScope->"+"pos="+pos+",\n\t\t sig="+sig+", isExact="+isExact+", startingScope="+startingScope+", endingScope="+endingScope+", fields="+fields+", lower="+lower);
-    	
-    	
+    	    	
     	if (pos == null) pos = Pos.UNKNOWN;
         if (sig == null) throw new NullPointerException();
         if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
