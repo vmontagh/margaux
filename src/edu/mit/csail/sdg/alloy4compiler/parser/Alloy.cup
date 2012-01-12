@@ -334,7 +334,6 @@ action code {:
         if (names!=null) for(ExprVar n:names) if (n!=null && n.label.indexOf('$')>=0) throw new ErrorSyntax(n.pos, "The name cannot contain the '$' symbol.");
     }
     private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c) throws Err {
-    	System.out.println("In c("+follow+","+o+","+","+x+","+n+","+e+","+s+","+c+")");
         if (n!=null) nod(n);
         int bitwidth=(-1), maxseq=(-1), overall=(-1), expects=(c==null ? -1 : c.num);
         Pos p = o.pos.merge(n!=null ? n.span() : e.span());
@@ -621,7 +620,6 @@ Command ::=                 CommandPrefix:o        Name:n 	FOR	Name:nb {:
 	for(Bounds b: parser.alloymodule.getAllBounds()){
 		if(b.label.compareTo(nb.label) == 0){
 			c(false ,o,null,n   ,null,b.scope,null); 
-			System.out.println("b.scope>"+b.scope);
 			}
 
 	}

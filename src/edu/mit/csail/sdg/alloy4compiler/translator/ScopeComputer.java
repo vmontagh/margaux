@@ -158,7 +158,6 @@ final class ScopeComputer {
     /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
     private void sig2scope(Sig sig, int newValue) throws Err {
     	//[VM]
-    	System.out.println("In sig2scope->"+sig);
         if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
         if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
         if (newValue<0)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a negative scope for sig \""+sig+"\"");
@@ -305,8 +304,6 @@ final class ScopeComputer {
      * if A is abstract, scoped, and every child except one is scoped, then set that child's scope to be the difference.
      */
     private boolean derive_abstract_scope (Iterable<Sig> sigs) throws Err {
-       //[VM]
-    	System.out.println("In derive_abstract_scope");
     	boolean changed=false;
        again:
        for(Sig s:sigs) if (!s.builtin && (s instanceof PrimSig) && s.isAbstract!=null) {
@@ -348,9 +345,6 @@ final class ScopeComputer {
 
     /** If A is toplevel, and we haven't been able to derive its scope yet, then let it get the "overall" scope. */
     private boolean derive_overall_scope (Iterable<Sig> sigs) throws Err {
-        //[VM]
-     	System.out.println("In derive_overall_scope");
-
     	boolean changed=false;
         final int overall = (cmd.overall<0 && cmd.scope.size()==0) ? 3 : cmd.overall;
         for(Sig s:sigs) {
@@ -385,8 +379,6 @@ final class ScopeComputer {
 
     /** If A is not toplevel, and we haven't been able to derive its scope yet, then give it its parent's scope. */
     private boolean derive_scope_from_parent (Iterable<Sig> sigs) throws Err {
-        //[VM]
-     	System.out.println("In derive_scope_from_parent");
 
     	boolean changed=false;
         Sig trouble=null;
@@ -404,7 +396,6 @@ final class ScopeComputer {
 
     /** Computes the number of atoms needed for each sig (and add these atoms to this.atoms) */
     private int computeLowerBound(final PrimSig sig) throws Err {
-    	System.out.println("sig->"+sig);
         if (sig.builtin) return 0;
         int n=sig2scope(sig), lower=0;
         boolean isExact = isExact(sig);
@@ -440,8 +431,6 @@ final class ScopeComputer {
                 String name=sig.label;
         		StringBuilder sb=new StringBuilder();
                 for(int i=0; i<(rest-lower)+1; i++) {
-                	//[VM]
-                	System.out.println("i------->"+i);
                    String x = sb.delete(0, sb.length()).append(name).append('$').append(i).toString();
                    atoms.add(x);
                    lower++;
@@ -460,15 +449,10 @@ final class ScopeComputer {
             // By prepending the index with 0 so that they're the same width, we ensure they sort lexicographically.
             StringBuilder sb=new StringBuilder();
             for(int i=0; i<n; i++) {
-            	//[VM]
                String x = sb.delete(0, sb.length()).append(name).append('$').append(i).toString();
-               System.out.println("In computeLowerBound->"+x);
-
                atoms.add(x);
                lower++;
             }
-            //[VM]
-            System.out.println("atoms->"+atoms);
         }
         return lower;
     }
@@ -477,15 +461,11 @@ final class ScopeComputer {
 
     /** Compute the scopes, based on the settings in the "cmd", then log messages to the reporter. */
     private ScopeComputer(A4Reporter rep, Iterable<Sig> sigs, Command cmd) throws Err {
-        //[VM]
-     	System.out.println("In ScopeComputer");
-
     	this.rep = rep;
         this.cmd = cmd;
         boolean shouldUseInts = areIntsUsed(sigs);
         // Process each sig listed in the command
         for(CommandScope entry:cmd.scope) {
-        	System.out.println("entry>"+entry);
             Sig s = entry.sig;
             int scope = entry.startingScope;
             boolean exact = entry.isExact;
@@ -515,8 +495,6 @@ final class ScopeComputer {
             if (s.isSome!=null && scope<1) throw new ErrorSyntax(cmd.pos,
                 "Sig \""+s+"\" has the multiplicity of \"some\", so its scope must 1 or above, and cannot be "+scope);
             
-            //[VM]
-            System.out.println("---------------------------s="+s+" scope="+scope+" "+entry.isPartial);
             if(entry.isPartial){
             	if(entry.pFields.size() > 0){
             		List<Pair<String,String>> list = new ArrayList<Pair<String,String>>();
@@ -612,12 +590,9 @@ final class ScopeComputer {
      */
     static Pair<A4Solution,ScopeComputer> compute (A4Reporter rep, A4Options opt, Iterable<Sig> sigs, Command cmd) throws Err {
         ScopeComputer sc = new ScopeComputer(rep, sigs, cmd);
-        System.out.println("sigs->"+sigs);
         Set<String> set = cmd.getAllStringConstants(sigs);
         if (sc.maxstring>=0 && set.size()>sc.maxstring) rep.scope("Sig String expanded to contain all "+set.size()+" String constant(s) referenced by this command.\n");
         for(int i=0; set.size()<sc.maxstring; i++) set.add("\"String" + i + "\"");
-        System.out.println("set->"+set);
-        System.out.println("sc.atoms->"+sc.atoms);
         sc.atoms.addAll(set);
         A4Solution sol = new A4Solution(cmd.toString(), sc.bitwidth, sc.maxseq, set, sc.atoms, rep, opt, cmd.expects);
         return new Pair<A4Solution,ScopeComputer>(sol, sc);

@@ -133,15 +133,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.max = pair.a.max();
         this.a2k = null;
         this.s2k = null;
-        System.out.println("----------BEFORE--------------");
-        System.out.println("rep="+rep+"\nfarme="+frame+"\npair.b="+pair.b+"\nsigs="+sigs);
         BoundsComputer.compute(rep, frame, pair.b, sigs);
-        System.out.println("-----------AFTER-------------");
-        System.out.println("rep="+rep+"\nfarme="+frame+"\npair.b="+pair.b+"\nsigs="+sigs);
-        System.out.println("-----------END-------------");
-
-        
-
     }
 
     /** Construct a translator based on a already-fully-constructed association map.
@@ -393,8 +385,6 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
      * and you can call X2.next() to get the next satisfying solution X3... until you get an unsatisfying solution.
      */
     public static A4Solution execute_command (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt) throws Err {
-        //[VM]
-    	System.out.println("In execute_command>"+cmd);
     	if (rep==null) rep = A4Reporter.NOP;
         TranslateAlloyToKodkod tr = null;
         try {

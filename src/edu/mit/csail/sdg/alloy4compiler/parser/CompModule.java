@@ -465,17 +465,7 @@ public final class CompModule extends Browsable implements Module {
 
 		/** {@inheritDoc} */
 		@Override public synchronized Expr visit(ExprVar x) throws Err {
-			boolean isarray=false;
-
-			if(x.label.equals("array_ds")){
-				System.err.println("array_ds is here->"+x+",pos="+x.pos);
-				isarray=true;
-			}
-			if(isarray)
-				System.out.println("before resolve array_ds");    	  
 			Expr obj = resolve(x.pos, x.label);
-			if(isarray)
-				System.err.println("after resolve");
 			if (obj instanceof Macro) return ((Macro)obj).instantiate(this, warns); else return obj;
 		}
 
@@ -752,8 +742,6 @@ public final class CompModule extends Browsable implements Module {
 		// (r&1)!=0 => Sig,   (r&2) != 0 => assertion,   (r&4)!=0 => Func
 		List<Object> ans=new ArrayList<Object>();
 		for(CompModule m:getAllNameableModules()) {
-			System.out.println("m:getAllNameableModules->"+m+", name->"+name+", r->"+
-					r+" .(r&1)!=0->"+((r&1)!=0)+" .(r&2)!=0->"+((r&2)!=0)+" .(r&4)!=0->"+((r&4)!=0));
 			if ((r&1)!=0) { 
 				Sig x=m.sigs.get(name);
 				if (x!=null) 
@@ -1045,7 +1033,6 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 	Sig addSig(String name, ExprVar par, List<ExprVar> parents, List<Decl> fields, Expr fact, Attr... attributes) throws Err {
-		System.out.println("In addSig->"+"name="+name+",par="+par+",parents="+parents+",fields="+fields+",fact="+fact+",attributes="+attributes);
 		Sig obj;
 		Pos pos = Pos.UNKNOWN.merge(WHERE.find(attributes));
 		status = 3;
@@ -1413,7 +1400,6 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Resolve a particular command. */
 	private Command resolveCommand(Command cmd, ConstList<Sig> exactSigs, Expr globalFacts) throws Err {
-		System.out.println("cmd->"+cmd+", exactSigs->"+exactSigs+", globalFacts->"+globalFacts);
 		Command parent = cmd.parent==null ? null : resolveCommand(cmd.parent, exactSigs, globalFacts);
 		String cname = ((ExprVar)(cmd.formula)).label;
 		Expr e;
@@ -1436,7 +1422,6 @@ public final class CompModule extends Browsable implements Module {
 		if (e==null) e = ExprConstant.TRUE;
 		TempList<CommandScope> sc=new TempList<CommandScope>(cmd.scope.size());
 		for(CommandScope et: cmd.scope) {
-			System.out.println("et->"+et.pFields);
 
 			Sig s = getRawSIG(et.sig.pos, et.sig.label);
 			//[VM]
@@ -1464,8 +1449,6 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Return an unmodifiable list of all commands in this module. */
 	public ConstList<Command> getAllCommands() {
-		//[VM]
-		System.out.println("getAllCommands>"+commands);
 		return ConstList.make(commands); }
 
 	//============================================================================================================================//
@@ -1639,21 +1622,6 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Resolve the name based on the current context and this module. */
 	private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS) {
-		boolean isarray=false;
-
-		if(fullname.equals("array_ds")){
-			System.out.println("ch->"+ch+
-					"<- re->"+re+
-					"<- rootfield->"+rootfield+
-					"<- rootSig->"+rootsig+
-					"<- rootfunparam->"+rootfunparam+
-					"<- rootfunbody->"+rootfunbody+
-					"<- pos->"+pos+
-					"<- fullname->"+fullname+
-					"<- this->"+THIS);		  isarray=true;
-		}
-
-
 		// Return object can be Func(with > 0 arguments) or Expr
 		final String name = (fullname.charAt(0)=='@') ? fullname.substring(1) : fullname;
 		boolean fun = (rootsig!=null && (rootfield==null || rootfield.expr.mult()==ExprUnary.Op.EXACTLYOF))
