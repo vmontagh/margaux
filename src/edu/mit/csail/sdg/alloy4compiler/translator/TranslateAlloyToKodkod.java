@@ -54,6 +54,7 @@ import edu.mit.csail.sdg.alloy4.ErrorType;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
 import edu.mit.csail.sdg.alloy4compiler.ast.Decl;
@@ -164,6 +165,11 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     /** Returns the expression corresponding to the given sig. */
     private Expression a2k(Sig x)     throws Err { if (a2k!=null) return a2k.get(x); else return frame.a2k(x); }
 
+    //[VM]
+    /** Returns the expression corresponding to the given Bounds. */
+    private Expression a2k(Bounds x)     throws Err { if (a2k!=null) return a2k.get(x); else return frame.a2k(x); }
+
+    
     /** Returns the expression corresponding to the given field. */
     private Expression a2k(Field x)   throws Err { if (a2k!=null) return a2k.get(x); else return frame.a2k(x); }
 
@@ -379,12 +385,13 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
      * and you can call X2.next() to get the next satisfying solution X3... until you get an unsatisfying solution.
      */
     public static A4Solution execute_command (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt) throws Err {
-        if (rep==null) rep = A4Reporter.NOP;
+    	if (rep==null) rep = A4Reporter.NOP;
         TranslateAlloyToKodkod tr = null;
         try {
             if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
             tr.makeFacts(cmd.formula);
+            
             return tr.frame.solve(rep, cmd, new Simplifier(), false);
         } catch(UnsatisfiedLinkError ex) {
             throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
@@ -662,6 +669,17 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         return ans;
     }
 
+    //[VM]
+    /*=======================*/
+    /* Evaluates a Bounds node. */
+    /*=======================*/
+    
+    /** {@inheritDoc} */
+    @Override public Object visit(Bounds x) throws Err {
+        Expression ans = a2k(x);
+        if (ans==null) throw new ErrorFatal(x.pos, "Bounds \""+x+"\" is not bound to a legal value during translation.\n");
+        return ans;
+    }
     /*=============================*/
     /* Evaluates an ExprCall node. */
     /*=============================*/

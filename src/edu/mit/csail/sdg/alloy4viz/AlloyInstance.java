@@ -134,6 +134,7 @@ public final class AlloyInstance {
          }
          this.set2atoms = Collections.unmodifiableMap(s2a);
       }
+
       // Next, construct type2atoms
       {
          Map<AlloyType,List<AlloyAtom>> t2a = new LinkedHashMap<AlloyType,List<AlloyAtom>>();
@@ -151,6 +152,7 @@ public final class AlloyInstance {
             t2a.put(t, Collections.unmodifiableList(atoms));
          }
          this.type2atoms = Collections.unmodifiableMap(t2a);
+
       }
       // Finally, construct rel2tuples
       Map<AlloyRelation,Set<AlloyTuple>> r2t = new LinkedHashMap<AlloyRelation,Set<AlloyTuple>>();

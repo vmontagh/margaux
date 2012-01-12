@@ -153,6 +153,7 @@ import java_cup.runtime.*;
 "and"                 { return alloy_sym(yytext(), CompSym.AND         );}
 "assert"              { return alloy_sym(yytext(), CompSym.ASSERT      );}
 "as"                  { return alloy_sym(yytext(), CompSym.AS          );}
+"bounds"                { return alloy_sym(yytext(), CompSym.BOUND        );}
 "but"                 { return alloy_sym(yytext(), CompSym.BUT         );}
 "check"               { return alloy_sym(yytext(), CompSym.CHECK       );}
 "disjoint"            { return alloy_sym(yytext(), CompSym.DISJ        );}
@@ -173,6 +174,7 @@ import java_cup.runtime.*;
 "Int"                 { return alloy_sym(yytext(), CompSym.SIGINT      );}
 "int"                 { return alloy_sym(yytext(), CompSym.INT         );}
 "in"                  { return alloy_sym(yytext(), CompSym.IN          );}
+"include"             { return alloy_sym(yytext(), CompSym.INCLUDE     );}
 "let"                 { return alloy_sym(yytext(), CompSym.LET         );}
 "lone"                { return alloy_sym(yytext(), CompSym.LONE        );}
 "module"              { return alloy_sym(yytext(), CompSym.MODULE      );}
@@ -195,6 +197,7 @@ import java_cup.runtime.*;
 "sum"                 { return alloy_sym(yytext(), CompSym.SUM         );}
 "this"                { return alloy_sym(yytext(), CompSym.THIS        );}
 "univ"                { return alloy_sym(yytext(), CompSym.UNIV        );}
+
 
 [\"] ([^\\\"] | ("\\" .))* [\"] [\$0-9a-zA-Z_\'\"] [\$0-9a-zA-Z_\'\"]* { throw new ErrorSyntax(alloy_here(yytext()),"String literal cannot be followed by a legal identifier character."); }
 [\"] ([^\\\"] | ("\\" .))* [\"]                                        { return alloy_string(yytext()); }

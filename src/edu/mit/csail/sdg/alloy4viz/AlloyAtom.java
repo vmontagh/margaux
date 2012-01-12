@@ -45,7 +45,8 @@ public final class AlloyAtom implements Comparable<AlloyAtom> {
 
    /** Return a label for this atom as recommended by a theme (theme can be null if there's no theme to consult). */
    public String getVizName(VizState theme, boolean numberAtoms) {
-      if (theme!=null) {
+      //[VM] decode to show the proper name
+	   if (theme!=null) {
          if (theme.useOriginalName() || type.getName().equals("String")) return originalName;
          if (index==Integer.MAX_VALUE && type.getName().equals("Int") && theme.label.get(type).length()==0) {
             // Special handling for Meta Model. (Only meta model could have index==MAX_VALUE)
@@ -55,11 +56,22 @@ public final class AlloyAtom implements Comparable<AlloyAtom> {
             // Special handling for Meta Model. (Only meta model could have index==MIN_VALUE)
             return "seq/Int";
          }
-         if (index==Integer.MAX_VALUE || !numberAtoms) return theme.label.get(type); else return theme.label.get(type)+index;
+         if(index==Integer.MAX_VALUE-1 )
+        	 return this.originalName;
+         else if (index==Integer.MAX_VALUE || !numberAtoms) 
+        	 return theme.label.get(type);
+         else 
+        	 return theme.label.get(type)+index;
       }
       if (type.getName().equals("Int")) return ""+index; // Special override to display integers better
       if (type.getName().equals("seq/Int")) return ""+index; // Special override to display integers better
-      if (index==Integer.MAX_VALUE || !numberAtoms) return type.getName(); else return type.getName()+index;
+      
+      if(index==Integer.MAX_VALUE-1 )
+      	 return this.originalName;
+       else if (index==Integer.MAX_VALUE || !numberAtoms) 
+    	  return type.getName();
+      else  
+    	  return type.getName()+index;
    }
 
    /** Return the type of the AlloyAtom. */

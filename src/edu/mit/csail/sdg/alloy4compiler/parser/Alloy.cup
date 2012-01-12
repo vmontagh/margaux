@@ -55,6 +55,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
+//[VM]
+import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
 
 //===========================================================================//
 
@@ -220,6 +222,8 @@ parser code {:
     ch.put(CompSym.ID, "NAME");
     ch.put(CompSym.NUMBER, "NUMBER");
     ch.put(CompSym.STR, "STRING");
+    ch.put(CompSym.BOUND, "bounds");
+    
     TreeSet<String> list = new TreeSet<String>();
     Pos p=Pos.UNKNOWN;
     if (x!=null && x.value instanceof Pos) p=(Pos)(x.value);
@@ -398,6 +402,7 @@ terminal Pos ASSERT;           //  assert
 terminal Pos AT;               //  @
 terminal Pos BAR;              //  |
 terminal Pos BUT;              //  but
+terminal Pos BOUND;				//	bounds
 terminal Pos CARET;            //  ^
 terminal Pos CHECK;            //  check
 terminal Pos COLON;            //  :
@@ -422,6 +427,7 @@ terminal Pos IDEN;             //  iden
 terminal Pos IFF;              //  <=> iff
 terminal Pos IMPLIES;          //  => implies
 terminal Pos IN;               //  in
+terminal Pos INCLUDE;			//include
 terminal Pos INT;              //  int
 terminal Pos LBRACE;           //  {
 terminal Pos LBRACKET;         //  [
@@ -563,6 +569,13 @@ nonterminal Expr                       UnionDiffExprB;
 nonterminal Expr                       UnopExprA;
 nonterminal Expr                       UnopExprB;
 nonterminal Pos                        Vis;
+//[VM]
+nonterminal	Bounds						Bounds;
+nonterminal	ExprVar						ExprBb;
+nonterminal List						ExprB;
+nonterminal CommandScope				DeclsBb;
+nonterminal List<CommandScope>			DeclsB;
+
 
 //===========================================================================//
 
@@ -587,6 +600,7 @@ Spec ::= Spec Function        ;
 Spec ::= Spec Predicate       ;
 Spec ::= Spec Macro           ;
 Spec ::= Spec Command         ;
+Spec ::= Spec Bounds		  ;
 Spec ::= ;
 
 CommandPrefix ::= CHECK:c  {: RESULT = ExprVar.make(c, "c"); :};
@@ -601,6 +615,16 @@ Command ::=                 CommandPrefix:o        Name:n   Scope:s  Expects:c {
 Command ::= Command IMPLIES CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(true ,o,x   ,n   ,null,s,c); :};
 Command ::= Command IMPLIES CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(true ,o,null,n   ,null,s,c); :};
 
+//[VM]
+Command ::=                 CommandPrefix:o        Name:n 	FOR	Name:nb {: 
+	for(Bounds b: parser.alloymodule.getAllBounds()){
+		if(b.label.compareTo(nb.label) == 0){
+			c(false ,o,null,n   ,null,b.scope,null); 
+			}
+
+	}
+:};
+
 Expects    ::=                 {: RESULT=null; :};
 Expects    ::= EXPECT NUMBER:a {: RESULT=a;    :};
 
@@ -608,6 +632,8 @@ Scope      ::= FOR NUMBER:a                  {: RESULT=new ArrayList<CommandScop
 Scope      ::= FOR NUMBER:a BUT Typescopes:b {: RESULT=b;                                  b.add(new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1)); :};
 Scope      ::= FOR              Typescopes:b {: RESULT=b;                                                                                                                     :};
 Scope      ::=                               {: RESULT=new ArrayList<CommandScope>();                                                                                         :};
+
+
 
 Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);                                  :};
@@ -681,6 +707,14 @@ Predicate ::= Vis:p PRED:o SigRef:f DOT Name:n                           Super:v
 
 Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
+
+//[VM]
+Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {: 
+
+		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,e);
+:};
+
+
 
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
@@ -782,6 +816,50 @@ Decls ::=                        {: RESULT=new ArrayList<Decl>();               
 Decls ::= Declb:x                {: RESULT=new ArrayList<Decl>(); RESULT.add(x);  :};
 Decls ::= Declb:x COMMA Decls:y  {: RESULT=y; RESULT.add(0,x);                    :};
 Decls ::=         COMMA Decls:y  {: RESULT=y;                                     :};
+
+//[VM]
+ExprBb	::= Name:a	{:RESULT = a;:};
+
+ExprB	::= ExprBb:a	{:RESULT = new ArrayList<ExprVar>(); RESULT.add(a);:};
+
+ExprB	::= ExprB:a PLUS:o ExprBb:b	{:a.add(b); RESULT=a;:};
+
+ExprB	::= ExprB:a ARROW:o ExprBb:b	{:
+		ArrayList tmp = new ArrayList();
+		if(a.size() > 0)
+			tmp.add( a.get(a.size()-1)  );
+		a.add(new Pair<ArrayList<ExprVar>,ExprVar>(tmp,b)); 
+		RESULT =  a;
+		:};
+
+ExprB	::= LPAREN ExprB:a RPAREN	{:RESULT = a; :};
+
+
+//Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
+//Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);     
+
+
+DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1);  :};
+DeclsBb ::= TypeNumber:a Name:b  {:
+   nod(b);
+   RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
+:};
+DeclsBb ::= Name:a EQUALS:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, false,false); 
+:};
+
+DeclsBb ::= Name:a IN:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,false,true); 
+:};
+
+DeclsBb ::= Name:a INCLUDE:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,true,false); 
+:};
+
+DeclsB ::= DeclsBb:a 				{: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
+DeclsB ::= DeclsB:a COMMA DeclsBb:b  {: RESULT=a; a.add(b);                    :};
+//DeclsB ::= 			COMMA DeclsB:y  {: System.out.println("In the DeclsB->"+y);                    :};
+
 
 Let ::= Name:a EQUALS:o Expr:b SuperOrBar:x {:
   nod(a);

@@ -151,6 +151,9 @@ public final class ExprCall extends Expr {
         @Override public Type visit(ExprVar x)      { Type t=env.get(x); return (t!=null && t!=EMPTY) ? t : x.type; }
         @Override public Type visit(ExprConstant x) { return x.type; }
         @Override public Type visit(Sig x)          { return x.type; }
+        //[VM]
+        @Override public Type visit(Bounds x)          { return x.type; }
+
         @Override public Type visit(Field x)        { return x.type; }
         @Override public Type visit(ExprList x)     { return Type.FORMULA; }
     }
