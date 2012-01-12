@@ -26,6 +26,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.sun.org.apache.bcel.internal.generic.SIPUSH;
+
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorAPI;
@@ -331,6 +333,17 @@ final class ScopeComputer {
        return changed;
     }
 
+    /** If A is abstract, unscoped, and all children are scoped, then set A's scope to be the sum;
+     * if A is abstract, scoped, and every child except one is scoped, then set that child's scope to be the difference.
+     */
+   /* private boolean distinguish_atom_scope (Iterable<Sig> sigs) throws Err {
+       //[VM]
+    	for(Sig s: sigs){
+    		//sig2scope.put(key, value)
+    	}
+    }
+*/
+    
     //===========================================================================================================================//
 
     /** If A is toplevel, and we haven't been able to derive its scope yet, then let it get the "overall" scope. */
