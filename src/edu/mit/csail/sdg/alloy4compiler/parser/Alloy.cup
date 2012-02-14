@@ -222,7 +222,7 @@ parser code {:
     ch.put(CompSym.ID, "NAME");
     ch.put(CompSym.NUMBER, "NUMBER");
     ch.put(CompSym.STR, "STRING");
-    ch.put(CompSym.BOUND, "bounds");
+    ch.put(CompSym.BOUND, "inst");
     
     TreeSet<String> list = new TreeSet<String>();
     Pos p=Pos.UNKNOWN;
@@ -402,7 +402,7 @@ terminal Pos ASSERT;           //  assert
 terminal Pos AT;               //  @
 terminal Pos BAR;              //  |
 terminal Pos BUT;              //  but
-terminal Pos BOUND;				//	bounds
+terminal Pos BOUND;				//	inst
 terminal Pos CARET;            //  ^
 terminal Pos CHECK;            //  check
 terminal Pos COLON;            //  :
@@ -709,11 +709,14 @@ Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
 
 //[VM]
-Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {: 
-
-		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,e);
+//Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {: 
+Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE {: 
+		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,new ArrayList<ExprVar>());
 :};
 
+Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE LBRACE Names:e RBRACE{: 
+		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,e);
+:};
 
 
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e

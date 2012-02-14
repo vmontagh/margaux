@@ -996,36 +996,33 @@ public final class CompModule extends Browsable implements Module {
 		sigs.put(Sig.GHOST.label, Sig.GHOST);
 	}
 
-	/**[VM] This adds a bounds block to the bounds list*/
-	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes)throws Err{
-		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
-		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		for(CommandScope cs: commandScopes){
-			List<Sig> parent = new ArrayList<Sig>();
-			parent.add(cs.sig);
-			for(ExprVar atom: cs.pAtoms){
-				atoms.put(atom.label, new SubsetSig(atom.label, parent));
-			}
-		}
-		bnd2atoms.put(obj, atoms);
-		bounds.put(name, obj);
-		return obj;
-	}
+
 	
-	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes,Expr fact)throws Err{
+	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
+		System.out.println("namse->"+names);
 		for(CommandScope cs: commandScopes){
+			System.out.println(cs.pFields);
 			List<Sig> parent = new ArrayList<Sig>();
 			parent.add(cs.sig);
 			for(ExprVar atom: cs.pAtoms){
 				Sig sig = new SubsetSig(atom.label, parent,Attr.ONE);
 				atoms.put(atom.label, sig);
-				this.sigs.put(sig.label, sig);
+				//if the atom is in the appended name list, so it will be added to the sig list and treated as sig
+				for(ExprVar acName:names){
+					System.out.println("acName->"+acName+"atom.label>"+atom.label +" ="+acName.label.equals(atom.label));
+					if(acName.label.equals(atom.label)){
+						this.sigs.put(sig.label, sig);
+					}
+				}
+				
 			}
 			//[TODO] I need to decide to put appended fact to all sigs or any other entities. 
-			old2appendedfacts.put(cs.sig, fact);
-
+		//	old2appendedfacts.put(cs.sig, fact);
+			/*if(cs.pFields.size() > 0){
+			System.out.println("cs.label->"+cs.sig.label);
+		}*/
 		}
 		bnd2atoms.put(obj, atoms);
 		bounds.put(name, obj);
@@ -1169,6 +1166,13 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Add a FUN or PRED declaration. */
 	void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
+		/*System.out.println(	"p="+
+							",isPrivate="+isPrivate+
+							",n="+n+
+							",f="+f+
+							",decls="+decls+
+							",t="+t+
+						",v="+v);*/
 		if (decls==null) decls=new ArrayList<Decl>(); else decls=new ArrayList<Decl>(decls);
 		if (f!=null) decls.add(0, new Decl(null, null, null, Util.asList(ExprVar.make(f.span(), "this")), f));
 		for(Decl d:decls) {
@@ -1426,8 +1430,9 @@ public final class CompModule extends Browsable implements Module {
 			Sig s = getRawSIG(et.sig.pos, et.sig.label);
 			//[VM]
 			if ((s==null) && !(isField(et.sig.label) && et.isPartial) ) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
+			System.out.println("et->"+et.sig + ","+et.pFields);
 			if(et.isPartial)
-				if(isField(et.sig.label) && et.isPartial)
+				if(isField(et.sig.label))
 					sc.add(new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope, et.endingScope, et.increment,et.pFields,et.hasLower,et.hasUpper,true));
 				else
 					sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms,et.hasLower,et.hasUpper));
