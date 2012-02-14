@@ -98,7 +98,7 @@ final class ScopeComputer {
 
     //[VM]
     /** The partial scope for each field. */
-    private final IdentityHashMap<String,List<Pair<String,String>>> field2Pscope = new IdentityHashMap<String,List<Pair<String,String>>>();
+    private final IdentityHashMap<String,List<List<String>>> field2Pscope = new IdentityHashMap<String,List<List<String>>>();
 
     
     /** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
@@ -139,15 +139,17 @@ final class ScopeComputer {
 
     //[VM]
     /** Returns the scope for a sig (or -1 if we don't know). */
-    public List<Pair<String, String>> field2Pscope(Sig sig) {
+    public List<List<String>> field2Pscope(Sig sig) {
         return field2Pscope.get(sig.label);
     }    
     
     //[VM]
     /** Returns the scope for a sig (or -1 if we don't know). */
-    public List<Pair<String, String>> field2Pscope(String label) {
+    public List<List<String>> field2Pscope(String label) {
     	//
+    	//System.out.println("label->"+label+", "+field2Pscope);
     	for(String l: field2Pscope.keySet()){
+    		//System.out.println(l);
     		if(l.equals(label))
     			return field2Pscope.get(l);
     	}
@@ -184,7 +186,7 @@ final class ScopeComputer {
     
     //[VM]
     /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
-    private void field2Pscope(Sig sig, List<Pair<String,String>> newValue) throws Err {
+    private void field2Pscope(Sig sig, List<List<String>> newValue) throws Err {
         if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
         int old = field2Pscope(sig)== null ? -1 : field2Pscope(sig).size();
         if (old==newValue.size()) return;
@@ -194,7 +196,7 @@ final class ScopeComputer {
     }
 
     /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
-    private void field2Pscope(String label, List<Pair<String,String>> newValue) throws Err {
+    private void field2Pscope(String label, List<List<String>> newValue) throws Err {
         if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for field's label \""+label+"\"");
         int old = field2Pscope(label)== null ? -1 : field2Pscope(label).size();
         if (old==newValue.size()) return;
@@ -494,12 +496,20 @@ final class ScopeComputer {
                 "Sig \""+s+"\" has the multiplicity of \"lone\", so its scope must 0 or 1, and cannot be "+scope);
             if (s.isSome!=null && scope<1) throw new ErrorSyntax(cmd.pos,
                 "Sig \""+s+"\" has the multiplicity of \"some\", so its scope must 1 or above, and cannot be "+scope);
-            
+        	
+//            System.out.println("entry.isPartial->"+entry.isPartial);
             if(entry.isPartial){
+/*            	System.out.println("entry.isPartial1->"+entry.isPartial);
+            	System.out.println("entry.isPartial1->"+entry.pFields.size());
+            	System.out.println("entry.isPartial1->"+entry.sig.label);
+*/
             	if(entry.pFields.size() > 0){
-            		List<Pair<String,String>> list = new ArrayList<Pair<String,String>>();
-            		for(Pair<ExprVar,ExprVar> pair: entry.pFields ){
-            			list.add(new Pair(pair.a.label+"%", pair.b.label+"%"));
+            		List<List<String>> list = new ArrayList<List<String>>();
+            		for(List<ExprVar> pair: entry.pFields ){
+            			List<String> tmp = new ArrayList<String>();
+            			for(ExprVar ev: pair)
+            				tmp.add(ev.label+"%");
+            			list.add(tmp);
             		}
             		field2Pscope(s,list);
             	}else{
