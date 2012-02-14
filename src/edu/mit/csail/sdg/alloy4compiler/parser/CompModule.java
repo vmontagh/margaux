@@ -1001,9 +1001,9 @@ public final class CompModule extends Browsable implements Module {
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		System.out.println("names->"+names);
+		//System.out.println("names->"+names);
 		for(CommandScope cs: commandScopes){
-			System.out.println(cs.pFields);
+			//System.out.println(cs.pFields);
 			List<Sig> parent = new ArrayList<Sig>();
 			parent.add(cs.sig);
 			for(ExprVar atom: cs.pAtoms){
@@ -1011,7 +1011,7 @@ public final class CompModule extends Browsable implements Module {
 				atoms.put(atom.label, sig);
 				//if the atom is in the appended name list, so it will be added to the sig list and treated as sig
 				for(ExprVar acName:names){
-					System.out.println("acName->"+acName+"atom.label>"+atom.label +" ="+acName.label.equals(atom.label));
+					//System.out.println("acName->"+acName+"atom.label>"+atom.label +" ="+acName.label.equals(atom.label));
 					if(acName.label.equals(atom.label)){
 						this.sigs.put(sig.label, sig);
 					}
@@ -1430,7 +1430,7 @@ public final class CompModule extends Browsable implements Module {
 			Sig s = getRawSIG(et.sig.pos, et.sig.label);
 			//[VM]
 			if ((s==null) && !(isField(et.sig.label) && et.isPartial) ) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
-			System.out.println("et->"+et.sig + ","+et.pFields);
+			//.println("et->"+et.sig + ","+et.pFields);
 			if(et.isPartial)
 				if(isField(et.sig.label))
 					sc.add(new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope, et.endingScope, et.increment,et.pFields,et.hasLower,et.hasUpper,true));
