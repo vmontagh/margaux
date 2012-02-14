@@ -51,7 +51,7 @@ pred generateBindings[] {
 
 /******* Matrix Design Space *********/
 
-bounds MatrixBounds {
+inst MatrixBounds {
 	3,
 	exactly 8 Binding,
 	Value = dense + sparse + list_ds + array_ds + list_alg + array_alg + other_alg + other_ds,

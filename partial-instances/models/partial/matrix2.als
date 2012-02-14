@@ -226,7 +226,7 @@ pred generateBindings[] {
 
 /******* Matrix Design Space *********/
 
-bounds MatrixBounds {
+inst MatrixBounds {
 	3,
 	exactly 1 AugmentedConstraintNetwork,
 	exactly 1 DesignAutomaton,
