@@ -241,6 +241,6 @@ bounds MatrixBounds {
 	generate b : Binding | b.val in b.var.domain
 	generate a : TotalAssignment | ...
 	generate t : Transition | LegalTransition[t]*/
-}{foo}
+}{dense, sparse, list_ds, array_ds, list_alg, array_alg, other_alg, other_ds, Matrix, Ds, Alg}
 run generateBindings for MatrixBounds
 
