@@ -1001,7 +1001,7 @@ public final class CompModule extends Browsable implements Module {
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		System.out.println("namse->"+names);
+		System.out.println("names->"+names);
 		for(CommandScope cs: commandScopes){
 			System.out.println(cs.pFields);
 			List<Sig> parent = new ArrayList<Sig>();
