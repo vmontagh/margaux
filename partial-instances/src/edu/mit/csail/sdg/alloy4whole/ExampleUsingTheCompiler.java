@@ -48,11 +48,28 @@ public final class ExampleUsingTheCompiler {
         // Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
         // By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
         A4Reporter rep = new A4Reporter() {
+            private long lastTime=0;
+
             // For example, here we choose to display each "warning" by printing it to System.out
             @Override public void warning(ErrorWarning msg) {
-                System.out.print("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
+                System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
                 System.out.flush();
             }
+            @Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
+                System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
+                lastTime = System.currentTimeMillis();
+                System.out.flush();
+
+            }
+            @Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
+                lastTime = System.currentTimeMillis();
+                System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
+                + (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
+                + " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
+                System.out.flush();
+
+            }
+            
         };
 
         for(String filename:args) {
