@@ -177,8 +177,8 @@ final class BoundsComputer {
 		if (sig.exact) { sol.addSig(sig, sum); return sum; }
 		// Allocate a relation for this subset sig, then bound it
 		String label = (sig.label.startsWith("this/") ?
-			sig.label.substring(5):
-			sig.label)+"%";
+				sig.label.substring(5):
+					sig.label)+"%";
 
 		for(Tuple t: ts){
 			if( !t.atom(0).equals(label)){
@@ -313,14 +313,15 @@ final class BoundsComputer {
 					//[VM] Here the type of relation is determined.
 					Type t = isOne ? Sig.UNIV.type().join(f.type()) : f.type();
 					TupleSet ub = factory.noneOf(t.arity());
-					List<Pair<String,String>> pList = sc.field2Pscope(f.label);
+					List<List<String>> pList = sc.field2Pscope(f.label);
+
 					if( pList != null ){
 						//upper.add()
-						for(Pair<String,String> pair: pList){
-							ub.add( universe.factory().tuple( pair.a,pair.b));
-						}
+						for(List<String> pl : pList)
+							ub.add( universe.factory().tuple( pl));
 						Relation r;
 						//TODO [VM}; Refactory is required to put all in different functions
+
 						if(sc.isExact(f.label)){
 							r = sol.addRel(s.label+"."+f.label, ub, ub);
 							sol.addField(f, isOne ? sol.a2k(s).product(r) : r);
@@ -348,7 +349,7 @@ final class BoundsComputer {
 							r = sol.addRel(s.label+"."+f.label, ub, ub2);
 							sol.addField(f, isOne ? sol.a2k(s).product(r) : r);
 						}
-						
+
 
 					}else{
 						for(List<PrimSig> p:t.fold()) {
