@@ -41,7 +41,7 @@ pred predicateName{}
 
 /******* Matrix Design Space *********/
 
-bounds BoundsName {
+inst BoundsName {
  	4,
 //	exactly 1 Value,
 	 Variable = a + b + c//,
