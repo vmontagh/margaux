@@ -59,12 +59,12 @@ bounds MatrixBounds {
 	domain = Matrix->dense+ Matrix->sparse + 
 					Ds->list_ds+ Ds->array_ds+Ds->other_ds + 
 					Alg->array_alg + Alg->list_alg + Alg->other_alg
-//	dominates = AugmentedConstraintNetwork -> ((Ds->Matrix) + (Alg->Matrix)),
-/*	solutions = AugmentedConstraintNetwork -> Solution,
+/*//	dominates = AugmentedConstraintNetwork -> ((Ds->Matrix) + (Alg->Matrix)),
+	solutions = AugmentedConstraintNetwork -> Solution,
 	generate b : Binding | b.val in b.var.domain
 	generate a : TotalAssignment | ...
 	generate t : Transition | LegalTransition[t]*/
-}{nr4,nr5}
+}{dense, sparse, list_ds, array_ds, list_alg, array_alg, other_alg, other_ds, Matrix, Ds, Alg}
 run generateBindings for MatrixBounds
 
 
