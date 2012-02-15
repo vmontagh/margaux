@@ -86,11 +86,12 @@ class OurSyntaxDocument extends DefaultStyledDocument {
    /** The paragraph style for indentation. */
    private final MutableAttributeSet tabset = new SimpleAttributeSet();
 
+   //[VM] new keywords are added to support inst block.
    /** This stores the currently recognized set of reserved keywords. */
    private static final String[] keywords = new String[] {"abstract", "all", "and", "as", "assert", "but", "check", "disj",
       "disjoint", "else", "enum", "exactly", "exh", "exhaustive", "expect", "extends", "fact", "for", "fun", "iden",
       "iff", "implies", "in", "Int", "int", "let", "lone", "module", "no", "none", "not", "one", "open", "or", "part",
-      "partition", "pred", "private", "run", "seq", "set", "sig", "some", "String", "sum", "this", "univ"
+      "partition", "pred", "private", "run", "seq", "set", "sig", "some", "String", "sum", "this", "univ","include",/*"moreover",*/"inst"
    };
 
    /** Returns true if array[start .. start+len-1] matches one of the reserved keyword. */
