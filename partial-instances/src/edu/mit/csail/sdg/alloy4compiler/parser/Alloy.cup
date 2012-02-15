@@ -823,7 +823,7 @@ Decls ::=         COMMA Decls:y  {: RESULT=y;                                   
 //[VM]
 ExprBb	::= Name:a	{:RESULT = a;:};
 
-ExprB	::= ExprBb:a	{:RESULT = new ArrayList<ExprVar>(); RESULT.add(a);:};
+ExprB	::= ExprBb:a	{:RESULT = new ArrayList/*<ExprVar>*/(); RESULT.add(a);:};
 
 ExprB	::= ExprB:a PLUS:o ExprBb:b	{:a.add(b); RESULT=a;:};
 
