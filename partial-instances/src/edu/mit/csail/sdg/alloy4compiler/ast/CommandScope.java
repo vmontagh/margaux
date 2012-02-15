@@ -105,7 +105,7 @@ public class CommandScope {
 	//[VM]
 	public CommandScope(Pos pos, Sig sig, boolean isExact, 
 			int startingScope, int endingScope, int increment, 
-			List<ExprVar> atoms, boolean lower,boolean hasUpper) throws ErrorSyntax {
+			List/*<ExprVar>*/ atoms, boolean lower,boolean hasUpper) throws ErrorSyntax {
 		if (pos == null) pos = Pos.UNKNOWN;
 		if (sig == null) throw new NullPointerException();
 		if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
