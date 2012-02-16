@@ -1390,12 +1390,15 @@ public final class CompModule extends Browsable implements Module {
 		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
 	}
 
+	//It looks into the relations of all sigs
 	private boolean isField(String name){
 		for(Object o: old2fields.values()){
 			if( o instanceof List && ((List)o).size() >0){
-				if(((List)o).get(0) instanceof Decl &&
-						((Decl)((List)o).get(0)).hasName(name)){
-					return true;
+				for(Object decls: (List)o){
+					if(decls instanceof Decl &&
+							((Decl)decls).hasName(name)){
+						return true;
+					}
 				}
 			}
 		}
