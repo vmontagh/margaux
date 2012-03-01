@@ -53,7 +53,7 @@ public class CommandScope {
 	//[VM]
 	public final List<ExprVar> pAtoms;
 
-	public final List<List<ExprVar>> pFields;
+	public final List<List<Expr>> pFields;
 
 	public final boolean isPartial;
 
@@ -97,7 +97,7 @@ public class CommandScope {
 		this.increment = increment;
 		this.isPartial = false;
 		this.pAtoms = new ArrayList<ExprVar>();
-		this.pFields = new ArrayList<List<ExprVar>>();
+		this.pFields = new ArrayList<List<Expr>>();
 		this.hasLower = false;
 		this.hasUpper = false;
 	}
@@ -118,16 +118,16 @@ public class CommandScope {
 		this.isExact = isExact;
 		this.hasUpper = hasUpper;
 		this.increment = increment;
-		this.pFields = new ArrayList<List<ExprVar>>();
+		this.pFields = new ArrayList<List<Expr>>();
 		boolean isRelation = false;
 
-		List<List<ExprVar>> tmpPField = new ArrayList<List<ExprVar>>();
+		List<List<Expr>> tmpPField = new ArrayList<List<Expr>>();
 		if(atoms != null  && atoms.size() > 0){
 			this.isPartial = true;
 			int m = 0;
 			for(Object atom: atoms){
 				if(atom instanceof Pair){
-					List<ExprVar> list = extractRels((Pair)atom);
+					List<Expr> list = extractRels((Pair)atom);
 					m = Math.max(m, list.size());
 					//Pas One to detect the most arity number					
 					tmpPField.add(list);    				
@@ -161,17 +161,17 @@ public class CommandScope {
 		}
 	}
 
-	private List<ExprVar> extractRels(Pair pair){
-		List<ExprVar> tmp = new ArrayList<ExprVar>();
+	private List<Expr> extractRels(Pair pair){
+		List<Expr> tmp = new ArrayList<Expr>();
 		
 		if(pair.a instanceof List && ((List)pair.a).size()>0){
 			Object p = ((List)pair.a).get(0);
 			if(p instanceof Pair)
 				tmp.addAll(extractRels((Pair)p));
 			else
-				tmp.add((ExprVar)p);
+				tmp.add((Expr)p);
 		}
-		tmp.add((ExprVar)pair.b);
+		tmp.add((Expr)pair.b);
 		return tmp;
 	}
 	
@@ -182,7 +182,7 @@ public class CommandScope {
 
 	public CommandScope(Pos pos, Sig sig, boolean isExact,
 			int startingScope, int endingScope, int increment,
-			List<List<ExprVar>> fields, boolean lower,boolean hasUpper, boolean isField/*This is a dummy field*/) throws ErrorSyntax {
+			List<List<Expr>> fields, boolean lower,boolean hasUpper, boolean isField/*This is a dummy field*/) throws ErrorSyntax {
 		if (sig == null) throw new NullPointerException();
 		if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
 		if (endingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative ending scope ("+endingScope+")");
@@ -196,12 +196,12 @@ public class CommandScope {
 		this.endingScope = endingScope;
 		this.increment = increment;
 		this.hasUpper = hasUpper;
-		this.pFields = new ArrayList<List<ExprVar>>();
+		this.pFields = new ArrayList<List<Expr>>();
 
 		this.isPartial = true;
-		for(List<ExprVar> list: fields){
-			List<ExprVar> tmp = new ArrayList<ExprVar>();
-			for(ExprVar v:list){
+		for(List<Expr> list: fields){
+			List<Expr> tmp = new ArrayList<Expr>();
+			for(Expr v:list){
 				tmp.add(v);
 			}
 			this.pFields.add(tmp);
