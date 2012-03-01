@@ -26,6 +26,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
+import kodkod.ast.ConstantExpression;
+
 import com.sun.org.apache.bcel.internal.generic.SIPUSH;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
@@ -39,6 +41,8 @@ import edu.mit.csail.sdg.alloy4.UniqueNameGenerator;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
+import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprConstant;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
@@ -505,10 +509,13 @@ final class ScopeComputer {
 */
             	if(entry.pFields.size() > 0){
             		List<List<String>> list = new ArrayList<List<String>>();
-            		for(List<ExprVar> pair: entry.pFields ){
+            		for(List<Expr> pair: entry.pFields ){
             			List<String> tmp = new ArrayList<String>();
-            			for(ExprVar ev: pair)
-            				tmp.add(ev.label+"%");
+            			for(Expr ev: pair)
+            				if(ev instanceof ExprVar)
+            					tmp.add(((ExprVar)ev).label+"%");
+            				else if(ev instanceof ExprConstant )
+            					tmp.add(String.valueOf(((ExprConstant)ev).num));
             			list.add(tmp);
             		}
             		field2Pscope(s,list);
