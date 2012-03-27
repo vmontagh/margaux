@@ -241,7 +241,8 @@ public final class A4Solution {
         final TupleSet next = factory.noneOf(2);
 
         int min=min(), max=max();
-        if (max >= min) for(int i=min; i<=max; i++) { // Safe since we know 1 <= bitwidth <= 30
+        if (max >= min) 
+        	for(int i=min; i<=max; i++) { // Safe since we know 1 <= bitwidth <= 30
            Tuple ii = factory.tuple(""+i);
            TupleSet is = factory.range(ii, ii);
            bounds.boundExactly(i, is);
@@ -249,9 +250,23 @@ public final class A4Solution {
            if (i>=0 && i<maxseq) seqidxBounds.add(ii);
            if (i+1<=max) next.add(factory.tuple(""+i, ""+(i+1)));
            if (i==min) bounds.boundExactly(KK_MIN,  is);
-           if (i==max) bounds.boundExactly(KK_MAX,  is);
+           //if (i==max) bounds.boundExactly(KK_MAX,  is);
            if (i==0)   bounds.boundExactly(KK_ZERO, is);
         }
+        /*{ 
+        	int i=8;
+        	// [VM] Just for testing
+            Tuple ii = factory.tuple(""+i);
+            TupleSet is = factory.range(ii, ii);
+            bounds.boundExactly(i, is);
+            sigintBounds.add(ii);
+            //if (i>=0 && i<maxseq) 
+            seqidxBounds.add(ii);
+             next.add(factory.tuple(""+7, ""+8));
+             bounds.boundExactly(KK_MAX,  is);
+            //if (i==0)   bounds.boundExactly(KK_ZERO, is);
+         }*/
+        System.out.println("-->"+sigintBounds);
         this.sigintBounds = sigintBounds.unmodifiableView();
         this.seqidxBounds = seqidxBounds.unmodifiableView();
         bounds.boundExactly(KK_NEXT, next);
@@ -295,6 +310,8 @@ public final class A4Solution {
         solver.options().setSymmetryBreaking(sym);
         solver.options().setSkolemDepth(opt.skolemDepth);
         solver.options().setBitwidth(bitwidth > 0 ? bitwidth : (int) Math.ceil(Math.log(atoms.size())) + 1);
+        //[VM] To Test
+        //solver.options().setBitwidth(5);
         solver.options().setIntEncoding(Options.IntEncoding.TWOSCOMPLEMENT);
      }
 
@@ -408,11 +425,12 @@ public final class A4Solution {
      * @param upper - the upperbound; cannot be null; must contain everything in lowerbound
      */
     Relation addRel(String label, TupleSet lower, TupleSet upper) throws ErrorFatal {
-       if (solved) throw new ErrorFatal("Cannot add a Kodkod relation since solve() has completed.");
+      
+    	if (solved) throw new ErrorFatal("Cannot add a Kodkod relation since solve() has completed.");
        Relation rel = Relation.nary(label, upper.arity());
        if (lower == upper) {
           bounds.boundExactly(rel, upper);
-       } else if (lower == null) {
+       } else if (lower == null|| lower.size() == 0) {
           bounds.bound(rel, upper);
        } else {
           if (lower.arity() != upper.arity()) throw new ErrorFatal("Relation "+label+" must have same arity for lowerbound and upperbound.");
