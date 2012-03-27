@@ -575,6 +575,7 @@ nonterminal	ExprVar						ExprBb;
 nonterminal	ExprConstant					ExprBbN;
 nonterminal List						ExprB;
 nonterminal CommandScope				DeclsBb;
+nonterminal CommandScope				TypescopeB;
 nonterminal List<CommandScope>			DeclsB;
 
 
@@ -859,7 +860,29 @@ ExprB	::= LPAREN ExprB:a RPAREN	{:RESULT = a; :};
 //Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 //Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);     
 
+//[VM] The following three rules are copied to set the Int,int, and seq size in Inst block
+TypescopeB ::= TypeNumber:a SIGINT:b  {: 
+   Pos p = a.pos.merge(b);
+   if (a.endingScope>a.startingScope) throw new ErrorSyntax(p, "Cannot specify a growing scope for \"Int\"");
+   if (a.isExact) throw new ErrorSyntax(p, "The exactly keyword is redundant here since the integer bitwidth must be exact.");
+   RESULT = new CommandScope(p, new PrimSig("int", AttrType.WHERE.make(p)), a.isExact, a.startingScope, a.startingScope, 1);
+:};
 
+TypescopeB ::= TypeNumber:a INT:b  {: 
+   Pos p = a.pos.merge(b);
+   if (a.endingScope>a.startingScope) throw new ErrorSyntax(p, "Cannot specify a growing scope for \"Int\"");
+   if (a.isExact) throw new ErrorSyntax(p, "The exactly keyword is redundant here since the integer bitwidth must be exact.");
+   RESULT = new CommandScope(p, new PrimSig("int", AttrType.WHERE.make(p)), a.isExact, a.startingScope, a.startingScope, 1);
+:};
+
+TypescopeB ::= TypeNumber:a SEQ:b  {:
+   Pos p = a.pos.merge(b);
+   if (a.endingScope>a.startingScope) throw new ErrorSyntax(p, "Cannot specify a growing scope for \"seq\"");
+   if (a.isExact) throw new ErrorSyntax(p, "The exactly keyword is redundant here since the number of sequence index has to be exact.");
+   RESULT = new CommandScope(p, new PrimSig("seq", AttrType.WHERE.make(p)), a.isExact, a.startingScope, a.startingScope, 1);
+:};
+
+DeclsBb	::=	TypescopeB:b			{: RESULT=b;	:};
 DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1);  :};
 DeclsBb ::= TypeNumber:a Name:b  {:
    nod(b);
