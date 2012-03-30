@@ -5573,6 +5573,8 @@ class CUP$CompParser$actions {
 		int bleft = ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()).left;
 		int bright = ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()).right;
 		CommandScope b = (CommandScope)((java_cup.runtime.Symbol) CUP$CompParser$stack.peek()).value;
+		System.out.println("a="+a);
+		System.out.println("b="+b);
 		 RESULT=a; a.add(b);                    
               CUP$CompParser$result = parser.getSymbolFactory().newSymbol("DeclsB",88, ((java_cup.runtime.Symbol)CUP$CompParser$stack.elementAt(CUP$CompParser$top-2)), ((java_cup.runtime.Symbol)CUP$CompParser$stack.peek()), RESULT);
             }

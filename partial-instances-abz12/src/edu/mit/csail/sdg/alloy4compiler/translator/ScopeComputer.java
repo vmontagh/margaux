@@ -97,9 +97,13 @@ final class ScopeComputer {
     private final IdentityHashMap<PrimSig,Integer> sig2scope = new IdentityHashMap<PrimSig,Integer>();
 
     //[VM]
-    /** The partial scope for each sig. */
-    private final IdentityHashMap<PrimSig,List<String>> sig2Pscope = new IdentityHashMap<PrimSig,List<String>>();
+    /** The partial lower bound scope for each sig. */
+    private final IdentityHashMap<String,List<String>> sig2PscopeL = new IdentityHashMap<String,List<String>>();
 
+    //[VM]
+    /** The partial lower bound scope for each sig. */
+    private final IdentityHashMap<String,List<String>> sig2PscopeU = new IdentityHashMap<String,List<String>>();    
+    
     //[VM]
     /** The partial scope for each field. */
     private final IdentityHashMap<String,List<List<String>>> field2Pscope = new IdentityHashMap<String,List<List<String>>>();
@@ -131,16 +135,61 @@ final class ScopeComputer {
         return (y==null) ? (-1) : y;
     }
 
+    //Storing the lower bound of each sig determined in the inst block. In case of exact bound, the atoms are stored in both sig2PScopeL and sig2PScopeU.
+    //So, whatever is in sig2PScopeL also exists in sig2PScopeU.
     //[VM]
+    //Lower-bound
     /** Returns the scope for a sig (or -1 if we don't know). */
-    public int sig2PScope(Sig sig) {
+    public int sig2PScopeL(Sig sig) {
         if (sig==SIGINT) return 1<<bitwidth;
         if (sig==SEQIDX) return maxseq;
         if (sig==STRING) return maxstring;
-        List y = sig2Pscope.get(sig);
+        List y = sig2PscopeL.get(sig.label);
         return (y==null) ? (-1) : y.size();
     }
 
+    //[VM]
+    /** Returns the scope for a sig (or null if we don't know). */
+    public List<String> sig2PscopeL(Sig sig) {
+        return sig2PscopeL.get(sig.label);
+    }    
+    
+    //[VM]
+    /** Returns the scope for a sig (or null if we don't know). */
+    public List<String> sig2PscopeL(String label) {
+    	for(String l: sig2PscopeL.keySet()){
+    		if(l.equals(label))
+    			return sig2PscopeL.get(l);
+    	}
+    	return null;
+    } 
+
+    //Upper bound
+    /** Returns the scope for a sig (or -1 if we don't know). */
+    public int sig2PScopeU(Sig sig) {
+        if (sig==SIGINT) return 1<<bitwidth;
+        if (sig==SEQIDX) return maxseq;
+        if (sig==STRING) return maxstring;
+        List y = sig2PscopeU.get(sig.label);
+        return (y==null) ? (-1) : y.size();
+    }
+
+    //[VM]
+    /** Returns the scope for a sig (or null if we don't know). */
+    public List<String> sig2PscopeU(Sig sig) {
+        return sig2PscopeU.get(sig.label);
+    }    
+    
+    //[VM]
+    /** Returns the scope for a sig (or null if we don't know). */
+    public List<String> sig2PscopeU(String label) {
+    	for(String l: sig2PscopeU.keySet()){
+    		if(l.equals(label))
+    			return sig2PscopeU.get(l);
+    	}
+    	return null;
+    }
+    
     //[VM]
     /** Returns the scope for a sig (or -1 if we don't know). */
     public List<List<String>> field2Pscope(Sig sig) {
@@ -150,10 +199,7 @@ final class ScopeComputer {
     //[VM]
     /** Returns the scope for a sig (or -1 if we don't know). */
     public List<List<String>> field2Pscope(String label) {
-    	//
-    	//System.out.println("label->"+label+", "+field2Pscope);
     	for(String l: field2Pscope.keySet()){
-    		//System.out.println(l);
     		if(l.equals(label))
     			return field2Pscope.get(l);
     	}
@@ -168,23 +214,39 @@ final class ScopeComputer {
         if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
         if (newValue<0)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a negative scope for sig \""+sig+"\"");
         int old=sig2scope(sig);
-        if (old==newValue) return;
+//        if (old==newValue) return;
         //[VM] Not a good condition
-        if (old>=0 && !hasLower(sig))        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+//        if (old>=0 && !hasLower(sig))        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
         sig2scope.put((PrimSig)sig, newValue);
         rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
     }
 
     //[VM]
-    /** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
-    private void sig2Pscope(Sig sig, List<String> newValue) throws Err {
+    /** Sets the upper-bound scope for a sig; returns true iff the sig's scope is changed by this call. */
+    private void sig2PscopeU(Sig sig, List<String> newValue) throws Err {
         if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
         if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
         if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
         int old=sig2scope(sig);
-        if (old==newValue.size()) return;
-        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
-        sig2Pscope.put((PrimSig)sig, newValue);
+        List<String> oldList = sig2PscopeU.get(sig);
+        if (oldList != null && oldList.containsAll(newValue)) 
+        	return;
+//        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+        sig2PscopeU.put(sig.label, newValue);
+        rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
+    }
+    
+    /** Sets the upper-bound scope for a sig; returns true iff the sig's scope is changed by this call. */
+    private void sig2PscopeL(Sig sig, List<String> newValue) throws Err {
+        if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
+        if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
+        if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
+        int old=sig2scope(sig);
+        List<String> oldList = sig2PscopeU.get(sig);
+        if (oldList != null && oldList.containsAll(newValue)) return;
+//        if (old==newValue.size()) return;
+//        if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+        sig2PscopeL.put(sig.label, newValue);
         rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
     }
     
@@ -306,34 +368,100 @@ final class ScopeComputer {
 
     //===========================================================================================================================//
 
+    //Supossing the new rule: A super-sig is abstract.
+    private boolean derive_abstract_scope_rule1 (Iterable<Sig> sigs) throws Err {
+    	for(Sig sig:sigs){
+    		derive_abstract_sig_bound(sig);
+    	}
+    	return false;
+    }
+
+    //[VM]Complaint about the concrete super-sig. super-sig should be abstract sig.
+    private void check_abstract_hierchy(Iterable<Sig> sigs) throws Err{
+    	for(Sig sig:sigs){
+    		if((!sig.builtin) && (sig.isAbstract == null) &&
+    				(sig instanceof PrimSig) && !(((PrimSig)sig).children().isEmpty())){
+    			throw new ErrorSyntax(sig.pos, "The super-sig must be an abstract.");
+    		}
+    	}
+    }
+    
+    //It derives the the scope of an abstract sig, from its children. If it does not have a child, the bounds are empty.
+    private void derive_abstract_sig_bound(Sig sig) throws Err{
+    	if(sig.isAbstract == null || sig.builtin)
+    		return;
+    	
+    	List<String> listL = new ArrayList<String>();
+    	List<String> listU = new ArrayList<String>();
+		int sum=0;
+    	for(PrimSig c:((PrimSig)sig).children()){
+    		if(c.isAbstract != null)
+    			derive_abstract_sig_bound(c);
+			if(sig2PScopeL(c) > 0)
+				listL.addAll(sig2PscopeL(c));
+			if(sig2PScopeU(c) > 0)
+				listU.addAll(sig2PscopeU(c));
+			if(sig2scope(c) > 0)
+				sum = sum + sig2scope(c);
+    	}
+		sig2PscopeL(sig, listL);
+		sig2PscopeU(sig, listU);
+		sig2scope(sig, sum);
+
+
+    }
+    
+    //------------
+    
     /** If A is abstract, unscoped, and all children are scoped, then set A's scope to be the sum;
      * if A is abstract, scoped, and every child except one is scoped, then set that child's scope to be the difference.
      */
     private boolean derive_abstract_scope (Iterable<Sig> sigs) throws Err {
     	boolean changed=false;
-       again:
-       for(Sig s:sigs) if (!s.builtin && (s instanceof PrimSig) && s.isAbstract!=null) {
-          SafeList<PrimSig> subs = ((PrimSig)s).children();
-          if (subs.size()==0) continue;
-          Sig missing=null;
-          int sum=0;
-          for(Sig c:subs) {
-             int cn = sig2scope(c);
-             if (cn<0) { if (missing==null) { missing=c; continue; } else { continue again; } }
-             sum=sum+cn;
-             if (sum<0) throw new ErrorSyntax(cmd.pos, "The number of atoms exceeds the internal limit of "+Integer.MAX_VALUE);
-          }
-          int sn = sig2scope(s);
-          if (sn<0) {
-             if (missing!=null) continue;
-             sig2scope(s, sum);
-             changed=true;
-          } else if (missing!=null) {
-             sig2scope(missing, (sn<sum) ? 0 : sn-sum);
-             changed=true;
-          }
-       }
-       return changed;
+
+    	again:
+    		for(Sig s:sigs) 
+    			if (!s.builtin && (s instanceof PrimSig) && s.isAbstract!=null) {
+    		    	List<String> listL = new ArrayList<String>();
+    		    	List<String> listU = new ArrayList<String>();
+    				SafeList<PrimSig> subs = ((PrimSig)s).children();
+    				if (subs.size()==0) 
+    					continue;
+    				Sig missing=null;
+    				int sum=0;
+    				for(Sig c:subs) {
+    					int cn = sig2scope(c);
+    					if (cn<0) { 
+    						if (missing==null) { 
+    							missing=c; 
+    							continue; 
+    						} else { 
+    							continue again; 
+    						} 
+    					}
+    					sum=sum+cn;
+    					listL.addAll(sig2PscopeL(c));
+    					listU.addAll(sig2PscopeU(c));
+    					if (sum<0) 
+    						throw new ErrorSyntax(cmd.pos, "The number of atoms exceeds the internal limit of "+Integer.MAX_VALUE);
+    				}
+    				int sn = sig2scope(s);
+    				//Means the abstract sig does not have something 
+    				if (sn<0) {
+    					if (missing!=null) 
+    						continue;
+    					sig2scope(s, sum);
+    					sig2PscopeL(s, listL);
+    					sig2PscopeU(s, listU);
+    					changed=true;
+    					//The else means that one or more sub-sigs does not have scope.
+    					//It means that, The super-sig has already some atoms, one of its sub-sigs is not scoped, So, the scope of such sub-sig should be the rest.
+    				} else if (missing!=null) {
+    					sig2scope(missing, (sn<sum) ? 0 : sn-sum);
+    					changed=true;
+    				}
+    			}
+    	return changed;
     }
 
     /** If A is abstract, unscoped, and all children are scoped, then set A's scope to be the sum;
@@ -347,6 +475,52 @@ final class ScopeComputer {
     }
 */
     
+    private List<String> nameRangeGen(Sig sig, int start, int length){
+        List<String> list  = new ArrayList<String>();
+    	String name=sig.label;
+        if (name.startsWith("this/")) 
+			name=name.substring(5);
+		StringBuilder sb=new StringBuilder();
+        for(int i=start; i < length; i++) {
+           String x = sb.delete(0, sb.length()).append(name).append('$').append(i).toString();
+           list.add(x);
+        }        		
+        return list;
+    }
+    //===========================================================================================================================//
+
+    /**
+     * In case of top-down approach, we need to set the upper-bound for each, unbound sig, and set the upper-bound for each sig having lower bound.
+     * @throws Err 
+     */
+    private void derive_overall_scope_bound(Iterable<Sig> sigs) throws Err{
+        final int overall = (cmd.overall<0 && cmd.scope.size()==0) ? 3 : cmd.overall;
+        for(Sig sig:sigs) {
+        	if(!sig.builtin && sig.isAbstract == null){
+        		int rest = 0;
+        		if(sig2PScopeL(sig) > 0 && hasLower(sig)){
+            		rest = overall - sig2PScopeL(sig);
+            		if (sig2scope(sig) == overall)
+            			continue;
+            		if(rest > 0){
+                		List<String> list = new ArrayList<String>();
+                		list.addAll(sig2PscopeU(sig));
+                		list.addAll(nameRangeGen(sig, 0, rest));
+                		sig2PscopeU(sig,list);
+            			sig2scope(sig, overall);
+            		}
+        		}else if(sig2PScopeU(sig) < 0){
+        			int u = sig2scope(sig) < 0 ? overall : sig2scope(sig);
+            		sig2PscopeU(sig,nameRangeGen(sig, 0, u));
+            		if(isExact(sig))
+            			sig2PscopeL(sig,nameRangeGen(sig, 0, u));
+            		else
+            			sig2PscopeL(sig,new ArrayList<String>());
+            		sig2scope(sig, u);            		
+        		}
+        	}
+        }
+    }
     //===========================================================================================================================//
 
     /** If A is toplevel, and we haven't been able to derive its scope yet, then let it get the "overall" scope. */
@@ -356,8 +530,8 @@ final class ScopeComputer {
         for(Sig s:sigs) {
         	
         	//[VM] Insert the rest.
-        	if(!s.builtin && s.isTopLevel() && sig2PScope(s) > 0 && hasLower(s)){
-        		int rest = overall - sig2PScope(s);
+        	if(!s.builtin /*&& s.isTopLevel()*/ && sig2PScopeL(s) > 0 && hasLower(s)){
+        		int rest = overall - sig2PScopeL(s);
         		if (sig2scope(s) == overall)
         			continue;
         		if(rest > 0){
@@ -367,7 +541,7 @@ final class ScopeComputer {
         		}
         	}else
         	
-        	if (!s.builtin && s.isTopLevel() && sig2scope(s)<0 && sig2PScope(s) < 0) {
+        	if (!s.builtin && s.isTopLevel() && sig2scope(s)<0 && sig2PScopeL(s) < 0) {
         		if (s.isEnum!=null) { 
         			sig2scope(s, 0); 
         			continue; 
@@ -388,7 +562,7 @@ final class ScopeComputer {
 
     	boolean changed=false;
         Sig trouble=null;
-        for(Sig s:sigs) if (!s.builtin && !s.isTopLevel() && sig2scope(s)<0 && sig2PScope(s) < 0 && (s instanceof PrimSig)) {
+        for(Sig s:sigs) if (!s.builtin && !s.isTopLevel() && sig2scope(s)<0 && sig2PScopeL(s) < 0 && (s instanceof PrimSig)) {
            PrimSig p = ((PrimSig)s).parent;
            int pb = sig2scope(p);
            if (pb>=0) {sig2scope(s,pb); changed=true;} else {trouble=s;}
@@ -398,6 +572,19 @@ final class ScopeComputer {
         throw new ErrorSyntax(cmd.pos,"You must specify a scope for sig \""+trouble+"\"");
     }
 
+    //-------------------------
+    
+    /**
+     * Regarding the bottom-up approach, we are ony traversing the Upper-bound list and put the tokens in the atom list.
+     */
+    private void makeAtoms(final PrimSig sig){
+        if (sig.builtin) return;
+        List<String> list = sig2PscopeU(sig);
+        if(list != null){
+        	this.atoms.addAll(list);
+        }
+    }
+    
     //===========================================================================================================================//
 
     /** Computes the number of atoms needed for each sig (and add these atoms to this.atoms) */
@@ -406,7 +593,8 @@ final class ScopeComputer {
         int n=sig2scope(sig), lower=0;
         boolean isExact = isExact(sig);
         // First, figure out what atoms *MUST* be in this sig
-        for(PrimSig c:sig.children()) lower = lower + computeLowerBound(c);
+        for(PrimSig c:sig.children()) 
+        	lower = lower + computeLowerBound(c);
         // Bump up the scope if the sum of children exceed the scope for this sig
         if (n<lower) {
            if (isExact)
@@ -423,8 +611,8 @@ final class ScopeComputer {
         //[VM] 
         //int j = 0;
         StringBuilder sb2=new StringBuilder();
-        if(sig2Pscope.containsKey(sig)){
-        	for(String str: sig2Pscope.get(sig)){
+        if(sig2PscopeL.containsKey(sig.label)){
+        	for(String str: sig2PscopeL.get(sig.label)){
         		if (str.startsWith("this/")) 
         			str=str.substring(5);
                 	str=un.make(str);
@@ -435,6 +623,8 @@ final class ScopeComputer {
         	
         	if( rest > lower){
                 String name=sig.label;
+                if (name.startsWith("this/")) 
+        			name=name.substring(5);
         		StringBuilder sb=new StringBuilder();
                 for(int i=0; i<(rest-lower)+1; i++) {
                    String x = sb.delete(0, sb.length()).append(name).append('$').append(i).toString();
@@ -501,12 +691,7 @@ final class ScopeComputer {
             if (s.isSome!=null && scope<1) throw new ErrorSyntax(cmd.pos,
                 "Sig \""+s+"\" has the multiplicity of \"some\", so its scope must 1 or above, and cannot be "+scope);
         	
-//            System.out.println("entry.isPartial->"+entry.isPartial);
             if(entry.isPartial){
-/*            	System.out.println("entry.isPartial1->"+entry.isPartial);
-            	System.out.println("entry.isPartial1->"+entry.pFields.size());
-            	System.out.println("entry.isPartial1->"+entry.sig.label);
-*/
             	if(entry.pFields.size() > 0){
             		List<List<String>> list = new ArrayList<List<String>>();
             		for(List<Expr> pair: entry.pFields ){
@@ -520,12 +705,31 @@ final class ScopeComputer {
             		}
             		field2Pscope(s,list);
             	}else{
-            	List<String> list = new ArrayList<String>();
-            	for(ExprVar var: entry.pAtoms)
-            			list.add(var.label);
-            	sig2Pscope(s,list);
-            	sig2scope(s, list.size());
-            	}
+	            	List<String> list = new ArrayList<String>();
+	            	for(Expr var: entry.pAtoms)
+	            		if(var instanceof ExprVar)
+	            			list.add(((ExprVar)var).label+"%");
+	            		else if(var instanceof ExprConstant )
+	            			list.add(String.valueOf(((ExprConstant)var).num));
+	            	if(exact){
+	            		//Upper-bound and lower-bound are the same.
+		            	sig2PscopeU(s,list);
+		            	sig2PscopeL(s,list);
+	            	}else if(lower){
+		            	sig2PscopeL(s,list);
+		            	//If the default overall number is more that the lower bound, more atoms will be added in the sig2PscopeU
+		            	//Otherwise, upper-bound and lower-bound will be the same. 
+		            	sig2PscopeU(s,list);
+	            	}else if(upper){
+	            		//Upper-bound is set to atoms, but lower-bound is empty set. 
+		            	sig2PscopeU(s,list);
+		            	sig2PscopeL(s,new ArrayList<String>());
+
+	            	}
+	            	//sig2scope stores the upper-bound for back-ward compatibility. In case of other use case, 
+	            	//other methods can be called to read the size from maps directly. 
+	            	sig2scope(s, list.size());
+	            }
             
             }else{
             	sig2scope(s, scope);
@@ -538,16 +742,32 @@ final class ScopeComputer {
         }
         //[VM] if in "value = a + b + c", the value should not be "one" or ...
         // Force "one" sigs to be exactly one, and "lone" to be at most one
-        for(Sig s:sigs) if (s instanceof PrimSig) {
-            if (s.isOne!=null) { makeExact(cmd.pos, s); sig2scope(s,1); } else if (s.isLone!=null && sig2scope(s)!=0) sig2scope(s,1);
+        for(Sig s:sigs) 
+        	if (s instanceof PrimSig) {
+            if (s.isOne!=null) { 
+            	makeExact(cmd.pos, s); 
+            	sig2scope(s,1); 
+            	} else if (s.isLone!=null && sig2scope(s)!=0) 
+            		sig2scope(s,1);
         }
+
+        
+        //Generate all atoms for concrete sigs.
+        derive_overall_scope_bound(sigs);
+
+        //[VM] Derive scopes for abstract sigs, The super-sigs should be only abstract.
+        // Complaint about the concrete super-sig. super-sig should be abstract sig.
+        check_abstract_hierchy(sigs);
+        derive_abstract_scope_rule1(sigs);
+
         // Derive the implicit scopes
-        while(true) {
+        /*while(true) {
             if (derive_abstract_scope(sigs))    { do {} while(derive_abstract_scope(sigs));     continue; }
             if (derive_overall_scope(sigs))     { do {} while(derive_overall_scope(sigs));      continue; }
+            //[VM]We do not evaluating in top-down approach yet.
             if (derive_scope_from_parent(sigs)) { do {} while(derive_scope_from_parent(sigs));  continue; }
             break;
-        }
+        }*/
         // Set the initial scope on "int" and "Int" and "seq"
         int maxseq=cmd.maxseq, bitwidth=cmd.bitwidth;
         if (bitwidth<0) { bitwidth = (shouldUseInts ? 4 : 0); } 
@@ -559,9 +779,17 @@ final class ScopeComputer {
         }
         setMaxSeq(cmd.pos, maxseq);
         // Generate the atoms and the universe
-        for(Sig s:sigs) if (s.isTopLevel()) computeLowerBound((PrimSig)s);
+        for(Sig s:sigs) 
+        	if (s.isTopLevel())
+        		//[VM] To make and top-down apprach
+        		//computeLowerBound((PrimSig)s);
+        		makeAtoms((PrimSig)s);
         int max = max(), min = min();
-        if (max >= min) for(int i=min; i<=max; i++) atoms.add(""+i);
+        if (max >= min) 
+        	for(int i=min; i<=max; i++) 
+        		atoms.add(""+i);
+        //[VM]
+       // atoms.add(""+8);
     }
 
     /** Whether or not Int appears in the relation types found in these sigs */
@@ -606,7 +834,7 @@ final class ScopeComputer {
      * <p> Please see ScopeComputer.java for the exact rules for deriving the missing scopes.
      */
     static Pair<A4Solution,ScopeComputer> compute (A4Reporter rep, A4Options opt, Iterable<Sig> sigs, Command cmd) throws Err {
-        ScopeComputer sc = new ScopeComputer(rep, sigs, cmd);
+    	ScopeComputer sc = new ScopeComputer(rep, sigs, cmd);
         Set<String> set = cmd.getAllStringConstants(sigs);
         if (sc.maxstring>=0 && set.size()>sc.maxstring) rep.scope("Sig String expanded to contain all "+set.size()+" String constant(s) referenced by this command.\n");
         for(int i=0; set.size()<sc.maxstring; i++) set.add("\"String" + i + "\"");

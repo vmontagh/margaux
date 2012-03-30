@@ -1001,9 +1001,7 @@ public final class CompModule extends Browsable implements Module {
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		//System.out.println("names->"+names);
 		for(CommandScope cs: commandScopes){
-			//System.out.println(cs.pFields);
 			List<Sig> parent = new ArrayList<Sig>();
 			parent.add(cs.sig);
 			for(ExprVar atom: cs.pAtoms){
@@ -1011,7 +1009,6 @@ public final class CompModule extends Browsable implements Module {
 				atoms.put(atom.label, sig);
 				//if the atom is in the appended name list, so it will be added to the sig list and treated as sig
 				for(ExprVar acName:names){
-					//System.out.println("acName->"+acName+"atom.label>"+atom.label +" ="+acName.label.equals(atom.label));
 					if(acName.label.equals(atom.label)){
 						this.sigs.put(sig.label, sig);
 					}
@@ -1166,13 +1163,6 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Add a FUN or PRED declaration. */
 	void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
-		/*System.out.println(	"p="+
-							",isPrivate="+isPrivate+
-							",n="+n+
-							",f="+f+
-							",decls="+decls+
-							",t="+t+
-						",v="+v);*/
 		if (decls==null) decls=new ArrayList<Decl>(); else decls=new ArrayList<Decl>(decls);
 		if (f!=null) decls.add(0, new Decl(null, null, null, Util.asList(ExprVar.make(f.span(), "this")), f));
 		for(Decl d:decls) {
