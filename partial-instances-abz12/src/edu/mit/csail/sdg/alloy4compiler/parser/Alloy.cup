@@ -883,7 +883,7 @@ TypescopeB ::= TypeNumber:a SEQ:b  {:
 :};
 
 DeclsBb	::=	TypescopeB:b			{: RESULT=b;	:};
-DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1);  :};
+DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), false, a.num, a.num, 1);  :};
 DeclsBb ::= TypeNumber:a Name:b  {:
    nod(b);
    RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
