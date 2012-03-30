@@ -68,6 +68,30 @@ final class BoundsComputer {
 	/** Stores the lowerbound for each sig. */
 	private final Map<Sig,TupleSet> lb = new LinkedHashMap<Sig,TupleSet>();
 
+	//-------------------
+	/**
+	 * Compute thr lower-bound from bottom-up and by the atoms computed in the ScopeComputer.
+	 */
+	private TupleSet computeLowerBound_BU(final PrimSig sig) throws Err {
+		if(sc == null )
+			return null;
+
+		TupleSet lower = factory.noneOf(1);
+		List<String> list = sc.sig2PscopeL(sig);
+		for(String atom:list){
+			lower.add(factory.tuple(atom));
+		}
+		
+		for(PrimSig c:sig.children())
+			computeLowerBound_BU(c);
+
+		lb.put(sig, lower);
+		
+		return lower;
+	}
+
+	
+	
 	//==============================================================================================================//
 
 	/** Computes the lowerbound from bottom-up; it will also set a suitable initial value for each sig's upperbound.
@@ -76,10 +100,12 @@ final class BoundsComputer {
 	private TupleSet computeLowerBound(List<Tuple> atoms, final PrimSig sig) throws Err {
 		int n = sc.sig2scope(sig);
 		TupleSet lower = factory.noneOf(1);
-		for(PrimSig c:sig.children()) lower.addAll(computeLowerBound(atoms, c));
+		for(PrimSig c:sig.children()) 
+			lower.addAll(computeLowerBound(atoms, c));
 		TupleSet upper = lower.clone();
 		boolean isExact = sc.isExact(sig);
 		boolean hasLower = sc.hasLower(sig);
+
 		if (hasLower) 
 			for(n=n-upper.size(); n>0; n--) {
 				Tuple atom = atoms.remove(atoms.size()-1);
@@ -101,12 +127,34 @@ final class BoundsComputer {
 					//if (hasLower) lower.add(atom);
 					upper.add(atom);
 				}
-		//[VM]
 		lb.put(sig, lower);
 		ub.put(sig, upper);
+		
 		return lower;
 	}
 
+	//-------------------
+	/**
+	 * Compute thr upper-bound from bottom-up and by the atoms computed in the ScopeComputer.
+	 */
+	private TupleSet computeUpperBound_BU(final PrimSig sig) throws Err {
+		if(sc == null )
+			return null;
+
+		TupleSet upper = factory.noneOf(1);
+		List<String> list = sc.sig2PscopeU(sig);
+		for(String atom:list){
+			upper.add(factory.tuple(atom));
+		}
+		
+		for(PrimSig c:sig.children())
+			computeUpperBound_BU(c);
+		
+		ub.put(sig, upper);
+		
+		return upper;
+	}
+	
 	//==============================================================================================================//
 
 	/** Computes the upperbound from top-down, then allocate a relation for it.
@@ -116,11 +164,16 @@ final class BoundsComputer {
 		// Sig's upperbound is fully computed. We recursively compute the upperbound for children...
 		TupleSet x = ub.get(sig).clone();
 		// We remove atoms that MUST be in a subsig
-		for(PrimSig c: sig.children()) x.removeAll(lb.get(c));
+		for(PrimSig c: sig.children()) 
+			x.removeAll(lb.get(c));
 		// So now X is the set of atoms that MIGHT be in this sig, but MIGHT NOT be in any particular subsig.
 		// For each subsig that may need more atom, we say it could potentionally get any of the atom from X.
 		for(PrimSig c: sig.children()) {
-			if (sc.sig2scope(c) > lb.get(c).size()) ub.get(c).addAll(x);
+				if (sc.sig2scope(c) > lb.get(c).size()) {
+					ub.get(c).addAll(x);
+				}
+			
+			
 			computeUpperBound(c);
 		}
 	}
@@ -253,13 +306,16 @@ final class BoundsComputer {
 		final Universe universe = factory.universe();
 		final int atomN = universe.size();
 		final List<Tuple> atoms = new ArrayList<Tuple>(atomN);
-		for(int i=atomN-1; i>=0; i--) atoms.add(factory.tuple(universe.atom(i)));
+		for(int i=atomN-1; i>=0; i--) 
+			atoms.add(factory.tuple(universe.atom(i)));
 		for(Sig s:sigs) 
 			if (!s.builtin && s.isTopLevel()) 
-				computeLowerBound(atoms, (PrimSig)s);
+				//computeLowerBound(atoms, (PrimSig)s);
+				computeLowerBound_BU((PrimSig)s);
 		for(Sig s:sigs) 
 			if (!s.builtin && s.isTopLevel()) 
-				computeUpperBound((PrimSig)s);
+				//computeUpperBound((PrimSig)s);
+				computeUpperBound_BU((PrimSig)s);
 		// Bound the sigs
 		for(Sig s:sigs) 
 			if (!s.builtin && s.isTopLevel()) 
