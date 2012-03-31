@@ -13,10 +13,10 @@
 */
 
 /* A product can be configured with some number of features;
-	e.g., feature1, feature2, and so on. In this model, each feature
-	appears once in a product configuration, but we could specify
-	a different multiplicity. For example, if we use "lone" instead of
-	"one", then the feature would be optional. */
+	e.g., feature1, feature2, and so on. We can specify
+	a different multiplicity for each feature. For example, if we
+	use "lone" instead of "one", then the feature would be
+	optional. */
 sig Product {
 	feature1: one F1,
 	feature2: one F2,
