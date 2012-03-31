@@ -24,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import kodkod.ast.BinaryExpression;
 import kodkod.ast.Decls;
@@ -70,10 +71,12 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprQt;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Func;
+import edu.mit.csail.sdg.alloy4compiler.ast.ObjDecl;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 
@@ -134,6 +137,24 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.a2k = null;
         this.s2k = null;
         BoundsComputer.compute(rep, frame, pair.b, sigs);
+        
+        // [s26stewa] This may be deemed as a bit of a hack, but, with my limited understanding of this code base,
+        // this appeared to be a reasonable place to translate the objective declarations associated with a particular
+        // command into a set of IntExpression objects that can be later passed to Kodkod, which in turn passes
+        // control over to Moolloy for solving.
+        if (cmd.objectives != null) {
+	        cmd.moolloyObjectives = new TreeSet<Objective>();
+	        for (ObjDecl od: cmd.objectives.decls) {
+	        	IntExpression e = cint(od.e);
+	        	Objective moolloy;
+	        	if (od.maximize)
+	        		moolloy = Objective.newMaxObjective("maximize[" + od.e.toString() + "]", e);
+	        	else
+	        		moolloy = Objective.newMinObjective("minimize[" + od.e.toString() + "]", e);
+	        	cmd.moolloyObjectives.add(moolloy);
+	        }
+        }
+
     }
 
     /** Construct a translator based on a already-fully-constructed association map.

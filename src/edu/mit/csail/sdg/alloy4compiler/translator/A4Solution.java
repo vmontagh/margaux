@@ -90,6 +90,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
@@ -967,7 +968,7 @@ public final class A4Solution {
         if (solver.options().solver()==SATFactory.ZChaffMincost || !solver.options().solver().incremental()) {
            if (sol==null) sol = solver.solve(fgoal, bounds);
         } else {
-           kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
+           kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds, cmd.moolloyObjectives));
            if (sol==null) sol = kEnumerator.next();
         }
         if (!solved[0]) rep.solve(0, 0, 0);
