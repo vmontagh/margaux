@@ -78,6 +78,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Func;
 import edu.mit.csail.sdg.alloy4compiler.ast.Module;
+import edu.mit.csail.sdg.alloy4compiler.ast.ObjBlock;
+import edu.mit.csail.sdg.alloy4compiler.ast.ObjDecl;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
@@ -85,6 +87,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Attr.AttrType;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.SubsetSig;
+
 
 /** Mutable; this class represents an Alloy module; equals() uses object identity. */
 
@@ -167,6 +170,9 @@ public final class CompModule extends Browsable implements Module {
 	/**[VM] Each Bounds name is mapped to its corresponding BoundsAST. */
 	private final Map<String,Bounds> bounds = new LinkedHashMap<String,Bounds>();   
 
+	/**[s26stewa] Each objective block name has a set of objective declarations. */
+	private final Map<String,ArrayList<ObjDecl>> objectives = new LinkedHashMap<String,ArrayList<ObjDecl>>();
+	
 	/** The list of params in this module whose scope shall be deemed "exact" */
 	private final List<String> exactParams = new ArrayList<String>();
 
@@ -996,6 +1002,15 @@ public final class CompModule extends Browsable implements Module {
 		sigs.put(Sig.GHOST.label, Sig.GHOST);
 	}
 
+	// Add objectives to this modules map/list of objective blocks
+	public void addObjectives(ObjBlock ob) {
+		// This maps the name of the block (ObjBlock) to its declarations (ObjDecls)
+		this.objectives.put(ob.name, ob.decls);
+	}
+	// Returns an ObjBlock AST node by name (if it exists, otherwise null)
+	public ObjBlock getObjectiveBlock(String name) {
+		return new ObjBlock(name, this.objectives.get(name));
+	}
 
 	
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
@@ -1254,6 +1269,41 @@ public final class CompModule extends Browsable implements Module {
 		return errors;
 	}
 
+	/**
+	 * [s26stewa] With this method, an objective declaration will be made to
+	 * point to a typechecked Expr rather than an untypechecked Expr.
+	 * 
+	 * Note: these comments are "beta" (i.e., based on my limited understanding
+	 * of this code base.
+	 * 
+	 * @param res The CompModule object (represents a parsed Alloy module)
+	 * @param rep
+	 * @param errors
+	 * @param warns
+	 * @param od
+	 * @return
+	 * @throws Err
+	 */
+	private JoinableList<Err> resolveObjective(CompModule res, A4Reporter rep,
+			JoinableList<Err> errors, List<ErrorWarning> warns, ObjDecl od) throws Err {
+		
+		Context cx = new Context(this, warns); // type-checking context
+
+		// We expect an int expression to appear in an objective declaration
+		// If the Expr is not an int expression, then it will have an error
+		//Expr expr = cx.check(od.e).resolve_as_int(warns);
+		Expr expr = cx.check(od.e).resolve_as_int(warns);
+		if (expr.errors.isEmpty()) {
+			od.e = expr; // set the ObjDecl's expression to the typechecked one
+			rep.typecheck("Expr [" + od.e.toString() + "]: " + expr.type()
+					+ "\n");
+		} else
+			errors = errors.make(expr.errors);
+
+		return errors;
+	}
+
+	
 	/** Return an unmodifiable list of all functions in this module. */
 	public SafeList<Func> getAllFunc() {
 		SafeList<Func> ans = new SafeList<Func>();
@@ -1354,30 +1404,56 @@ public final class CompModule extends Browsable implements Module {
 	//============================================================================================================================//
 
 	/** Add a COMMAND declaration. */
-	void addCommand(boolean followUp, Pos p, String n, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label) throws Err {
-		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
-		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
-		status=3;
-		if (n.length()==0) throw new ErrorSyntax(p, "Predicate/assertion name cannot be empty.");
-		if (n.indexOf('@')>=0) throw new ErrorSyntax(p, "Predicate/assertion name cannot contain \'@\'");
-		String labelName = (label==null || label.label.length()==0) ? n : label.label;
-		Command parent = followUp ? commands.get(commands.size()-1) : null;
-		Command newcommand = new Command(p, labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent);
-		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
+	void addCommand(boolean followUp, Pos p, String n, boolean c, int o, int b,
+			int seq, int exp, List<CommandScope> s, ExprVar label, ObjBlock ob)
+			throws Err {
+		if (followUp && !Version.experimental)
+			throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
+		if (label != null)
+			p = Pos.UNKNOWN.merge(p).merge(label.pos);
+		status = 3;
+		if (n.length() == 0)
+			throw new ErrorSyntax(p,
+					"Predicate/assertion name cannot be empty.");
+		if (n.indexOf('@') >= 0)
+			throw new ErrorSyntax(p,
+					"Predicate/assertion name cannot contain \'@\'");
+		String labelName = (label == null || label.label.length() == 0) ? n
+				: label.label;
+		Command parent = followUp ? commands.get(commands.size() - 1) : null;
+		Command newcommand = new Command(p, labelName, c, o, b, seq, exp, s,
+				null, ExprVar.make(null, n), parent, ob);
+		if (parent != null)
+			commands.set(commands.size() - 1, newcommand);
+		else
+			commands.add(newcommand);
 	}
 
 	/** Add a COMMAND declaration. */
-	void addCommand(boolean followUp, Pos p, Expr e, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label) throws Err {
-		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
-		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
-		status=3;
+	void addCommand(boolean followUp, Pos p, Expr e, boolean c, int o, int b,
+			int seq, int exp, List<CommandScope> s, ExprVar label, ObjBlock ob)
+			throws Err {
+		if (followUp && !Version.experimental)
+			throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
+		if (label != null)
+			p = Pos.UNKNOWN.merge(p).merge(label.pos);
+		status = 3;
 		String n;
-		if (c) n=addAssertion(p,"check$"+(1+commands.size()),e);
-		else addFunc(e.span().merge(p), Pos.UNKNOWN, n="run$"+(1+commands.size()), null, new ArrayList<Decl>(), null, e);
-		String labelName = (label==null || label.label.length()==0) ? n : label.label;
-		Command parent = followUp ? commands.get(commands.size()-1) : null;
-		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent);
-		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
+		if (c)
+			n = addAssertion(p, "check$" + (1 + commands.size()), e);
+		else
+			addFunc(e.span().merge(p), Pos.UNKNOWN,
+					n = "run$" + (1 + commands.size()), null,
+					new ArrayList<Decl>(), null, e);
+		String labelName = (label == null || label.label.length() == 0) ? n
+				: label.label;
+		Command parent = followUp ? commands.get(commands.size() - 1) : null;
+		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b,
+				seq, exp, s, null, ExprVar.make(null, n), parent, ob);
+		if (parent != null)
+			commands.set(commands.size() - 1, newcommand);
+		else
+			commands.add(newcommand);
 	}
 
 	//It looks into the relations of all sigs
@@ -1432,7 +1508,7 @@ public final class CompModule extends Browsable implements Module {
 			else
 				sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
 		}
-		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent);
+		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent, cmd.objectives);
 	}
 
 	/** Each command now points to a typechecked Expr. */
@@ -1571,10 +1647,19 @@ public final class CompModule extends Browsable implements Module {
 	/** This method resolves the entire world; NOTE: if it throws an exception, it may leave the world in an inconsistent state! */
 	static CompModule resolveAll(final A4Reporter rep, final CompModule root) throws Err {
 		final List<ErrorWarning> warns = new ArrayList<ErrorWarning>();
-		for(CompModule m: root.getAllReachableModules()) root.allModules.add(m);
+		
+		// Add all reachable modules to root's list of all modules
+		for(CompModule m: root.getAllReachableModules())
+			root.allModules.add(m);
+
 		resolveParams(rep, root.allModules);
 		resolveModules(rep, root.allModules);
-		for(CompModule m: root.allModules) for(Sig s: m.sigs.values()) root.sig2module.put(s, m);
+		
+		// Map each sig to the CompModule it belongs to
+		for(CompModule m: root.allModules)
+			for(Sig s: m.sigs.values())
+				root.sig2module.put(s, m);
+		
 		// Resolves SigAST -> Sig, and topologically sort the sigs into the "sorted" array
 		root.new2old.put(UNIV,UNIV);
 		root.new2old.put(SIGINT,SIGINT);
@@ -1582,34 +1667,74 @@ public final class CompModule extends Browsable implements Module {
 		root.new2old.put(STRING,STRING);
 		root.new2old.put(NONE,NONE);
 		HashSet<Object> topo = new HashSet<Object>();
-		for(CompModule m: root.allModules) for(Sig s: m.sigs.values()) resolveSig(root, topo, s);
+		for(CompModule m: root.allModules)
+			for(Sig s: m.sigs.values())
+				resolveSig(root, topo, s);
+		
 		// Add the non-defined fields to the sigs in topologically sorted order (since fields in subsigs are allowed to refer to parent's fields)
-		for(Sig oldS: root.new2old.keySet()) resolveFieldDecl(root, rep, oldS, warns, false);
-		// Typecheck the function declarations
+		for(Sig oldS: root.new2old.keySet())
+			resolveFieldDecl(root, rep, oldS, warns, false);
+		
+		// Joinable list of errors (used for when type checking)
 		JoinableList<Err> errors = new JoinableList<Err>();
-		for(CompModule x: root.allModules) errors = x.resolveFuncDecls(rep, errors, warns);
-		if (!errors.isEmpty()) throw errors.pick();
+
+		// [s26stewa] Typecheck the objective declarations (ObjDecl), which have
+		// expressions (Expr) that need to be type checked
+		for (CompModule x : root.allModules) {
+			for (ArrayList<ObjDecl> objdecl: x.objectives.values()) {
+				for (ObjDecl od: objdecl) {
+					errors = x.resolveObjective(root, rep, errors, warns, od);
+				}
+			}
+		}
+		
+		// Typecheck the function declarations
+		for(CompModule x: root.allModules)
+			errors = x.resolveFuncDecls(rep, errors, warns);
+		if (!errors.isEmpty())
+			throw errors.pick();
+		
 		// Typecheck the defined fields
-		for(Sig oldS: root.new2old.keySet()) resolveFieldDecl(root, rep, oldS, warns, true);
+		for(Sig oldS: root.new2old.keySet())
+			resolveFieldDecl(root, rep, oldS, warns, true);
+		
 		if (Version.experimental && root.seenDollar) resolveMeta(root);
+		
 		// Reject name clash
 		rejectNameClash(root.allModules);
-		// Typecheck the function bodies, assertions, and facts (which can refer to function declarations)
-		for(CompModule x: root.allModules) {
+		
+		// Typecheck the function bodies, assertions, and facts (which can refer
+		// to function declarations)
+		for (CompModule x : root.allModules) {
 			errors = x.resolveFuncBody(rep, errors, warns);
 			errors = x.resolveAssertions(rep, errors, warns);
 			errors = x.resolveFacts(root, rep, errors, warns);
-			// also, we can collect up all the exact sigs and add them to the root module's list of exact sigs
-			for(String n: x.exactParams) { Sig sig = x.params.get(n); if (sig!=null) root.exactSigs.add(sig); }
+			// also, we can collect up all the exact sigs and add them to the
+			// root module's list of exact sigs ("exact" refers to scope)
+			for (String n : x.exactParams) {
+				Sig sig = x.params.get(n);
+				if (sig != null)
+					root.exactSigs.add(sig);
+			}
 		}
-		if (!errors.isEmpty()) throw errors.pick();
+		if (!errors.isEmpty())
+			throw errors.pick();
+		
 		// Typecheck the run/check commands (which can refer to function bodies and assertions)
 		root.resolveCommands(root.getAllReachableFacts());
-		if (!errors.isEmpty()) throw errors.pick();
-		for(ErrorWarning w:warns) rep.warning(w);
-		for(Sig s: root.exactSigs) rep.debug("Forced to be exact: "+s+"\n");
+		
+		if (!errors.isEmpty())
+			throw errors.pick();
+		
+		for(ErrorWarning w:warns)
+			rep.warning(w);
+		
+		for(Sig s: root.exactSigs)
+			rep.debug("Forced to be exact: "+s+"\n");
+		
 		return root;
 	}
+
 
 	//============================================================================================================================//
 
