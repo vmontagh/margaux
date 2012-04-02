@@ -193,6 +193,7 @@ import java_cup.runtime.*;
 "set"                 { return alloy_sym(yytext(), CompSym.SET         );}
 "sig"                 { return alloy_sym(yytext(), CompSym.SIG         );}
 "some"                { return alloy_sym(yytext(), CompSym.SOME        );}
+"sparse"              { return alloy_sym(yytext(), CompSym.SPARSE      );}
 "String"              { return alloy_sym(yytext(), CompSym.STRING      );}
 "sum"                 { return alloy_sym(yytext(), CompSym.SUM         );}
 "this"                { return alloy_sym(yytext(), CompSym.THIS        );}

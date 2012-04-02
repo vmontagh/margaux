@@ -35,6 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+
 import kodkod.ast.BinaryExpression;
 import kodkod.ast.BinaryFormula;
 import kodkod.ast.Decl;
@@ -153,6 +155,10 @@ public final class A4Solution {
     /** The Kodkod Solver object. */
     private final Solver solver;
 
+    /** The default bitwidth to set the kodkod bidwidth in case of having out-of-bound numbers*/
+    final int exceedBitWidth = 31;
+
+    
     //====== mutable fields (immutable after solve() has been called) ===================================//
 
     /** True iff the problem is solved. */
@@ -199,7 +205,12 @@ public final class A4Solution {
 
     /** The map from each Kodkod Variable to an Alloy Type and Alloy Pos. */
     private Map<Variable,Pair<Type,Pos>> decl2type;
-
+    
+    /** The flag would be on if the integers in the inst block exceed the bitwidth range*/
+    boolean exceededInt = false;
+    
+    List<Integer> exceededInts = new ArrayList<Integer>();
+    
     //===================================================================================================//
 
     /** Construct a blank A4Solution containing just UNIV, SIGINT, SEQIDX, STRING, and NONE as its only known sigs.
@@ -241,16 +252,31 @@ public final class A4Solution {
         final TupleSet next = factory.noneOf(2);
 
         int min=min(), max=max();
-        if (max >= min) for(int i=min; i<=max; i++) { // Safe since we know 1 <= bitwidth <= 30
-           Tuple ii = factory.tuple(""+i);
-           TupleSet is = factory.range(ii, ii);
-           bounds.boundExactly(i, is);
-           sigintBounds.add(ii);
-           if (i>=0 && i<maxseq) seqidxBounds.add(ii);
-           if (i+1<=max) next.add(factory.tuple(""+i, ""+(i+1)));
-           if (i==min) bounds.boundExactly(KK_MIN,  is);
-           if (i==max) bounds.boundExactly(KK_MAX,  is);
-           if (i==0)   bounds.boundExactly(KK_ZERO, is);
+        
+        if (max >= min){
+        	ConcurrentSkipListSet<Integer> ints = new ConcurrentSkipListSet<Integer>();
+        	for(String a: atoms){
+        		try{
+        			ints.add(Integer.valueOf(a));
+        		}catch(NumberFormatException e){}
+        	}
+        	if(ints.last() > max() || ints.first() < min){
+        		exceededInt = true;
+        		exceededInts.addAll(ints.subSet(ints.first(), min));
+        		exceededInts.addAll(ints.subSet(max+1, ints.last()+1 ));
+        	}
+
+        	for(Integer i: ints) { // Safe since we know 1 <= bitwidth <= 30
+        		Tuple ii = factory.tuple(""+i);
+        		TupleSet is = factory.range(ii, ii);
+        		bounds.boundExactly(i, is);
+        		sigintBounds.add(ii);
+        		if (i>=0 && i<maxseq) seqidxBounds.add(ii);
+        		if (i < ints.last()) next.add(factory.tuple(""+i, ""+(ints.ceiling(i+1))));
+        		if (i==ints.first()) bounds.boundExactly(KK_MIN,  is);
+        		if (i==ints.last()) bounds.boundExactly(KK_MAX,  is);
+        		if (i==0)   bounds.boundExactly(KK_ZERO, is);
+        	}
         }
         this.sigintBounds = sigintBounds.unmodifiableView();
         this.seqidxBounds = seqidxBounds.unmodifiableView();
@@ -294,7 +320,13 @@ public final class A4Solution {
         }
         solver.options().setSymmetryBreaking(sym);
         solver.options().setSkolemDepth(opt.skolemDepth);
-        solver.options().setBitwidth(bitwidth > 0 ? bitwidth : (int) Math.ceil(Math.log(atoms.size())) + 1);
+        //[VM] 
+        if(exceededInt){
+            solver.options().setBitwidth(exceedBitWidth);
+
+        }else{
+            solver.options().setBitwidth(bitwidth > 0 ? bitwidth : (int) Math.ceil(Math.log(atoms.size())) + 1);
+        }
         solver.options().setIntEncoding(Options.IntEncoding.TWOSCOMPLEMENT);
      }
 
@@ -393,7 +425,14 @@ public final class A4Solution {
        else
           return TranslateKodkodToJava.convert(Formula.and(formulas), bitwidth, kAtoms, bounds.unmodifiableView(), null);
     }
+    
+    public List<Integer> getExceededInts(){
+    	return this.exceededInts;
+    }
 
+    public boolean isExceededInt(){
+    	return this.exceededInt;
+    }
     //===================================================================================================//
 
     /** Returns the Kodkod TupleFactory object. */
@@ -408,15 +447,18 @@ public final class A4Solution {
      * @param upper - the upperbound; cannot be null; must contain everything in lowerbound
      */
     Relation addRel(String label, TupleSet lower, TupleSet upper) throws ErrorFatal {
-       if (solved) throw new ErrorFatal("Cannot add a Kodkod relation since solve() has completed.");
+      
+    	if (solved) throw new ErrorFatal("Cannot add a Kodkod relation since solve() has completed.");
        Relation rel = Relation.nary(label, upper.arity());
        if (lower == upper) {
           bounds.boundExactly(rel, upper);
-       } else if (lower == null) {
+       } else if (lower == null || lower.size() == 0) {
           bounds.bound(rel, upper);
+
        } else {
           if (lower.arity() != upper.arity()) throw new ErrorFatal("Relation "+label+" must have same arity for lowerbound and upperbound.");
           bounds.bound(rel, lower, upper);
+
        }
        return rel;
     }
@@ -883,6 +925,12 @@ public final class A4Solution {
            for(int max=max(), i=min(); i<=max; i++) {
               Tuple it = factory.tuple(""+i);
               inst.add(i, factory.range(it, it));
+           }
+           //[VM[ Inclue the extra integers into the visulizer. 
+           for(Integer i: exceededInts){
+               Tuple it = factory.tuple(String.valueOf(i));
+               inst.add(i, factory.range(it, it));
+        	   
            }
            for(Relation r: bounds.relations()) inst.add(r, bounds.lowerBound(r));
            eval = new Evaluator(inst, solver.options());

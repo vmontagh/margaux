@@ -212,6 +212,7 @@ parser code {:
     ch.put(CompSym.SLASH, "/");
     ch.put(CompSym.SOME2, "some");
     ch.put(CompSym.SOME, "some");
+	ch.put(CompSym.SPARSE, "sparse");
     ch.put(CompSym.STAR, "*");
     ch.put(CompSym.STRING, "String");
     ch.put(CompSym.SUM2, "sum");
@@ -334,20 +335,31 @@ action code {:
         if (names!=null) for(ExprVar n:names) if (n!=null && n.label.indexOf('$')>=0) throw new ErrorSyntax(n.pos, "The name cannot contain the '$' symbol.");
     }
     private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c) throws Err {
-        if (n!=null) nod(n);
+       if (n!=null) nod(n);
         int bitwidth=(-1), maxseq=(-1), overall=(-1), expects=(c==null ? -1 : c.num);
+        //The integers inside the inst-block are grouped and added into the int scope.
+        boolean isSparse=(false);
         Pos p = o.pos.merge(n!=null ? n.span() : e.span());
         for(int i=s.size()-1; i>=0; i--) {
-          Sig j=s.get(i).sig;  int k=s.get(i).startingScope;
+          Sig j=s.get(i).sig;  
+          int k=s.get(i).startingScope;
           p=p.merge(j.pos);
           if (j.label.equals("univ")) { overall=k; s.remove(i); continue; }
-          if (j.label.equals("int"))  { if (bitwidth>=0) throw new ErrorSyntax(j.pos, "The bitwidth cannot be specified more than once."); bitwidth=k; s.remove(i); continue; }
+          if (j.label.equals("int"))  { 
+          if (bitwidth>=0) 
+          throw new ErrorSyntax(j.pos, "The bitwidth cannot be specified more than once."); 
+          bitwidth=k; 
+          isSparse = s.get(i).isSparse;
+          s.remove(i); 
+          continue; 
+          }
           if (j.label.equals("seq"))  { if (maxseq>=0) throw new ErrorSyntax(j.pos, "The maximum sequence length cannot be specified more than once."); maxseq=k; s.remove(i); continue; }
+          
         }
         if (n!=null)
-          parser.alloymodule.addCommand(follow, p, n.label, o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x);
+          parser.alloymodule.addCommand(follow, p, n.label, o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse);
         else
-          parser.alloymodule.addCommand(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x);
+          parser.alloymodule.addCommand(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse);
     }
     private Expr t(Pos pos, Pos oldClosing, Expr left, Expr right, Pos close) throws Err {
       if (right instanceof ExprVar) {
@@ -473,6 +485,7 @@ terminal Pos SIGINT;           //  Int
 terminal Pos SLASH;            //  /
 terminal Pos SOME2;            //  some      // The filter enables us to disambiguate
 terminal Pos SOME;             //  some      // The filter enables us to disambiguate
+terminal Pos SPARSE;           //  sparse      // [VM] The sparse interger values inside the inst-block
 terminal Pos STAR;             //  *
 terminal Pos STRING;           //  String
 terminal Pos SUM2;             //  sum       // The filter enables us to disambiguate
@@ -575,6 +588,7 @@ nonterminal	ExprVar						ExprBb;
 nonterminal	ExprConstant					ExprBbN;
 nonterminal List						ExprB;
 nonterminal CommandScope				DeclsBb;
+nonterminal CommandScope				TypescopeB;
 nonterminal List<CommandScope>			DeclsB;
 
 
@@ -859,8 +873,27 @@ ExprB	::= LPAREN ExprB:a RPAREN	{:RESULT = a; :};
 //Typescopes ::= Typescope:a                    {: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 //Typescopes ::= Typescopes:a COMMA Typescope:b {: RESULT=a; a.add(b);     
 
+//[VM] The following three rules are copied to set the Int,int, and seq size in Inst block
+TypescopeB ::= TypeNumber:a SIGINT:b  {: 
+   Pos p = a.pos.merge(b);
+   if (a.endingScope>a.startingScope) throw new ErrorSyntax(p, "Cannot specify a growing scope for \"Int\"");
+   if (a.isExact) throw new ErrorSyntax(p, "The exactly keyword is redundant here since the integer bitwidth must be exact.");
+   RESULT = new CommandScope(p, new PrimSig("int", AttrType.WHERE.make(p)), a.isExact, a.startingScope, a.startingScope, 1);
+:};
 
-DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), true, a.num, a.num, 1);  :};
+//[VM] Supporting the sparse integers.
+TypescopeB ::= TypeNumber:a SPARSE:s SIGINT:b  {: 
+   Pos p = a.pos.merge(b);
+   if (a.endingScope>a.startingScope) throw new ErrorSyntax(p, "Cannot specify a growing scope for \"Int\"");
+   if (a.isExact) throw new ErrorSyntax(p, "The exactly keyword is redundant here since the integer bitwidth must be exact.");
+   //[VM] I have exlpoited the idea of exact here. If the exact=true, it means that the integers are sparse. ( Iknow the meaning is in reverese, but
+   //it made the least effort to change the code.)
+   RESULT = new CommandScope(p, new PrimSig("int", AttrType.WHERE.make(p)), a.isExact, a.startingScope, a.startingScope, 1, true);
+:};
+
+
+DeclsBb	::=	TypescopeB:b			{: RESULT=b;	:};
+DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), false, a.num, a.num, 1);  :};
 DeclsBb ::= TypeNumber:a Name:b  {:
    nod(b);
    RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);

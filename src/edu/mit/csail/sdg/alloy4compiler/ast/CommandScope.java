@@ -60,6 +60,8 @@ public class CommandScope {
 	public final boolean hasLower;
 
 	public final boolean hasUpper;
+	
+	public final boolean isSparse;
 
 
 	/** Construct a new CommandScope object.
@@ -82,6 +84,22 @@ public class CommandScope {
 	 * @throws ErrorSyntax if increment is less than one
 	 */
 	public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment) throws ErrorSyntax {
+		this(pos, sig, isExact, startingScope, endingScope,increment,false);
+	}
+
+	/**
+	 * It is similar the previous constructor, but sets the sparse boolean value to see whether integer values in inst-block should be includided in the
+	 * atoms or not. 
+	 * @param pos
+	 * @param sig
+	 * @param isExact
+	 * @param startingScope
+	 * @param endingScope
+	 * @param increment
+	 * @param isSparse - if true the integer numbers in inst-block are added in the Int set in universe, otherwise only the range is generated. 
+	 * @throws ErrorSyntax
+	 */
+	public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment, boolean isSparse) throws ErrorSyntax {
 		if (pos == null) pos = Pos.UNKNOWN;
 		if (sig == null) throw new NullPointerException();
 		if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
@@ -100,8 +118,9 @@ public class CommandScope {
 		this.pFields = new ArrayList<List<Expr>>();
 		this.hasLower = false;
 		this.hasUpper = false;
+		this.isSparse = isSparse;
 	}
-
+	
 	//[VM]
 	public CommandScope(Pos pos, Sig sig, boolean isExact, 
 			int startingScope, int endingScope, int increment, 
@@ -119,6 +138,7 @@ public class CommandScope {
 		this.hasUpper = hasUpper;
 		this.increment = increment;
 		this.pFields = new ArrayList<List<Expr>>();
+		this.isSparse = false;
 		boolean isRelation = false;
 
 		List<List<Expr>> tmpPField = new ArrayList<List<Expr>>();
@@ -197,6 +217,7 @@ public class CommandScope {
 		this.increment = increment;
 		this.hasUpper = hasUpper;
 		this.pFields = new ArrayList<List<Expr>>();
+		this.isSparse = false;
 
 		this.isPartial = true;
 		for(List<Expr> list: fields){

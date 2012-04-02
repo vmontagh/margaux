@@ -101,7 +101,7 @@ public final class A4SolutionWriter {
 		for(List<PrimSig> ps: type.fold()) {
 			out.print("   <types>");
 			for(PrimSig sig: ps) Util.encodeXMLs(out, " <type ID=\"", map(sig), "\"/>");
-					out.print(" </types>\n");
+			out.print(" </types>\n");
 		}
 		return true;
 	}
@@ -137,9 +137,17 @@ public final class A4SolutionWriter {
 			throw new ErrorFatal("Error evaluating sig " + x.label, ex);
 		}
 		if (x instanceof SubsetSig) for(Sig p:((SubsetSig)x).parents) Util.encodeXMLs(out, "   <type ID=\"", map(p), "\"/>\n");
-				out.print("</sig>\n");
-				for(Field field: x.getFields()) writeField(field);
-						return ts;
+		//[VM] To include the extra integers
+		if(sol!=null && x==Sig.SIGINT && sol.isExceededInt()){
+			for(Integer i : sol.getExceededInts()){
+				out.print("<int value=\""+i+"\"/>");
+			}
+			out.println();
+		}
+			
+		out.print("</sig>\n");
+		for(Field field: x.getFields()) writeField(field);
+		return ts;
 	}
 
 	/** Write the given Field. */
@@ -180,47 +188,47 @@ public final class A4SolutionWriter {
 		for (Sig s:sigs) 
 			if (s instanceof PrimSig && ((PrimSig)s).parent==Sig.UNIV) 
 				toplevels.add((PrimSig)s);
-				out.print("<instance bitwidth=\""); 
-				out.print(bitwidth);
-				out.print("\" maxseq=\""); 
-				out.print(maxseq);
-				out.print("\" command=\""); 
-				Util.encodeXML(out, originalCommand);
-				out.print("\" filename=\""); 
-				Util.encodeXML(out, originalFileName);
-				if (sol==null) 
-					out.print("\" metamodel=\"yes");
-				out.print("\">\n");
-				writesig(Sig.UNIV);
-				for (Sig s:sigs) 
-					if (s instanceof SubsetSig) 
-						writesig(s);
-						if (sol!=null) 
-							for (ExprVar s:sol.getAllSkolems()) { 
-								if (rep!=null) 
-									rep.write(s); 
-								writeSkolem(s); 
-							}
-						int m=0;
-						if (sol!=null && extraSkolems!=null) 
-							for(Func f:extraSkolems) 
-								if (f.count()==0 && f.call().type().hasTuple()) 
-								{
-									String label = f.label;
-									while(label.length()>0 && label.charAt(0)=='$') 
-										label=label.substring(1);
-									label="$"+label;
-									try {
-										if (rep!=null) rep.write(f.call());
-										StringBuilder sb = new StringBuilder();
-										Util.encodeXMLs(sb, "\n<skolem label=\"", label, "\" ID=\"m"+m+"\">\n");
-										if (writeExpr(sb.toString(), f.call())) { out.print("</skolem>\n"); }
-										m++;
-									} catch(Throwable ex) {
-										throw new ErrorFatal("Error evaluating skolem "+label, ex);
-									}
-								}
-						out.print("\n</instance>\n");
+		out.print("<instance bitwidth=\""); 
+		out.print(bitwidth);
+		out.print("\" maxseq=\""); 
+		out.print(maxseq);
+		out.print("\" command=\""); 
+		Util.encodeXML(out, originalCommand);
+		out.print("\" filename=\""); 
+		Util.encodeXML(out, originalFileName);
+		if (sol==null) 
+			out.print("\" metamodel=\"yes");
+		out.print("\">\n");
+		writesig(Sig.UNIV);
+		for (Sig s:sigs) 
+			if (s instanceof SubsetSig) 
+				writesig(s);
+		if (sol!=null) 
+			for (ExprVar s:sol.getAllSkolems()) { 
+				if (rep!=null) 
+					rep.write(s); 
+				writeSkolem(s); 
+			}
+		int m=0;
+		if (sol!=null && extraSkolems!=null) 
+			for(Func f:extraSkolems) 
+				if (f.count()==0 && f.call().type().hasTuple()) 
+				{
+					String label = f.label;
+					while(label.length()>0 && label.charAt(0)=='$') 
+						label=label.substring(1);
+					label="$"+label;
+					try {
+						if (rep!=null) rep.write(f.call());
+						StringBuilder sb = new StringBuilder();
+						Util.encodeXMLs(sb, "\n<skolem label=\"", label, "\" ID=\"m"+m+"\">\n");
+						if (writeExpr(sb.toString(), f.call())) { out.print("</skolem>\n"); }
+						m++;
+					} catch(Throwable ex) {
+						throw new ErrorFatal("Error evaluating skolem "+label, ex);
+					}
+				}
+		out.print("\n</instance>\n");
 	}
 
 	/** If this solution is a satisfiable solution, this method will write it out in XML format. */

@@ -15,6 +15,7 @@
 
 package edu.mit.csail.sdg.alloy4viz;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -228,11 +229,18 @@ public final class StaticInstanceReader {
    /** Parse the file into an AlloyInstance if possible. */
    private StaticInstanceReader(XMLNode root) throws Err {
       XMLNode inst = null;
-      for(XMLNode sub: root) if (sub.is("instance")) { inst=sub; break; }
-      if (inst==null) throw new ErrorSyntax("The XML file must contain an <instance> element.");
+      for(XMLNode sub: root) 
+    	  if (sub.is("instance")) { 
+    		  inst=sub; 
+    		  break; 
+    		  }
+      if (inst==null) 
+    	  throw new ErrorSyntax("The XML file must contain an <instance> element.");
       boolean isMeta = "yes".equals(inst.getAttribute("metamodel"));
       A4Solution sol = A4SolutionReader.read(new ArrayList<Sig>(), root);
-      for (Sig s:sol.getAllReachableSigs()) if (s instanceof PrimSig && ((PrimSig)s).parent==Sig.UNIV) toplevels.add((PrimSig)s);
+      for (Sig s:sol.getAllReachableSigs()) 
+    	  if (s instanceof PrimSig && ((PrimSig)s).parent==Sig.UNIV) 
+    		  toplevels.add((PrimSig)s);
       if (!isMeta) {
          sig2type.put(Sig.UNIV, AlloyType.UNIV);
          sig2type.put(Sig.SIGINT, AlloyType.INT);
@@ -244,6 +252,23 @@ public final class StaticInstanceReader {
             atom2sets.put(at, new LinkedHashSet<AlloySet>());
             string2atom.put(""+i, at);
          }
+         //[VM] retrieve the exceeded integers.
+         for(XMLNode i:inst){
+        	 if(i.getAttribute("label").equals("Int")){
+        		 for(XMLNode y: i){    			   
+        			 try{
+        				 AlloyAtom at = new AlloyAtom(AlloyType.SEQINT , Integer.valueOf(y.getAttribute("value")),
+        						 String.valueOf(Integer.valueOf(y.getAttribute("value"))));
+        		            atom2sets.put(at, new LinkedHashSet<AlloySet>());
+        		            string2atom.put(String.valueOf(Integer.valueOf(y.getAttribute("value"))), at);
+        			 }catch(NumberFormatException e){
+        				 throw new ErrorSyntax("The XML file must containt integer type instead of:"+y.getAttribute("value"));
+        			 }
+        		 }
+        	 }
+         }
+         
+         
          for(Sig s:sol.getAllReachableSigs()) if (!s.builtin && s instanceof PrimSig) sig((PrimSig)s);
          for(Sig s:toplevels)                 if (!s.builtin || s==Sig.STRING)        atoms(sol, (PrimSig)s);
          for(Sig s:sol.getAllReachableSigs()) if (s instanceof SubsetSig)             setOrRel(sol, s.label, s, s.isPrivate!=null, s.isMeta!=null);
@@ -265,14 +290,29 @@ public final class StaticInstanceReader {
                rels.put(rel, Util.asSet(new AlloyTuple(tuple)));
             }
          }
-         if (ins.size()>0) { sig2type.put(null, AlloyType.SET); rels.put(AlloyRelation.IN, ins); }
+         if (ins.size()>0) { 
+        	 sig2type.put(null, AlloyType.SET); 
+        	 rels.put(AlloyRelation.IN, ins); 
+        	 }
          AlloyAtom univAtom = sig2atom.get(Sig.UNIV);
          AlloyAtom intAtom = sig2atom.get(Sig.SIGINT);
          AlloyAtom seqAtom = sig2atom.get(Sig.SEQIDX);
          AlloyAtom strAtom = sig2atom.get(Sig.STRING);
-         for(Set<AlloyTuple> t: rels.values()) for(AlloyTuple at: t) if (at.getAtoms().contains(univAtom)) { univAtom=null; break; }
-         for(Set<AlloyTuple> t: rels.values()) for(AlloyTuple at: t) if (at.getAtoms().contains(intAtom)) { intAtom=null; break; }
-         for(Set<AlloyTuple> t: rels.values()) for(AlloyTuple at: t) if (at.getAtoms().contains(seqAtom)) { seqAtom=null; break; }
+         for(Set<AlloyTuple> t: rels.values()) 
+        	 for(AlloyTuple at: t) 
+        		 if (at.getAtoms().contains(univAtom)) { 
+        			 univAtom=null; 
+        			 break; }
+         for(Set<AlloyTuple> t: rels.values()) 
+        	 for(AlloyTuple at: t) 
+        		 if (at.getAtoms().contains(intAtom)) { 
+        			 intAtom=null; 
+        			 break; }
+         for(Set<AlloyTuple> t: rels.values()) 
+        	 for(AlloyTuple at: t) 
+        		 if (at.getAtoms().contains(seqAtom)) { 
+        			 seqAtom=null; 
+        			 break; }
          for(Set<AlloyTuple> t: rels.values()) for(AlloyTuple at: t) if (at.getAtoms().contains(strAtom)) { strAtom=null; break; }
          if (univAtom!=null) {
             for(Iterator<AlloyTuple> it=exts.iterator(); it.hasNext();) {

@@ -1,204 +1,29 @@
 <alloy builddate="unknown">
 
-<instance bitwidth="0" maxseq="0" command="Run generateBindings for 3 but exactly 1 AugmentedConstraintNetwork, exactly 1 DesignAutomaton, exactly 8 Binding, exactly  partial 8 Value, exactly  partial 3 Variable, exactly  partial 8 domain" filename="">
+<instance bitwidth="2" maxseq="1" command="Run p for 2 int, exactly  partial 2 A, exactly  partial 2 a" filename="">
 
 <sig label="seq/Int" ID="0" parentID="1" builtin="yes">
 </sig>
 
 <sig label="Int" ID="1" parentID="2" builtin="yes">
+<int value="-7"/><int value="67"/>
 </sig>
 
 <sig label="String" ID="3" parentID="2" builtin="yes">
 </sig>
 
-<sig label="this/Value" ID="4" parentID="2" abstract="yes">
-   <atom label="dense%"/>
-   <atom label="sparse%"/>
-   <atom label="list_ds%"/>
-   <atom label="array_ds%"/>
-   <atom label="list_alg%"/>
-   <atom label="array_alg%"/>
-   <atom label="other_alg%"/>
-   <atom label="other_ds%"/>
+<sig label="this/A" ID="4" parentID="2">
+   <atom label="s%"/>
+   <atom label="d%"/>
 </sig>
 
-<sig label="this/Variable" ID="5" parentID="2" abstract="yes">
-   <atom label="Matrix%"/>
-   <atom label="Ds%"/>
-   <atom label="Alg%"/>
-</sig>
-
-<field label="domain" ID="6" parentID="5">
-   <tuple> <atom label="Matrix%"/> <atom label="dense%"/> </tuple>
-   <tuple> <atom label="Matrix%"/> <atom label="sparse%"/> </tuple>
-   <tuple> <atom label="Ds%"/> <atom label="list_ds%"/> </tuple>
-   <tuple> <atom label="Ds%"/> <atom label="array_ds%"/> </tuple>
-   <tuple> <atom label="Ds%"/> <atom label="other_ds%"/> </tuple>
-   <tuple> <atom label="Alg%"/> <atom label="list_alg%"/> </tuple>
-   <tuple> <atom label="Alg%"/> <atom label="array_alg%"/> </tuple>
-   <tuple> <atom label="Alg%"/> <atom label="other_alg%"/> </tuple>
-   <types> <type ID="5"/> <type ID="4"/> </types>
-</field>
-
-<sig label="this/Binding" ID="7" parentID="2">
-   <atom label="Binding$0"/>
-   <atom label="Binding$1"/>
-   <atom label="Binding$2"/>
-   <atom label="Binding$3"/>
-   <atom label="Binding$4"/>
-   <atom label="Binding$5"/>
-   <atom label="Binding$6"/>
-   <atom label="Binding$7"/>
-</sig>
-
-<field label="var" ID="8" parentID="7">
-   <tuple> <atom label="Binding$0"/> <atom label="Alg%"/> </tuple>
-   <tuple> <atom label="Binding$1"/> <atom label="Alg%"/> </tuple>
-   <tuple> <atom label="Binding$2"/> <atom label="Ds%"/> </tuple>
-   <tuple> <atom label="Binding$3"/> <atom label="Matrix%"/> </tuple>
-   <tuple> <atom label="Binding$4"/> <atom label="Alg%"/> </tuple>
-   <tuple> <atom label="Binding$5"/> <atom label="Matrix%"/> </tuple>
-   <tuple> <atom label="Binding$6"/> <atom label="Ds%"/> </tuple>
-   <tuple> <atom label="Binding$7"/> <atom label="Ds%"/> </tuple>
-   <types> <type ID="7"/> <type ID="5"/> </types>
-</field>
-
-<field label="val" ID="9" parentID="7">
-   <tuple> <atom label="Binding$0"/> <atom label="other_alg%"/> </tuple>
-   <tuple> <atom label="Binding$1"/> <atom label="list_alg%"/> </tuple>
-   <tuple> <atom label="Binding$2"/> <atom label="list_ds%"/> </tuple>
-   <tuple> <atom label="Binding$3"/> <atom label="sparse%"/> </tuple>
-   <tuple> <atom label="Binding$4"/> <atom label="array_alg%"/> </tuple>
-   <tuple> <atom label="Binding$5"/> <atom label="dense%"/> </tuple>
-   <tuple> <atom label="Binding$6"/> <atom label="other_ds%"/> </tuple>
-   <tuple> <atom label="Binding$7"/> <atom label="array_ds%"/> </tuple>
-   <types> <type ID="7"/> <type ID="4"/> </types>
-</field>
-
-<sig label="this/TotalAssignment" ID="10" parentID="11" abstract="yes">
-</sig>
-
-<sig label="this/PartialAssignment" ID="12" parentID="11">
-   <atom label="Assignment$1"/>
-   <atom label="Assignment$2"/>
-</sig>
-
-<sig label="this/Assignment" ID="11" parentID="2" abstract="yes">
-</sig>
-
-<field label="bindings" ID="13" parentID="11">
-   <tuple> <atom label="Assignment$1"/> <atom label="Binding$6"/> </tuple>
-   <tuple> <atom label="Assignment$1"/> <atom label="Binding$7"/> </tuple>
-   <tuple> <atom label="Assignment$2"/> <atom label="Binding$4"/> </tuple>
-   <tuple> <atom label="Assignment$2"/> <atom label="Binding$5"/> </tuple>
-   <tuple> <atom label="Assignment$2"/> <atom label="Binding$7"/> </tuple>
-   <types> <type ID="11"/> <type ID="7"/> </types>
-</field>
-
-<sig label="this/Transition" ID="14" parentID="2">
-</sig>
-
-<field label="from" ID="15" parentID="14">
-   <types> <type ID="14"/> <type ID="10"/> </types>
-</field>
-
-<field label="forced" ID="16" parentID="14">
-   <types> <type ID="14"/> <type ID="5"/> </types>
-</field>
-
-<field label="compensating" ID="17" parentID="14">
-   <types> <type ID="14"/> <type ID="5"/> </types>
-</field>
-
-<field label="letter" ID="18" parentID="14">
-   <types> <type ID="14"/> <type ID="12"/> </types>
-</field>
-
-<field label="to" ID="19" parentID="14">
-   <types> <type ID="14"/> <type ID="10"/> </types>
-</field>
-
-<sig label="this/AugmentedConstraintNetwork" ID="20" parentID="2">
-   <atom label="AugmentedConstraintNetwork$0"/>
-</sig>
-
-<sig label="this/DesignAutomaton" ID="21" parentID="2">
-   <atom label="DesignAutomaton$0"/>
-</sig>
-
-<field label="acn" ID="22" parentID="21">
-   <tuple> <atom label="DesignAutomaton$0"/> <atom label="AugmentedConstraintNetwork$0"/> </tuple>
-   <types> <type ID="21"/> <type ID="20"/> </types>
-</field>
-
-<field label="transitions" ID="23" parentID="21">
-   <types> <type ID="21"/> <type ID="14"/> </types>
+<field label="a" ID="5" parentID="4">
+   <tuple> <atom label="s%"/> <atom label="-7"/> </tuple>
+   <tuple> <atom label="d%"/> <atom label="67"/> </tuple>
+   <types> <type ID="4"/> <type ID="1"/> </types>
 </field>
 
 <sig label="univ" ID="2" builtin="yes">
-</sig>
-
-<sig label="this/Solution" ID="24">
-   <type ID="10"/>
-</sig>
-
-<sig label="this/State" ID="25" exact="yes">
-   <type ID="24"/>
-</sig>
-
-<sig label="this/dense" ID="26" one="yes">
-   <atom label="dense%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/sparse" ID="27" one="yes">
-   <atom label="sparse%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/list_ds" ID="28" one="yes">
-   <atom label="list_ds%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/array_ds" ID="29" one="yes">
-   <atom label="array_ds%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/list_alg" ID="30" one="yes">
-   <atom label="list_alg%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/array_alg" ID="31" one="yes">
-   <atom label="array_alg%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/other_alg" ID="32" one="yes">
-   <atom label="other_alg%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/other_ds" ID="33" one="yes">
-   <atom label="other_ds%"/>
-   <type ID="4"/>
-</sig>
-
-<sig label="this/Matrix" ID="34" one="yes">
-   <atom label="Matrix%"/>
-   <type ID="5"/>
-</sig>
-
-<sig label="this/Ds" ID="35" one="yes">
-   <atom label="Ds%"/>
-   <type ID="5"/>
-</sig>
-
-<sig label="this/Alg" ID="36" one="yes">
-   <atom label="Alg%"/>
-   <type ID="5"/>
 </sig>
 
 </instance>

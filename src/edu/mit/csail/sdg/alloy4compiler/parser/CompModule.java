@@ -1001,9 +1001,7 @@ public final class CompModule extends Browsable implements Module {
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		//System.out.println("names->"+names);
 		for(CommandScope cs: commandScopes){
-			//System.out.println(cs.pFields);
 			List<Sig> parent = new ArrayList<Sig>();
 			parent.add(cs.sig);
 			for(ExprVar atom: cs.pAtoms){
@@ -1011,7 +1009,6 @@ public final class CompModule extends Browsable implements Module {
 				atoms.put(atom.label, sig);
 				//if the atom is in the appended name list, so it will be added to the sig list and treated as sig
 				for(ExprVar acName:names){
-					//System.out.println("acName->"+acName+"atom.label>"+atom.label +" ="+acName.label.equals(atom.label));
 					if(acName.label.equals(atom.label)){
 						this.sigs.put(sig.label, sig);
 					}
@@ -1166,13 +1163,6 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Add a FUN or PRED declaration. */
 	void addFunc(Pos p, Pos isPrivate, String n, Expr f, List<Decl> decls, Expr t, Expr v) throws Err {
-		/*System.out.println(	"p="+
-							",isPrivate="+isPrivate+
-							",n="+n+
-							",f="+f+
-							",decls="+decls+
-							",t="+t+
-						",v="+v);*/
 		if (decls==null) decls=new ArrayList<Decl>(); else decls=new ArrayList<Decl>(decls);
 		if (f!=null) decls.add(0, new Decl(null, null, null, Util.asList(ExprVar.make(f.span(), "this")), f));
 		for(Decl d:decls) {
@@ -1364,7 +1354,7 @@ public final class CompModule extends Browsable implements Module {
 	//============================================================================================================================//
 
 	/** Add a COMMAND declaration. */
-	void addCommand(boolean followUp, Pos p, String n, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label) throws Err {
+	void addCommand(boolean followUp, Pos p, String n, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label,boolean isSprse) throws Err {
 		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
 		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
 		status=3;
@@ -1372,12 +1362,12 @@ public final class CompModule extends Browsable implements Module {
 		if (n.indexOf('@')>=0) throw new ErrorSyntax(p, "Predicate/assertion name cannot contain \'@\'");
 		String labelName = (label==null || label.label.length()==0) ? n : label.label;
 		Command parent = followUp ? commands.get(commands.size()-1) : null;
-		Command newcommand = new Command(p, labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent);
+		Command newcommand = new Command(p, labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent,isSprse);
 		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
 	}
 
 	/** Add a COMMAND declaration. */
-	void addCommand(boolean followUp, Pos p, Expr e, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label) throws Err {
+	void addCommand(boolean followUp, Pos p, Expr e, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label, boolean isSparse) throws Err {
 		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
 		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
 		status=3;
@@ -1386,7 +1376,7 @@ public final class CompModule extends Browsable implements Module {
 		else addFunc(e.span().merge(p), Pos.UNKNOWN, n="run$"+(1+commands.size()), null, new ArrayList<Decl>(), null, e);
 		String labelName = (label==null || label.label.length()==0) ? n : label.label;
 		Command parent = followUp ? commands.get(commands.size()-1) : null;
-		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent);
+		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent, isSparse);
 		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
 	}
 
@@ -1418,15 +1408,21 @@ public final class CompModule extends Browsable implements Module {
 			e = ((Expr)(m.get(0))).not();
 		} else {
 			List<Object> m = getRawQS(4, cname); // We prefer fun/pred in the topmost module
-			if (m.size()==0 && cname.indexOf('/')<0) m=getRawNQS(this, 4, cname);
-			if (m.size()>1) unique(cmd.pos, cname, m);
-			if (m.size()<1) throw new ErrorSyntax(cmd.pos, "The predicate/function \""+cname+"\" cannot be found.");
+			if (m.size()==0 && cname.indexOf('/')<0) 
+				m=getRawNQS(this, 4, cname);
+			if (m.size()>1) 
+				unique(cmd.pos, cname, m);
+			if (m.size()<1) 
+				throw new ErrorSyntax(cmd.pos, "The predicate/function \""+cname+"\" cannot be found.");
 			Func f = (Func) (m.get(0));
 			e = f.getBody();
-			if (!f.isPred) e = e.in(f.returnDecl);
-			if (f.decls.size()>0) e = ExprQt.Op.SOME.make(null, null, f.decls, e);
+			if (!f.isPred) 
+				e = e.in(f.returnDecl);
+			if (f.decls.size()>0) 
+				e = ExprQt.Op.SOME.make(null, null, f.decls, e);
 		}
-		if (e==null) e = ExprConstant.TRUE;
+		if (e==null) 
+			e = ExprConstant.TRUE;
 		TempList<CommandScope> sc=new TempList<CommandScope>(cmd.scope.size());
 		for(CommandScope et: cmd.scope) {
 
@@ -1442,7 +1438,7 @@ public final class CompModule extends Browsable implements Module {
 			else
 				sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
 		}
-		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent);
+		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent,cmd.isSparse);
 	}
 
 	/** Each command now points to a typechecked Expr. */
