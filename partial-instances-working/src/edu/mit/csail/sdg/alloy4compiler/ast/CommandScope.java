@@ -121,6 +121,20 @@ public class CommandScope {
 		this.isSparse = isSparse;
 	}
 	
+	/**
+	 * Create a commandscope for a sig. 
+	 * If the atoms list is empty, it no sig should be created.  
+	 * @param pos
+	 * @param sig
+	 * @param isExact
+	 * @param startingScope
+	 * @param endingScope
+	 * @param increment
+	 * @param atoms
+	 * @param lower
+	 * @param hasUpper
+	 * @throws ErrorSyntax
+	 */
 	//[VM]
 	public CommandScope(Pos pos, Sig sig, boolean isExact, 
 			int startingScope, int endingScope, int increment, 

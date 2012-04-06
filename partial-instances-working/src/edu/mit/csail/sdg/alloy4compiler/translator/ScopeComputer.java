@@ -230,6 +230,7 @@ final class ScopeComputer {
 	//[VM]
 	/** Sets the upper-bound scope for a sig; returns true iff the sig's scope is changed by this call. */
 	private void sig2PscopeU(Sig sig, List<String> newValue) throws Err {
+		System.out.println("sig->"+sig+", newValue->"+newValue+", type->"+sig.getClass());
 		if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
 		if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
 		if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
@@ -392,19 +393,25 @@ final class ScopeComputer {
 	private void check_abstract_hierchy(Iterable<Sig> sigs) throws Err{
 		for(Sig sig:sigs){
 			if((!sig.builtin) && (sig.isAbstract == null) &&
-					(sig instanceof PrimSig) && !(((PrimSig)sig).children().isEmpty())){
-				throw new ErrorSyntax(sig.pos, "The super-sig must be an abstract.");
+					(sig instanceof PrimSig)){
+				//[VM] If all children are abstract, no matter the parent is not abstract
+				for(PrimSig c:((PrimSig)sig).children()){
+					if(c.isAbstract == null && !c.label.contains("~")){
+						throw new ErrorSyntax(sig.pos, "The super-sig must be an abstract.");
+					}
+				}
 			}
 		}
 	}
 
-	//It derives the the scope of an abstract sig, from its children. If it does not have a child, the bounds are empty.
+	/**It derives the the scope of an abstract sig, from its children. If it does not have a child, the bounds are empty.*/
 	private void derive_abstract_sig_bound(Sig sig) throws Err{
 		if(sig.isAbstract == null || sig.builtin)
 			return;
-
+		
 		List<String> listL = new ArrayList<String>();
 		List<String> listU = new ArrayList<String>();
+		
 		int sum=0;
 		for(PrimSig c:((PrimSig)sig).children()){
 			if(c.isAbstract != null)
@@ -506,9 +513,23 @@ final class ScopeComputer {
 	 * @throws Err 
 	 */
 	private void derive_overall_scope_bound(Iterable<Sig> sigs) throws Err{
-		final int overall = (cmd.overall<0 && cmd.scope.size()==0) ? 3 : cmd.overall;
+		
+		final int overall = (cmd.overall<0 || cmd.scope.size()==0) ? 3 : cmd.overall;
 		for(Sig sig:sigs) {
-			if(!sig.builtin && sig.isAbstract == null){
+			//Checking to see if an atom is gotten accessed from appended fact.
+			if(sig.label.contains("~")){
+				List<String> listL = new ArrayList<String>();
+				List<String> listU = new ArrayList<String>();
+
+				//The atoms that are accessible by appended fact.
+					listL.add(sig.label.replace('~', '%').substring("this/".length()));
+					listU.add(sig.label.replace('~', '%').substring("this/".length()));
+					sig2PscopeL(sig, listL);
+					sig2PscopeU(sig, listU);
+					sig2scope(sig, 1);
+					continue;
+			}
+			if(!sig.builtin && sig.isAbstract == null ){
 				int rest = 0;
 				if(sig2PScopeL(sig) > 0 && hasLower(sig)){
 					rest = overall - sig2PScopeL(sig);
