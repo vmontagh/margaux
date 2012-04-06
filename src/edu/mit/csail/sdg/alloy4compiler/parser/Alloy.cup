@@ -724,15 +724,17 @@ Vis ::=           {: RESULT=null; :};
 Vis ::= PRIVATE:p {: RESULT=p;    :};
 
 //[VM]
-//Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {: 
-Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE {: 
-		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,new ArrayList<ExprVar>());
+Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {: 
+		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,e);
+
+//Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE {: 
+//		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,new ArrayList<ExprVar>());
 :};
 
-Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE LBRACE Names:e RBRACE{: 
+/*Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE LBRACE Names:e RBRACE{: 
 		parser.alloymodule.addBounds(a.pos.merge(o),a.label,b,e);
 :};
-
+*/
 
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
@@ -898,8 +900,13 @@ DeclsBb ::= TypeNumber:a Name:b  {:
    nod(b);
    RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
 :};
+
 DeclsBb ::= Name:a EQUALS:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
 	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, false,false); 
+:};
+
+DeclsBb ::= NO:o Name:a {: 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, 0, 0, 1, new ArrayList() , false,false); 
 :};
 
 DeclsBb ::= Name:a IN:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 

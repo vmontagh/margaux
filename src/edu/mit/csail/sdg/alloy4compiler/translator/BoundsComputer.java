@@ -135,7 +135,7 @@ final class BoundsComputer {
 
 	//-------------------
 	/**
-	 * Compute thr upper-bound from bottom-up and by the atoms computed in the ScopeComputer.
+	 * Compute the upper-bound from bottom-up and by the atoms computed in the ScopeComputer.
 	 */
 	private TupleSet computeUpperBound_BU(final PrimSig sig) throws Err {
 		if(sc == null )

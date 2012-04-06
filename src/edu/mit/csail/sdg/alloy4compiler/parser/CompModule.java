@@ -39,6 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -241,7 +242,6 @@ public final class CompModule extends Browsable implements Module {
 
 		/** Resolve the given name to get a collection of Expr and Func objects. */
 		public Expr resolve(final Pos pos, final String name) {
-
 			if (name.indexOf('/') >= 0) {
 				String n = name.startsWith("this/") ? name.substring(5) : name;
 				CompModule mod = rootmodule;
@@ -316,9 +316,12 @@ public final class CompModule extends Browsable implements Module {
 			for(int i=0; i<choices.size(); i++) {
 				Expr x=choices.get(i), y=x;
 				while(true) {
-					if (y instanceof ExprUnary && ((ExprUnary)y).op==ExprUnary.Op.NOOP) y=((ExprUnary)y).sub;
-					else if (y instanceof ExprChoice && ((ExprChoice)y).choices.size()==1) y=((ExprChoice)y).choices.get(0);
-					else break;
+					if (y instanceof ExprUnary && ((ExprUnary)y).op==ExprUnary.Op.NOOP) 
+						y=((ExprUnary)y).sub;
+					else if (y instanceof ExprChoice && ((ExprChoice)y).choices.size()==1) 
+						y=((ExprChoice)y).choices.get(0);
+					else 
+						break;
 				}
 				if (y instanceof ExprBadCall) {
 					ExprBadCall bc = (ExprBadCall)y;
@@ -375,12 +378,15 @@ public final class CompModule extends Browsable implements Module {
 			Expr right = visitThis(x.right);
 			if (x.op==ExprBinary.Op.JOIN) {
 				// If it's a macro invocation, instantiate it
-				if (right instanceof Macro) return ((Macro)right).addArg(left).instantiate(this, warns);
+				if (right instanceof Macro) 
+					return ((Macro)right).addArg(left).instantiate(this, warns);
 				// check to see if it is the special builtin function "Int[]"
-				if (left.type().is_int() && right.isSame(Sig.SIGINT)) return left; //[AM] .cast2sigint();
+				if (left.type().is_int() && right.isSame(Sig.SIGINT)) 
+					return left; //[AM] .cast2sigint();
 				// otherwise, process as regular join or as method call
 				left = left.typecheck_as_set();
-				if (!left.errors.isEmpty() || !(right instanceof ExprChoice)) return x.op.make(x.pos, x.closingBracket, left, right);
+				if (!left.errors.isEmpty() || !(right instanceof ExprChoice)) 
+					return x.op.make(x.pos, x.closingBracket, left, right);
 				return process(x.pos, x.closingBracket, right.pos, ((ExprChoice)right).choices, ((ExprChoice)right).reasons, left);
 			}
 			return x.op.make(x.pos, x.closingBracket, left, right);
@@ -398,7 +404,8 @@ public final class CompModule extends Browsable implements Module {
 		}
 
 		private boolean isOneOf(Expr x) {
-			if (x.mult!=1 || x.type().arity()!=1) return false;
+			if (x.mult!=1 || x.type().arity()!=1) 
+				return false;
 			while (x instanceof ExprUnary && ((ExprUnary)x).op==ExprUnary.Op.NOOP) x=((ExprUnary)x).sub;
 			return (x instanceof ExprUnary && ((ExprUnary)x).op==ExprUnary.Op.ONEOF);
 		}
@@ -409,7 +416,8 @@ public final class CompModule extends Browsable implements Module {
 			boolean isMetaSig=false, isMetaField=false;
 			for(Decl d: x.decls) {
 				Expr exp = visitThis(d.expr).resolve_as_set(warns);
-				if (exp.mult==0 && exp.type().arity()==1) exp = ExprUnary.Op.ONEOF.make(null, exp);
+				if (exp.mult==0 && exp.type().arity()==1) 
+					exp = ExprUnary.Op.ONEOF.make(null, exp);
 				if (exp.errors.isEmpty()) {
 					if (exp.type().isSubtypeOf(rootmodule.metaSig().plus(rootmodule.metaField()).type())) {
 						isMetaSig = exp.type().intersects(rootmodule.metaSig().type());
@@ -425,23 +433,35 @@ public final class CompModule extends Browsable implements Module {
 					warns = null;
 					// Now duplicate the body for each possible Meta Atom binding
 					Expr answer = null;
-					if (isMetaSig) for(PrimSig child: rootmodule.metaSig().children()) if (child.type().intersects(exp.type())) {
-						put(v.label, child);
-						Expr sub = visitThis(x.sub);
-						remove(v.label);
-						if (compre) answer = child.in(exp).and(sub).ite(child, Sig.NONE).plus(answer);
-						else if (some) answer = child.in(exp).and(sub).or(answer);
-						else answer = child.in(exp).implies(sub).and(answer);
-					}
-					if (isMetaField) for(PrimSig child: rootmodule.metaField().children()) if (child.type().intersects(exp.type())) {
-						put(v.label, child);
-						Expr sub = visitThis(x.sub);
-						remove(v.label);
-						if (compre) answer = child.in(exp).and(sub).ite(child, Sig.NONE).plus(answer);
-						else if (some) answer = child.in(exp).and(sub).or(answer);
-						else answer = child.in(exp).implies(sub).and(answer);
-					}
-					if (answer==null) answer = (compre ? Sig.NONE : (some ? ExprConstant.FALSE : ExprConstant.TRUE)); else answer = answer.resolve(answer.type(), null);
+					if (isMetaSig) 
+						for(PrimSig child: rootmodule.metaSig().children()) if (child.type().intersects(exp.type())) {
+							put(v.label, child);
+							Expr sub = visitThis(x.sub);
+							remove(v.label);
+							if (compre) 
+								answer = child.in(exp).and(sub).ite(child, Sig.NONE).plus(answer);
+							else if (some) 
+								answer = child.in(exp).and(sub).or(answer);
+							else 
+								answer = child.in(exp).implies(sub).and(answer);
+						}
+					if (isMetaField) 
+						for(PrimSig child: rootmodule.metaField().children()) 
+							if (child.type().intersects(exp.type())) {
+								put(v.label, child);
+								Expr sub = visitThis(x.sub);
+								remove(v.label);
+								if (compre) 
+									answer = child.in(exp).and(sub).ite(child, Sig.NONE).plus(answer);
+								else if (some) 
+									answer = child.in(exp).and(sub).or(answer);
+								else 
+									answer = child.in(exp).implies(sub).and(answer);
+							}
+					if (answer==null) 
+						answer = (compre ? Sig.NONE : (some ? ExprConstant.FALSE : ExprConstant.TRUE)); 
+					else 
+						answer = answer.resolve(answer.type(), null);
 					// Now, wrap the body in an ExprLet expression to prevent any more warnings by outer code
 					ExprVar combinedAnswer = ExprVar.make(Pos.UNKNOWN, "", answer.type());
 					Expr returnValue = ExprLet.make(Pos.UNKNOWN, combinedAnswer, answer, combinedAnswer);
@@ -451,14 +471,21 @@ public final class CompModule extends Browsable implements Module {
 				}
 				// Above is a special case to allow more fine-grained typechecking when we see "all x:field$" or "some x:field$"
 				TempList<ExprVar> n = new TempList<ExprVar>(d.names.size());
-				for(ExprHasName v: d.names) n.add(ExprVar.make(v.pos, v.label, exp.type()));
+				for(ExprHasName v: d.names) 
+					n.add(ExprVar.make(v.pos, v.label, exp.type()));
 				Decl dd = new Decl(d.isPrivate, d.disjoint, d.disjoint2, n.makeConst(), exp);
-				for(ExprHasName newname: dd.names) put(newname.label, newname);
+				for(ExprHasName newname: dd.names) 
+					put(newname.label, newname);
 				decls.add(dd);
 			}
 			Expr sub = visitThis(x.sub);
-			if (x.op==ExprQt.Op.SUM) sub=sub.resolve_as_int(warns); else sub=sub.resolve_as_formula(warns);
-			for(Decl d: decls.makeConst()) for(ExprHasName v: d.names) remove(v.label);
+			if (x.op==ExprQt.Op.SUM) 
+				sub=sub.resolve_as_int(warns); 
+			else 
+				sub=sub.resolve_as_formula(warns);
+			for(Decl d: decls.makeConst()) 
+				for(ExprHasName v: d.names) 
+					remove(v.label);
 			return x.op.make(x.pos, x.closingBracket, decls.makeConst(), sub);
 		}
 
@@ -466,7 +493,9 @@ public final class CompModule extends Browsable implements Module {
 		/** {@inheritDoc} */
 		@Override public synchronized Expr visit(ExprVar x) throws Err {
 			Expr obj = resolve(x.pos, x.label);
-			if (obj instanceof Macro) return ((Macro)obj).instantiate(this, warns); else return obj;
+			if (obj instanceof Macro) 
+				return ((Macro)obj).instantiate(this, warns); 
+			else return obj;
 		}
 
 		/** {@inheritDoc} */
@@ -490,6 +519,140 @@ public final class CompModule extends Browsable implements Module {
 		@Override public Expr visit(Bounds x) { return x; }
 
 	}
+
+	//============================================================================================================================//
+
+	/** Mutable; this class represents the atom name replacement in the expression. */
+	static final class BoundFactMangler extends VisitReturn<Expr> {
+
+		final CompModule rootmodule;
+		/**Atoms name and the desired sig name*/
+		final Map<String, String> newNames;
+		final Expr expr;
+		
+		/**The atoms that are got accessed from appended fact*/
+		List<String> accessed = new ArrayList<String>();
+		/**The defined names by let or quantifiers*/
+		Set<String> defined = new TreeSet<String>(); 
+
+		public BoundFactMangler(CompModule rootmodule,Map<String, String> newNames, Expr expr){
+			this.rootmodule = rootmodule;
+			this.newNames = newNames;
+			this.expr = expr;
+		}
+
+		public Expr replace() throws Err{
+			return visitThis(expr);
+		}
+
+		public List<String> getAccessedAtoms(){
+			return accessed;
+		}
+
+		@Override
+		public Expr visit(ExprBinary x) throws Err {
+			System.out.println("In visit(ExprBinary x)->"+x);
+			Expr left = visitThis(x.left);
+			Expr right = visitThis(x.right);
+			return x.op.make(x.pos, x.closingBracket, left, right);
+		}
+
+		@Override
+		public Expr visit(ExprList x) throws Err {
+			System.out.println("In visit(ExprList x)->"+x);
+
+			TempList<Expr> temp = new TempList<Expr>(x.args.size());
+			for(int i=0; i<x.args.size(); i++) {
+				temp.add(visitThis(x.args.get(i)));
+			}
+			return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst());
+		}
+
+		@Override
+		public Expr visit(ExprCall x) throws Err {
+			System.out.println("In visit(ExprCall x)->"+x);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprConstant x) throws Err {
+			System.out.println("In visit(ExprConstant x)->"+x);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprITE x) throws Err {
+			System.out.println("In visit(ExprITE x)->"+x);
+			Expr f = visitThis(x.cond);
+			Expr a = visitThis(x.left);
+			Expr b = visitThis(x.right);
+			return ExprITE.make(x.pos, f, a, b);
+		}
+
+		@Override
+		public Expr visit(ExprLet x) throws Err {
+			System.out.println("In visit(ExprLet x)->"+x);
+			Expr right = visitThis(x.expr);
+			ExprVar left = ExprVar.make(x.var.pos, x.var.label, right.type());
+			System.out.print(" and the defined varaible name is:->"+left.label);
+			//Put the defined name in the expression in the efined list.
+			defined.add(left.label);
+			Expr sub = visitThis(x.sub);
+			return ExprLet.make(x.pos, left, right, sub);
+		}
+
+		@Override
+		public Expr visit(ExprQt x) throws Err {
+			System.out.println("In visit(ExprQt x)->"+x);
+			//Put the defined name in the expression in the efined list.
+			for(Decl decl:x.decls)
+				for(ExprHasName name:decl.names)
+					defined.add(name.label);
+
+			Expr sub = visitThis(x.sub);			
+
+			return x.op.make(x.pos, x.closingBracket, x.decls, sub);
+		}
+
+		@Override
+		public Expr visit(ExprUnary x) throws Err {
+			System.out.println("In visit(ExprUnary x)->"+x);
+			return x.op.make(x.pos, visitThis(x.sub));
+		}
+
+		@Override
+		public Expr visit(ExprVar x) throws Err {
+			System.out.println("In visit(ExprVar x)->"+x);
+			String name = x.label;
+			System.out.println("defined is->"+defined);
+			if(newNames.containsKey(name) && !name.contains("@") && !defined.contains(name)){
+				name = newNames.get(name);
+				accessed.add(x.label);
+			}
+			return ExprVar.make(x.pos, name, x.type());
+
+		}
+
+		@Override
+		public Expr visit(Sig x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(Field x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(Bounds bounds) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+	}
+
 
 	//============================================================================================================================//
 
@@ -997,15 +1160,32 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 
-	
+	/**
+	 * It takes a list of names that should accessible from outside of the inst-block. 
+	 * It is going to be deprecated after appended facts works. 
+	 * @param pos
+	 * @param name
+	 * @param commandScopes
+	 * @param names
+	 * @return
+	 * @throws Err
+	 */
+	@Deprecated 
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, List<ExprVar> names/*Expr fact*/)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
 		for(CommandScope cs: commandScopes){
-			List<Sig> parent = new ArrayList<Sig>();
-			parent.add(cs.sig);
+
 			for(ExprVar atom: cs.pAtoms){
-				Sig sig = new SubsetSig(atom.label, parent,Attr.ONE);
+
+				Sig sig = new PrimSig(atom.label+"~",(PrimSig)cs.sig,
+						AttrType.ABSTRACT.make(atom.pos),
+						SUBSIG.makenull(this.sigs.get(cs.sig.label).pos));
+				System.out.println("sig----->"+sig);
+				for(Attr attr:sig.attributes)
+					if(attr != null)
+						System.out.println(attr);
+
 				atoms.put(atom.label, sig);
 				//if the atom is in the appended name list, so it will be added to the sig list and treated as sig
 				for(ExprVar acName:names){
@@ -1013,10 +1193,10 @@ public final class CompModule extends Browsable implements Module {
 						this.sigs.put(sig.label, sig);
 					}
 				}
-				
+
 			}
 			//[TODO] I need to decide to put appended fact to all sigs or any other entities. 
-		//	old2appendedfacts.put(cs.sig, fact);
+			//	old2appendedfacts.put(cs.sig, fact);
 			/*if(cs.pFields.size() > 0){
 			System.out.println("cs.label->"+cs.sig.label);
 		}*/
@@ -1025,6 +1205,55 @@ public final class CompModule extends Browsable implements Module {
 		bounds.put(name, obj);
 		return obj;
 	}
+
+	/**
+	 *  It takes the bound and the appended fact
+	 * @param pos
+	 * @param name
+	 * @param commandScopes
+	 * @param names
+	 * @return
+	 * @throws Err
+	 */
+	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, Expr fact)throws Err{
+		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
+		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
+		System.out.println("fact->"+fact);
+		//System.exit(-1);
+		Map<String, String> names = new HashMap<String, String>();
+		for(CommandScope cs: commandScopes){
+			List<Sig> parent = new ArrayList<Sig>();
+			parent.add(cs.sig);
+			for(ExprVar atom: cs.pAtoms){
+				Sig sig = new PrimSig("this/"+atom.label+"~",(PrimSig)cs.sig/*,
+						AttrType.ABSTRACT.make(atom.pos)*/,AttrType.ONE.make(atom.pos),
+						SUBSIG.makenull(this.sigs.get(cs.sig.label).pos));
+
+				atoms.put(atom.label, sig);
+				//[VM] the mentioned atom name in the appended fact are replaced with mangled sig name
+
+				names.put(atom.label, atom.label+"~");
+			}
+
+			//[TODO] I need to decide to put appended fact to all sigs or any other entities. 
+			//	old2appendedfacts.put(cs.sig, fact);
+			/*if(cs.pFields.size() > 0){
+			System.out.println("cs.label->"+cs.sig.label);
+		}*/
+		}
+		if(fact != null){
+			BoundFactMangler bfm = new  BoundFactMangler(this, names, fact);
+			this.addFact(fact.pos, "fact~"+name, bfm.replace());
+			for(String nm:bfm.getAccessedAtoms()){
+				this.sigs.put(nm+"~", atoms.get(nm));
+			}
+		}
+		bnd2atoms.put(obj, atoms);
+		bounds.put(name, obj);
+
+		return obj;
+	}
+
 
 	Sig addSig(String name, ExprVar par, List<ExprVar> parents, List<Decl> fields, Expr fact, Attr... attributes) throws Err {
 		Sig obj;
@@ -1035,20 +1264,38 @@ public final class CompModule extends Browsable implements Module {
 		Pos subset=null, subsig=null;
 		boolean exact = false;
 		if (par!=null) {
-			if (par.label.equals("extends")) { subsig=par.span().merge(parents.get(0).span()); }
-			else { exact=!par.label.equals("in"); subset=par.span(); for(ExprVar p:parents) subset=p.span().merge(subset); }
+			if (par.label.equals("extends")) { 
+				subsig=par.span().merge(parents.get(0).span()); 
+			}
+			else { 
+				exact=!par.label.equals("in"); 
+				subset=par.span(); 
+				for(ExprVar p:parents) 
+					subset=p.span().merge(subset); 
+			}
 		}
 		attributes = Util.append(attributes, exact ? Attr.EXACT : null);
 		if (subset!=null) {
 			attributes = Util.append(attributes, SUBSET.makenull(subset));
 			List<Sig> newParents = new ArrayList<Sig>(parents==null ? 0 : parents.size());
-			if (parents!=null) for(ExprVar p: parents) newParents.add(new PrimSig(p.label, WHERE.make(p.pos)));
+			if (parents!=null) 
+				for(ExprVar p: parents) 
+					newParents.add(new PrimSig(p.label, WHERE.make(p.pos)));
 			obj = new SubsetSig(full, newParents, attributes);
 		} else {
+			System.out.println("subsig->"+subsig);
 			attributes = Util.append(attributes, SUBSIG.makenull(subsig));
 			PrimSig newParent = (parents!=null && parents.size()>0) ? (new PrimSig(parents.get(0).label, WHERE.make(parents.get(0).pos))) : UNIV;
-			obj = new PrimSig(full, newParent, attributes);
+			/*			for(Attr attr:attributes)
+				if(attr != null)
+					System.out.println(attr.type);
+			 */			obj = new PrimSig(full, newParent, attributes);
 		}
+		System.out.println("name="+name+", obj="+obj);
+		for(Attr attr:obj.attributes)
+			if(attr != null)
+				System.out.println(attr);
+
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
 		old2appendedfacts.put(obj, fact);
@@ -1135,7 +1382,7 @@ public final class CompModule extends Browsable implements Module {
 		}
 		return x.dup();
 	}
-	
+
 	public SafeList<Sig> getAllAtoms(){
 		SafeList<Sig> x = new SafeList<Sig>();
 		for(Bounds b: getAllBounds()){
@@ -1143,8 +1390,8 @@ public final class CompModule extends Browsable implements Module {
 		}
 		return x;
 	}
-	
-	
+
+
 	//============================================================================================================================//
 
 	/** Add a MACRO declaration. */
@@ -1227,6 +1474,7 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Each Func's body will now be typechecked Expr object. */
 	private JoinableList<Err> resolveFuncBody(A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
+		System.out.println("In ResolveFuncBody->");
 		for(ArrayList<Func> entry: funcs.values()) for(Func ff: entry) {
 			Context cx = new Context(this, warns);
 			cx.rootfunbody = ff;
@@ -1310,6 +1558,7 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Each fact name now points to a typechecked Expr rather than an untypechecked Exp; we'll also add the sig appended facts. */
 	private JoinableList<Err> resolveFacts(CompModule res, A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
+
 		Context cx = new Context(this, warns);
 		for(int i=0; i<facts.size(); i++) {
 			String name = facts.get(i).a;
@@ -1641,7 +1890,9 @@ public final class CompModule extends Browsable implements Module {
 			if (s!=null) return ExprUnary.Op.NOOP.make(pos, s);
 		}
 		final List<Object> ans = name.indexOf('/')>=0 ? getRawQS(fun?5:1, name) : getRawNQS(this, fun?5:1, name);
-		final Sig param = params.get(name); if (param!=null && !ans.contains(param)) ans.add(param);
+		final Sig param = params.get(name); 
+		if (param!=null && !ans.contains(param)) 
+			ans.add(param);
 		for(Object x: ans) {
 			if (x instanceof Sig) {
 				Sig y = (Sig)x;
@@ -1686,27 +1937,28 @@ public final class CompModule extends Browsable implements Module {
 		// (2) But can refer to anything else visible.
 		// All else: we can call, and can refer to anything visible.
 		for(CompModule m: getAllNameableModules())
-			for(Sig s: m.sigs.values()) if (m==this || s.isPrivate==null)
-				for(Field f: s.getFields()) if (f.isMeta==null && (m==this || f.isPrivate==null) && f.label.equals(name))
-					if (resolution==1) {
-						Expr x=null;
-						if (rootsig==null)
-						{ x=ExprUnary.Op.NOOP.make(pos, f, null, 0); }
-						else if (rootsig.isSameOrDescendentOf(f.sig))
-						{ x=ExprUnary.Op.NOOP.make(pos, f, null, 0); if (fullname.charAt(0)!='@') x=THIS.join(x); }
-						else if (rootfield==null || rootfield.expr.mult()==ExprUnary.Op.EXACTLYOF)
-						{ x=ExprUnary.Op.NOOP.make(pos, f, null, 1); } // penalty of 1
-						if (x!=null) { ch.add(x); re.add("field "+f.sig.label+" <: "+f.label); }
-					} else if (rootfield==null || rootsig.isSameOrDescendentOf(f.sig)) {
-						Expr x0 = ExprUnary.Op.NOOP.make(pos, f, null, 0);
-						if (resolution==2 && THIS!=null && fullname.charAt(0)!='@' && f.type().firstColumnOverlaps(THIS.type())) {
-							ch.add(THIS.join(x0));
-							re.add("field "+f.sig.label+" <: this."+f.label);
-							if (rootsig!=null) continue;
+			for(Sig s: m.sigs.values()) 
+				if (m==this || s.isPrivate==null)
+					for(Field f: s.getFields()) if (f.isMeta==null && (m==this || f.isPrivate==null) && f.label.equals(name))
+						if (resolution==1) {
+							Expr x=null;
+							if (rootsig==null)
+							{ x=ExprUnary.Op.NOOP.make(pos, f, null, 0); }
+							else if (rootsig.isSameOrDescendentOf(f.sig))
+							{ x=ExprUnary.Op.NOOP.make(pos, f, null, 0); if (fullname.charAt(0)!='@') x=THIS.join(x); }
+							else if (rootfield==null || rootfield.expr.mult()==ExprUnary.Op.EXACTLYOF)
+							{ x=ExprUnary.Op.NOOP.make(pos, f, null, 1); } // penalty of 1
+							if (x!=null) { ch.add(x); re.add("field "+f.sig.label+" <: "+f.label); }
+						} else if (rootfield==null || rootsig.isSameOrDescendentOf(f.sig)) {
+							Expr x0 = ExprUnary.Op.NOOP.make(pos, f, null, 0);
+							if (resolution==2 && THIS!=null && fullname.charAt(0)!='@' && f.type().firstColumnOverlaps(THIS.type())) {
+								ch.add(THIS.join(x0));
+								re.add("field "+f.sig.label+" <: this."+f.label);
+								if (rootsig!=null) continue;
+							}
+							ch.add(x0);
+							re.add("field "+f.sig.label+" <: "+f.label);
 						}
-						ch.add(x0);
-						re.add("field "+f.sig.label+" <: "+f.label);
-					}
 		if (metaSig()!=null && (rootsig==null || rootfield==null)) {
 			SafeList<PrimSig> children = null;
 			try { children=metaSig().children(); } catch(Err err) { return null; } // exception NOT possible
