@@ -224,6 +224,8 @@ parser code {:
     ch.put(CompSym.NUMBER, "NUMBER");
     ch.put(CompSym.STR, "STRING");
     ch.put(CompSym.BOUND, "inst");
+    ch.put(CompSym.MORE, "moreover");
+
     
     TreeSet<String> list = new TreeSet<String>();
     Pos p=Pos.UNKNOWN;
@@ -451,6 +453,7 @@ terminal Pos LT;               //  <
 terminal Pos LTE;              //  <=     =<
 terminal Pos MINUS;            //  -
 terminal Pos MODULE;           //  module
+terminal Pos MORE;           	//  moreover
 terminal Pos NO2;              //  no        // The filter enables us to disambiguate
 terminal Pos NO;               //  no        // The filter enables us to disambiguate
 terminal Pos NONE;             //  none
@@ -895,27 +898,35 @@ TypescopeB ::= TypeNumber:a SPARSE:s SIGINT:b  {:
 
 
 DeclsBb	::=	TypescopeB:b			{: RESULT=b;	:};
-DeclsBb ::= NUMBER:a				{: RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), false, a.num, a.num, 1);  :};
+DeclsBb ::= NUMBER:a				{: 
+	RESULT = new CommandScope(a.pos, new PrimSig("univ", AttrType.WHERE.make(a.pos)), false, a.num, a.num, 1);  :};
+
 DeclsBb ::= TypeNumber:a Name:b  {:
    nod(b);
    RESULT = new CommandScope(a.pos.merge(b.pos), new PrimSig(b.label, AttrType.WHERE.make(a.pos.merge(b.pos))), a.isExact, a.startingScope, a.endingScope, a.increment);
 :};
 
-DeclsBb ::= Name:a EQUALS:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, false,false); 
+DeclsBb ::= Name:a EQUALS:o ExprB:b				{:  
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, b.size(), b.size(), 1, b, b.size()); 
 :};
 
 DeclsBb ::= NO:o Name:a {: 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, 0, 0, 1, new ArrayList() , false,false); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), true, 0, 0, 1, new ArrayList() , 0); 
 :};
 
 DeclsBb ::= Name:a IN:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,false,true); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,0); 
 :};
 
 DeclsBb ::= Name:a INCLUDE:o ExprB:b				{:  //RESULT = new CommandScope(null,false,-1); 
-	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,true,false); 
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b, b.size()); 
 :};
+
+DeclsBb ::= Name:a INCLUDE:o ExprB:b MORE:p ExprB:c	{:  
+	b.addAll(c);
+	RESULT = new CommandScope(a.pos, new PrimSig(a.label, AttrType.WHERE.make(a.pos)), false, b.size(), b.size(), 1, b,b.size() - c.size()); 
+:};
+
 
 DeclsB ::= DeclsBb:a 				{: RESULT=new ArrayList<CommandScope>(); RESULT.add(a); :};
 DeclsB ::= DeclsB:a COMMA DeclsBb:b  {: RESULT=a; a.add(b);                    :};

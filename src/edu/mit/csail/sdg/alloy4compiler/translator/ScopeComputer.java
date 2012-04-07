@@ -108,8 +108,12 @@ final class ScopeComputer {
 	private final IdentityHashMap<String,List<String>> sig2PscopeU = new IdentityHashMap<String,List<String>>();    
 
 	//[VM]
-	/** The partial scope for each field. */
-	private final IdentityHashMap<String,List<List<String>>> field2Pscope = new IdentityHashMap<String,List<List<String>>>();
+	/** The partial lower-bound scope for each field. */
+	private final IdentityHashMap<String,List<List<String>>> field2PscopeL = new IdentityHashMap<String,List<List<String>>>();
+
+	//[VM]
+	/** The partial upper-bound scope for each field. */
+	private final IdentityHashMap<String,List<List<String>>> field2PscopeU = new IdentityHashMap<String,List<List<String>>>();
 
 
 	/** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
@@ -198,20 +202,39 @@ final class ScopeComputer {
 
 	//[VM]
 	/** Returns the scope for a sig (or -1 if we don't know). */
-	public List<List<String>> field2Pscope(Sig sig) {
-		return field2Pscope.get(sig.label);
+	public List<List<String>> field2PscopeL(Sig sig) {
+		return field2PscopeL.get(sig.label);
 	}    
 
 	//[VM]
 	/** Returns the scope for a sig (or -1 if we don't know). */
-	public List<List<String>> field2Pscope(String label) {
-		for(String l: field2Pscope.keySet()){
+	public List<List<String>> field2PscopeL(String label) {
+		for(String l: field2PscopeL.keySet()){
 			if(l.equals(label))
-				return field2Pscope.get(l);
+				return field2PscopeL.get(l);
+		}
+		return null;
+		//return field2Pscope.get(label);
+	} 
+	
+	
+	//[VM]
+	/** Returns the scope for a sig (or -1 if we don't know). */
+	public List<List<String>> field2PscopeU(Sig sig) {
+		return field2PscopeU.get(sig.label);
+	}    
+
+	//[VM]
+	/** Returns the scope for a sig (or -1 if we don't know). */
+	public List<List<String>> field2PscopeU(String label) {
+		for(String l: field2PscopeU.keySet()){
+			if(l.equals(label))
+				return field2PscopeU.get(l);
 		}
 		return null;
 		//return field2Pscope.get(label);
 	}  
+
 
 	/** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
 	private void sig2scope(Sig sig, int newValue) throws Err {
@@ -259,25 +282,36 @@ final class ScopeComputer {
 
 	//[VM]
 	/** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
-	private void field2Pscope(Sig sig, List<List<String>> newValue) throws Err {
-		if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
-		int old = field2Pscope(sig)== null ? -1 : field2Pscope(sig).size();
-		if (old==newValue.size()) return;
-		if (old>=0)        throw new ErrorSyntax(cmd.pos, "Sig \""+sig+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
-		field2Pscope.put(((PrimSig)sig).label, newValue);
-		rep.scope("Sig "+sig+" scope <= "+newValue+"\n");
+	private void field2PscopeL(Sig sig, List<List<String>> newValue) throws Err {
+		field2PscopeL(((PrimSig)sig).label, newValue);
 	}
 
 	/** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
-	private void field2Pscope(String label, List<List<String>> newValue) throws Err {
+	private void field2PscopeL(String label, List<List<String>> newValue) throws Err {
 		if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for field's label \""+label+"\"");
-		int old = field2Pscope(label)== null ? -1 : field2Pscope(label).size();
+		int old = field2PscopeL(label)== null ? -1 : field2PscopeL(label).size();
 		if (old==newValue.size()) return;
 		if (old>=0)        throw new ErrorSyntax(cmd.pos, "Fields's label \""+label+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
-		field2Pscope.put(label, newValue);
+		field2PscopeL.put(label, newValue);
 		rep.scope("Filed's label "+label+" scope <= "+newValue+"\n");
 	}
 
+	//[VM]
+	/** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
+	private void field2PscopeU(Sig sig, List<List<String>> newValue) throws Err {
+		field2PscopeU(((PrimSig)sig).label, newValue);
+	}
+
+	/** Sets the scope for a sig; returns true iff the sig's scope is changed by this call. */
+	private void field2PscopeU(String label, List<List<String>> newValue) throws Err {
+		if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for field's label \""+label+"\"");
+		int old = field2PscopeU(label)== null ? -1 : field2PscopeU(label).size();
+		if (old==newValue.size()) return;
+		if (old>=0)        throw new ErrorSyntax(cmd.pos, "Fields's label \""+label+"\" already has a scope of "+old+", so we cannot set it to be "+newValue);
+		field2PscopeU.put(label, newValue);
+		rep.scope("Filed's label "+label+" scope <= "+newValue+"\n");
+	}
+	
 	//[VM] It is sloppy, but the filed is not field, so I need to think in a better way. 
 	/** Returns whether the scope of a sig is exact or not. */
 	public boolean isExact(String label) {
@@ -408,10 +442,10 @@ final class ScopeComputer {
 	private void derive_abstract_sig_bound(Sig sig) throws Err{
 		if(sig.isAbstract == null || sig.builtin)
 			return;
-		
+
 		List<String> listL = new ArrayList<String>();
 		List<String> listU = new ArrayList<String>();
-		
+
 		int sum=0;
 		for(PrimSig c:((PrimSig)sig).children()){
 			if(c.isAbstract != null)
@@ -513,7 +547,7 @@ final class ScopeComputer {
 	 * @throws Err 
 	 */
 	private void derive_overall_scope_bound(Iterable<Sig> sigs) throws Err{
-		
+
 		final int overall = (cmd.overall<0 || cmd.scope.size()==0) ? 3 : cmd.overall;
 		for(Sig sig:sigs) {
 			//Checking to see if an atom is gotten accessed from appended fact.
@@ -522,16 +556,16 @@ final class ScopeComputer {
 				List<String> listU = new ArrayList<String>();
 
 				//The atoms that are accessible by appended fact.
-					listL.add(sig.label.replace('~', '%').substring("this/".length()));
-					listU.add(sig.label.replace('~', '%').substring("this/".length()));
-					sig2PscopeL(sig, listL);
-					sig2PscopeU(sig, listU);
-					sig2scope(sig, 1);
-					continue;
+				listL.add(sig.label.replace('~', '%').substring("this/".length()));
+				listU.add(sig.label.replace('~', '%').substring("this/".length()));
+				sig2PscopeL(sig, listL);
+				sig2PscopeU(sig, listU);
+				sig2scope(sig, 1);
+				continue;
 			}
 			if(!sig.builtin && sig.isAbstract == null ){
 				int rest = 0;
-				if(sig2PScopeL(sig) > 0 && hasLower(sig)){
+				if(sig2PScopeL(sig) > 0 && hasLower(sig) && !hasUpper(sig)){
 					rest = overall - sig2PScopeL(sig);
 					if (sig2scope(sig) == overall)
 						continue;
@@ -695,6 +729,7 @@ final class ScopeComputer {
 		boolean shouldUseInts = areIntsUsed(sigs);
 		// Process each sig listed in the command
 		for(CommandScope entry:cmd.scope) {
+			System.out.println("entry->"+entry);
 			Sig s = entry.sig;
 			int scope = entry.startingScope;
 			boolean exact = entry.isExact;
@@ -726,48 +761,74 @@ final class ScopeComputer {
 
 			if(entry.isPartial){
 				if(entry.pFields.size() > 0){
-					List<List<String>> list = new ArrayList<List<String>>();
+					List<List<String>> listL = new ArrayList<List<String>>();
+					List<List<String>> listU = new ArrayList<List<String>>();
+
+					int i = 0;
 					for(List<Expr> pair: entry.pFields ){
 						List<String> tmp = new ArrayList<String>();
 						for(Expr ev: pair)
 							if(ev instanceof ExprVar)
+								//Here the Sig in relation can be extended.
 								tmp.add(((ExprVar)ev).label+"%");
 							else if(ev instanceof ExprConstant ){
 								tmp.add(String.valueOf(((ExprConstant)ev).num));
 								//[VM] putting the mentioned integer inside the set, later out of the range values are added in the universe
 								exInt.add(((ExprConstant)ev).num);		
 							}
-						list.add(tmp);
+						if(i<entry.pAtomsLowerLastIndex)
+							listL.add(tmp);
+						else
+							listU.add(tmp);
+						i++;
 					}
-					field2Pscope(s,list);
+					listU.addAll(0, listL);
+					field2PscopeL(s,listL);
+					field2PscopeU(s,listU);
 				}else{
-					List<String> list = new ArrayList<String>();
-					for(Expr var: entry.pAtoms)
-						if(var instanceof ExprVar)
-							list.add(((ExprVar)var).label+"%");
+
+					List<String> listL = new ArrayList<String>();
+					List<String> listU = new ArrayList<String>();
+					int i = 0;
+					for(Expr var: entry.pAtoms){
+						if(var instanceof ExprVar){
+							if(i < entry.pAtomsLowerLastIndex)
+								listL.add(((ExprVar)var).label+"%");
+							else
+								listU.add(((ExprVar)var).label+"%");
+						}
 						else if(var instanceof ExprConstant ){
 							//[VM] It is not possible to have an Singlton Int, but just in case it is stored.
-							list.add(String.valueOf(((ExprConstant)var).num));
 							exInt.add(((ExprConstant)var).num);		
+							if(i < entry.pAtomsLowerLastIndex){
+								listL.add(String.valueOf(((ExprConstant)var).num));
+							}else
+								listU.add(String.valueOf(((ExprConstant)var).num));
 						}
-					if(exact){
-						//Upper-bound and lower-bound are the same.
-						sig2PscopeU(s,list);
-						sig2PscopeL(s,list);
-					}else if(lower){
-						sig2PscopeL(s,list);
+						i++;
+					}
+					listU.addAll(0, listL);
+					System.out.println("listU->"+listU);
+					System.out.println("listL->"+listL);
+					
+					//if(exact){
+					//Upper-bound and lower-bound are the same.
+					sig2PscopeU(s,listU);
+					sig2PscopeL(s,listL);
+					/*}else if(lower){
+						sig2PscopeL(s,listL);
 						//If the default overall number is more that the lower bound, more atoms will be added in the sig2PscopeU
 						//Otherwise, upper-bound and lower-bound will be the same. 
-						sig2PscopeU(s,list);
+						sig2PscopeU(s,listU);
 					}else if(upper){
 						//Upper-bound is set to atoms, but lower-bound is empty set. 
-						sig2PscopeU(s,list);
+						sig2PscopeU(s,listU);
 						sig2PscopeL(s,new ArrayList<String>());
 
-					}
+					}*/
 					//sig2scope stores the upper-bound for back-ward compatibility. In case of other use case, 
 					//other methods can be called to read the size from maps directly. 
-					sig2scope(s, list.size());
+					sig2scope(s, listU.size());
 				}
 
 			}else{
@@ -778,6 +839,8 @@ final class ScopeComputer {
 			if (lower) makeLower(cmd.pos, s);
 
 			if(upper) makeUpper(cmd.pos, s);
+			
+			System.out.println("exact->"+exact+", lower->"+lower+", upper->"+upper);
 		}
 		//[VM] if in "value = a + b + c", the value should not be "one" or ...
 		// Force "one" sigs to be exactly one, and "lone" to be at most one
@@ -811,7 +874,7 @@ final class ScopeComputer {
 		int maxseq=cmd.maxseq, bitwidth=cmd.bitwidth;
 		if (bitwidth<0) { 
 			bitwidth = (shouldUseInts ? 4 : 0); 
-			} 
+		} 
 		setBitwidth(cmd.pos, bitwidth);
 		if (maxseq<0) {
 			if (cmd.overall>=0) maxseq=cmd.overall; else maxseq=4;
