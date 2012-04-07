@@ -1218,7 +1218,6 @@ public final class CompModule extends Browsable implements Module {
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, Expr fact)throws Err{
 		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		System.out.println("fact->"+fact);
 		//System.exit(-1);
 		Map<String, String> names = new HashMap<String, String>();
 		for(CommandScope cs: commandScopes){
@@ -1677,13 +1676,25 @@ public final class CompModule extends Browsable implements Module {
 
 			Sig s = getRawSIG(et.sig.pos, et.sig.label);
 			//[VM]
-			if ((s==null) && !(isField(et.sig.label) && et.isPartial) ) throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
+			if ((s==null) && !(isField(et.sig.label) && et.isPartial) ) 
+				throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
 			//.println("et->"+et.sig + ","+et.pFields);
 			if(et.isPartial)
-				if(isField(et.sig.label))
-					sc.add(new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope, et.endingScope, et.increment,et.pFields,et.hasLower,et.hasUpper,true));
-				else
-					sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms,et.hasLower,et.hasUpper));
+				if(isField(et.sig.label)){
+					//sc.add(new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope, et.endingScope, et.increment,et.pFields,et.hasLower,et.hasUpper,true));
+					sc.add( new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope,
+							et.endingScope, et.increment, new ArrayList<ExprVar>() ,
+							et.pAtomsLowerLastIndex, et.pFields,
+							et.isPartial, et.hasLower, et. hasUpper,
+							et. isSparse));
+				}else{
+					//sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment,et.pAtoms,et.hasLower,et.hasUpper));
+					sc.add( new CommandScope(null, s, et.isExact, et.startingScope,
+							et.endingScope, et.increment, et.pAtoms ,
+							et.pAtomsLowerLastIndex, new ArrayList<List<Expr>>(),
+							et.isPartial, et.hasLower, et. hasUpper,
+							et. isSparse));
+				}
 			else
 				sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
 		}

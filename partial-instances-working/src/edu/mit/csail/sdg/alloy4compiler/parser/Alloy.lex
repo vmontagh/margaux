@@ -178,6 +178,7 @@ import java_cup.runtime.*;
 "let"                 { return alloy_sym(yytext(), CompSym.LET         );}
 "lone"                { return alloy_sym(yytext(), CompSym.LONE        );}
 "module"              { return alloy_sym(yytext(), CompSym.MODULE      );}
+"moreover"            { return alloy_sym(yytext(), CompSym.MORE		   );}
 "none"                { return alloy_sym(yytext(), CompSym.NONE        );}
 "not"                 { return alloy_sym(yytext(), CompSym.NOT         );}
 "no"                  { return alloy_sym(yytext(), CompSym.NO          );}

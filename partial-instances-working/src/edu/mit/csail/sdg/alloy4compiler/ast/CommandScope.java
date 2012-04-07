@@ -23,6 +23,7 @@ import edu.mit.csail.sdg.alloy4.ErrorSyntax;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 
 /** Immutable; reresents a scope in a "run" or "check" command.
  *
@@ -50,9 +51,48 @@ public class CommandScope {
 
 	/** The scope increment; if this sig is not a growing sig, then this.increment is ignored. */
 	public final int increment;
-	//[VM]
+
+	/** The atoms for upper-bound*/
 	public final List<ExprVar> pAtoms;
 
+	/** The index to show the last index of lower-bound*/
+	public final int pAtomsLowerLastIndex;
+
+
+	public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope,
+			int endingScope, int increment, List<ExprVar> pAtoms,
+			int pAtomsLowerLastIndex, List<List<Expr>> pFields,
+			boolean isPartial, boolean hasLower, boolean hasUpper,
+			boolean isSparse) {
+		super();
+		this.pos = pos;
+		this.sig = sig;
+		this.isExact = isExact;
+		this.startingScope = startingScope;
+		this.endingScope = endingScope;
+		this.increment = increment;
+		this.pAtoms = pAtoms;
+		this.pAtomsLowerLastIndex = pAtomsLowerLastIndex;
+		this.pFields = pFields;
+		this.isPartial = isPartial;
+		this.hasLower = hasLower;
+		this.hasUpper = hasUpper;
+		this.isSparse = isSparse;
+	}
+
+
+	/**
+	 * The sig is still shallow copy.
+	 * @return
+	 */
+	public Object clone(){
+		return new CommandScope(this.pos, this.sig,this.isExact,this.startingScope,
+				this.endingScope,this.increment,new ArrayList<ExprVar>(this.pAtoms),
+				this.pAtomsLowerLastIndex, new ArrayList<List<Expr>>(this.pFields),
+				this.isPartial,this.hasLower,this.hasUpper,
+				this.isSparse);
+	}
+	
 	public final List<List<Expr>> pFields;
 
 	public final boolean isPartial;
@@ -60,7 +100,7 @@ public class CommandScope {
 	public final boolean hasLower;
 
 	public final boolean hasUpper;
-	
+
 	public final boolean isSparse;
 
 
@@ -88,7 +128,7 @@ public class CommandScope {
 	}
 
 	/**
-	 * It is similar the previous constructor, but sets the sparse boolean value to see whether integer values in inst-block should be includided in the
+	 * It is similar the previous constructor, but sets the sparse boolean value to see whether integer values in inst-block should be included in the
 	 * atoms or not. 
 	 * @param pos
 	 * @param sig
@@ -100,7 +140,7 @@ public class CommandScope {
 	 * @throws ErrorSyntax
 	 */
 	public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope, int endingScope, int increment, boolean isSparse) throws ErrorSyntax {
-		if (pos == null) pos = Pos.UNKNOWN;
+		/*if (pos == null) pos = Pos.UNKNOWN;
 		if (sig == null) throw new NullPointerException();
 		if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
 		if (endingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative ending scope ("+endingScope+")");
@@ -118,12 +158,24 @@ public class CommandScope {
 		this.pFields = new ArrayList<List<Expr>>();
 		this.hasLower = false;
 		this.hasUpper = false;
-		this.isSparse = isSparse;
+		*/
+		this(pos,sig,isExact,startingScope,endingScope,increment,new ArrayList(),0,isSparse);
 	}
 	
+	
+	public CommandScope(Pos pos, Sig sig, boolean isExact, 
+			int startingScope, int endingScope, int increment, 
+			List/*<ExprVar>*/ atoms, int LIndex) throws ErrorSyntax {
+		this(pos,sig,isExact,startingScope,endingScope, increment, atoms,LIndex,false);
+	}
+
 	/**
 	 * Create a commandscope for a sig. 
 	 * If the atoms list is empty, it no sig should be created.  
+	 * If not isExact and LIndex = 0 and atoms.size() > 0 then hasUpper and notLower
+	 * If not isExact and LIndex > 0 and atoms.size() = LIndex then HasLower
+	 * If not isExact and LIndex > 0 and atoms.size() > LIndex the hasLower and hasUpper, means a range.
+	 * If isExact then LIndex = atoms.size() = LIndex
 	 * @param pos
 	 * @param sig
 	 * @param isExact
@@ -138,7 +190,7 @@ public class CommandScope {
 	//[VM]
 	public CommandScope(Pos pos, Sig sig, boolean isExact, 
 			int startingScope, int endingScope, int increment, 
-			List/*<ExprVar>*/ atoms, boolean lower,boolean hasUpper) throws ErrorSyntax {
+			List/*<ExprVar>*/ atoms, int LIndex,boolean isSparse) throws ErrorSyntax {
 		if (pos == null) pos = Pos.UNKNOWN;
 		if (sig == null) throw new NullPointerException();
 		if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
@@ -149,10 +201,12 @@ public class CommandScope {
 		this.pos = pos;
 		this.sig = sig;
 		this.isExact = isExact;
-		this.hasUpper = hasUpper;
+		this.hasUpper = !isExact & LIndex < atoms.size();
+		this.hasLower = !isExact & LIndex>0;
+		this.pAtomsLowerLastIndex=LIndex;
 		this.increment = increment;
 		this.pFields = new ArrayList<List<Expr>>();
-		this.isSparse = false;
+		this.isSparse = isSparse;
 		boolean isRelation = false;
 
 		List<List<Expr>> tmpPField = new ArrayList<List<Expr>>();
@@ -179,9 +233,7 @@ public class CommandScope {
 				this.pAtoms = new ArrayList<ExprVar>();
 			}
 
-			this.hasLower = lower;
 		}else{
-			this.hasLower = false;
 			this.isPartial = false;
 			this.pAtoms = new ArrayList<ExprVar>();    		
 		}
@@ -195,9 +247,11 @@ public class CommandScope {
 		}
 	}
 
+
+
 	private List<Expr> extractRels(Pair pair){
 		List<Expr> tmp = new ArrayList<Expr>();
-		
+
 		if(pair.a instanceof List && ((List)pair.a).size()>0){
 			Object p = ((List)pair.a).get(0);
 			if(p instanceof Pair)
@@ -208,15 +262,13 @@ public class CommandScope {
 		tmp.add((Expr)pair.b);
 		return tmp;
 	}
-	
+
 
 	//[VM] In The CompModule.resolveCommand, the commandScopes are made again. So, We need to have another constructor
 	//to create a relation with empty atoms.
-
-
-	public CommandScope(Pos pos, Sig sig, boolean isExact,
+	/*public CommandScope(Pos pos, Sig sig, boolean isExact,
 			int startingScope, int endingScope, int increment,
-			List<List<Expr>> fields, boolean lower,boolean hasUpper, boolean isField/*This is a dummy field*/) throws ErrorSyntax {
+			List<List<Expr>> fields, boolean lower,boolean hasUpper, boolean isField/*This is a dummy field*//*) throws ErrorSyntax {
 		if (sig == null) throw new NullPointerException();
 		if (startingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative starting scope ("+startingScope+")");
 		if (endingScope < 0) throw new ErrorSyntax(pos, "Sig "+sig+" cannot have a negative ending scope ("+endingScope+")");
@@ -243,10 +295,8 @@ public class CommandScope {
 		}
 		this.pAtoms = new ArrayList<ExprVar>();
 		this.hasLower = lower;
-
-		
-
 	}
+			*/
 	/** {@inheritDoc} */
 	@Override public String toString() {
 		return (isExact ? "exactly " : "") + (isPartial ? " partial " : "")

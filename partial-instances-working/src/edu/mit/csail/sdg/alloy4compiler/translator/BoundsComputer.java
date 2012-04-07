@@ -70,7 +70,7 @@ final class BoundsComputer {
 
 	//-------------------
 	/**
-	 * Compute thr lower-bound from bottom-up and by the atoms computed in the ScopeComputer.
+	 * Compute the lower-bound from bottom-up and by the atoms computed in the ScopeComputer.
 	 */
 	private TupleSet computeLowerBound_BU(final PrimSig sig) throws Err {
 		if(sc == null )
@@ -81,17 +81,17 @@ final class BoundsComputer {
 		for(String atom:list){
 			lower.add(factory.tuple(atom));
 		}
-		
+
 		for(PrimSig c:sig.children())
 			computeLowerBound_BU(c);
 
 		lb.put(sig, lower);
-		
+
 		return lower;
 	}
 
-	
-	
+
+
 	//==============================================================================================================//
 
 	/** Computes the lowerbound from bottom-up; it will also set a suitable initial value for each sig's upperbound.
@@ -129,7 +129,7 @@ final class BoundsComputer {
 				}
 		lb.put(sig, lower);
 		ub.put(sig, upper);
-		
+
 		return lower;
 	}
 
@@ -146,15 +146,15 @@ final class BoundsComputer {
 		for(String atom:list){
 			upper.add(factory.tuple(atom));
 		}
-		
+
 		for(PrimSig c:sig.children())
 			computeUpperBound_BU(c);
-		
+
 		ub.put(sig, upper);
-		
+
 		return upper;
 	}
-	
+
 	//==============================================================================================================//
 
 	/** Computes the upperbound from top-down, then allocate a relation for it.
@@ -169,11 +169,11 @@ final class BoundsComputer {
 		// So now X is the set of atoms that MIGHT be in this sig, but MIGHT NOT be in any particular subsig.
 		// For each subsig that may need more atom, we say it could potentionally get any of the atom from X.
 		for(PrimSig c: sig.children()) {
-				if (sc.sig2scope(c) > lb.get(c).size()) {
-					ub.get(c).addAll(x);
-				}
-			
-			
+			if (sc.sig2scope(c) > lb.get(c).size()) {
+				ub.get(c).addAll(x);
+			}
+
+
 			computeUpperBound(c);
 		}
 	}
@@ -331,25 +331,45 @@ final class BoundsComputer {
 					Expr fact = s.getFacts().get(0).deNOP(), b1 = s.getFieldDecls().get(0).expr.deNOP(), b2 = s.getFieldDecls().get(1).expr.deNOP(), b3;
 					if (!(fact instanceof ExprList) || !(b1 instanceof ExprUnary) || !(b2 instanceof ExprBinary)) break;
 					ExprList list = (ExprList)fact;
-					if (list.op!=ExprList.Op.TOTALORDER || list.args.size()!=3) break;
-					if (((ExprUnary)b1).op!=ExprUnary.Op.SETOF) break; else b1 = ((ExprUnary)b1).sub.deNOP();
-					if (((ExprBinary)b2).op!=ExprBinary.Op.ARROW) break; else { b3 = ((ExprBinary)b2).right.deNOP(); b2 = ((ExprBinary)b2).left.deNOP(); }
-					if (!(b1 instanceof PrimSig) || b1!=b2 || b1!=b3) break;
+					if (list.op!=ExprList.Op.TOTALORDER || list.args.size()!=3) 
+						break;
+					if (((ExprUnary)b1).op!=ExprUnary.Op.SETOF) 
+						break; 
+					else 
+						b1 = ((ExprUnary)b1).sub.deNOP();
+					if (((ExprBinary)b2).op!=ExprBinary.Op.ARROW) 
+						break; 
+					else { 
+						b3 = ((ExprBinary)b2).right.deNOP(); 
+						b2 = ((ExprBinary)b2).left.deNOP(); }
+					if (!(b1 instanceof PrimSig) || b1!=b2 || b1!=b3) 
+						break;
 					PrimSig sub = (PrimSig)b1;
 					Field f1 = s.getFields().get(0), f2 = s.getFields().get(1);
-					if (sub.isEnum==null || !list.args.get(0).isSame(sub) || !list.args.get(1).isSame(s.join(f1)) || !list.args.get(2).isSame(s.join(f2))) break;
+					if (sub.isEnum==null || !list.args.get(0).isSame(sub) || !list.args.get(1).isSame(s.join(f1)) || !list.args.get(2).isSame(s.join(f2))) 
+						break;
 					// Now, we've confirmed it is a total ordering on an enum. Let's pre-bind the relations
 					TupleSet me = sol.query(true, sol.a2k(s), false), firstTS = factory.noneOf(2), lastTS = null, nextTS = factory.noneOf(3);
-					if (me.size()!=1 || me.arity()!=1) break;
+					if (me.size()!=1 || me.arity()!=1) 
+						break;
 					int n = sub.children().size();
 					for(PrimSig c: sub.children()) {
 						TupleSet TS = sol.query(true, sol.a2k(c), false);
-						if (TS.size()!=1 || TS.arity()!=1) { firstTS=factory.noneOf(2); nextTS=factory.noneOf(3); break; }
-						if (lastTS==null) { firstTS=me.product(TS); lastTS=TS; continue; }
+						if (TS.size()!=1 || TS.arity()!=1) { 
+							firstTS=factory.noneOf(2); 
+							nextTS=factory.noneOf(3); 
+							break; 
+						}
+						if (lastTS==null) { 
+							firstTS=me.product(TS); 
+							lastTS=TS; 
+							continue; 
+						}
 						nextTS.addAll(me.product(lastTS).product(TS));
 						lastTS=TS;
 					}
-					if (firstTS.size()!=(n>0 ? 1 : 0) || nextTS.size() != n-1) break;
+					if (firstTS.size()!=(n>0 ? 1 : 0) || nextTS.size() != n-1) 
+						break;
 					sol.addField(f1, sol.addRel(s.label+"."+f1.label, firstTS, firstTS));
 					sol.addField(f2, sol.addRel(s.label+"."+f2.label, nextTS, nextTS));
 					rep.bound("Field "+s.label+"."+f1.label+" == "+firstTS+"\n");
@@ -369,27 +389,32 @@ final class BoundsComputer {
 					//[VM] Here the type of relation is determined.
 					Type t = isOne ? Sig.UNIV.type().join(f.type()) : f.type();
 					TupleSet ub = factory.noneOf(t.arity());
-					List<List<String>> pList = sc.field2Pscope(f.label);
+					TupleSet lb = factory.noneOf(t.arity());
+					List<List<String>> pListL = sc.field2PscopeL(f.label);
+					List<List<String>> pListU = sc.field2PscopeU(f.label);
 
-					if( pList != null ){
+					if( pListU != null ){
 						//upper.add()
-						for(List<String> pl : pList)
+						for(List<String> pl : pListU)
 							ub.add( universe.factory().tuple( pl));
+						for(List<String> pl : pListL)
+							lb.add( universe.factory().tuple( pl));
+						
 						Relation r;
 						//TODO [VM}; Refactory is required to put all in different functions
 
 						if(sc.isExact(f.label)){
-							r = sol.addRel(s.label+"."+f.label, ub, ub);
+							r = sol.addRel(s.label+"."+f.label, lb, ub);
 							sol.addField(f, isOne ? sol.a2k(s).product(r) : r);
 						}
-						if(sc.hasUpper(f.label)){
+						if(sc.hasUpper(f.label) & sc.hasLower(f.label)){
+							r = sol.addRel(s.label+"."+f.label, lb, ub);
+							sol.addField(f, isOne ? sol.a2k(s).product(r) : r);							
+						}else if(sc.hasUpper(f.label)){
 							r = sol.addRel(s.label+"."+f.label, null, ub);
 							sol.addField(f, isOne ? sol.a2k(s).product(r) : r);
-						} 
-
-						if(sc.hasLower(f.label)){
+						}else if(sc.hasLower(f.label)){
 							TupleSet ub2 = factory.noneOf(t.arity());
-
 							for(List<PrimSig> p:t.fold()) {
 								TupleSet upper=null;
 								for(PrimSig b:p) {
@@ -402,11 +427,9 @@ final class BoundsComputer {
 								ub2.addAll(upper);
 							}
 							//[VM] TODO: change the ub to lower bound and ub2 to upper bound 
-							r = sol.addRel(s.label+"."+f.label, ub, ub2);
+							r = sol.addRel(s.label+"."+f.label, lb, ub2);
 							sol.addField(f, isOne ? sol.a2k(s).product(r) : r);
 						}
-
-
 					}else{
 						for(List<PrimSig> p:t.fold()) {
 							TupleSet upper=null;
@@ -417,10 +440,7 @@ final class BoundsComputer {
 									upper=tmp; 
 								else 
 									upper=upper.product(tmp);
-
-
 							}
-
 							ub.addAll(upper);
 						}
 						Relation r = sol.addRel(s.label+"."+f.label, null, ub);
