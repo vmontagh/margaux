@@ -346,6 +346,8 @@ public final class A4Solution {
         sigintBounds = old.sigintBounds;
         seqidxBounds = old.seqidxBounds;
         stringBounds = old.stringBounds;
+        exceededInts = old.exceededInts;
+        exceededInt = old.exceededInt;
         solver = old.solver;
         bounds = old.bounds;
         formulas = old.formulas;
