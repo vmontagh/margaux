@@ -12,16 +12,16 @@ one sig Knapsack {
 sig Item {	weight: one Int, value: one Int }
 
 inst contents1 {
-	6 Int,
+	4 sparse Int,
 	Item = apple + orange + pear + banana + peach,
-	weight = apple->2 + orange->4 + pear->2 +
-					banana->5 + peach->3,
-	value = apple->6 + orange->3 + pear->5 +
-					banana->4 + peach->3
+	weight = apple->20 + orange->40 + pear->20 +
+					banana->50 + peach->30,
+	value = apple->60 + orange->30 + pear->50 +
+					banana->40 + peach->30
 }
 
-pred knap1 { Knapsack.totalWeight < 10 }
+pred knap1 { Knapsack.totalWeight < 100 }
 
-objectives o { maximize Knapsack.totalValue }
+//objectives o { maximize Knapsack.totalValue }
 
-run knap1 for contents1 optimize o
+run knap1 for contents1 //optimize o
