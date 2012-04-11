@@ -103,4 +103,7 @@ public abstract class VisitQuery<T> extends VisitReturn<T> {
     @Override public T visit(Bounds x) throws Err {
         return null;
     }
+    
+    /** Visit an ObjBlock node.*/
+	public T visit(ObjBlock x) throws Err { return null; };
 }
