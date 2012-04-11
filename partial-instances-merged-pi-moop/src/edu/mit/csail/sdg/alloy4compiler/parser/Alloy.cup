@@ -53,6 +53,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprConstant;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprQt;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
+import edu.mit.csail.sdg.alloy4compiler.ast.ObjBlock;
+import edu.mit.csail.sdg.alloy4compiler.ast.ObjDecl;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 //[VM]
@@ -176,6 +178,8 @@ parser code {:
     ch.put(CompSym.LPAREN, "(");
     ch.put(CompSym.LT, "<");
     ch.put(CompSym.LTE, "<=");
+    ch.put(CompSym.MAXIMIZE, "maximize"); // ObjDecl
+    ch.put(CompSym.MINIMIZE, "minimize"); // ObjDecl
     ch.put(CompSym.MINUS, "-");
     ch.put(CompSym.MODULE, "module");
     ch.put(CompSym.NO2, "no");
@@ -191,6 +195,7 @@ parser code {:
     ch.put(CompSym.ONE2, "one");
     ch.put(CompSym.ONE, "one");
     ch.put(CompSym.OPEN, "open");
+    ch.put(CompSym.OPTIMIZE, "optimize"); // Command
     ch.put(CompSym.OR, "||");
     ch.put(CompSym.PART, "part");
     ch.put(CompSym.PLUS, "+");
@@ -336,7 +341,7 @@ action code {:
     private void nod(List<ExprVar> names) throws Err {
         if (names!=null) for(ExprVar n:names) if (n!=null && n.label.indexOf('$')>=0) throw new ErrorSyntax(n.pos, "The name cannot contain the '$' symbol.");
     }
-    private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c) throws Err {
+    private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c, ObjBlock ob) throws Err {
        if (n!=null) nod(n);
         int bitwidth=(-1), maxseq=(-1), overall=(-1), expects=(c==null ? -1 : c.num);
         //The integers inside the inst-block are grouped and added into the int scope.
@@ -359,9 +364,9 @@ action code {:
           
         }
         if (n!=null)
-          parser.alloymodule.addCommand(follow, p, n.label, o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse);
+          parser.alloymodule.addCommand(follow, p, n.label, o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse, ob);
         else
-          parser.alloymodule.addCommand(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse);
+          parser.alloymodule.addCommand(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse, ob);
     }
     private Expr t(Pos pos, Pos oldClosing, Expr left, Expr right, Pos close) throws Err {
       if (right instanceof ExprVar) {
@@ -378,7 +383,8 @@ action code {:
 :};
 
 //===========================================================================//
-
+// Terminals (in CAPS)
+//===========================================================================//
 terminal Pos ARROW;            //  ->
 terminal Pos ANY_ARROW_SOME;   //  ->some       // The filter allows whitespace/comment in these 15 "*->*" tokens
 terminal Pos ANY_ARROW_ONE;    //  ->one        // The filter allows whitespace/comment in these 15 "*->*" tokens
@@ -451,6 +457,8 @@ terminal Pos LONE;             //  lone      // The filter enables us to disambi
 terminal Pos LPAREN;           //  (
 terminal Pos LT;               //  <
 terminal Pos LTE;              //  <=     =<
+terminal Pos MAXIMIZE;		   // maximize
+terminal Pos MINIMIZE;		   // minimize
 terminal Pos MINUS;            //  -
 terminal Pos MODULE;           //  module
 terminal Pos MORE;           	//  moreover
@@ -464,9 +472,11 @@ terminal Pos NOTGTE;           //  !>=    not>=   // The filter allows whitespac
 terminal Pos NOTIN;            //  !in    notin   // The filter allows whitespace/comment in between
 terminal Pos NOTLT;            //  !<     not<    // The filter allows whitespace/comment in between
 terminal Pos NOTLTE;           //  !=<    not=<   // The filter allows whitespace/comment in between
+terminal Pos OBJECTIVES;	   // objectives
 terminal Pos ONE2;             //  one            // The filter enables us to disambiguate
 terminal Pos ONE;              //  one            // The filter enables us to disambiguate
 terminal Pos OPEN;             //  open
+terminal Pos OPTIMIZE;		   // optimize
 terminal Pos OR;               //  ||     or
 terminal Pos PART;             //  part   partition
 terminal Pos PLUS;             //  +
@@ -502,7 +512,8 @@ terminal ExprVar ID;
 terminal ExprConstant NUMBER, STR;
 
 //===========================================================================//
-
+// Non-terminals (in camel-case, first character is uppercase)
+//===========================================================================//
 nonterminal Expr                       AndExprA;
 nonterminal Expr                       AndExprB;
 nonterminal Expr                       BaseExpr;
@@ -594,9 +605,19 @@ nonterminal CommandScope				DeclsBb;
 nonterminal CommandScope				TypescopeB;
 nonterminal List<CommandScope>			DeclsB;
 
+// These non-terminals are introduced for the objectives block
+nonterminal ObjBlock 					ObjBlock;
+nonterminal ArrayList<ObjDecl>			ObjDecls;
+nonterminal	ObjDecl						ObjDecl;
 
 //===========================================================================//
+// Precedence and Associativity rules
+//===========================================================================//
+// none specified
 
+//===========================================================================//
+// PRODUCTION RULES
+//===========================================================================//
 File ::= Spec {: parser.alloymodule.doneParsing(); :};
 
 Spec ::= Spec MODULE:o Name:n                                                  {: nod(n);         parser.alloymodule.addModelName(o.merge(n.pos) , n.label , new ArrayList<ExprVar>()); :};
@@ -619,25 +640,26 @@ Spec ::= Spec Predicate       ;
 Spec ::= Spec Macro           ;
 Spec ::= Spec Command         ;
 Spec ::= Spec Bounds		  ;
+Spec ::= Spec ObjBlock;
 Spec ::= ;
 
 CommandPrefix ::= CHECK:c  {: RESULT = ExprVar.make(c, "c"); :};
 CommandPrefix ::= RUN:r    {: RESULT = ExprVar.make(r, "r"); :};
 
-Command ::=                 CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(false,o,x   ,null,e   ,s,c); :};
-Command ::=                 CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(false,o,null,null,e   ,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(true ,o,x   ,null,e   ,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(true ,o,null,null,e   ,s,c); :};
-Command ::=                 CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(false,o,x   ,n   ,null,s,c); :};
-Command ::=                 CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(false,o,null,n   ,null,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(true ,o,x   ,n   ,null,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(true ,o,null,n   ,null,s,c); :};
+Command ::=                 CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(false,o,x   ,null,e   ,s,c, null); :};
+Command ::=                 CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(false,o,null,null,e   ,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(true ,o,x   ,null,e   ,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(true ,o,null,null,e   ,s,c, null); :};
+Command ::=                 CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(false,o,x   ,n   ,null,s,c, null); :};
+Command ::=                 CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(false,o,null,n   ,null,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(true ,o,x   ,n   ,null,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(true ,o,null,n   ,null,s,c, null); :};
 
 //[VM]
 Command ::=                 CommandPrefix:o        Name:n 	FOR	Name:nb {: 
 	for(Bounds b: parser.alloymodule.getAllBounds()){
 		if(b.label.compareTo(nb.label) == 0){
-			c(false ,o,null,n   ,null,b.scope,null); 
+			c(false ,o,null,n   ,null,b.scope,null, null); 
 			}
 
 	}
@@ -1184,5 +1206,33 @@ BaseExpr ::= AT:o Name:x                            {: nod(x); RESULT = ExprVar.
 BaseExpr ::= Super:x                                {: RESULT = x;                                                        :};
 BaseExpr ::= LBRACE:o Declz:a SuperOrBar:b RBRACE:c {: RESULT = ExprQt.Op.COMPREHENSION.make(o, c, a, b);                 :};
 BaseExpr ::= LBRACE:o Declz:a              RBRACE:c {: RESULT = ExprQt.Op.COMPREHENSION.make(o, c, a, ExprConstant.TRUE); :};
+
+//===========================================================================//
+// [2012-03-16 s26stewa@uwaterloo.ca]
+// ObjBlock, ObjDecls, ObjDecl: Production rules for an objectives block
+//
+// Example:
+// objectives myGoals { maximize[Performance], minimize[Cost] }
+// where Performance and Cost are Alloy expressions.
+//===========================================================================//
+ObjBlock ::= OBJECTIVES Name:n LBRACE ObjDecls:d RBRACE
+{:
+	RESULT = new ObjBlock(n.label, d);
+	parser.alloymodule.addObjectives(RESULT);
+:};
+ObjDecls ::= ObjDecl:d							{: RESULT = new ArrayList<ObjDecl>(); RESULT.add(d); :};
+ObjDecls ::= ObjDecls:d1 COMMA ObjDecl:d2		{: d1.add(d2); RESULT = d1; :};
+ObjDecl ::= MAXIMIZE Expr:e						{: RESULT = new ObjDecl(true, e); :};
+ObjDecl ::= MINIMIZE Expr:e						{: RESULT = new ObjDecl(false, e); :};
+
+Command ::= CommandPrefix:o Name:n FOR Name:nb OPTIMIZE Name:nb2
+{: 
+	for(Bounds b: parser.alloymodule.getAllBounds()){
+		if(b.label.compareTo(nb.label) == 0){
+			c(false ,o,null,n   ,null,b.scope,null, parser.alloymodule.getObjectiveBlock(nb2.label)); 
+		}
+	}
+:};
+
 
 //=============================================================================
