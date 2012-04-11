@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BUILD_DATE=$(date +"%F %H:%M %Z")
-VERSION="4.2"
+VERSION="4.2.i"
 
 if [[ -z $KODKOD_HOME ]]
 then
@@ -12,8 +12,9 @@ function compile {
     version_file=src/edu/mit/csail/sdg/alloy4/Version.java
     cp -r $version_file $version_file.bak
     sed -i \
-      -e 's/public static String buildDate.*/public static String buildDate() { return "'"$BUILD_DATE"'"; }/' \
-      -e 's/public static String version.*/public static String version() { return "'"$VERSION"'"; }/' $version_file
+      -e 's/public static String buildDate.*/public static String buildDate() { return "'"$BUILD_DATE"'"; }/' $version_file
+      
+    sed -i -e 's/public static String version.*/public static String version() { return "'"$VERSION"'"; }/' $version_file
 
     echo "[cleaning up the bin folder...]"
     rm -rf bin/*
