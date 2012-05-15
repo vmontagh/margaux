@@ -2,6 +2,10 @@
 - now that + and - are no longer ambiguous, can we:
     - simplify the grammar
     - separate type checking from parsing more cleanly
+    	- cf, is type checker not doing some checks? dnj email.
+- while parsing there are a lot of actions for building data structures
+	- module system ?
+	- 
 - can the grammar be made more similar to the book?
 - why does Sig extend Expr?
 - the implementation of the visitor pattern seems unconventional
@@ -11,3 +15,48 @@
 - some methods are very large
 - ScopeComputer
 
+
+- AST hierarchy
+    - factor Browsable out of AST hierarchy
+    - Sig extends Expr 
+    - Bounds extends Expr
+    - Field extends ExprHasName extends Expr
+    - Expr is for both formulas and exprs?
+    - so many different Expr classes: should their construction be pushed to another phase?
+    - Type should not be in the AST package
+    
+- Big classes
+    - ScopeComputer 
+    - CompModule 2000
+    - A4Solution 1200
+    - SimpleGui
+    
+- is there some type checking in TranslateAlloyToKodkod ?
+
+- Four classes are involved in computing the set of atoms for each sig:
+    - CompModule
+    - CommandScope
+    - ScopeComputer
+    - BoundsComputer
+
+- Partial instance issues:
+    - don't want to type check all commands at the same time, just the command to run
+    - the appended facts for each partial instance get added to the AST, which is not
+      what we want. we want just the appended fact for the partial instance block that
+      we are going to run.
+      
+- alloy4 package is a grab-bag of miscelleny
+    -   
+
+- SimpleGUI is huge, handles multi-threading, etc.
+
+- Alloy.cup includes too much logic that goes beyond the basic syntax
+
+- refactoring grammar in Alloy.cup
+
+- Vajih refactoring:
+    - BoundsComputer
+    - ScopeComputer
+    - error reporting
+    
+- bitwidth required changes in a variety of surprising places
