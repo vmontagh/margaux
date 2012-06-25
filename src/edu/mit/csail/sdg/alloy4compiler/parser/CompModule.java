@@ -549,18 +549,24 @@ public final class CompModule extends Browsable implements Module {
 			return accessed;
 		}
 
+		@Override public Expr visit(ExprBadJoin x) throws Err {
+			return x;
+		}
+		
 		@Override
 		public Expr visit(ExprBinary x) throws Err {
-			System.out.println("In visit(ExprBinary x)->"+x);
-			Expr left = visitThis(x.left);
-			Expr right = visitThis(x.right);
-			return x.op.make(x.pos, x.closingBracket, left, right);
+			if (x.op==ExprBinary.Op.JOIN) {
+				return x;
+			}else{
+				Expr left = visitThis(x.left);
+				Expr right = visitThis(x.right);
+
+				return x.op.make(x.pos, x.closingBracket, left, right);
+			}
 		}
 
 		@Override
 		public Expr visit(ExprList x) throws Err {
-			System.out.println("In visit(ExprList x)->"+x);
-
 			TempList<Expr> temp = new TempList<Expr>(x.args.size());
 			for(int i=0; i<x.args.size(); i++) {
 				temp.add(visitThis(x.args.get(i)));
@@ -570,19 +576,17 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprCall x) throws Err {
-			System.out.println("In visit(ExprCall x)->"+x);
+			System.out.println("In call->"+x);
 			return x;
 		}
 
 		@Override
 		public Expr visit(ExprConstant x) throws Err {
-			System.out.println("In visit(ExprConstant x)->"+x);
 			return x;
 		}
 
 		@Override
 		public Expr visit(ExprITE x) throws Err {
-			System.out.println("In visit(ExprITE x)->"+x);
 			Expr f = visitThis(x.cond);
 			Expr a = visitThis(x.left);
 			Expr b = visitThis(x.right);
@@ -591,11 +595,10 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprLet x) throws Err {
-			System.out.println("In visit(ExprLet x)->"+x);
 			Expr right = visitThis(x.expr);
+			
 			ExprVar left = ExprVar.make(x.var.pos, x.var.label, right.type());
-			System.out.print(" and the defined varaible name is:->"+left.label);
-			//Put the defined name in the expression in the efined list.
+			//Put the defined name in the expression in the defined list.
 			defined.add(left.label);
 			Expr sub = visitThis(x.sub);
 			return ExprLet.make(x.pos, left, right, sub);
@@ -603,28 +606,25 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprQt x) throws Err {
-			System.out.println("In visit(ExprQt x)->"+x);
-			//Put the defined name in the expression in the efined list.
+			//Put the defined name in the expression in the defined list.
 			for(Decl decl:x.decls)
 				for(ExprHasName name:decl.names)
 					defined.add(name.label);
-
-			Expr sub = visitThis(x.sub);			
-
+			System.out.println("x.sub is->"+x.sub);
+			Expr sub = visitThis(x.sub);
+			System.out.println("Here is the expression->"+x.op.make(x.pos, x.closingBracket, x.decls, sub));
 			return x.op.make(x.pos, x.closingBracket, x.decls, sub);
 		}
 
 		@Override
 		public Expr visit(ExprUnary x) throws Err {
-			System.out.println("In visit(ExprUnary x)->"+x);
 			return x.op.make(x.pos, visitThis(x.sub));
 		}
 
 		@Override
 		public Expr visit(ExprVar x) throws Err {
-			System.out.println("In visit(ExprVar x)->"+x);
+			
 			String name = x.label;
-			System.out.println("defined is->"+defined);
 			if(newNames.containsKey(name) && !name.contains("@") && !defined.contains(name)){
 				name = newNames.get(name);
 				accessed.add(x.label);
@@ -632,6 +632,8 @@ public final class CompModule extends Browsable implements Module {
 			return ExprVar.make(x.pos, name, x.type());
 
 		}
+		
+		
 
 		@Override
 		public Expr visit(Sig x) throws Err {
@@ -1216,10 +1218,9 @@ public final class CompModule extends Browsable implements Module {
 	 * @throws Err
 	 */
 	Bounds addBounds(Pos pos, String name, List<CommandScope> commandScopes, Expr fact)throws Err{
-		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) );
+		Bounds obj = new Bounds(pos, name, new ArrayList<CommandScope>(commandScopes) ,fact);
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		//System.exit(-1);
-		Map<String, String> names = new HashMap<String, String>();
+		//Map<String, String> names = new HashMap<String, String>();
 		for(CommandScope cs: commandScopes){
 			List<Sig> parent = new ArrayList<Sig>();
 			parent.add(cs.sig);
@@ -1227,11 +1228,9 @@ public final class CompModule extends Browsable implements Module {
 				Sig sig = new PrimSig("this/"+atom.label+"~",(PrimSig)cs.sig/*,
 						AttrType.ABSTRACT.make(atom.pos)*/,AttrType.ONE.make(atom.pos),
 						SUBSIG.makenull(this.sigs.get(cs.sig.label).pos));
-
 				atoms.put(atom.label, sig);
 				//[VM] the mentioned atom name in the appended fact are replaced with mangled sig name
-
-				names.put(atom.label, atom.label+"~");
+			//	names.put(atom.label, atom.label+"~");
 			}
 
 			//[TODO] I need to decide to put appended fact to all sigs or any other entities. 
@@ -1240,20 +1239,39 @@ public final class CompModule extends Browsable implements Module {
 			System.out.println("cs.label->"+cs.sig.label);
 		}*/
 		}
-		if(fact != null){
+		/*if(fact != null){
 			BoundFactMangler bfm = new  BoundFactMangler(this, names, fact);
 			this.addFact(fact.pos, "fact~"+name, bfm.replace());
 			for(String nm:bfm.getAccessedAtoms()){
 				this.sigs.put(nm+"~", atoms.get(nm));
 			}
-		}
+		}*/
 		bnd2atoms.put(obj, atoms);
 		bounds.put(name, obj);
 
 		return obj;
 	}
 
+	public void attachBound(Bounds bounds) throws Err{
+		if(bounds.fact != null){
+			Map<String, String> names = new HashMap<String, String>();
+			for(String atom:bnd2atoms.get(bounds).keySet()){
+				names.put(atom, atom+"~");
+			}
+			BoundFactMangler bfm = new  BoundFactMangler(this, names, bounds.fact);
+			this.addFact(bounds.fact.pos, "fact~"+bounds.label, bfm.replace());
+			for(String nm:bfm.getAccessedAtoms()){
+				this.sigs.put(nm+"~", bnd2atoms.get(bounds).get(nm));
+			}
+		}/*else{
+			this.facts.
+		}*/
+	}
 
+/*	public boolean removeBoundsAppendedFact(){
+		
+	}
+	*/
 	Sig addSig(String name, ExprVar par, List<ExprVar> parents, List<Decl> fields, Expr fact, Attr... attributes) throws Err {
 		Sig obj;
 		Pos pos = Pos.UNKNOWN.merge(WHERE.find(attributes));

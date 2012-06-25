@@ -1,12 +1,19 @@
-sig A { a:Int}
+ sig A { a:Int}
+
+//abstract sig B extends A{}
 
 inst i{
 	2 sparse Int,
-	A = s+d,
-	a=s->-7+d->67	
+	A include s+d moreover e+r//,
+	
+	//a=s->-7+d->67	
 }
+{some s:A | s in A}
 
-pred p{}
+pred p{
+
+
+}
 
 run p for i
 
