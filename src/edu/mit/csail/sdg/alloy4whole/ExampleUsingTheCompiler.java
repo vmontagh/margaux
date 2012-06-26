@@ -97,7 +97,9 @@ public final class ExampleUsingTheCompiler {
             // Parse+typecheck the model
             System.out.println("=========== Parsing+Typechecking "+filename+" =============");
             Module world = CompUtil.parseEverything_fromFile(rep, null, filename);
-
+            
+            System.exit(0);
+            
             // Choose some default options for how you want to execute the commands
             A4Options options = new A4Options();
             options.solver = A4Options.SatSolver.MiniSatJNI;

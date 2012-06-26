@@ -3,7 +3,7 @@ sig A{}
 sig B{}
 
 sig W{
-	r:A,
+	r: set A,
 	v:B}
 
 pred constraintA[aA: set A, bB: set B]{

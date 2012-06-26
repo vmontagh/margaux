@@ -41,6 +41,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DirectedMultigraph;
+
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Env;
@@ -86,6 +89,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Attr.AttrType;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.SubsetSig;
+import edu.uw.ece.se.sa.Link;
+import edu.uw.ece.se.sa.SigsGraph;
 
 /** Mutable; this class represents an Alloy module; equals() uses object identity. */
 
@@ -188,7 +193,7 @@ public final class CompModule extends Browsable implements Module {
 
 	/** The list of (CommandName,Command,Expr) triples; NOTE: duplicate command names are allowed. */
 	private final List<Command> commands = new ArrayList<Command>();
-
+	
 	//============================================================================================================================//
 
 	/** Mutable; this class represents the current typechecking context. */
@@ -1064,6 +1069,11 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Do any post-parsing processig. */
 	void doneParsing() {
+		System.out.println("Post proccessing...");
+
+		System.out.println((new SigsGraph(old2fields,sigs)).printGrpah());
+		
+		
 		status = 3;
 		LinkedHashMap<String,Open> copy = new LinkedHashMap<String,Open>(opens);
 		opens.clear();
@@ -1300,7 +1310,6 @@ public final class CompModule extends Browsable implements Module {
 					newParents.add(new PrimSig(p.label, WHERE.make(p.pos)));
 			obj = new SubsetSig(full, newParents, attributes);
 		} else {
-			System.out.println("subsig->"+subsig);
 			attributes = Util.append(attributes, SUBSIG.makenull(subsig));
 			PrimSig newParent = (parents!=null && parents.size()>0) ? (new PrimSig(parents.get(0).label, WHERE.make(parents.get(0).pos))) : UNIV;
 			/*			for(Attr attr:attributes)
@@ -1308,11 +1317,11 @@ public final class CompModule extends Browsable implements Module {
 					System.out.println(attr.type);
 			 */			obj = new PrimSig(full, newParent, attributes);
 		}
-		System.out.println("name="+name+", obj="+obj);
 		for(Attr attr:obj.attributes)
 			if(attr != null)
 				System.out.println(attr);
 
+		
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
 		old2appendedfacts.put(obj, fact);
