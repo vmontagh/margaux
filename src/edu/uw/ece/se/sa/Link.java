@@ -7,6 +7,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 public abstract class Link extends DefaultEdge{
 	final private Sig left,right;
 	final private String label;
+	protected enum ARROW {normal,none,empty,vee};
 	
 	public Link(Sig left, Sig right, String label) {
 		this.left = left;
@@ -32,6 +33,6 @@ public abstract class Link extends DefaultEdge{
 				+ "]";
 	}
 	
-	
+	public abstract String arrow(); 
 	
 }

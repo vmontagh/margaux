@@ -23,6 +23,11 @@ public class BinaryRelation extends Link {
 				+ getLeft() + ", getRight()=" + getRight() + ", getLabel()="
 				+ getLabel() + "]";
 	}
+
+	@Override
+	public String arrow() {
+		return ARROW.vee.toString();
+	}
 	
 	
 }
