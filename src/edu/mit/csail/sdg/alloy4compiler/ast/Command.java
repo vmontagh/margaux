@@ -19,12 +19,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
 
 /** Immutable; reresents a "run" or "check" command.
  *
@@ -77,26 +80,67 @@ public final class Command extends Browsable {
     /** This stores a list of Sig whose scope shall be considered "exact", but we may or may not know what its scope is yet. */
     public final ConstList<Sig> additionalExactScopes;
 
-    /** Returns a human-readable string that summarizes this Run or Check command. */
-    @Override public final String toString() {
-        if (parent!=null) { Command p=parent; while(p.parent!=null) p=p.parent; return p.toString(); }
-        boolean first=true;
-        StringBuilder sb=new StringBuilder(check?"Check ":"Run ").append(label);
-        if (overall>=0 && (bitwidth>=0 || maxseq>=0 || scope.size()>0))
-            sb.append(" for ").append(overall).append(" but");
-        else if (overall>=0)
-            sb.append(" for ").append(overall);
-        else if (bitwidth>=0 || maxseq>=0 || scope.size()>0)
-            sb.append(" for");
-        if (bitwidth>=0) { sb.append(" ").append(bitwidth).append(" int"); first=false; }
-        if (maxseq>=0) { sb.append(first?" ":", ").append(maxseq).append(" seq"); first=false; }
-        for(CommandScope e:scope) {
-            sb.append(first?" ":", ").append(e);
-            first=false;
+    /** [s26stewa] 
+     * 	Here, we have a reference to an ObjBlock, which is an AST node for the
+     * 	objective block associated with the command.
+     *	TODO This may not be the best way of handling objectives. Please investigate. 
+     */
+    public final ObjBlock objectives;
+    
+    /**
+     * [s26stewa]
+     * Here, we have a reference to the set of objectives in the ObjBlock
+     * associated with this command. Note that this Object is not 
+     * instantiated until the TranslateToKodkod.execute_command() method is called.
+     * It represents the translation of the ObjBlock to the set of Objective
+     * objects that Moolloy is expecting.
+     * TODO This may not be the best way of handling objectives. Please investigate. 
+     */
+    public TreeSet<Objective> moolloyObjectives;
+    
+	/**
+	 * Returns a human-readable string that summarizes this Run or Check
+	 * command.
+	 */
+	@Override
+	public final String toString() {
+		if (parent != null) {
+			Command p = parent;
+			while (p.parent != null)
+				p = p.parent;
+			return p.toString();
+		}
+		boolean first = true;
+		StringBuilder sb = new StringBuilder(check ? "Check " : "Run ")
+				.append(label);
+		if (overall >= 0 && (bitwidth >= 0 || maxseq >= 0 || scope.size() > 0))
+			sb.append(" for ").append(overall).append(" but");
+		else if (overall >= 0)
+			sb.append(" for ").append(overall);
+		else if (bitwidth >= 0 || maxseq >= 0 || scope.size() > 0)
+			sb.append(" for");
+		if (bitwidth >= 0) {
+			sb.append(" ").append(bitwidth).append(" int");
+			first = false;
+		}
+		if (maxseq >= 0) {
+			sb.append(first ? " " : ", ").append(maxseq).append(" seq");
+			first = false;
+		}
+		for (CommandScope e : scope) {
+			sb.append(first ? " " : ", ").append(e);
+			first = false;
+		}
+		if (expects >= 0)
+			sb.append(" expect ").append(expects);
+		
+        // [s26stewa] If applicable, append the name of the objectives block
+        if (this.objectives != null) {
+        	sb.append(" optimize ").append(this.objectives.name);
         }
-        if (expects>=0) sb.append(" expect ").append(expects);
-        return sb.toString();
-    }
+		
+		return sb.toString();
+	}
 
     /** Constructs a new Command object.
      *
@@ -107,7 +151,7 @@ public final class Command extends Browsable {
      * @param formula - the formula that must be satisfied by this command
      */
     public Command(boolean check, int overall, int bitwidth, int maxseq, Expr formula) throws ErrorSyntax {
-        this(null, "", check, overall, bitwidth, maxseq, -1, null, null, formula, null,false);
+        this(null, "", check, overall, bitwidth, maxseq, -1, null, null, formula, null,false, null);
     }
 
     /** Constructs a new Command object.
@@ -123,7 +167,7 @@ public final class Command extends Browsable {
      * @param additionalExactSig - a list of sigs whose scope shall be considered exact though we may or may not know what the scope is yet
      * @param formula - the formula that must be satisfied by this command
      */
-    public Command(Pos pos, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, Expr formula, Command parent,boolean isSparse) {
+    public Command(Pos pos, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, Expr formula, Command parent,boolean isSparse, ObjBlock ob) {
         if (pos==null) pos = Pos.UNKNOWN;
         this.formula = formula;
         this.pos = pos;
@@ -138,21 +182,22 @@ public final class Command extends Browsable {
         this.additionalExactScopes = ConstList.make(additionalExactSig);
         this.parent = parent;
         this.isSparse = isSparse;
+        this.objectives = ob;
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different formula. */
     public Command change(Expr newFormula) {
-        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, newFormula, parent,isSparse);
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, newFormula, parent,isSparse, objectives);
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different scope. */
     public Command change(ConstList<CommandScope> scope) {
-        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, formula, parent,isSparse);
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, formula, parent,isSparse, objectives);
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different list of "additional exact sigs". */
     public Command change(Sig... additionalExactScopes) {
-        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, Util.asList(additionalExactScopes), formula, parent,isSparse);
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, Util.asList(additionalExactScopes), formula, parent,isSparse, objectives);
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different scope for the given sig. */

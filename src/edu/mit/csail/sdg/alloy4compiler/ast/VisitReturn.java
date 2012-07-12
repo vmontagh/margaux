@@ -72,4 +72,9 @@ public abstract class VisitReturn<T> {
     
     /** Visit a Bounds node.*/
 	public abstract T visit(Bounds bounds) throws Err;
+
+	public T visit(ObjBlock objBlock) throws Err {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

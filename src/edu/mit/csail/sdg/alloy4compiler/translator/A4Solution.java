@@ -996,12 +996,14 @@ public final class A4Solution {
             rep.resultCNF(out);
             return null;
          }
-        if (solver.options().solver()==SATFactory.ZChaffMincost || !solver.options().solver().incremental()) {
-           if (sol==null) sol = solver.solve(fgoal, bounds);
-        } else {
-           kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
-           if (sol==null) sol = kEnumerator.next();
-        }
+		if (solver.options().solver() == SATFactory.ZChaffMincost || !solver.options().solver().incremental()) {
+			if (sol == null)
+				sol = solver.solve(fgoal, bounds);
+		} else {
+			kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds, cmd.moolloyObjectives));
+			if (sol == null)
+				sol = kEnumerator.next();
+		}
         if (!solved[0]) rep.solve(0, 0, 0);
         final Instance inst = sol.instance();
         // To ensure no more output during SolutionEnumeration
