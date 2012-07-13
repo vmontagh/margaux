@@ -35,6 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import kodkod.ast.BinaryExpression;
@@ -92,6 +93,9 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MeasuredSolution;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MetricPoint;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
@@ -210,6 +214,13 @@ public final class A4Solution {
     boolean exceededInt = false;
     
     List<Integer> exceededInts = new ArrayList<Integer>();
+    
+    /** s26stewa -- I made it so that "sol" is now an instance variable of A4Solution,
+     * which is a Kodkod solution object.  The programmer can access this by calling
+     * getKodkodSolution(), and is also used by the getMeasuredSolution() method that
+     * Additionally, solOptions are the Kodkod options used to obtain the solution. **/
+    private Solution sol;
+    private Options solOptions;
     
     //===================================================================================================//
 
@@ -711,6 +722,11 @@ public final class A4Solution {
     /** Caches a constant pair of Type.EMPTY and Pos.UNKNOWN */
     private Pair<Type,Pos> cachedPAIR = null;
 
+	// s26stewa -- this makes the moolloy objectives accessible to
+	// other methods after getting the next solution. This is
+	// is for the getMeasuredSolution() method
+	private TreeSet<Objective> moolloyObjectives;
+
     /** Maps a Kodkod variable to an Alloy Type and Alloy Pos (if no association exists, it will return (Type.EMPTY , Pos.UNKNOWN) */
     Pair<Type,Pos> kv2typepos(Variable var) {
        Pair<Type,Pos> ans=decl2type.get(var);
@@ -949,7 +965,7 @@ public final class A4Solution {
         Formula fgoal = Formula.and(formulas);
         rep.debug("Generating the solution...\n");
         kEnumerator = null;
-        Solution sol = null;
+        sol = null;
         final Reporter oldReporter = solver.options().reporter();
         final boolean solved[] = new boolean[]{true};
         solver.options().setReporter(new AbstractReporter() { // Set up a reporter to catch the type+pos of skolems
@@ -1000,10 +1016,15 @@ public final class A4Solution {
 			if (sol == null)
 				sol = solver.solve(fgoal, bounds);
 		} else {
+			// s26stewa -- This next line makes it so that the moolloy objectives are accessible to
+			// other methods after getting the next solution. This is, admittedly, a bit of a hack,
+			// which helps me to implement the getMeasuredSolution() method
+			this.moolloyObjectives = cmd.moolloyObjectives;
 			kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds, cmd.moolloyObjectives));
 			if (sol == null)
 				sol = kEnumerator.next();
 		}
+		this.solOptions = solver.options(); // [s26stewa] added primarily for use in getMeasuredSolution()
         if (!solved[0]) rep.solve(0, 0, 0);
         final Instance inst = sol.instance();
         // To ensure no more output during SolutionEnumeration
@@ -1193,5 +1214,29 @@ public final class A4Solution {
     public void writeXML(A4Reporter rep, PrintWriter writer, Iterable<Func> macros, Map<String,String> sourceFiles) throws Err {
         A4SolutionWriter.writeInstance(rep, this, writer, macros, sourceFiles);
         if (writer.checkError()) throw new ErrorFatal("Error writing the solution XML file.");
+    }
+    
+    /** [s26stewa]
+     *	This method returns the Kodkod solution that corresponds with this instance
+     *	of A4Solution. The user should check if the returned Kodkod solution is 
+     *	null or not, which could indicate that the solve() method has not yet
+     *	been called.
+     */
+    public Solution getKodkodSolution() {
+    	return sol;
+    }
+    
+    /** [s26stewa]
+     * This method has been added so that, when solving a multi-objective optimization
+     * problem, the programmer can access the computed metric points of the solution.
+     * To achieve this, there are two classes in the Moolloy project that are needed:
+     * MeasuredPoint and MeasuredSolution. 
+     */
+    public MeasuredSolution getMeasuredSolution() {
+    	if (this.sol == null || this.moolloyObjectives == null || this.solOptions == null)
+    		return null;
+    	MetricPoint mp = MetricPoint.measure(this.sol, this.moolloyObjectives, this.solOptions);
+    	MeasuredSolution ms = new MeasuredSolution(this.sol, mp);
+    	return ms;
     }
 }

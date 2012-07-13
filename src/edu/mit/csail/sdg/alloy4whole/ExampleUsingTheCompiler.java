@@ -30,6 +30,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MeasuredSolution;
 
 /** This class demonstrates how to access Alloy4 via the compiler methods. */
 
@@ -106,6 +107,11 @@ public final class ExampleUsingTheCompiler {
                 // Execute the command
                 System.out.println("============ Command "+command+": ============");
                 A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+
+                MeasuredSolution ms = ans.getMeasuredSolution();
+                if (ms != null)
+                	System.out.println("<MOOP>\n" + ms.toString() + "\n</MOOP>\n");
+                
                 // Print the outcome
                 System.out.println("------------------ans->---------\n"+ans);
                 // If satisfiable...
