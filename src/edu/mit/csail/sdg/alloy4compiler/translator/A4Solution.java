@@ -1085,6 +1085,13 @@ public final class A4Solution {
     /** If nonnull, it caches the result of calling "next()". */
     private A4Solution nextCache = null;
 
+    public boolean hasNext() {
+       // TODO: is this eval condition necessary/good? copied from guard in next()
+       if (eval == null) return false;
+       return kEnumerator.hasNext();
+
+    }
+
     /** If this solution is UNSAT, return itself; else return the next solution (which could be SAT or UNSAT).
      * @throws ErrorAPI if the solver was not an incremental solver
      */
