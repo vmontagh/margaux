@@ -1,0 +1,23 @@
+My list to meet conference deadline:
+
+Priority between 1 and 5. 5 is the most and 1 is the least important priorities.
+
+New Features:
+	-> extend keyword for inst-block (5)
+	->GUI and PI
+		-> show atoms in evaluator (4)
+		->show inst-block in parse tree (5)
+	->Export an instance into inst-block (4)
+	->Easier to write the atoms (3)
+		->sing name in RHS (3)
+		->Factoring and distributing (4)
+
+Incomplete Features:
+	->Error reporting (5)
+	->Access inst-block from modules (5)
+	->Refactoring to reorganize the classes supporting inst-block: CompModule, CommandScope, ScopeComputer, and BoundsComputer. (2)
+	->cleaning the JavaCup file (2)
+	->Test (4)
+
+Bugs:
+	->Multiple run command and appended fact (5)

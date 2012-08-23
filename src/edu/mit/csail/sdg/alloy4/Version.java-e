@@ -37,6 +37,6 @@ public final class Version {
    public static String version() { return ""; }
 
    /** Returns the build date. */
-   public static String buildDate() { return "unknown"; }
+   public static String buildDate() { return "2012-07-15 10:45 EDT"; }
    
 }
