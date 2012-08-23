@@ -18,6 +18,8 @@ public class Bounds extends Expr {
     public final ArrayList<CommandScope> scope;
     
     public final ArrayList<ExprVar> funcs;
+    
+    public final Expr fact;
 	
     public Bounds(String label){
         super(Pos.UNKNOWN, null);
@@ -25,6 +27,7 @@ public class Bounds extends Expr {
         //scope = ConstList.make();
         scope = new ArrayList<CommandScope>();
         funcs = new ArrayList<ExprVar>();
+        fact = null;
 
         
     }
@@ -35,16 +38,26 @@ public class Bounds extends Expr {
         //this.scope = ConstList.make(list);
         this.scope = new ArrayList<CommandScope>(list);
         funcs = new ArrayList<ExprVar>();
-
+        fact = null;
     }
 
+    public Bounds(Pos pos, String label, List<CommandScope> list, Expr fact){
+    	super( Pos.UNKNOWN,Type.FORMULA);
+        this.label = label;
+        //this.scope = ConstList.make(list);
+        this.scope = new ArrayList<CommandScope>(list);
+        funcs = new ArrayList<ExprVar>();
+        this.fact = fact;
+    }
+
+    
     public Bounds(Pos pos, String label, List<CommandScope> list, List<ExprVar> funcs /*Iterable<CommandScope> list*/){
     	super( Pos.UNKNOWN,Type.FORMULA);
         this.label = label;
         //this.scope = ConstList.make(list);
         this.scope = new ArrayList<CommandScope>(list);
         this.funcs = new ArrayList<ExprVar>(funcs);
-
+        fact = null;
     }
 
     
@@ -82,5 +95,13 @@ public class Bounds extends Expr {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public String toString() {
+		return "Bounds [label=" + label + ", scope=" + scope + ", funcs="
+				+ funcs + ", fact=" + fact + "]";
+	}
+	
+	
     
 }

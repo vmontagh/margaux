@@ -402,9 +402,11 @@ final class SimpleReporter extends A4Reporter {
                    "some equivalent solutions may have been omitted."); return;}
                 String toString = sol.toString();
                 synchronized(SimpleReporter.class) {
-                    if (!latestKodkods.add(toString)) if (tries<100) { tries++; continue; }
+                    if (!latestKodkods.add(toString)) 
+                    	if (tries<100) { tries++; continue; }
                     // The counter is needed to avoid a Kodkod bug where sometimes we might repeat the same solution infinitely number of times; this at least allows the user to keep going
-                    writeXML(null, mod, filename, sol, latestKodkodSRC); latestKodkod=sol;
+                    writeXML(null, mod, filename, sol, latestKodkodSRC); 
+                    latestKodkod=sol;
                 }
                 cb("declare", filename);
                 return;
