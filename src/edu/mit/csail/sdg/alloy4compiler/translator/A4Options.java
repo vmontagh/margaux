@@ -176,8 +176,14 @@ public final class A4Options implements Serializable {
      *  that don't cause any overflows. */
     public boolean noOverflow = false;
 
-    /** This option constrols how deep we unroll loops and unroll recursive predicate/function/macros (negative means it's disallowed) */
+    /** This option controls how deep we unroll loops and unroll recursive predicate/function/macros (negative means it's disallowed) */
     public int unrolls = (-1);
+    
+    /** This option controls when using Moolloy whether all the solutions for a given pareto point are computed or not (e.g GIA magnifying glass option). Defaults to True */
+    public boolean MoolloyListAllSolutionsForParertoPoint = true ;
+
+    /** This option controls when using Moolloy whether an adaptable minimum improvement at each step is used (it grows and reduces exponentially) */
+	public Boolean MoolloyUseAdaptableMinimumImprovement;
 
     /** This method makes a copy of this Options object. */
     public A4Options dup() {
@@ -193,6 +199,8 @@ public final class A4Options implements Serializable {
         x.recordKodkod = recordKodkod;
         x.noOverflow = noOverflow;
         x.coreGranularity = coreGranularity;
+        x.MoolloyListAllSolutionsForParertoPoint = MoolloyListAllSolutionsForParertoPoint;
+        x.MoolloyUseAdaptableMinimumImprovement = MoolloyUseAdaptableMinimumImprovement;
         return x;
     }
 }
