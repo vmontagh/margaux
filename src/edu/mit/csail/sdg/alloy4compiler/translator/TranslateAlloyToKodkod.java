@@ -17,6 +17,7 @@ package edu.mit.csail.sdg.alloy4compiler.translator;
 
 import static edu.mit.csail.sdg.alloy4.Util.tail;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.UNIV;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.evaluation.GIAStepCounter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -119,6 +120,10 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     /** The maximum allowed loop unrolling and recursion. */
     private final int unrolls;
 
+    
+    /*  Object that TranslatesAlloyToKodkod */
+    private static TranslateAlloyToKodkod tr = null;
+    
     /** Construct a translator based on the given list of sigs and the given command.
      * @param rep - if nonnull, it's the reporter that will receive diagnostics and progress reports
      * @param opt - the solving options (must not be null)
@@ -405,8 +410,9 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
      * and you can call X2.next() to get the next satisfying solution X3... until you get an unsatisfying solution.
      */
     public static A4Solution execute_command (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt) throws Err {
-    	if (rep==null) rep = A4Reporter.NOP;
-        TranslateAlloyToKodkod tr = null;
+    	if (rep==null) 
+    		rep = A4Reporter.NOP;
+    	tr = null;
         try {
             if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
@@ -1083,4 +1089,9 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         if (ans instanceof Formula) k2pos((Formula)ans, x);
         return ans;
     }
+    
+    public static GIAStepCounter getStatistics(){
+    	return tr.frame.getStatistics();
+    }
+    
 }

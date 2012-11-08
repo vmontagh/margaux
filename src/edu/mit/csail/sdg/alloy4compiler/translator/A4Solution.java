@@ -93,6 +93,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.evaluation.GIAStepCounter;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
@@ -1256,5 +1257,9 @@ public final class A4Solution {
     public void writeXML(A4Reporter rep, PrintWriter writer, Iterable<Func> macros, Map<String,String> sourceFiles) throws Err {
         A4SolutionWriter.writeInstance(rep, this, writer, macros, sourceFiles);
         if (writer.checkError()) throw new ErrorFatal("Error writing the solution XML file.");
+    }
+    
+    public GIAStepCounter getStatistics(){
+    	return this.solver.getStatistics();
     }
 }
