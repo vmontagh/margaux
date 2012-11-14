@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package edu.mit.csail.sdg.alloy4whole;
+package edu.mit.csail.sdg.alloy4whole.multiobjective;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -40,11 +40,7 @@ import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MeasuredSolution;
 
 public final class RanMultiobjectiveModel {
 
-	private static final String SingleSolutionPerParetoPointArg = "--SingleSolutionPerParetoPoint";
-	private static final String SingleSolutionPerParetoPointArg_short = "-s";
-	private static final String ListOnlyOneSolutionArg = "--ListOnlyOneSoultion";
-	private static final String LogRunningTimesArg = "--LogRunningTimesArg=";
-	private static final String NoAdaptableMinimumImprovement = "--NoAdaptableImprovement";
+
 	/*
      * Execute every command in every file.
      *
@@ -72,28 +68,7 @@ public final class RanMultiobjectiveModel {
     	
     	System.out.println( loadLibrary("minisat"));
 
-    	/* Start Extracting Arguments */
-    	Boolean ListAllSolutionsForAParetoPoint = true;
-    	Boolean ListOnlyOneSolution = false;
-    	Boolean LogRunningTimes = false;
-    	Boolean UseAdaptableMinimumImprovement = true;
-    	String LogFilename = "";
-    	
-    	for (int i = 0;i < (args.length-1);i++){
-    		System.out.println("Checking arg " + args[i]);
-    		if  (args[i].equals(SingleSolutionPerParetoPointArg) || args[i].equals(SingleSolutionPerParetoPointArg_short)){
-    			ListAllSolutionsForAParetoPoint = false;
-    		}else if (args[i].startsWith(LogRunningTimesArg)) {
-    			System.out.println("Matched " + args[i]);
-    			LogRunningTimes = true;
-    			LogFilename = args[i].substring(LogRunningTimesArg.length());    			
-    		} else if (args[i].equals(ListOnlyOneSolutionArg)){    			
-    			ListOnlyOneSolution = true;    			    			
-    		} else if (args[i].equals(NoAdaptableMinimumImprovement)){
-    			UseAdaptableMinimumImprovement = false;    			
-    		}
-    	}    	
-    	String filename = args[args.length-1];    	
+    	MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
     	/* Finished Extracting Arguments */
     	
         A4Reporter rep = new A4Reporter() {
@@ -122,18 +97,18 @@ public final class RanMultiobjectiveModel {
         };
         
 
-    	Module world = CompUtil.parseEverything_fromFile(rep, null, filename);
+    	Module world = CompUtil.parseEverything_fromFile(rep, null, parsedParameters.getFilename());
 
         // Choose some default options for how you want to execute the commands
         A4Options options = new A4Options();
         options.solver = A4Options.SatSolver.MiniSatJNI;
-        options.MoolloyListAllSolutionsForParertoPoint = ListAllSolutionsForAParetoPoint;
-        options.MoolloyUseAdaptableMinimumImprovement  = UseAdaptableMinimumImprovement;
+        options.MoolloyListAllSolutionsForParertoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
+        options.MoolloyUseAdaptableMinimumImprovement  = parsedParameters.getUseAdaptableMinimumImprovement();
         
         
         FileWriter fp_logFile = null; 
-        if ( LogRunningTimes ){        	
-        	fp_logFile  = new FileWriter(LogFilename, true);        	
+        if ( parsedParameters.getLogRunningTimes() ){        	
+        	fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);        	
         }
 
         
@@ -154,7 +129,7 @@ public final class RanMultiobjectiveModel {
               
             System.out.println("Finished Writing ans");
             try {
-            	if (!ListOnlyOneSolution){
+            	if (!parsedParameters.getListOnlyOneSolution()){
             		System.out.println("To List all Solutions");
 	                A4Solution ans_next = ans.next();
 	                while(ans_next.satisfiable()){            		
@@ -171,12 +146,12 @@ public final class RanMultiobjectiveModel {
             long end_time = System.currentTimeMillis();
             
             long time_taken = end_time - start_time  ;
-            String LogLine = filename + ",";
-            LogLine += ListAllSolutionsForAParetoPoint == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
+            String LogLine = parsedParameters.getFilename() + ",";
+            LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
             LogLine += "," + time_taken;
             LogLine +=  "," + TranslateAlloyToKodkod.getStatistics().toString() +  "\n";
 
-            if ( LogRunningTimes ){    
+            if ( parsedParameters.getLogRunningTimes() ){    
             	System.out.println("Writing LogLine");
                 fp_logFile.write(LogLine);            
                 fp_logFile.close();
@@ -303,10 +278,7 @@ public final class RanMultiobjectiveModel {
     }
     
     private static String alloyHome = null;
-    private static final String fs = System.getProperty("file.separator");
-   
-
-
+    private static final String fs = System.getProperty("file.separator");	
     
-
 }
+
