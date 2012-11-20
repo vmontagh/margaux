@@ -6,15 +6,20 @@ public class MultiObjectiveArguments {
 	static final String ListOnlyOneSolutionArg = "--ListOnlyOneSoultion";
 	static final String LogRunningTimesArg = "--LogRunningTimesArg=";
 	static final String NoAdaptableMinimumImprovement = "--NoAdaptableImprovement";
-
+	static final String MinMaxBoundsForGoals = "--MinMaxBoundsForGoals=";
+	
 	Boolean ListAllSolutionsForAParetoPoint = true;
 
 
 	private Boolean ListOnlyOneSolution = false;
 	private Boolean LogRunningTimes = false;
+	private Boolean UseMinMaxBoundsForGoals = false;
 	private Boolean UseAdaptableMinimumImprovement = true;
+
+	
 	private String LogFilename = "";
 	private String filename;
+	private String MinMaxBoundsContent = "";
 	
 	public static MultiObjectiveArguments parseCommandLineArguments(final String args[]){
 		MultiObjectiveArguments  parsedParams =  new MultiObjectiveArguments();
@@ -30,7 +35,11 @@ public class MultiObjectiveArguments {
     			parsedParams.ListOnlyOneSolution = true;    			    			
     		} else if (args[i].equals(MultiObjectiveArguments.NoAdaptableMinimumImprovement)){
     			parsedParams.UseAdaptableMinimumImprovement = false;    			
+    		} else if (args[i].equals(MultiObjectiveArguments.MinMaxBoundsForGoals)){
+    			parsedParams.UseMinMaxBoundsForGoals = true;
+    			parsedParams.MinMaxBoundsContent =  args[i].substring(MultiObjectiveArguments.MinMaxBoundsForGoals.length());
     		}
+    		
     	}    	
     	parsedParams.filename = args[args.length-1];    
     	
@@ -54,6 +63,10 @@ public class MultiObjectiveArguments {
 		return UseAdaptableMinimumImprovement;
 	}
 
+	public Boolean getUseMinMaxBoundsForGoals() {
+		return UseMinMaxBoundsForGoals;
+	}
+	
 	public String getLogFilename() {
 		return LogFilename;
 	}

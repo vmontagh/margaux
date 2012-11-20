@@ -76,21 +76,21 @@ public final class RanMultiobjectiveModel {
 
             // For example, here we choose to display each "warning" by printing it to System.out
             @Override public void warning(ErrorWarning msg) {
-                System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
-                System.out.flush();
+                //System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
+                //System.out.flush();
             }
             @Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
-                System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
-                lastTime = System.currentTimeMillis();
-                System.out.flush();
+                //System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
+                //lastTime = System.currentTimeMillis();
+                //System.out.flush();
 
             }
             @Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
-                lastTime = System.currentTimeMillis();
-                System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
-                + (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
-                + " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
-                System.out.flush();
+                //lastTime = System.currentTimeMillis();
+                //System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
+                //+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
+                //+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
+                //System.out.flush();
 
             }
             
@@ -124,10 +124,8 @@ public final class RanMultiobjectiveModel {
             int solution_number = 1;
             
             
-            System.out.println(ans);
             ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
-              
-            System.out.println("Finished Writing ans");
+            
             try {
             	if (!parsedParameters.getListOnlyOneSolution()){
             		System.out.println("To List all Solutions");
@@ -135,7 +133,6 @@ public final class RanMultiobjectiveModel {
 	                while(ans_next.satisfiable()){            		
 	            		solution_number++;            		
 	            		ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
-	            		System.out.println(ans_next);
 	            		ans_next = ans_next.next();            		
 	            	}   
             	}

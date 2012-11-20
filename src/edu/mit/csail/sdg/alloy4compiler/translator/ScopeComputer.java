@@ -253,7 +253,7 @@ final class ScopeComputer {
 	//[VM]
 	/** Sets the upper-bound scope for a sig; returns true iff the sig's scope is changed by this call. */
 	private void sig2PscopeU(Sig sig, List<String> newValue) throws Err {
-		System.out.println("sig->"+sig+", newValue->"+newValue+", type->"+sig.getClass());
+//		System.out.println("sig->"+sig+", newValue->"+newValue+", type->"+sig.getClass());
 		if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
 		if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
 		if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
@@ -729,7 +729,7 @@ final class ScopeComputer {
 		boolean shouldUseInts = areIntsUsed(sigs);
 		// Process each sig listed in the command
 		for(CommandScope entry:cmd.scope) {
-			System.out.println("entry->"+entry);
+			//System.out.println("entry->"+entry);
 			Sig s = entry.sig;
 			int scope = entry.startingScope;
 			boolean exact = entry.isExact;
@@ -808,8 +808,8 @@ final class ScopeComputer {
 						i++;
 					}
 					listU.addAll(0, listL);
-					System.out.println("listU->"+listU);
-					System.out.println("listL->"+listL);
+					//System.out.println("listU->"+listU);
+					//System.out.println("listL->"+listL);
 					
 					//if(exact){
 					//Upper-bound and lower-bound are the same.
@@ -840,7 +840,7 @@ final class ScopeComputer {
 
 			if(upper) makeUpper(cmd.pos, s);
 			
-			System.out.println("exact->"+exact+", lower->"+lower+", upper->"+upper);
+			//System.out.println("exact->"+exact+", lower->"+lower+", upper->"+upper);
 		}
 		//[VM] if in "value = a + b + c", the value should not be "one" or ...
 		// Force "one" sigs to be exactly one, and "lone" to be at most one
