@@ -93,6 +93,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.evaluation.GIAStepCounter;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
@@ -1262,4 +1263,8 @@ public final class A4Solution {
     public GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
     	return this.solver.getGIACountCallsOnEachMovementToParetoFront();
     }
+
+	public Stats getStats() {
+		return this.solver.getStats();
+	}
 }

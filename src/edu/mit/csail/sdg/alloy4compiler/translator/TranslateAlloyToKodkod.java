@@ -78,6 +78,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 
@@ -1090,6 +1091,10 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     
     public static GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
     	return tr.frame.getGIACountCallsOnEachMovementToParetoFront();
+    }
+    
+    public static Stats getStats(){
+    	return tr.frame.getStats();
     }
     
 }

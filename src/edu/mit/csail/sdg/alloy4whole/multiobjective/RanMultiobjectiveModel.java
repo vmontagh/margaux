@@ -35,6 +35,8 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MeasuredSolution;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.StatKey;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
 
 /** This class demonstrates how to access Alloy4 via the compiler methods. */
 
@@ -146,10 +148,49 @@ public final class RanMultiobjectiveModel {
             String LogLine = parsedParameters.getFilename() + ",";
             LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
             LogLine += "," + time_taken;
-            LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() +  "\n";
+            LogLine += "," + "SummaryStatsNext";
 
-            if ( parsedParameters.getLogRunningTimes() ){    
-            	System.out.println("Writing LogLine");
+            Stats SummaryStatistics  = TranslateAlloyToKodkod.getStats();
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_CALL);
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_CALL) ;
+
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME);
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME);
+            
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_SOLVING);
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_SOLVING); 
+            		
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_TRANSLATION);
+            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_TRANSLATION); 
+
+            
+            LogLine += "," + "GiaCountCallsOnEachMovementToParetoFront";            
+            LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() + "\n";;
+
+            
+            String LogHeaderLine = "";
+
+            LogHeaderLine += "Filename";
+            LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
+            LogHeaderLine += "," + "Total Time(ms)";
+            LogHeaderLine += "," + "SummaryStatsNext";
+           
+            LogHeaderLine += "," + "Total Time of Regular Sat Calls";
+            LogHeaderLine += "," + "Total Time of Regular Unsat Calls";
+
+            LogHeaderLine += "," + "Total Time Solving Regular Sat Calls";
+            LogHeaderLine += "," + "Total Time Solving Regular Unsat Calls"; 
+            
+            LogHeaderLine += "," + "Total Time Translating Regular Sat Calls";
+            LogHeaderLine += "," + "Total Time Translating Regular Unsat Calls"; 
+
+            LogHeaderLine += "," + "GiaCountCallsOnEachMovementToParetoFront" + "\n" ;
+            
+            if ( parsedParameters.getLogRunningTimes()  == true){    
+            	System.out.println("Writing LogLine");            	
+            	if (parsedParameters.getWriteHeaderLogfile()){            		
+                    fp_logFile.write(LogHeaderLine);            		
+            	}
                 fp_logFile.write(LogLine);            
                 fp_logFile.close();
             }

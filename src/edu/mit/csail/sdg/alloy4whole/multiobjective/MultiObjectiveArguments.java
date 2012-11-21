@@ -7,6 +7,7 @@ public class MultiObjectiveArguments {
 	static final String LogRunningTimesArg = "--LogRunningTimesArg=";
 	static final String NoAdaptableMinimumImprovement = "--NoAdaptableImprovement";
 	static final String MinMaxBoundsForGoals = "--MinMaxBoundsForGoals=";
+	static final String LogPrintHeadersArg = "--LogPrintHeaders";
 	
 	Boolean ListAllSolutionsForAParetoPoint = true;
 
@@ -15,7 +16,7 @@ public class MultiObjectiveArguments {
 	private Boolean LogRunningTimes = false;
 	private Boolean UseMinMaxBoundsForGoals = false;
 	private Boolean UseAdaptableMinimumImprovement = true;
-
+	private Boolean LogPrintHeaders = false;
 	
 	private String LogFilename = "";
 	private String filename;
@@ -38,6 +39,8 @@ public class MultiObjectiveArguments {
     		} else if (args[i].equals(MultiObjectiveArguments.MinMaxBoundsForGoals)){
     			parsedParams.UseMinMaxBoundsForGoals = true;
     			parsedParams.MinMaxBoundsContent =  args[i].substring(MultiObjectiveArguments.MinMaxBoundsForGoals.length());
+    		} else if (args[i].equals(MultiObjectiveArguments.LogPrintHeadersArg)){
+    			parsedParams.LogPrintHeaders = true;
     		}
     		
     	}    	
@@ -73,5 +76,9 @@ public class MultiObjectiveArguments {
 
 	public String getFilename() {
 		return filename;
+	}
+
+	public boolean getWriteHeaderLogfile() {
+		return this.LogPrintHeaders;
 	}	
 }
