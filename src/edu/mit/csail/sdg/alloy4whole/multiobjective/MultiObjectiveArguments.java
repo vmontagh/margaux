@@ -37,7 +37,7 @@ public class MultiObjectiveArguments {
     			if (parsedParams.LogFilename.indexOf(".") == -1){
     				parsedParams.LogFilenameIndividualCallsStats = parsedParams.LogFilename +  "_indvidualCallStatistics";
     			} else {
-        			parsedParams.LogFilenameIndividualCallsStats =  "_indvidualCallStatistics" + parsedParams.LogFilename.substring(0, parsedParams.LogFilename.indexOf("."));
+        			parsedParams.LogFilenameIndividualCallsStats =  parsedParams.LogFilename.substring(0, parsedParams.LogFilename.indexOf(".")) + "_indvidualCallStatistics"  ;
         			parsedParams.LogFilenameIndividualCallsStats +=   parsedParams.LogFilename.substring(parsedParams.LogFilename.indexOf("."));
     			}
 
