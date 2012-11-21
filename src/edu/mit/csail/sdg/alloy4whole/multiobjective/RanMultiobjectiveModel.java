@@ -34,6 +34,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
+import edu.mit.csail.sdg.moolloy.solver.kodkod.api.IndividualStats;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MeasuredSolution;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.StatKey;
 import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
@@ -109,8 +110,11 @@ public final class RanMultiobjectiveModel {
         
         
         FileWriter fp_logFile = null; 
+        FileWriter fp_logFileIndividualCallStats = null;
         if ( parsedParameters.getLogRunningTimes() ){        	
         	fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);        	
+        	System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
+        	fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);        	
         }
 
         
@@ -145,6 +149,7 @@ public final class RanMultiobjectiveModel {
             long end_time = System.currentTimeMillis();
             
             long time_taken = end_time - start_time  ;
+            
             String LogLine = parsedParameters.getFilename() + ",";
             LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
             LogLine += "," + time_taken;
@@ -174,7 +179,11 @@ public final class RanMultiobjectiveModel {
             LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
             LogHeaderLine += "," + "Total Time(ms)";
             LogHeaderLine += "," + "SummaryStatsNext";
-           
+
+            LogHeaderLine += "," + "# of Regular Sat Calls";
+            LogHeaderLine += "," + "# f Regular Unsat Calls";
+
+            
             LogHeaderLine += "," + "Total Time of Regular Sat Calls";
             LogHeaderLine += "," + "Total Time of Regular Unsat Calls";
 
@@ -186,14 +195,31 @@ public final class RanMultiobjectiveModel {
 
             LogHeaderLine += "," + "GiaCountCallsOnEachMovementToParetoFront" + "\n" ;
             
+            String LogIndividualCallsHeaderLine = parsedParameters.getFilename() +  "\n";
+            LogIndividualCallsHeaderLine +=  IndividualStats.getHeaderLine()  + "\n";
+            		
+            
+            
             if ( parsedParameters.getLogRunningTimes()  == true){    
-            	System.out.println("Writing LogLine");            	
+            	System.out.println("Writing LogLine General");            	
             	if (parsedParameters.getWriteHeaderLogfile()){            		
                     fp_logFile.write(LogHeaderLine);            		
             	}
                 fp_logFile.write(LogLine);            
                 fp_logFile.close();
+
+            	System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
+
+            	fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
+            	for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
+            		fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
+            	}
+            	
+            	fp_logFileIndividualCallStats.close();
             }
+            
+            
+            
             
             
          }

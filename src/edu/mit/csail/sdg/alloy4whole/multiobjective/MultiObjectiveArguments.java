@@ -19,6 +19,7 @@ public class MultiObjectiveArguments {
 	private Boolean LogPrintHeaders = false;
 	
 	private String LogFilename = "";
+	private String LogFilenameIndividualCallsStats = "";
 	private String filename;
 	private String MinMaxBoundsContent = "";
 	
@@ -31,7 +32,15 @@ public class MultiObjectiveArguments {
     			parsedParams.ListAllSolutionsForAParetoPoint = false;
     		}else if (args[i].startsWith(MultiObjectiveArguments.LogRunningTimesArg)) {
     			parsedParams.LogRunningTimes = true;
-    			parsedParams.LogFilename = args[i].substring(MultiObjectiveArguments.LogRunningTimesArg.length());    			
+    			parsedParams.LogFilename = args[i].substring(MultiObjectiveArguments.LogRunningTimesArg.length());    
+    			
+    			if (parsedParams.LogFilename.indexOf(".") == -1){
+    				parsedParams.LogFilenameIndividualCallsStats = parsedParams.LogFilename +  "_indvidualCallStatistics";
+    			} else {
+        			parsedParams.LogFilenameIndividualCallsStats =  "_indvidualCallStatistics" + parsedParams.LogFilename.substring(0, parsedParams.LogFilename.indexOf("."));
+        			parsedParams.LogFilenameIndividualCallsStats +=   parsedParams.LogFilename.substring(parsedParams.LogFilename.indexOf("."));
+    			}
+
     		} else if (args[i].equals(MultiObjectiveArguments.ListOnlyOneSolutionArg)){    			
     			parsedParams.ListOnlyOneSolution = true;    			    			
     		} else if (args[i].equals(MultiObjectiveArguments.NoAdaptableMinimumImprovement)){
@@ -80,5 +89,9 @@ public class MultiObjectiveArguments {
 
 	public boolean getWriteHeaderLogfile() {
 		return this.LogPrintHeaders;
+	}
+
+	public String getLogFilenameIndividualStats() {
+		return this.LogFilenameIndividualCallsStats;
 	}	
 }
