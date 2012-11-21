@@ -1259,7 +1259,7 @@ public final class A4Solution {
         if (writer.checkError()) throw new ErrorFatal("Error writing the solution XML file.");
     }
     
-    public GIAStepCounter getStatistics(){
-    	return this.solver.getStatistics();
+    public GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
+    	return this.solver.getGIACountCallsOnEachMovementToParetoFront();
     }
 }

@@ -114,7 +114,7 @@ public final class RanMultiobjectiveModel {
         
         for (Command command: world.getAllCommands()) {
             // Execute the command
-            System.out.println("============ Command "+command+": ============");
+            //System.out.println("============ Command "+command+": ============");
             
             long start_time = System.currentTimeMillis();
             A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
@@ -146,7 +146,7 @@ public final class RanMultiobjectiveModel {
             String LogLine = parsedParameters.getFilename() + ",";
             LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
             LogLine += "," + time_taken;
-            LogLine +=  "," + TranslateAlloyToKodkod.getStatistics().toString() +  "\n";
+            LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() +  "\n";
 
             if ( parsedParameters.getLogRunningTimes() ){    
             	System.out.println("Writing LogLine");

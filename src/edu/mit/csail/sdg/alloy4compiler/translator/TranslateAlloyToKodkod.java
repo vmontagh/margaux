@@ -1088,8 +1088,8 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         return ans;
     }
     
-    public static GIAStepCounter getStatistics(){
-    	return tr.frame.getStatistics();
+    public static GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
+    	return tr.frame.getGIACountCallsOnEachMovementToParetoFront();
     }
     
 }
