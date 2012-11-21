@@ -556,7 +556,7 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprBinary x) throws Err {
-			System.out.println("In visit(ExprBinary x)->"+x);
+			//("In visit(ExprBinary x)->"+x);
 			Expr left = visitThis(x.left);
 			Expr right = visitThis(x.right);
 			return x.op.make(x.pos, x.closingBracket, left, right);
@@ -564,7 +564,7 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprList x) throws Err {
-			System.out.println("In visit(ExprList x)->"+x);
+			//System.out.println("In visit(ExprList x)->"+x);
 
 			TempList<Expr> temp = new TempList<Expr>(x.args.size());
 			for(int i=0; i<x.args.size(); i++) {
@@ -575,19 +575,19 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprCall x) throws Err {
-			System.out.println("In visit(ExprCall x)->"+x);
+			//System.out.println("In visit(ExprCall x)->"+x);
 			return x;
 		}
 
 		@Override
 		public Expr visit(ExprConstant x) throws Err {
-			System.out.println("In visit(ExprConstant x)->"+x);
+			//System.out.println("In visit(ExprConstant x)->"+x);
 			return x;
 		}
 
 		@Override
 		public Expr visit(ExprITE x) throws Err {
-			System.out.println("In visit(ExprITE x)->"+x);
+			//System.out.println("In visit(ExprITE x)->"+x);
 			Expr f = visitThis(x.cond);
 			Expr a = visitThis(x.left);
 			Expr b = visitThis(x.right);
@@ -596,10 +596,10 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprLet x) throws Err {
-			System.out.println("In visit(ExprLet x)->"+x);
+			//System.out.println("In visit(ExprLet x)->"+x);
 			Expr right = visitThis(x.expr);
 			ExprVar left = ExprVar.make(x.var.pos, x.var.label, right.type());
-			System.out.print(" and the defined varaible name is:->"+left.label);
+			//System.out.print(" and the defined varaible name is:->"+left.label);
 			//Put the defined name in the expression in the efined list.
 			defined.add(left.label);
 			Expr sub = visitThis(x.sub);
@@ -608,7 +608,7 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprQt x) throws Err {
-			System.out.println("In visit(ExprQt x)->"+x);
+			//System.out.println("In visit(ExprQt x)->"+x);
 			//Put the defined name in the expression in the efined list.
 			for(Decl decl:x.decls)
 				for(ExprHasName name:decl.names)
@@ -621,15 +621,15 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprUnary x) throws Err {
-			System.out.println("In visit(ExprUnary x)->"+x);
+			//System.out.println("In visit(ExprUnary x)->"+x);
 			return x.op.make(x.pos, visitThis(x.sub));
 		}
 
 		@Override
 		public Expr visit(ExprVar x) throws Err {
-			System.out.println("In visit(ExprVar x)->"+x);
+			//System.out.println("In visit(ExprVar x)->"+x);
 			String name = x.label;
-			System.out.println("defined is->"+defined);
+			//System.out.println("defined is->"+defined);
 			if(newNames.containsKey(name) && !name.contains("@") && !defined.contains(name)){
 				name = newNames.get(name);
 				accessed.add(x.label);
@@ -1195,11 +1195,11 @@ public final class CompModule extends Browsable implements Module {
 				Sig sig = new PrimSig(atom.label+"~",(PrimSig)cs.sig,
 						AttrType.ABSTRACT.make(atom.pos),
 						SUBSIG.makenull(this.sigs.get(cs.sig.label).pos));
-				System.out.println("sig----->"+sig);
+				//System.out.println("sig----->"+sig);
 				for(Attr attr:sig.attributes)
-					if(attr != null)
-						System.out.println(attr);
-
+					if(attr != null) {
+						//System.out.println(attr);
+					}
 				atoms.put(atom.label, sig);
 				//if the atom is in the appended name list, so it will be added to the sig list and treated as sig
 				for(ExprVar acName:names){
@@ -1296,7 +1296,7 @@ public final class CompModule extends Browsable implements Module {
 					newParents.add(new PrimSig(p.label, WHERE.make(p.pos)));
 			obj = new SubsetSig(full, newParents, attributes);
 		} else {
-			System.out.println("subsig->"+subsig);
+			//System.out.println("subsig->"+subsig);
 			attributes = Util.append(attributes, SUBSIG.makenull(subsig));
 			PrimSig newParent = (parents!=null && parents.size()>0) ? (new PrimSig(parents.get(0).label, WHERE.make(parents.get(0).pos))) : UNIV;
 			/*			for(Attr attr:attributes)
@@ -1304,11 +1304,12 @@ public final class CompModule extends Browsable implements Module {
 					System.out.println(attr.type);
 			 */			obj = new PrimSig(full, newParent, attributes);
 		}
-		System.out.println("name="+name+", obj="+obj);
+		
+		//System.out.println("name="+name+", obj="+obj);
 		for(Attr attr:obj.attributes)
-			if(attr != null)
-				System.out.println(attr);
-
+			if(attr != null) {
+				//System.out.println(attr);
+			}
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
 		old2appendedfacts.put(obj, fact);
@@ -1487,7 +1488,7 @@ public final class CompModule extends Browsable implements Module {
 
 	/** Each Func's body will now be typechecked Expr object. */
 	private JoinableList<Err> resolveFuncBody(A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
-		System.out.println("In ResolveFuncBody->");
+		//System.out.println("In ResolveFuncBody->");
 		for(ArrayList<Func> entry: funcs.values()) for(Func ff: entry) {
 			Context cx = new Context(this, warns);
 			cx.rootfunbody = ff;
