@@ -220,11 +220,13 @@ parser code {:
     ch.put(CompSym.THIS, "this");
     ch.put(CompSym.TILDE, "~");
     ch.put(CompSym.UNIV, "univ");
+    ch.put(CompSym.UNIQ, "uniq");
     ch.put(CompSym.ID, "NAME");
     ch.put(CompSym.NUMBER, "NUMBER");
     ch.put(CompSym.STR, "STRING");
     ch.put(CompSym.BOUND, "inst");
     ch.put(CompSym.MORE, "moreover");
+    ch.put(CompSym.EVAL, "eval");
 
     
     TreeSet<String> list = new TreeSet<String>();
@@ -336,7 +338,7 @@ action code {:
     private void nod(List<ExprVar> names) throws Err {
         if (names!=null) for(ExprVar n:names) if (n!=null && n.label.indexOf('$')>=0) throw new ErrorSyntax(n.pos, "The name cannot contain the '$' symbol.");
     }
-    private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c) throws Err {
+    private void c(boolean follow, ExprVar o, ExprVar x, ExprVar n, Expr e, List<CommandScope> s, ExprConstant c, Bounds bName) throws Err {
        if (n!=null) nod(n);
         int bitwidth=(-1), maxseq=(-1), overall=(-1), expects=(c==null ? -1 : c.num);
         //The integers inside the inst-block are grouped and added into the int scope.
@@ -359,10 +361,14 @@ action code {:
           
         }
         if (n!=null)
-          parser.alloymodule.addCommand(follow, p, n.label, o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse);
+          parser.alloymodule.addCommand(follow, p, n.label, o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse, bName);
         else
-          parser.alloymodule.addCommand(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse);
+        	if(o.label.equals("e"))
+	    	    parser.alloymodule.addEvaluation(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse, bName);	
+        	else
+          		parser.alloymodule.addCommand(follow, p, e,       o.label.equals("c"), overall, bitwidth, maxseq, expects, s, x,isSparse, bName);
     }
+    
     private Expr t(Pos pos, Pos oldClosing, Expr left, Expr right, Pos close) throws Err {
       if (right instanceof ExprVar) {
          String n = ((ExprVar)right).label;
@@ -496,6 +502,8 @@ terminal Pos SUM;              //  sum       // The filter enables us to disambi
 terminal Pos THIS;             //  this
 terminal Pos TILDE;            //  ~
 terminal Pos UNIV;             //  univ
+terminal Pos UNIQ;             //  uniq
+terminal Pos EVAL;			   //  eval		//Hidden feature to evaluate an expression without SATSolver
 
 terminal ExprVar ID;
 
@@ -593,6 +601,9 @@ nonterminal List						ExprB;
 nonterminal CommandScope				DeclsBb;
 nonterminal CommandScope				TypescopeB;
 nonterminal List<CommandScope>			DeclsB;
+nonterminal ExprVar						EvalPrefix;
+
+
 
 
 //===========================================================================//
@@ -619,28 +630,51 @@ Spec ::= Spec Predicate       ;
 Spec ::= Spec Macro           ;
 Spec ::= Spec Command         ;
 Spec ::= Spec Bounds		  ;
-Spec ::= ;
+Spec ::= 					;
+
+
+//EvalExpr ::= Decla:e {:RESULT=e;:};
+
+
 
 CommandPrefix ::= CHECK:c  {: RESULT = ExprVar.make(c, "c"); :};
 CommandPrefix ::= RUN:r    {: RESULT = ExprVar.make(r, "r"); :};
 
-Command ::=                 CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(false,o,x   ,null,e   ,s,c); :};
-Command ::=                 CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(false,o,null,null,e   ,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(true ,o,x   ,null,e   ,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(true ,o,null,null,e   ,s,c); :};
-Command ::=                 CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(false,o,x   ,n   ,null,s,c); :};
-Command ::=                 CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(false,o,null,n   ,null,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(true ,o,x   ,n   ,null,s,c); :};
-Command ::= Command IMPLIES CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(true ,o,null,n   ,null,s,c); :};
+
+Command ::=                 CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(false,o,x   ,null,e   ,s,c, null); :};
+Command ::=                 CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(false,o,null,null,e   ,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o Name:x Super:e  Scope:s  Expects:c {: c(true ,o,x   ,null,e   ,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o        Super:e  Scope:s  Expects:c {: c(true ,o,null,null,e   ,s,c, null); :};
+Command ::=                 CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(false,o,x   ,n   ,null,s,c, null); :};
+Command ::=                 CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(false,o,null,n   ,null,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o Name:x Name:n   Scope:s  Expects:c {: c(true ,o,x   ,n   ,null,s,c, null); :};
+Command ::= Command IMPLIES CommandPrefix:o        Name:n   Scope:s  Expects:c {: c(true ,o,null,n   ,null,s,c, null); :};
 
 //[VM]
 Command ::=                 CommandPrefix:o        Name:n 	FOR	Name:nb {: 
 	for(Bounds b: parser.alloymodule.getAllBounds()){
 		if(b.label.compareTo(nb.label) == 0){
 			parser.alloymodule.attachBound(b);
-			c(false ,o,null,n   ,null,b.scope,null); 
+			parser.alloymodule.mangleGenFact(b);
+			c(false ,o,null,n   ,null,b.scope,null,b); 
 			}
 
+	}
+:};
+
+EvalPrefix ::= EVAL:e	{: RESULT = ExprVar.make(e, "e"); :};
+
+Command ::= EvalPrefix:o Super:e	{:
+			parser.alloymodule.addEvalQuery(e);
+:};
+
+
+Command ::= EvalPrefix:o Super:e FOR:c Name:nb{:
+		for(Bounds bs: parser.alloymodule.getAllBounds()){
+		if(bs.label.compareTo(nb.label) == 0){
+			parser.alloymodule.addEvalQuery(e, bs);
+			c(false,o,null,null,e   ,bs.scope,null,bs);
+		}
 	}
 :};
 
@@ -740,6 +774,7 @@ Bounds ::= BOUND:o Name:a LBRACE DeclsB:b RBRACE SuperOpt:e {:
 :};
 */
 
+//[VM] generator axiom
 Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
  {:
    if (e==null) e = ExprConstant.Op.TRUE.make(o, 0);
@@ -751,18 +786,26 @@ Sig ::= SigQuals:a Names:b SigIn:c LBRACE Decls:d RBRACE:o SuperOpt:e
          AttrType.LONE    .makenull(a.get(1)),
          AttrType.ONE     .makenull(a.get(2)),
          AttrType.SOME    .makenull(a.get(3)),
-         AttrType.PRIVATE .makenull(a.get(4)));
+         AttrType.PRIVATE .makenull(a.get(4)),
+		 AttrType.UNIQUE  .makenull(a.get(5)));
    }
  :};
+ 
 
-SigQual  ::= ABSTRACT:x               {: RESULT=new ArrayList<Pos>(5); RESULT.add(x);    RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); :};
-SigQual  ::= LONE:x                   {: RESULT=new ArrayList<Pos>(5); RESULT.add(null); RESULT.add(x);    RESULT.add(null); RESULT.add(null); RESULT.add(null); :};
-SigQual  ::= ONE:x                    {: RESULT=new ArrayList<Pos>(5); RESULT.add(null); RESULT.add(null); RESULT.add(x);    RESULT.add(null); RESULT.add(null); :};
-SigQual  ::= SOME:x                   {: RESULT=new ArrayList<Pos>(5); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(x);    RESULT.add(null); :};
-SigQual  ::= PRIVATE:x                {: RESULT=new ArrayList<Pos>(5); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(x);    :};
+SigQual  ::= ABSTRACT:x               {: RESULT=new ArrayList<Pos>(6); RESULT.add(x);    RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null);:};
+SigQual  ::= LONE:x                   {: RESULT=new ArrayList<Pos>(6); RESULT.add(null); RESULT.add(x);    RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null);:};
+SigQual  ::= ONE:x                    {: RESULT=new ArrayList<Pos>(6); RESULT.add(null); RESULT.add(null); RESULT.add(x);    RESULT.add(null); RESULT.add(null); RESULT.add(null);:};
+SigQual  ::= SOME:x                   {: RESULT=new ArrayList<Pos>(6); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(x);    RESULT.add(null); RESULT.add(null);:};
+SigQual  ::= PRIVATE:x                {: RESULT=new ArrayList<Pos>(6); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(x);   RESULT.add(null); :};
+SigQual  ::= UNIQ:x                	  {: RESULT=new ArrayList<Pos>(6); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(x);    :};
 
-SigQuals ::= SIG                      {: RESULT=new ArrayList<Pos>(5); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); :};
-SigQuals ::= SigQual:a SigQuals:b     {: RESULT=a; for(int i=0;i<5;i++) if (a.get(i)==null) a.set(i,b.get(i)); else if (b.get(i)!=null) throw new ErrorSyntax(b.get(i), "The same qualifer cannot be specified more than once for the same sig."); :};
+SigQuals ::= SIG                      {: RESULT=new ArrayList<Pos>(6); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null); RESULT.add(null);RESULT.add(null); :};
+SigQuals ::= SigQual:a SigQuals:b     {: RESULT=a; 
+										 for(int i=0;i<6;i++) 
+										 	if (a.get(i)==null) 
+										 		a.set(i,b.get(i)); 
+										 	else if (b.get(i)!=null) 
+										 		throw new ErrorSyntax(b.get(i), "The same qualifer cannot be specified more than once for the same sig."); :};
 
 SigIn    ::= EXTENDS:a SigRef:x       {: RESULT=new ArrayList<ExprVar>(2); RESULT.add(x); RESULT.add(ExprVar.make(a, "extends")); :};
 SigIn    ::= IN:a SigRefu:x           {: RESULT=x;  x.add(ExprVar.make(a,"in"));                                                  :};
@@ -1187,3 +1230,4 @@ BaseExpr ::= LBRACE:o Declz:a SuperOrBar:b RBRACE:c {: RESULT = ExprQt.Op.COMPRE
 BaseExpr ::= LBRACE:o Declz:a              RBRACE:c {: RESULT = ExprQt.Op.COMPREHENSION.make(o, c, a, ExprConstant.TRUE); :};
 
 //=============================================================================
+

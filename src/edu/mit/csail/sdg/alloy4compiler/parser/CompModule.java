@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.sun.mirror.declaration.FieldDeclaration;
+
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Env;
@@ -186,8 +188,24 @@ public final class CompModule extends Browsable implements Module {
 	/** The list of facts; each fact is either an untypechecked Exp or a typechecked Expr. */
 	private final List<Pair<String,Expr>> facts = new ArrayList<Pair<String,Expr>>();
 
+	/**
+	 * [VM] Maps each unique sigs to the generator boolean predicate. The predicate will be type checked
+	 * and transformed to a set to be evaluated using evaluator, model counter, or other techniques.
+	 */
+	private final Map<String, Expr> uniqFact = new HashMap<String, Expr>();
+
+	/**
+	 * [VM] map each field name to the related set expression. The Expression has to be
+	 * type-checked already. 
+	 */
+	private final Map<String, Expr> uniqFldSetDcl = new HashMap<String, Expr>(); 
+
 	/** The list of (CommandName,Command,Expr) triples; NOTE: duplicate command names are allowed. */
 	private final List<Command> commands = new ArrayList<Command>();
+
+	/**[VM] the eval expression is stored here**/
+	private Expr eval = null;
+
 
 	//============================================================================================================================//
 
@@ -529,7 +547,7 @@ public final class CompModule extends Browsable implements Module {
 		/**Atoms name and the desired sig name*/
 		final Map<String, String> newNames;
 		final Expr expr;
-		
+
 		/**The atoms that are got accessed from appended fact*/
 		List<String> accessed = new ArrayList<String>();
 		/**The defined names by let or quantifiers*/
@@ -552,7 +570,7 @@ public final class CompModule extends Browsable implements Module {
 		@Override public Expr visit(ExprBadJoin x) throws Err {
 			return x;
 		}
-		
+
 		@Override
 		public Expr visit(ExprBinary x) throws Err {
 			if (x.op==ExprBinary.Op.JOIN) {
@@ -596,7 +614,7 @@ public final class CompModule extends Browsable implements Module {
 		@Override
 		public Expr visit(ExprLet x) throws Err {
 			Expr right = visitThis(x.expr);
-			
+
 			ExprVar left = ExprVar.make(x.var.pos, x.var.label, right.type());
 			//Put the defined name in the expression in the defined list.
 			defined.add(left.label);
@@ -623,7 +641,7 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprVar x) throws Err {
-			
+
 			String name = x.label;
 			if(newNames.containsKey(name) && !name.contains("@") && !defined.contains(name)){
 				name = newNames.get(name);
@@ -632,8 +650,8 @@ public final class CompModule extends Browsable implements Module {
 			return ExprVar.make(x.pos, name, x.type());
 
 		}
-		
-		
+
+
 
 		@Override
 		public Expr visit(Sig x) throws Err {
@@ -653,6 +671,123 @@ public final class CompModule extends Browsable implements Module {
 			return null;
 		}
 
+	}
+
+	/** Mutable; this class represents the current typechecking context. */
+	static final class SigInstanceReplacement extends VisitReturn<Expr> {
+
+		final CompModule rootmodule;
+		/**Atoms name and the desired sig name*/
+		final Sig oldName;
+		final ExprHasName newName;
+		final Expr expr;
+
+
+		public SigInstanceReplacement(CompModule rootmodule,Sig oldName, ExprHasName newName, Expr expr){
+			this.rootmodule = rootmodule;
+			this.newName = newName;
+			this.oldName = oldName;
+			this.expr = expr;
+		}
+
+		public Expr replace() throws Err{
+			return visitThis(expr);
+		}
+
+
+
+		@Override public Expr visit(ExprBadJoin x) throws Err {
+
+			return ExprBadJoin.make(x.pos, x.closingBracket, visitThis( x.left), visitThis( x.right));
+		}
+
+		@Override
+		public Expr visit(ExprBinary x) throws Err {
+
+			Expr left = visitThis(x.left);
+			Expr right = visitThis(x.right);
+
+			return x.op.make(x.pos, x.closingBracket, left, right);
+		}
+
+		@Override
+		public Expr visit(ExprList x) throws Err {
+			TempList<Expr> temp = new TempList<Expr>(x.args.size());
+			for(int i=0; i<x.args.size(); i++) {
+				temp.add(visitThis(x.args.get(i)));
+			}
+			return ExprList.make(x.pos, x.closingBracket, x.op, temp.makeConst());
+		}
+
+		@Override
+		public Expr visit(ExprCall x) throws Err {
+			//System.out.println("In call->"+x);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprConstant x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprITE x) throws Err {
+			Expr f = visitThis(x.cond);
+			Expr a = visitThis(x.left);
+			Expr b = visitThis(x.right);
+			return ExprITE.make(x.pos, f, a, b);
+		}
+
+		@Override
+		public Expr visit(ExprLet x) throws Err {
+			Expr right = visitThis(x.expr);
+
+			ExprVar left = ExprVar.make(x.var.pos, x.var.label, right.type());
+			//Put the defined name in the expression in the defined list.
+			Expr sub = visitThis(x.sub);
+			return ExprLet.make(x.pos, left, right, sub);
+		}
+
+		@Override
+		public Expr visit(ExprQt x) throws Err {
+			List<Decl> declz = new ArrayList<Decl>();
+			for(Decl decl:x.decls)
+				declz.add(new Decl(decl.isPrivate, decl.disjoint, decl.disjoint2, decl.names, visitThis(decl.expr))); 
+			return x.op.make(x.pos, x.closingBracket, declz, visitThis(x.sub));
+		}
+
+		@Override
+		public Expr visit(ExprUnary x) throws Err {
+			return x.op.make(x.pos, visitThis(x.sub));
+		}
+
+		@Override
+		public Expr visit(ExprVar x) throws Err {
+			String name = x.label;
+			//name = newName.get(name) 			}
+			return ExprVar.make(x.pos, name, x.type());
+
+		}
+
+
+
+		@Override
+		public Expr visit(Sig x) throws Err {
+			if(x.label.equals(oldName.label))
+				return newName;
+			else 
+				return x;
+		}
+
+		@Override
+		public Expr visit(Field x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(Bounds bounds) throws Err {
+			return null;
+		}
 	}
 
 
@@ -724,7 +859,7 @@ public final class CompModule extends Browsable implements Module {
 			exactSigs         = world.exactSigs;
 			globals           = world.globals;
 			metaSig           = world.metaSig;
-			metaField         = world.metaField;
+			metaField         = world.metaField;			
 		}
 		this.path = path;
 		if (filename!=null && filename.length()>0) this.modulePos=new Pos(filename,1,1);
@@ -813,7 +948,8 @@ public final class CompModule extends Browsable implements Module {
 		Map<String,String> fc = new LinkedHashMap<String,String>();
 		fc.put("", "run {\n"+input+"}"); // We prepend the line "run{"
 		CompModule m = CompParser.alloy_parseStream(new ArrayList<Object>(), null, fc, null, -1, "", "", 1);
-		if (m.funcs.size()==0) throw new ErrorSyntax("The input does not correspond to an Alloy expression.");
+		if (m.funcs.size()==0) 
+			throw new ErrorSyntax("The input does not correspond to an Alloy expression.");
 		Expr body = m.funcs.values().iterator().next().get(0).getBody();
 		Context cx = new Context(this, null);
 		body = cx.check(body);
@@ -1207,6 +1343,46 @@ public final class CompModule extends Browsable implements Module {
 		return obj;
 	}
 
+	public Bounds replaceBound(Bounds oBound, Bounds nBound) throws Err{
+		Bounds obj = new Bounds(nBound.pos, nBound.label, new ArrayList<CommandScope>(nBound.scope) ,nBound.fact);
+		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
+		
+		Map<String, Sig> oldAtoms =  bnd2atoms.get(bounds.get(oBound.label));
+		if(oldAtoms==null) new ErrorSyntax(oBound.pos, "There was nothing to be replaced with a new Bound in the current CompModule");
+		//Map<String, String> names = new HashMap<String, String>();
+		for(CommandScope cs: nBound.scope){
+			for(ExprVar atom: cs.pAtoms){
+				if(!oldAtoms.containsKey(atom.label)){
+					Sig sig = new PrimSig("this/"+atom.label+"~",(PrimSig)cs.sig/*,
+						AttrType.ABSTRACT.make(atom.pos)*/,AttrType.ONE.make(atom.pos),
+						SUBSIG.makenull(this.sigs.get(cs.sig.label.replace("this/", "")).pos));
+					atoms.put(atom.label, sig);
+				}else{
+					atoms.put(atom.label, oldAtoms.get(atom.label));
+				}
+				//[VM] the mentioned atom name in the appended fact are replaced with mangled sig name
+				//	names.put(atom.label, atom.label+"~");
+			}
+
+			//[TODO] I need to decide to put appended fact to all sigs or any other entities. 
+			//	old2appendedfacts.put(cs.sig, fact);
+			/*if(cs.pFields.size() > 0){
+			System.out.println("cs.label->"+cs.sig.label);
+		}*/
+		}
+		/*if(fact != null){
+			BoundFactMangler bfm = new  BoundFactMangler(this, names, fact);
+			this.addFact(fact.pos, "fact~"+name, bfm.replace());
+			for(String nm:bfm.getAccessedAtoms()){
+				this.sigs.put(nm+"~", atoms.get(nm));
+			}
+		}*/
+		bnd2atoms.put(obj, atoms);
+		bounds.put(nBound.label, obj);
+
+		return obj;
+	}
+
 	/**
 	 *  It takes the bound and the appended fact
 	 * @param pos
@@ -1221,15 +1397,13 @@ public final class CompModule extends Browsable implements Module {
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
 		//Map<String, String> names = new HashMap<String, String>();
 		for(CommandScope cs: commandScopes){
-			List<Sig> parent = new ArrayList<Sig>();
-			parent.add(cs.sig);
 			for(ExprVar atom: cs.pAtoms){
 				Sig sig = new PrimSig("this/"+atom.label+"~",(PrimSig)cs.sig/*,
 						AttrType.ABSTRACT.make(atom.pos)*/,AttrType.ONE.make(atom.pos),
-						SUBSIG.makenull(this.sigs.get(cs.sig.label).pos));
+						SUBSIG.makenull(this.sigs.get(cs.sig.label.replace("this/", "")).pos));
 				atoms.put(atom.label, sig);
 				//[VM] the mentioned atom name in the appended fact are replaced with mangled sig name
-			//	names.put(atom.label, atom.label+"~");
+				//	names.put(atom.label, atom.label+"~");
 			}
 
 			//[TODO] I need to decide to put appended fact to all sigs or any other entities. 
@@ -1251,26 +1425,143 @@ public final class CompModule extends Browsable implements Module {
 		return obj;
 	}
 
-	public void attachBound(Bounds bounds) throws Err{
-		if(bounds.fact != null){
+	public Bounds name2Bound(String  bound){
+		return bounds.get(bound);
+	}
+
+	public Expr getUniqueFact(String sigLabel){
+		return uniqFact.get(sigLabel);
+	}
+
+	public void attachBound(Bounds bound) throws Err{
+
+
+		//[VM] The unique expressions are transformed here. It makes easier to handle the bound, 
+		//but the precedency of command and the gen-fact declaration might cause an issue. 
+		if(bound.fact != null){
 			Map<String, String> names = new HashMap<String, String>();
-			for(String atom:bnd2atoms.get(bounds).keySet()){
+			for(String atom:bnd2atoms.get(bound).keySet()){
 				names.put(atom, atom+"~");
 			}
-			BoundFactMangler bfm = new  BoundFactMangler(this, names, bounds.fact);
-			this.addFact(bounds.fact.pos, "fact~"+bounds.label, bfm.replace());
+			BoundFactMangler bfm = new  BoundFactMangler(this, names, bound.fact);
+			this.addFact(bound.fact.pos, "fact~"+bound.label, bfm.replace());
 			for(String nm:bfm.getAccessedAtoms()){
-				this.sigs.put(nm+"~", bnd2atoms.get(bounds).get(nm));
+				this.sigs.put(nm+"~", bnd2atoms.get(bound).get(nm));
 			}
 		}/*else{
 			this.facts.
 		}*/
 	}
 
-/*	public boolean removeBoundsAppendedFact(){
-		
+	public void detachBound(String bound) throws Err{
+		this.detachBound(world.name2Bound( bound));
+	}	
+
+	public void detachBound(Bounds bound) throws Err{
+		this.removeFact("fact~"+bound.label);
+		Object[] keys = this.sigs.keySet().toArray();
+		for(Object nm:keys){
+			if(((String)nm).contains("~")){
+				if(this.sigs.get(nm) instanceof PrimSig)
+				{
+					SafeList<Sig.PrimSig> newChilderen = new SafeList<Sig.PrimSig>();
+					for(Sig.PrimSig pSig : ((PrimSig)this.sigs.get(nm)).parent.children()){
+						if(!pSig.label.contains("~"))
+							newChilderen.add(pSig);
+					}
+					((PrimSig)this.sigs.get(nm)).parent.setChilderen( newChilderen);
+					this.new2old.remove(this.sigs.get(nm));
+					this.old2fields.remove(this.sigs.get(nm));
+					this.old2appendedfacts.remove(this.sigs.get(nm));
+					this.sig2module.remove(this.sigs.get(nm));
+					this.exactSigs.remove(this.sigs.get(nm));
+					this.sigs.remove(nm);
+				}
+			}
+		}
 	}
-	*/
+
+	public void removeAllUniquFacts(){
+		uniqFact.clear();
+		uniqFldSetDcl.clear();
+		eval = null;
+	}
+
+	public Expr getUniqueFieldFact(String field){
+
+		return uniqFldSetDcl.get(field);
+	}
+
+	public List<Expr> getUniqueFieldFacts(String sName){
+		List<Expr> list = new ArrayList<Expr>();
+		Sig sig = sigs.get(sName);
+		if(sig !=null)
+			for(Decl fDecl:sig.getFieldDecls()){
+				list.add(getUniqueFieldFact(fDecl.get().toString()));
+			}
+		return list;
+	}
+
+	public void addEvalQuery(Expr query, Bounds bounds) throws Err{
+
+		Map<String, String> names = new HashMap<String, String>();
+		for(String atom:bnd2atoms.get(bounds).keySet()){
+			names.put(atom, atom+"~");
+		}
+		if(bounds.fact != null) {
+			BoundFactMangler bfm2 = new  BoundFactMangler(this, names, bounds.fact);
+			this.addFact(bounds.fact.pos, "fact~"+bounds.label, bfm2.replace());
+			for(String nm:bfm2.getAccessedAtoms()){
+				this.sigs.put(nm+"~", bnd2atoms.get(bounds).get(nm));
+			}
+		}
+		if(query != null){
+			BoundFactMangler bfm = new  BoundFactMangler(this, names, query);
+			eval = bfm.replace();
+			for(String nm:bfm.getAccessedAtoms()){
+				this.sigs.put(nm+"~", bnd2atoms.get(bounds).get(nm));
+			}			
+		}/*else{
+			this.facts.
+		}*/
+	}
+
+	public void mangleGenFact(Bounds bounds) throws Err{
+		for(String sName: uniqFact.keySet()){
+			Sig sig = sigs.get(sName);
+			this.uniqFact.put(sName,mangleGenFact(sig,this.uniqFact.get(sName),bounds));
+		}
+	}
+
+	private Expr mangleGenFact( Sig sig, Expr fact, Bounds bounds) throws Err{
+
+		Map<String, String> names = new HashMap<String, String>();
+		for(String atom:this.bnd2atoms.get(bounds).keySet()){
+			names.put(atom, atom+"~");
+		}
+
+		if(fact != null){
+			BoundFactMangler bfm = new  BoundFactMangler(this, names, fact);
+			fact = bfm.replace();
+			for(String nm:bfm.getAccessedAtoms()){
+				this.sigs.put(nm+"~", this.bnd2atoms.get(bounds).get(nm));
+			}	
+		}
+		return fact;
+	}
+
+	public void addEvalQuery(Expr query) {		
+		eval = query;
+	}
+
+	public Expr getEvalQuery(){
+		return this.eval;
+	}
+
+	/*	public boolean removeBoundsAppendedFact(){
+
+	}
+	 */
 	Sig addSig(String name, ExprVar par, List<ExprVar> parents, List<Decl> fields, Expr fact, Attr... attributes) throws Err {
 		Sig obj;
 		Pos pos = Pos.UNKNOWN.merge(WHERE.find(attributes));
@@ -1306,13 +1597,16 @@ public final class CompModule extends Browsable implements Module {
 					System.out.println(attr.type);
 			 */			obj = new PrimSig(full, newParent, attributes);
 		}
-/*		for(Attr attr:obj.attributes)
+		/*		for(Attr attr:obj.attributes)
 			if(attr != null)
 				System.out.println(attr);
-*/
+		 */
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
-		old2appendedfacts.put(obj, fact);
+		if(obj.isUnique == null)
+			old2appendedfacts.put(obj, fact);
+		else
+			uniqFact.put(obj.label.replace("this/", ""), fact);
 		return obj;
 	}
 
@@ -1570,6 +1864,92 @@ public final class CompModule extends Browsable implements Module {
 		facts.add(new Pair<String,Expr>(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value)));
 	}
 
+	/** Add a FACT declaration. */
+	void removeFact(String name) throws Err {
+		for(int i=0; i < facts.size(); i++){
+			Pair<String,Expr> pair = facts.get(i);
+			if(pair.a.equals(name))
+				facts.remove(i);
+		}
+	}
+
+	private Expr mult(Expr x) throws Err {
+		if (x instanceof ExprUnary) {
+			ExprUnary y=(ExprUnary)x;
+			if (y.op==ExprUnary.Op.SOME) return ExprUnary.Op.SOMEOF.make(y.pos, y.sub);
+			if (y.op==ExprUnary.Op.LONE) return ExprUnary.Op.LONEOF.make(y.pos, y.sub);
+			if (y.op==ExprUnary.Op.ONE)  return ExprUnary.Op.ONEOF.make(y.pos, y.sub);
+		}
+		return x;
+	}
+
+	private JoinableList<Err> resolveGenFacts(CompModule res, A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
+		Context cx = new Context(this, warns);
+		for(String sName: uniqFact.keySet()) {
+			Expr f = res.uniqFact.get(sName);
+			if (f == null) 
+				continue;
+			if (f instanceof ExprConstant && ((ExprConstant)f).op==ExprConstant.Op.TRUE) 
+				continue;
+			Expr formula;
+			Sig sig = res.sigs.get(sName);
+
+			cx.rootsig = sig;
+			//if (sig.isOne==null) {
+			//	cx.put("this", sig.decl.get());
+			//	formula = cx.check(f).resolve_as_formula(warns);
+			//} else {
+			cx.put("this", sig);
+			formula = cx.check(f).resolve_as_formula(warns);
+			//}
+			cx.remove("this");
+			if (formula.errors.size()>0) 
+				errors = errors.make(formula.errors); 
+			else {
+
+				for(Decl fDecl:sig.getFieldDecls()){
+					ArrayList<Decl> declz = new ArrayList<Decl>(); 
+					List<ExprHasName> names=new ArrayList<ExprHasName>();
+					ExprHasName sigVar = ExprVar.make(sig.closingBracket, sName+ Math.abs(sName.hashCode()));
+
+					names.add(sigVar);
+					Expr left = names.get(0);
+
+					declz.add(new Decl(null, null, null,names , sig.decl.expr));
+					List<List<PrimSig>> fSigs = fDecl.expr.type().fold();
+					names=new ArrayList<ExprHasName>();
+					for(Sig fSig: fSigs.get(0)){
+						String fSigName = fSig.label.replace("this/", "");
+						ExprHasName varName = ExprVar.make(sig.closingBracket, fSigName+ Math.abs(fSigName.hashCode()));
+						names.add(varName);
+						declz.add(new Decl(null, null, null,names , mult( fSig)));
+						left = ExprBinary.Op.ARROW.make(sig.closingBracket, f.pos, left, varName);
+					}
+
+					SigInstanceReplacement sir = new SigInstanceReplacement(res, sig, sigVar, formula);
+					Expr setF = sir.replace();
+
+					setF = setF.and(ExprBinary.Op.IN.make(sig.closingBracket, formula.pos, left, fDecl.get()));
+
+					setF = ExprQt.Op.COMPREHENSION.make(sig.closingBracket, f.closingBracket, declz, setF);
+
+					//if (sig.isOne==null) {
+					//	cx.put("this", sig.decl.get());
+					//	setF = cx.check(setF).resolve_as_set(warns);
+					//} else {
+					setF = cx.check(setF).resolve_as_set(warns);
+					if (setF.errors.size()>0) 
+						errors = errors.make(formula.errors);
+					else{
+						uniqFldSetDcl.put(fDecl.get().toString(), setF);
+						rep.typecheck("Generator Fact "+sig+"$gen_fact: " + setF.type()+"\n");  }
+				}
+			}				
+		}
+		return errors;
+
+	}
+
 	/** Each fact name now points to a typechecked Expr rather than an untypechecked Exp; we'll also add the sig appended facts. */
 	private JoinableList<Err> resolveFacts(CompModule res, A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
 
@@ -1610,14 +1990,32 @@ public final class CompModule extends Browsable implements Module {
 	/** Return the conjunction of all facts in this module and all reachable submodules (not including field constraints, nor including sig appended constraints) */
 	public Expr getAllReachableFacts() {
 		ArrayList<Expr> facts = new ArrayList<Expr>();
-		for(CompModule m: world.getAllReachableModules()) for(Pair<String,Expr> f: m.facts) facts.add(f.b);
+		for(CompModule m: world.getAllReachableModules()) 
+			for(Pair<String,Expr> f: m.facts){
+				facts.add(f.b);
+			}
 		if (facts.size()==0) return ExprConstant.TRUE; else return ExprList.make(null, null, ExprList.Op.AND, facts);
 	}
 
 	//============================================================================================================================//
 
-	/** Add a COMMAND declaration. */
-	void addCommand(boolean followUp, Pos p, String n, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label,boolean isSprse) throws Err {
+	/** Add a COMMAND declaration. 
+	 * @param bName */
+	void addEvaluation(boolean followUp, Pos p, Expr e, boolean c, int o, int b, int seq, int exp, List<CommandScope> scope, ExprVar label,boolean isSparse, Bounds bName) throws Err {
+		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
+		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
+		status=3;
+		String labelName = (label==null || label.label.length()==0) ? "eval" : label.label;
+		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b, seq,
+				exp, scope, null, 
+				e, /*parent*/ null, /*isSparse*/false,true,bName);
+		commands.add(newcommand);
+	}
+
+
+	/** Add a COMMAND declaration. 
+	 * @param bName */
+	void addCommand(boolean followUp, Pos p, String n, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label,boolean isSparse, Bounds bName) throws Err {
 		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
 		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
 		status=3;
@@ -1625,12 +2023,12 @@ public final class CompModule extends Browsable implements Module {
 		if (n.indexOf('@')>=0) throw new ErrorSyntax(p, "Predicate/assertion name cannot contain \'@\'");
 		String labelName = (label==null || label.label.length()==0) ? n : label.label;
 		Command parent = followUp ? commands.get(commands.size()-1) : null;
-		Command newcommand = new Command(p, labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent,isSprse);
+		Command newcommand = new Command(p, labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent,isSparse, bName);
 		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
 	}
 
 	/** Add a COMMAND declaration. */
-	void addCommand(boolean followUp, Pos p, Expr e, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label, boolean isSparse) throws Err {
+	void addCommand(boolean followUp, Pos p, Expr e, boolean c, int o, int b, int seq, int exp, List<CommandScope> s, ExprVar label, boolean isSparse, Bounds bName) throws Err {
 		if (followUp && !Version.experimental) throw new ErrorSyntax(p, "Syntax error encountering => symbol.");
 		if (label!=null) p=Pos.UNKNOWN.merge(p).merge(label.pos);
 		status=3;
@@ -1639,7 +2037,7 @@ public final class CompModule extends Browsable implements Module {
 		else addFunc(e.span().merge(p), Pos.UNKNOWN, n="run$"+(1+commands.size()), null, new ArrayList<Decl>(), null, e);
 		String labelName = (label==null || label.label.length()==0) ? n : label.label;
 		Command parent = followUp ? commands.get(commands.size()-1) : null;
-		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent, isSparse);
+		Command newcommand = new Command(e.span().merge(p), labelName, c, o, b, seq, exp, s, null, ExprVar.make(null, n), parent, isSparse,bName);
 		if (parent!=null) commands.set(commands.size()-1, newcommand); else commands.add(newcommand);
 	}
 
@@ -1661,28 +2059,54 @@ public final class CompModule extends Browsable implements Module {
 	/** Resolve a particular command. */
 	private Command resolveCommand(Command cmd, ConstList<Sig> exactSigs, Expr globalFacts) throws Err {
 		Command parent = cmd.parent==null ? null : resolveCommand(cmd.parent, exactSigs, globalFacts);
-		String cname = ((ExprVar)(cmd.formula)).label;
-		Expr e;
-		if (cmd.check) {
-			List<Object> m = getRawQS(2, cname); // We prefer assertion in the topmost module
-			if (m.size()==0 && cname.indexOf('/')<0) m=getRawNQS(this, 2, cname);
-			if (m.size()>1) unique(cmd.pos, cname, m);
-			if (m.size()<1) throw new ErrorSyntax(cmd.pos, "The assertion \""+cname+"\" cannot be found.");
-			e = ((Expr)(m.get(0))).not();
-		} else {
-			List<Object> m = getRawQS(4, cname); // We prefer fun/pred in the topmost module
-			if (m.size()==0 && cname.indexOf('/')<0) 
-				m=getRawNQS(this, 4, cname);
-			if (m.size()>1) 
-				unique(cmd.pos, cname, m);
-			if (m.size()<1) 
-				throw new ErrorSyntax(cmd.pos, "The predicate/function \""+cname+"\" cannot be found.");
-			Func f = (Func) (m.get(0));
-			e = f.getBody();
-			if (!f.isPred) 
-				e = e.in(f.returnDecl);
-			if (f.decls.size()>0) 
-				e = ExprQt.Op.SOME.make(null, null, f.decls, e);
+		String cname = cmd.formula instanceof ExprVar ? ((ExprVar)(cmd.formula)).label : "";
+		Expr e = null;
+
+		if(cmd.eval){
+			Context cx = new Context(this, null);
+			this.eval = cx.check(this.eval);
+			this.eval = this.eval.resolve(this.eval.type(), null);
+			if (this.eval.errors.size()>0) throw this.eval.errors.pick(); 
+
+			//e = this.eval;
+			//Context cx = new Context(this, null);
+			//cx.rootfunbody = this.eval;
+			//for(Decl d: ff.decls) for(ExprHasName n: d.names) cx.put(n.label, n);
+			//Expr newBody = cx.check(this.eval);
+
+			//newBody = newBody.resolve_as_set(null);
+
+			//this.eval = this.eval.typecheck_as_set();
+			//this.eval = this.eval.typecheck_as_formula();
+
+			//this.eval = this.eval.resolve_as_set(null);
+			//this.eval = this.eval.resolve_as_formula(null);
+
+		}else{
+			if (cmd.check) {
+				List<Object> m = getRawQS(2, cname); // We prefer assertion in the topmost module
+				if (m.size()==0 && cname.indexOf('/')<0) 
+					m=getRawNQS(this, 2, cname);
+				if (m.size()>1) 
+					unique(cmd.pos, cname, m);
+				if (m.size()<1) 
+					throw new ErrorSyntax(cmd.pos, "The assertion \""+cname+"\" cannot be found.");
+				e = ((Expr)(m.get(0))).not();
+			} else {
+				List<Object> m = getRawQS(4, cname); // We prefer fun/pred in the topmost module
+				if (m.size()==0 && cname.indexOf('/')<0) 
+					m=getRawNQS(this, 4, cname);
+				if (m.size()>1) 
+					unique(cmd.pos, cname, m);
+				if (m.size()<1) 
+					throw new ErrorSyntax(cmd.pos, "The predicate/function \""+cname+"\" cannot be found.");
+				Func f = (Func) (m.get(0));
+				e = f.getBody();
+				if (!f.isPred) 
+					e = e.in(f.returnDecl);
+				if (f.decls.size()>0) 
+					e = ExprQt.Op.SOME.make(null, null, f.decls, e);
+			}
 		}
 		if (e==null) 
 			e = ExprConstant.TRUE;
@@ -1713,7 +2137,13 @@ public final class CompModule extends Browsable implements Module {
 			else
 				sc.add(new CommandScope(null, s, et.isExact, et.startingScope, et.endingScope, et.increment));
 		}
-		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent,cmd.isSparse);
+		//Chnage the current Bound to the yped checked bound.
+		if(cmd.bound !=null){
+			final Bounds bound = new Bounds(cmd.bound.pos, cmd.bound.label, sc.makeConst(), cmd.bound.fact);
+			bnd2atoms.put(bound, bnd2atoms.get(bounds.get(bound.label)));
+			bounds.put(bound.label,bound);
+		}
+		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent,cmd.isSparse,bounds.get(cmd.bound.label) );
 	}
 
 	/** Each command now points to a typechecked Expr. */
@@ -1779,7 +2209,9 @@ public final class CompModule extends Browsable implements Module {
 			for(Sig sig: m.sigs.values()) {
 				for(Field field: sig.getFields()) {
 					List<Field> peers=fieldname2fields.get(field.label);
-					if (peers==null) { peers=new ArrayList<Field>(); fieldname2fields.put(field.label, peers); }
+					if (peers==null) { 
+						peers=new ArrayList<Field>(); 
+						fieldname2fields.put(field.label, peers); }
 					for(Field field2: peers)
 						if (field.type().firstColumnOverlaps(field2.type()))
 							throw new ErrorType(field.pos,
@@ -1852,10 +2284,13 @@ public final class CompModule extends Browsable implements Module {
 	/** This method resolves the entire world; NOTE: if it throws an exception, it may leave the world in an inconsistent state! */
 	static CompModule resolveAll(final A4Reporter rep, final CompModule root) throws Err {
 		final List<ErrorWarning> warns = new ArrayList<ErrorWarning>();
-		for(CompModule m: root.getAllReachableModules()) root.allModules.add(m);
+		for(CompModule m: root.getAllReachableModules()) 
+			root.allModules.add(m);
 		resolveParams(rep, root.allModules);
 		resolveModules(rep, root.allModules);
-		for(CompModule m: root.allModules) for(Sig s: m.sigs.values()) root.sig2module.put(s, m);
+		for(CompModule m: root.allModules) 
+			for(Sig s: m.sigs.values()) 
+				root.sig2module.put(s, m);
 		// Resolves SigAST -> Sig, and topologically sort the sigs into the "sorted" array
 		root.new2old.put(UNIV,UNIV);
 		root.new2old.put(SIGINT,SIGINT);
@@ -1863,9 +2298,12 @@ public final class CompModule extends Browsable implements Module {
 		root.new2old.put(STRING,STRING);
 		root.new2old.put(NONE,NONE);
 		HashSet<Object> topo = new HashSet<Object>();
-		for(CompModule m: root.allModules) for(Sig s: m.sigs.values()) resolveSig(root, topo, s);
+		for(CompModule m: root.allModules) 
+			for(Sig s: m.sigs.values()) 
+				resolveSig(root, topo, s);
 		// Add the non-defined fields to the sigs in topologically sorted order (since fields in subsigs are allowed to refer to parent's fields)
-		for(Sig oldS: root.new2old.keySet()) resolveFieldDecl(root, rep, oldS, warns, false);
+		for(Sig oldS: root.new2old.keySet()) 
+			resolveFieldDecl(root, rep, oldS, warns, false);
 		// Typecheck the function declarations
 		JoinableList<Err> errors = new JoinableList<Err>();
 		for(CompModule x: root.allModules) errors = x.resolveFuncDecls(rep, errors, warns);
@@ -1880,8 +2318,13 @@ public final class CompModule extends Browsable implements Module {
 			errors = x.resolveFuncBody(rep, errors, warns);
 			errors = x.resolveAssertions(rep, errors, warns);
 			errors = x.resolveFacts(root, rep, errors, warns);
+			errors = x.resolveGenFacts(root, rep, errors, warns);
 			// also, we can collect up all the exact sigs and add them to the root module's list of exact sigs
-			for(String n: x.exactParams) { Sig sig = x.params.get(n); if (sig!=null) root.exactSigs.add(sig); }
+			for(String n: x.exactParams) { 
+				Sig sig = x.params.get(n); 
+				if (sig!=null) 
+					root.exactSigs.add(sig); 
+			}
 		}
 		if (!errors.isEmpty()) throw errors.pick();
 		// Typecheck the run/check commands (which can refer to function bodies and assertions)
@@ -1900,7 +2343,8 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 	/** Resolve the name based on the current context and this module. */
-	private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS) {
+	private Expr populate(TempList<Expr> ch, TempList<String> re, Decl rootfield, Sig rootsig, 
+			boolean rootfunparam, Func rootfunbody, Pos pos, String fullname, Expr THIS) {
 		// Return object can be Func(with > 0 arguments) or Expr
 		final String name = (fullname.charAt(0)=='@') ? fullname.substring(1) : fullname;
 		boolean fun = (rootsig!=null && (rootfield==null || rootfield.expr.mult()==ExprUnary.Op.EXACTLYOF))
@@ -2001,4 +2445,5 @@ public final class CompModule extends Browsable implements Module {
 		}
 		return null;
 	}
+
 }

@@ -35,6 +35,9 @@ import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Module;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
+import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Context;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Open;
 
 /** This class provides convenience methods for calling the parser and the compiler. */
@@ -221,8 +224,10 @@ public final class CompUtil {
             loaded.clear();
             List<Object> seenDollar = new ArrayList<Object>();
             CompModule root = parseRecursively(seenDollar, loaded, fc, new Pos(filename,1,1), filename, null, "", thispath, 1);
+
             root.seenDollar = seenDollar.size()>0;
             return CompModule.resolveAll(rep==null ? A4Reporter.NOP : rep, root);
+
         } catch(FileNotFoundException ex) {
             throw new ErrorSyntax("File cannot be found.\n"+ex.getMessage(), ex);
         } catch(IOException ex) {
@@ -260,4 +265,20 @@ public final class CompUtil {
             if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
         }
     }
+    
+	/**[VM] Parse the input string as an evaluating query.**/
+	public static Expr parseEvalExpressionFromString(String input, CompModule root) throws Err, FileNotFoundException, IOException {
+		Map<String,String> fc = new LinkedHashMap<String,String>();
+		fc.put("", input); // We prepend the line "run{"
+		CompParser.alloy_parseStream(new ArrayList<Object>(), null, fc, root, -1, "", " ", 1);
+		Context cx = new Context(root, null);
+		root.addEvalQuery(cx.check(root.getEvalQuery()));
+		root.addEvalQuery(root.getEvalQuery().resolve(root.getEvalQuery().type(), null));
+		CompModule.resolveAll( A4Reporter.NOP , root);
+		if (root.getEvalQuery().errors.size()>0) 
+			throw root.getEvalQuery().errors.pick(); 
+		else 
+			return root.getEvalQuery();
+	}
+
 }
