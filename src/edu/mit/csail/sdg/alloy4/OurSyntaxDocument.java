@@ -91,7 +91,7 @@ class OurSyntaxDocument extends DefaultStyledDocument {
    private static final String[] keywords = new String[] {"abstract", "all", "and", "as", "assert", "but", "check", "disj",
       "disjoint", "else", "enum", "exactly", "exh", "exhaustive", "expect", "extends", "fact", "for", "fun", "iden",
       "iff", "implies", "in", "Int", "int", "let", "lone", "module", "no", "none", "not", "one", "open", "or", "part",
-      "partition", "pred", "private", "run", "seq", "set", "sig", "some", "String", "sum", "this", "univ","include","moreover","inst","sparse"
+      "partition", "pred", "private", "run", "seq", "set", "sig", "some", "String", "sum", "this", "univ","include","moreover","inst","sparse", "uniq", "eval"
    };
 
    /** Returns true if array[start .. start+len-1] matches one of the reserved keyword. */
