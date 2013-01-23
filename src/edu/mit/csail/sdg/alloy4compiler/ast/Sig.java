@@ -141,6 +141,9 @@ public abstract class Sig extends Expr {
 
    /** The declaration that quantifies over each atom in this sig. */
    public final Decl decl;
+   
+   /** The unique sig should be generated over all legal predicate in the appended fact*/
+   public final Pos isUnique;
 
    /** The list of "per atom" fact associated with this signature; each fact is allowed to refer to this.decl.get() */
    private final SafeList<Expr> facts = new SafeList<Expr>();
@@ -167,6 +170,7 @@ public abstract class Sig extends Expr {
       this.isPrivate = null;
       this.isMeta = null;
       this.isEnum = null;
+      this.isUnique = null;
       this.attributes = ConstList.make();
    }
 
@@ -177,7 +181,7 @@ public abstract class Sig extends Expr {
       Expr oneof = ExprUnary.Op.ONEOF.make(null, this);
       ExprVar v = ExprVar.make(null, "this", oneof.type);
       this.decl = new Decl(null, null, null, Util.asList(v), oneof);
-      Pos isAbstract=null, isLone=null, isOne=null, isSome=null, isSubsig=null, isSubset=null, isPrivate=null, isMeta=null, isEnum=null;
+      Pos isAbstract=null, isLone=null, isOne=null, isSome=null, isSubsig=null, isSubset=null, isPrivate=null, isMeta=null, isEnum=null, isUnique=null;
       for(Attr a: attributes) if (a!=null) switch(a.type) {
          case ABSTRACT: isAbstract = a.pos.merge(isAbstract); break;
          case ENUM:     isEnum     = a.pos.merge(isEnum);     break;
@@ -188,6 +192,7 @@ public abstract class Sig extends Expr {
          case SOME:     isSome     = a.pos.merge(isSome);     break;
          case SUBSET:   isSubset   = a.pos.merge(isSubset);   break;
          case SUBSIG:   isSubsig   = a.pos.merge(isSubsig);   break;
+         case UNIQUE:	isUnique   = a.pos.merge(isUnique);   break;
       }
       this.isPrivate  = isPrivate;
       this.isMeta     = isMeta;
@@ -199,6 +204,7 @@ public abstract class Sig extends Expr {
       this.isSubset   = isSubset;
       this.isSubsig   = isSubsig;
       this.label      = label;
+      this.isUnique	  = isUnique;
       this.builtin    = false;
       if (isLone!=null && isOne!=null)  throw new ErrorSyntax(isLone.merge(isOne),  "You cannot declare a sig to be both lone and one.");
       if (isLone!=null && isSome!=null) throw new ErrorSyntax(isLone.merge(isSome), "You cannot declare a sig to be both lone and some.");
@@ -267,7 +273,7 @@ public abstract class Sig extends Expr {
       /** Stores its immediate children sigs (not including NONE)
        * <p> Note: if this==UNIV, then this list will always be empty, since we don't keep track of UNIV's children
        */
-      private final SafeList<PrimSig> children = new SafeList<PrimSig>();
+      private /*final*/ SafeList<PrimSig> children = new SafeList<PrimSig>();
 
       /** Returns its immediate children sigs (not including NONE)
        * <p> Note: if this==UNIV, then this method will throw an exception, since we don't keep track of UNIV's children
@@ -275,6 +281,12 @@ public abstract class Sig extends Expr {
       public SafeList<PrimSig> children() throws Err {
          if (this==UNIV) throw new ErrorFatal("Internal error (cannot enumerate the subsigs of UNIV)");
          return children.dup();
+      }
+      
+      //[VM]
+      public void setChilderen(SafeList<PrimSig> children) throws ErrorFatal{
+          if (this==UNIV) throw new ErrorFatal("Internal error (cannot enumerate the subsigs of UNIV)");
+          this.children = children.dup();
       }
 
       /** Returns its subsigs and their subsigs and their subsigs, etc.

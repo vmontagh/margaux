@@ -58,7 +58,10 @@ public final class Attr {
       BUILTIN("builtin"),
 
       /** ENUM; if a PrimSig has the ENUM attribute, it is toplevel and abstract and has only singleton children. */
-      ENUM("enum");
+      ENUM("enum"),
+     
+      /**[VM] indicating that all atoms should be properly generated.*/
+      UNIQUE("unique");
 
       /** The label for this attribute type. */
       private final String label;
@@ -122,6 +125,10 @@ public final class Attr {
    /** ENUM; if a PrimSig has the ENUM attribute, it is toplevel and abstract and has only singleton children. */
    public static final Attr ENUM = new Attr(AttrType.ENUM, null);
 
+   /** UNIQUE: if a Sig has the UNIQUE attribute, its all legal instances have to be generated.*/
+   public static final Attr UNIQUE = new Attr(AttrType.UNIQUE, null);
+
+   
    /** Construct an attribute of the given type with the given position; if pos==null, it is treated as Pos.UNKNOWN. */
    private Attr(AttrType type, Pos pos) {
       this.type = type;

@@ -58,7 +58,6 @@ public class CommandScope {
 	/** The index to show the last index of lower-bound*/
 	public final int pAtomsLowerLastIndex;
 
-
 	public CommandScope(Pos pos, Sig sig, boolean isExact, int startingScope,
 			int endingScope, int increment, List<ExprVar> pAtoms,
 			int pAtomsLowerLastIndex, List<List<Expr>> pFields,

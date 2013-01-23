@@ -46,6 +46,9 @@ public final class Command extends Browsable {
     /** The label for the command; it is just for pretty-printing and does not have to be unique. */
     public final String label;
 
+    /** [VM] shows wether the command is evaluator or not**/
+    public final boolean eval;
+    
     /** true if this is a "check"; false if this is a "run". */
     public final boolean check;
 
@@ -73,6 +76,8 @@ public final class Command extends Browsable {
 
     /** The list of scopes. */
     public final ConstList<CommandScope> scope;
+    
+    public final Bounds bound;
 
     /** This stores a list of Sig whose scope shall be considered "exact", but we may or may not know what its scope is yet. */
     public final ConstList<Sig> additionalExactScopes;
@@ -107,9 +112,28 @@ public final class Command extends Browsable {
      * @param formula - the formula that must be satisfied by this command
      */
     public Command(boolean check, int overall, int bitwidth, int maxseq, Expr formula) throws ErrorSyntax {
-        this(null, "", check, overall, bitwidth, maxseq, -1, null, null, formula, null,false);
+        this(null, "", check, overall, bitwidth, maxseq, -1, null, null, formula, null,false,false,null);
     }
 
+    /**
+     * [VM]
+     * @param pos
+     * @param label
+     * @param check
+     * @param overall
+     * @param bitwidth
+     * @param maxseq
+     * @param expects
+     * @param scope
+     * @param additionalExactSig
+     * @param formula
+     * @param parent
+     * @param isSparse
+     * @param eval
+     */
+    public Command(Pos pos, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, Expr formula, Command parent,boolean isSparse,Bounds bound) {
+    	this(pos,label, check, overall, bitwidth,maxseq, expects, scope,additionalExactSig,formula, parent,isSparse, false,bound);
+    }
     /** Constructs a new Command object.
      *
      * @param pos - the original position in the file (must not be null)
@@ -123,7 +147,9 @@ public final class Command extends Browsable {
      * @param additionalExactSig - a list of sigs whose scope shall be considered exact though we may or may not know what the scope is yet
      * @param formula - the formula that must be satisfied by this command
      */
-    public Command(Pos pos, String label, boolean check, int overall, int bitwidth, int maxseq, int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, Expr formula, Command parent,boolean isSparse) {
+    public Command(Pos pos, String label, boolean check, int overall, int bitwidth, int maxseq, 
+    		int expects, Iterable<CommandScope> scope, Iterable<Sig> additionalExactSig, 
+    		Expr formula, Command parent,boolean isSparse,boolean eval, Bounds bound) {
         if (pos==null) pos = Pos.UNKNOWN;
         this.formula = formula;
         this.pos = pos;
@@ -138,21 +164,23 @@ public final class Command extends Browsable {
         this.additionalExactScopes = ConstList.make(additionalExactSig);
         this.parent = parent;
         this.isSparse = isSparse;
+        this.eval = eval;
+        this.bound = bound;
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different formula. */
     public Command change(Expr newFormula) {
-        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, newFormula, parent,isSparse);
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, newFormula, parent,isSparse,bound);
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different scope. */
     public Command change(ConstList<CommandScope> scope) {
-        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, formula, parent,isSparse);
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, formula, parent,isSparse,bound);
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different list of "additional exact sigs". */
     public Command change(Sig... additionalExactScopes) {
-        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, Util.asList(additionalExactScopes), formula, parent,isSparse);
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, Util.asList(additionalExactScopes), formula, parent,isSparse,bound);
     }
 
     /** Constructs a new Command object where it is the same as the current object, except with a different scope for the given sig. */
