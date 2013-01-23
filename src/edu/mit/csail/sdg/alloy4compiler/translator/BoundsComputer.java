@@ -448,6 +448,7 @@ final class BoundsComputer {
 					}
 
 				}
+
 			}
 		// Add any additional SIZE constraints
 		for(Sig s:sigs) if (!s.builtin) {
@@ -476,6 +477,12 @@ final class BoundsComputer {
 				rep.bound("Sig "+s+" in "+upper+" with size<="+n+"\n");
 				sol.addFormula(size(s,n,false), Pos.UNKNOWN);
 			}
+		}
+		
+		for(Sig s:sigs) 
+			if (!s.builtin ) {
+				TupleSet  ts = ub.get(s).clone();
+				this.sol.addAbstractUpperBound(s, ts);		
 		}
 	}
 

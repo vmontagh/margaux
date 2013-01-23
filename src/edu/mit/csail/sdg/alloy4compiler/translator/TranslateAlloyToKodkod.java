@@ -389,6 +389,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         TranslateAlloyToKodkod tr = null;
         try {
             if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
+
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
             tr.makeFacts(cmd.formula);
             
@@ -405,6 +406,44 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         }
     }
 
+    
+    /** Based on the specified "options", execute one command and return the resulting A4Solution object.
+    *
+    * @param rep - if nonnull, we'll send compilation diagnostic messages to it
+    * @param sigs - the list of sigs; this list must be complete
+    * @param cmd - the Command to execute
+    * @param opt - the set of options guiding the execution of the command
+    *
+    * @return null if the user chose "save to FILE" as the SAT solver,
+    * and nonnull if the solver finishes the entire solving and is either satisfiable or unsatisfiable.
+    * <p> If the return value X is satisfiable, you can call X.next() to get the next satisfying solution X2;
+    * and you can call X2.next() to get the next satisfying solution X3... until you get an unsatisfying solution.
+    */
+   public static Object evaluate_command (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt, Expr expr) throws Err {
+   	if (rep==null) rep = A4Reporter.NOP;
+       TranslateAlloyToKodkod tr = null;
+       try {
+           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+           /*System.out.println("Max tuples="+tr.frame.getMaxPossibleTuples());
+           Map<Sig,Integer> newCmdBnds = tr.frame.getMaxPossibleTuples();
+           for(Sig sig : newCmdBnds.keySet()){
+               cmd = cmd.change(sig, true, newCmdBnds.get(sig));
+           }
+           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+           */
+           return tr.frame.eval_woSolve(expr);
+       } catch(UnsatisfiedLinkError ex) {
+           throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
+       } catch(CapacityExceededException ex) {
+           throw rethrow(ex);
+       } catch(HigherOrderDeclException ex) {
+           Pos p = tr!=null ? tr.frame.kv2typepos(ex.decl().variable()).b : Pos.UNKNOWN;
+           throw new ErrorType(p, "Analysis cannot be performed since it requires higher-order quantification that could not be skolemized.");
+       } catch(Throwable ex) {
+           if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
+       }
+   }
+    
     /** Based on the specified "options", execute one command and return the resulting A4Solution object.
      *
      * <p> Note: it will first test whether the model fits one of the model from the "Software Abstractions" book;
@@ -445,7 +484,8 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
      * @param expr - this is the Alloy expression we want to translate
      */
     public static Object alloy2kodkod(A4Solution sol, Expr expr) throws Err {
-        if (expr.ambiguous && !expr.errors.isEmpty()) expr = expr.resolve(expr.type(), null);
+        if (expr.ambiguous && !expr.errors.isEmpty()) 
+        	expr = expr.resolve(expr.type(), null);
         if (!expr.errors.isEmpty()) throw expr.errors.pick();
         TranslateAlloyToKodkod tr = new TranslateAlloyToKodkod(sol.getBitwidth(), sol.unrolls(), sol.a2k(), sol.s2k());
         Object ans;

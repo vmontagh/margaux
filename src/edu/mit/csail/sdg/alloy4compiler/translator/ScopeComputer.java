@@ -77,7 +77,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
  * <p> Please see ScopeComputer.java for the exact rules for deriving the missing scopes.
  */
 
-final class ScopeComputer {
+ final class ScopeComputer {
 
 	// It calls A4Solution's constructor
 
@@ -160,6 +160,7 @@ final class ScopeComputer {
 
 	//[VM]
 	/** Returns the scope for a sig (or null if we don't know). */
+	
 	public List<String> sig2PscopeL(Sig sig) {
 		return sig2PscopeL.get(sig.label);
 	}    
@@ -253,7 +254,6 @@ final class ScopeComputer {
 	//[VM]
 	/** Sets the upper-bound scope for a sig; returns true iff the sig's scope is changed by this call. */
 	private void sig2PscopeU(Sig sig, List<String> newValue) throws Err {
-		System.out.println("sig->"+sig+", newValue->"+newValue+", type->"+sig.getClass());
 		if (sig.builtin)                throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for the builtin signature \""+sig+"\"");
 		if (!(sig instanceof PrimSig))  throw new ErrorSyntax(cmd.pos, "Cannot specify a scope for a subset signature \""+sig+"\"");
 		if (newValue == null)                 throw new ErrorSyntax(cmd.pos, "Cannot specify a Null Partial scope for sig \""+sig+"\"");
@@ -729,7 +729,6 @@ final class ScopeComputer {
 		boolean shouldUseInts = areIntsUsed(sigs);
 		// Process each sig listed in the command
 		for(CommandScope entry:cmd.scope) {
-			System.out.println("entry->"+entry);
 			Sig s = entry.sig;
 			int scope = entry.startingScope;
 			boolean exact = entry.isExact;
@@ -770,7 +769,7 @@ final class ScopeComputer {
 						for(Expr ev: pair)
 							if(ev instanceof ExprVar)
 								//Here the Sig in relation can be extended.
-								tmp.add(((ExprVar)ev).label+"%");
+								tmp.add(((ExprVar)ev).label.contains("%") ? ((ExprVar)ev).label : ((ExprVar)ev).label+"%");
 							else if(ev instanceof ExprConstant ){
 								tmp.add(String.valueOf(((ExprConstant)ev).num));
 								//[VM] putting the mentioned integer inside the set, later out of the range values are added in the universe
@@ -808,8 +807,6 @@ final class ScopeComputer {
 						i++;
 					}
 					listU.addAll(0, listL);
-					System.out.println("listU->"+listU);
-					System.out.println("listL->"+listL);
 					
 					//if(exact){
 					//Upper-bound and lower-bound are the same.
@@ -840,7 +837,6 @@ final class ScopeComputer {
 
 			if(upper) makeUpper(cmd.pos, s);
 			
-			System.out.println("exact->"+exact+", lower->"+lower+", upper->"+upper);
 		}
 		//[VM] if in "value = a + b + c", the value should not be "one" or ...
 		// Force "one" sigs to be exactly one, and "lone" to be at most one
