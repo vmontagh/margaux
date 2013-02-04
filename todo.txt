@@ -1,0 +1,42 @@
+COMPLETED
+- Project over Existential type inference
+- Color by sets
+- Express hierarchy with hair
+- 
+
+TO BE COMPLETED
+
+- backedges
+    - ignore some edges during layout
+    - infer back edges / spine
+- infer view relations as attributes
+- filter atoms by regex or skolem
+- consistent placement through projections
+- pictures for nodes
+- The backedge feature does not work when a model is "Projected". eg. FileSystem
+	- Projecting over the file-system Sig in Filesystem presents this problem
+
+- identify dominant shapes: largest list, tree, V, diamond, circle
+- identify hetergeneous shapes (i.e., comprise multiple relations)
+
+- minimize edge crossing through edge inversion
+
+- left-right orientation vs top-down orientation
+
+- bi-directional layout
+    - consider farmer without projection: put fox and farmer above the
+      state row, and grain and chicken below the state row
+
+- Subtyping with Haicuts
+	- Getting the possible width and depth of models
+	- expanding the shapes vocabulary
+- "relative" edge centre based labelling. (visual centre versus, boundary intersection centre)
+- for VERY LARGE instances, filter node and edges
+- Mouse over highlighting of nodes and edges
+
+Pamela Zave Suggestions:
+- circular layout
+- bigger arrowheads
+- arbitrary node placement
+- stability through projection
+- seeing multiple frames of a projection 
