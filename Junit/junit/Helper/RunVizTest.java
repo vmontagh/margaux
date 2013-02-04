@@ -106,6 +106,6 @@ public final class RunVizTest {
     }
     
     public String IntanceFileName(String filename, Object command){
-    	return OUT_DIR.getAbsolutePath() +filename.replace(".als", "_"+"Command"+command.toString()+".xml");
+    	return OUT_DIR.getAbsolutePath() + "/" + filename.replace(".als", "_"+"Command"+command.toString()+".xml");
     }
 }
