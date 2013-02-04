@@ -15,33 +15,20 @@
 
 package edu.mit.csail.sdg.alloy4viz;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.TreeSet;
+
 import edu.mit.csail.sdg.alloy4.ConstList;
-import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 import edu.mit.csail.sdg.alloy4graph.DotColor;
 import edu.mit.csail.sdg.alloy4graph.DotPalette;
 import edu.mit.csail.sdg.alloy4graph.DotShape;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.BOX;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.DIAMOND;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.TRAPEZOID;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.HOUSE;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.ELLIPSE;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.EGG;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.HEXAGON;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.OCTAGON;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.INV_HOUSE;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.INV_TRAPEZOID;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.INV_TRIANGLE;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.DOUBLE_OCTAGON;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.TRIPLE_OCTAGON;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.M_CIRCLE;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.M_DIAMOND;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.M_SQUARE;
-import static edu.mit.csail.sdg.alloy4graph.DotShape.PARALLELOGRAM;
+import edu.mit.csail.sdg.alloy4graph.HairCut;
 import edu.mit.csail.sdg.alloy4graph.DotStyle;
+import edu.mit.csail.sdg.alloy4viz.MagicLayout;
 
 /** This class implements the automatic visualization inference.
  *
@@ -52,9 +39,10 @@ final class MagicColor {
 
    /** The VizState object that we're going to configure. */
    private final VizState vizState;
-
+   public static List<HairCut> usedHair;
+   
    /** Constructor. */
-   private MagicColor(final VizState vizState) { this.vizState = vizState; }
+   private MagicColor(final VizState vizState) { this.vizState = vizState; usedHair = new ArrayList<HairCut>();}
 
    /** Main method to infer settings. */
    public static void magic(final VizState vizState) {
@@ -62,6 +50,7 @@ final class MagicColor {
       final MagicColor st = new MagicColor(vizState);
       st.nodeNames();
       st.nodeShape();
+      st.nodeHair();
       st.nodeColour();
       st.skolemColour();
    }
@@ -74,23 +63,16 @@ final class MagicColor {
     * <li> symmetry breaking: colors only matter up to recoloring (diff from
     * shape!)
     * <li> color substitutes for name/label
+    * <li>
+    * <li> Logic:
+    * <li> If there are existential projections, Color by Sets 
+    * <li> Otherwise color by type families
     * </ul>
     */
-   private void nodeColour() {
-      final Set<AlloyType> visibleUserTypes = MagicUtil.visibleUserTypes(vizState);
-      final Set<AlloyType> uniqueColourTypes;
-      if (visibleUserTypes.size() <= 5) {
-         // can give every visible user type its own shape
-         uniqueColourTypes = visibleUserTypes;
-      } else {
-         // give every top-level visible user type its own shape
-         uniqueColourTypes = MagicUtil.partiallyVisibleUserTopLevelTypes(vizState);
-      }
-      int index = 0;
-      for (final AlloyType t : uniqueColourTypes) {
-         vizState.nodeColor.put(t, (DotColor) DotColor.valuesWithout(DotColor.MAGIC)[index]);
-         index = (index + 1) % DotColor.valuesWithout(DotColor.MAGIC).length;
-      }
+   private void nodeColour() { 
+	   
+	  if(isStateProjection(this.vizState)){doColourByRelation();}
+	  else{doColourByType();}
    }
 
    /** SYNTACTIC/VISUAL: Determine colour highlighting for skolem constants. */
@@ -109,20 +91,6 @@ final class MagicColor {
       }
    }
 
-   /** The list of shape families. */
-   private static final List<ConstList<DotShape>> families;
-   static {
-      TempList<ConstList<DotShape>> list = new TempList<ConstList<DotShape>>();
-      list.add(Util.asList(BOX, TRAPEZOID, HOUSE));
-      list.add(Util.asList(ELLIPSE, EGG));
-      list.add(Util.asList(HEXAGON, OCTAGON, DOUBLE_OCTAGON, TRIPLE_OCTAGON));
-      list.add(Util.asList(INV_TRIANGLE, INV_HOUSE, INV_TRAPEZOID));
-      list.add(Util.asList(M_DIAMOND, M_SQUARE, M_CIRCLE));
-      list.add(Util.asList(PARALLELOGRAM, DIAMOND));
-      families = list.makeConst();
-   }
-
-
    /** SYNTACTIC/VISUAL: Determine shapes for nodes.
     * <ul>
     * <li> trapezoid, hexagon, rectangle, ellipse, circle, square -- no others
@@ -136,69 +104,152 @@ final class MagicColor {
     * </ul>
     */
    private void nodeShape() {
-      final Set<List<DotShape>> usedShapeFamilies = new LinkedHashSet<List<DotShape>>();
+	  Set<DotShape> blacklist = new LinkedHashSet<DotShape>(); blacklist = fillBlacklist(blacklist);
       final Set<AlloyType> topLevelTypes = MagicUtil.partiallyVisibleUserTopLevelTypes(vizState);
+      final LinkedHashMap<AlloyType, DotShape> Type_Shape = MakeMap(topLevelTypes, blacklist);
 
-      for (final AlloyType t : topLevelTypes) {
-
-         // get the type family
-         final Set<AlloyType> subTypes = MagicUtil.visibleSubTypes(vizState, t);
-         final boolean isTvisible = MagicUtil.isActuallyVisible(vizState, t);
-         final int size = subTypes.size() + (isTvisible ? 1 : 0);
-         //log("TopLevelType:  " + t + " -- " + subTypes + " " + size);
-
-         // match it to a shape family
-         // 1. look for exact match
-         boolean foundExactMatch = false;
-         for (final List<DotShape> shapeFamily: families) {
-            if (size == shapeFamily.size() && !usedShapeFamilies.contains(shapeFamily)) {
-               // found a match!
-               usedShapeFamilies.add(shapeFamily);
-               assignNodeShape(t, subTypes, isTvisible, shapeFamily);
-               foundExactMatch = true;
-               break;
-            }
-         }
-         if (foundExactMatch) continue;
-         // 2. look for approximate match
-         List<DotShape> approxShapeFamily = null;
-         int approxShapeFamilyDistance = Integer.MAX_VALUE;
-         for (final List<DotShape> shapeFamily: families) {
-            if (size <= shapeFamily.size() && !usedShapeFamilies.contains(shapeFamily)) {
-               // found a potential match
-               final int distance = shapeFamily.size() - size;
-               if (distance < approxShapeFamilyDistance) {
-                  // it's a closer fit than the last match, keep it for now
-                  approxShapeFamily = shapeFamily;
-                  approxShapeFamilyDistance = distance;
-               }
-            }
-         }
-         if (approxShapeFamily != null) {
-            // use the best approximate match that we just found
-            usedShapeFamilies.add(approxShapeFamily);
-            assignNodeShape(t, subTypes, isTvisible, approxShapeFamily);
-         }
-         // 3. re-use a shape family matched to something else -- just give up for now
-      }
+      for (final AlloyType t : Type_Shape.keySet()) {
+          vizState.shape.put(t, Type_Shape.get(t));
+          //Should Implement different hairs by checking used hairs.
+       }
    }
 
+   private LinkedHashMap<AlloyType, DotShape> MakeMap(Set<AlloyType> topLevelTypes, Set<DotShape> blacklist) {
+	   	final LinkedHashMap<AlloyType, DotShape> Top_Shape = new LinkedHashMap<AlloyType, DotShape>();
+	   	final LinkedHashMap<AlloyType, DotShape> Type_Shape = new LinkedHashMap<AlloyType, DotShape>();
+	   	final Set<AlloyType> interestingType = new LinkedHashSet<AlloyType>();
+        final List<DotShape> usedShapes = new ArrayList<DotShape>();
 
+	   	
+	   	// Collect Types to Consider
+	   	interestingType.addAll(topLevelTypes);
+	   	for(AlloyType t: topLevelTypes){
+	   		final List<AlloyType> subTypes = vizState.getOriginalModel().getSubTypes(t);
+	   		for(AlloyType st: subTypes){
+	   			interestingType.add(st);
+	   		}
+	   	}
+	   	// Make Type_Shape Map
+	   	for(AlloyType t: interestingType){
+	   		if(topLevelTypes.contains(t)){
+	   			for(DotShape shape: DotShape.values()){
+		           	 if(!usedShapes.contains(shape) && !blacklist.contains(shape)){
+		           		 usedShapes.add(shape);
+		           		 Type_Shape.put(t, shape);
+		           		 break;
+		           	 }
+	            }
+	   		}else if(t.isAbstract){
+	   			for(DotShape shape: DotShape.values()){
+		           	 if(!usedShapes.contains(shape) && !blacklist.contains(shape)){
+		           		 usedShapes.add(shape);
+		           		 Type_Shape.put(t, shape);
+		           		 break;
+		           	 }
+	            }
+	   		}
+	   	} 
+	    // User Type_Shape Map to Assign Shapes
+	   	Set<AlloyType> ParentTypes= new LinkedHashSet<AlloyType>();
+	   	ParentTypes = Top_Shape.keySet();
+	   	for(AlloyType t: ParentTypes){
+	   		Type_Shape.put(t, Top_Shape.get(t));
+	   		for(AlloyType st: MagicUtil.visibleSubTypes(vizState, t)){
+	   			Type_Shape.put(st, Top_Shape.get(t));
+	   		}
+	   	}
+	return Type_Shape;
+}
+
+/** Assigns nodeHair by recursively calling AssignNodeHair() on top level types*/
+private void nodeHair(){
+	   final Set<AlloyType> topLevelTypes = MagicUtil.partiallyVisibleUserTopLevelTypes(vizState);
+	   
+	   for (final AlloyType t : topLevelTypes) {
+		   final Set<AlloyType> subTypes = MagicUtil.visibleSubTypes(vizState, t);
+	       final boolean isTvisible = MagicUtil.isActuallyVisible(vizState, t);
+	       final int size = subTypes.size() + (isTvisible ? 1 : 0);
+	       
+	       if(size > HairCut.values().length){
+	    	   assignNodeHair(t);
+	       } else{
+    	   // Temporarily does the same thing as the other option, until a more dynamic approach is created
+	    	   assignNodeHair(t);	    	   
+	       }
+	   }
+   }
+   
+   private Set<DotShape> fillBlacklist(Set<DotShape> blacklist){
+	   blacklist.add(DotShape.CIRCLE);blacklist.add(DotShape.DIAMOND); blacklist.add(DotShape.DOUBLE_CIRCLE); blacklist.add(DotShape.EGG); blacklist.add(DotShape.ELLIPSE); blacklist.add(DotShape.HOUSE);
+	   blacklist.add(DotShape.M_CIRCLE); blacklist.add(DotShape.M_DIAMOND); blacklist.add(DotShape.TRIANGLE); blacklist.add(DotShape.DOUBLE_OCTAGON); blacklist.add(DotShape.TRIPLE_OCTAGON);
+	   
+	   return blacklist;
+   }
+   
    /** Helper for nodeShape(). */
-   private void assignNodeShape(final AlloyType t, final Set<AlloyType> subTypes, final boolean isTvisible, final List<DotShape> shapeFamily) {
-      int index = 0;
-      // shape for t, if visible
+   private void assignNodeShape(final AlloyType t, final Set<AlloyType> subTypes, final boolean isTvisible, final DotShape shape) {
+      // hair for t, if visible
       if (isTvisible) {
-         final DotShape shape = shapeFamily.get(index++);
-         //log("AssignNodeShape " + t + " " + shape);
          vizState.shape.put(t, shape);
       }
-      // shapes for visible subtypes
+      // hair for visible subtypes
       for (final AlloyType subt : subTypes) {
-         final DotShape shape = shapeFamily.get(index++);
-         //log("AssignNodeShape " + subt + " " + shape);
          vizState.shape.put(subt, shape);
+         //Should Implement different hairs by checking used hairs.
       }
+   }
+   
+   /** Assigns node hair for Supertypes and Subtypes.
+    * - Subtypes never get bald hair cut
+    * - Used hair cuts for subtypes are kept track of in usedHair*/
+   	
+   
+   private void  assignNodeHair(final AlloyType t){
+	   boolean isTvisible = MagicUtil.isActuallyVisible(vizState, t);
+	   ConstList<AlloyType> subTypes = vizState.getCurrentModel().getSubTypes(t);
+	   
+	   /** assignNodeHair for top level types. Recursively call assignNode Hair for subtypes*/
+	   if(vizState.isTopLevel(t)){
+				  usedHair = new ArrayList<HairCut>();
+			      if (isTvisible) {
+			         vizState.haircut.put(t, HairCut.Bald);
+			         usedHair.add(HairCut.Bald);
+			      } else{
+			    	 usedHair.add(HairCut.Bald);
+			      }
+			      for (final AlloyType subt : subTypes) {
+			    	  assignNodeHair(subt);
+			      }  
+		/** If it has subtypes, assign shapes and then recurse.
+		 * else only assign shape */	      
+	   }else{
+		   if(vizState.getCurrentModel().getSubTypes(t).isEmpty()){
+			   if(isTvisible){
+				   for(HairCut hair: HairCut.values()){ 
+				    	 if(!usedHair.contains(hair)){
+				    		 usedHair.add(hair); 
+				    		 vizState.haircut.put(t, hair);
+				    		 break;
+				    	 }
+				   }  
+			   }	   
+		   }else{
+			   if(isTvisible){
+				   for(HairCut hair: HairCut.values()){ 
+				    	 if(!usedHair.contains(hair)){
+				    		 usedHair.add(hair); 
+				    		 vizState.haircut.put(t, hair);
+				    		 break;
+				    	 }
+				   }  
+			   }
+			   
+			   	for(AlloyType subt: vizState.getCurrentModel().getSubTypes(t)){
+			   		assignNodeHair(subt);
+			   	}
+		   }
+	   }
+	      // shapes for visible subtypes
    }
 
    /** SYNTACTIC/VISUAL: Should the names of nodes be displayed on them?
@@ -221,5 +272,83 @@ final class MagicColor {
       if (1 == visibleUserTypes.size()) {
          vizState.label.put(visibleUserTypes.iterator().next(), "");
       }
+   }
+   
+   private boolean isStateProjection(VizState model){
+	   for(AlloyType t: model.projectedTypes){
+		   if(MagicLayout.hasLikelyProjectionTypeName(t.getName()))return true;
+	   }
+	   return false;
+   }
+   
+   private List<AlloyType> getStateProjection(VizState model){
+	   List<AlloyType> stateType = new ArrayList<AlloyType>();
+	   for(AlloyType t: model.projectedTypes){
+		   if(MagicLayout.hasLikelyProjectionTypeName(t.getName())) stateType.add(t);
+	   }
+	   return stateType;
+   }
+   
+   /** Populates the nodeColor Map with Type Families and their assigned colors*/
+   private void doColourByType(){
+	   final Set<AlloyType> visibleUserTypes = MagicUtil.visibleUserTypes(vizState);
+	      final Set<AlloyType> uniqueColourTypes;
+	      if (visibleUserTypes.size() <= 5) {
+	         // can give every visible user type its own shape
+	         uniqueColourTypes = visibleUserTypes;
+	      } else {
+	         // give every top-level visible user type its own shape
+	         uniqueColourTypes = MagicUtil.partiallyVisibleUserTopLevelTypes(vizState);
+	      }
+	      int index = 0;
+	      for (final AlloyType t : uniqueColourTypes) {	
+	         vizState.nodeColor.put(t, (DotColor) DotColor.valuesWithout(DotColor.YELLOW, DotColor.MAGIC)[index]);
+	         index = (index + 1) % DotColor.valuesWithout(DotColor.YELLOW, DotColor.MAGIC).length;
+	      }
+   }
+   
+   /**Returns the list of relations that are connected to the Atoms of the selected Type*/
+   private List<AlloyRelation> getSubjectRelations(AlloyType domState){
+	   List<AlloyRelation> subrelations = new ArrayList<AlloyRelation>();
+	   for(AlloyRelation rel: vizState.getOriginalModel().getRelations()){
+	    	if(rel.getTypes().contains(domState)) subrelations.add(rel); 
+	   }
+	   return subrelations;
+   }
+   
+   /**Returns a list of Sets that that correspond to the list of given relations*/
+   private List<AlloySet> getSets(List<AlloyRelation> SubRelation){
+	   List<AlloySet> ProjectSets = new ArrayList<AlloySet>();
+	   Set<AlloySet> CurrentSets = new TreeSet<AlloySet>(vizState.getCurrentModel().getSets());
+
+	   for(AlloyRelation r: SubRelation){
+		   for(AlloySet s : CurrentSets){
+			   if(r.getName().equals(s.getName())){
+				   ProjectSets.add(s);
+			   }
+		   }
+	   }
+		   
+	   return ProjectSets;
+   }
+   
+   
+   /** Populates nodeColor with the AlloySets according to the algorithm:
+    *  - Get list of Existential projection types
+    *  - Get the dominant projection type
+    *  - Get relations corresponding to the dominant projection type
+    *  - Retrieve sets from the subject relations
+    *  - Color the model according the sets */
+   private void doColourByRelation(){
+	   AlloyType domState = MagicLayout.Existential.iterator().next();
+	   List<AlloyRelation> SubRelation = getSubjectRelations(domState);
+	   List<AlloySet> ProjectSets = getSets(SubRelation);
+	   
+	   int index = 0;
+	   for(AlloySet s: ProjectSets){
+		   System.out.println((DotColor) DotColor.valuesWithout(DotColor.YELLOW, DotColor.MAGIC)[index]);
+		   vizState.nodeColor.put(s, (DotColor) DotColor.valuesWithout(DotColor.YELLOW, DotColor.MAGIC)[index]);
+	       index = (index + 1) % DotColor.valuesWithout(DotColor.YELLOW, DotColor.MAGIC).length;
+	   }
    }
 }

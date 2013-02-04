@@ -25,7 +25,7 @@ import java.util.Set;
  * <p><b>Thread Safety:</b> Can be called only by the AWT event thread.
  */
 
-final class MagicUtil {
+public class MagicUtil {
 
    /** Constructor.
     */
@@ -50,29 +50,54 @@ final class MagicUtil {
     * @param t
     * @return true if this type will be shown to the user, false if this type will be hidden from the user
     */
-   static boolean isActuallyVisible(final VizState vizState, final AlloyType t) {
+   public static boolean isActuallyVisible(final VizState vizState, final AlloyType t) {
       if (t.isAbstract) return false;
-      final Boolean V = vizState.nodeVisible.get(t);
-      if (V != null) return V;
 
-      // inherited value, find out the real deal
+      // search up hierarchy
       final AlloyModel model = vizState.getCurrentModel();
-      AlloyType parent = model.getSuperType(t);
-      while (parent != null) {
-         final Boolean pV = vizState.nodeVisible.get(parent);
-         if (pV != null) break; // found a real setting
-         parent = model.getSuperType(parent);
+      AlloyType current = t;
+      while (current != null) {
+    	  
+    	 //returns null if the "current" is a nonTopLevel abstract type and is not the subject type 't', because otherwise subtypes of 
+    	 // 'current' would be invisible
+    	 final Boolean pV;
+    	 if(secondaryAbstract(vizState, current) && t != current)pV = null;
+    	 else pV = vizState.nodeVisible.get(current);
+   	 
+         final Boolean pH = vizState.hideUnconnected.get(current);
+         
+         if (pV != null) {
+        	 if (pH != null) {
+        		 // real pV, real pH
+        		 return (pV && !pH);
+        	 } else {
+        		 // real pV, no pH
+        		 return pV;
+        	 }
+         } else {
+        	 if (pH != null) {
+        		 // no pV, real pH
+        		 return !pH;
+        	 } else {
+        		 // no pV, no pH
+        		 // do nothing, continue up hierarchy
+        	 }
+         }
+         
+    	 // keep going up
+    	 current = model.getSuperType(current);
       }
-      if (parent == null) {
-         // made it to univ without finding a real setting
-         return true;
-      } else {
-         // found a concrete setting, use it
-         return vizState.nodeVisible.get(parent);
-      }
+     // made it to univ without finding a real setting
+     return true;
    }
 
-   static boolean isActuallyVisible(final VizState vizState, final AlloySet s) {
+   private static boolean secondaryAbstract(VizState vizState, AlloyType t) {
+	   System.out.println(topLevelTypes(vizState));
+	   if(t.isAbstract && !topLevelTypes(vizState).contains(t)) return true;
+	   return false;
+}
+
+static boolean isActuallyVisible(final VizState vizState, final AlloySet s) {
       final Boolean V = vizState.nodeVisible.get(s);
       if (V != null) return V;
 
@@ -110,7 +135,7 @@ final class MagicUtil {
    /** Returns every top-level user type that is itself visible or has a visible subtype.
     * @param vizState
     */
-   static Set<AlloyType> partiallyVisibleUserTopLevelTypes(final VizState vizState) {
+   public static Set<AlloyType> partiallyVisibleUserTopLevelTypes(final VizState vizState) {
       final AlloyModel model = vizState.getOriginalModel();
       final Set<AlloyType> visibleUserTypes = visibleUserTypes(vizState);
       //final Set<AlloyType> topLevelTypes = topLevelTypes(vizState);
@@ -124,6 +149,10 @@ final class MagicUtil {
       }
 
       return Collections.unmodifiableSet(result);
+   }
+   
+   public static Set<AlloyType> getvisibleSubTypes(final VizState vizState, final AlloyType type){
+	   return visibleSubTypes(vizState, type);
    }
 
    /** Returns the set of visible subtypes for the given type.

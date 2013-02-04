@@ -19,11 +19,14 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
 import edu.mit.csail.sdg.alloy4.ConstSet;
 import edu.mit.csail.sdg.alloy4.MailBug;
 import edu.mit.csail.sdg.alloy4.OurCheckbox;
@@ -32,6 +35,7 @@ import edu.mit.csail.sdg.alloy4graph.DotColor;
 import edu.mit.csail.sdg.alloy4graph.DotPalette;
 import edu.mit.csail.sdg.alloy4graph.DotShape;
 import edu.mit.csail.sdg.alloy4graph.DotStyle;
+import edu.mit.csail.sdg.alloy4graph.HairCut;
 
 /** Mutable; this stores an unprojected model as well as the current theme customization.
  *
@@ -60,6 +64,7 @@ public final class VizState {
       fontSize = old.fontSize;
       nodePalette = old.nodePalette;
       edgePalette = old.edgePalette;
+      atomColor.putAll(old.atomColor);
       nodeColor.putAll(old.nodeColor);
       nodeStyle.putAll(old.nodeStyle);
       nodeVisible.putAll(old.nodeVisible);
@@ -69,6 +74,7 @@ public final class VizState {
       showAsAttr.putAll(old.showAsAttr);
       showAsLabel.putAll(old.showAsLabel);
       shape.putAll(old.shape);
+      haircut.putAll(old.haircut);
       weight.putAll(old.weight);
       attribute.putAll(old.attribute);
       mergeArrows.putAll(old.mergeArrows);
@@ -90,6 +96,7 @@ public final class VizState {
       fontSize    = 12;
       nodePalette = DotPalette.CLASSIC;
       edgePalette = DotPalette.CLASSIC;
+      atomColor.clear();	   atomColor.put(null, DotColor.WHITE);
       nodeColor.clear();       nodeColor.put(null, DotColor.WHITE);
       nodeStyle.clear();       nodeStyle.put(null, DotStyle.SOLID);
       nodeVisible.clear();     nodeVisible.put(null, true);
@@ -99,6 +106,7 @@ public final class VizState {
       showAsAttr.clear();      showAsAttr.put(null, false);
       showAsLabel.clear();     showAsLabel.put(null, true);
       shape.clear();           shape.put(null, DotShape.ELLIPSE);
+      haircut.clear();			haircut.put(null, HairCut.Bald);
       weight.clear();          weight.put(null, 0);
       attribute.clear();       attribute.put(null, false);
       mergeArrows.clear();     mergeArrows.put(null, true);
@@ -119,7 +127,7 @@ public final class VizState {
       // Provide some nice defaults for meta model stuff
       AlloyType set=AlloyType.SET;
       AlloyRelation ext=AlloyRelation.EXTENDS, in=AlloyRelation.IN;
-      shape.put(null,DotShape.BOX); nodeColor.put(null,DotColor.YELLOW); nodeStyle.put(null,DotStyle.SOLID);
+      shape.put(null,DotShape.BOX); nodeColor.put(null,DotColor.nodeDefault()); nodeStyle.put(null,DotStyle.SOLID);
       shape.put(set,DotShape.ELLIPSE); nodeColor.put(set,DotColor.BLUE); label.put(set,"");
       edgeColor.put(ext,DotColor.BLACK); weight.put(ext,100); layoutBack.put(ext,true);
       edgeColor.put(in,DotColor.BLACK); weight.put(in,100); layoutBack.put(in,true);
@@ -228,7 +236,7 @@ public final class VizState {
    /*============================================================================================*/
 
    /** The set of types we are currently projecting over. */
-   private Set<AlloyType> projectedTypes = new TreeSet<AlloyType>();
+   public Set<AlloyType> projectedTypes = new TreeSet<AlloyType>();
 
    /** Gets an unmodifiable copy of the set of types we are currently projecting over. */
    public ConstSet<AlloyType> getProjectedTypes() { return ConstSet.make(projectedTypes); }
@@ -348,11 +356,13 @@ public final class VizState {
    // An important invariant to maintain: every map here must map null to a nonnull value.
    public final MInt weight = new MInt();
    public final MString label = new MString();
+   public final Map<AlloyAtom, DotColor> atomColor	  = new LinkedHashMap<AlloyAtom ,DotColor>();
    public final MMap<DotColor> nodeColor      = new MMap<DotColor>();
    public final MMap<DotColor> edgeColor      = new MMap<DotColor>();
    public final MMap<DotStyle> nodeStyle      = new MMap<DotStyle>();
    public final MMap<DotStyle> edgeStyle      = new MMap<DotStyle>();
    public final MMap<DotShape> shape          = new MMap<DotShape>();
+   public final MMap<HairCut>  haircut		  = new MMap<HairCut>();
    public final MMap<Boolean> attribute       = new MMap<Boolean>(true, false);
    public final MMap<Boolean> mergeArrows     = new MMap<Boolean>(true, false);
    public final MMap<Boolean> constraint      = new MMap<Boolean>(true, false);
@@ -380,6 +390,9 @@ public final class VizState {
       private void putAll(MString x) { map.putAll(x.map); change(); }
       public String get(AlloyElement x)         { String ans=map.get(x); if (ans==null) ans=x.getName().trim(); return ans; }
       public void put(AlloyElement x, String v) { if (x==null && v==null) v=""; if (x!=null && x.getName().equals(v)) v=null; changeIf(map.put(x,v), v); }
+      public boolean equals(MString Comparator){return map.equals(Comparator.map);}
+      public boolean isEmpty(){return map.isEmpty();}
+      public String toString(){return map.toString();}
    }
 
    public final class MMap<T> {
@@ -391,16 +404,29 @@ public final class VizState {
       private void clear() { map.clear(); change(); }
       private void putAll(MMap<T> x) { map.putAll(x.map); change(); }
       public T get(AlloyElement obj) { return map.get(obj); }
+      public Set<AlloyElement> getKeySet(){
+    	  return map.keySet(); 
+      }
+      public Set<T> getValues(){return (Set<T>)map.values();}
       public T resolve(AlloyElement obj) {
          AlloyModel m = currentModel;
          for(AlloyElement x=obj; ;x=parent(x,m)) { T v=map.get(x); if (v!=null) return v; }
       }
+      public Integer getSize(){return map.size();}
+      public boolean equals(MMap<T> Comparator){return map.equals(Comparator.map);}
+      public boolean isEmpty(){return (map.isEmpty());}
+      public String toString(){return map.toString();}
       /** Set the value for the given object; can be "null" to mean "inherit" */
       public void put(AlloyElement obj, T value) {
          if (obj==null && value==null) return;
          Object old = map.put(obj, value);
          if ((old==null && value!=null) || (old!=null && !old.equals(value))) change();
       }
+      
+      public Set<Map.Entry<AlloyElement, T>> entryset(){
+    	  return map.entrySet();
+      }
+      
       OurCheckbox pick(String label, String tooltip) {
          return new OurCheckbox(label, tooltip, (Boolean.TRUE.equals(get(null)) ? OurCheckbox.ON : OurCheckbox.OFF)) {
             private static final long serialVersionUID = 0;
@@ -436,6 +462,7 @@ public final class VizState {
    public DotColor nodeColor   (AlloyAtom a, AlloyInstance i) { for(AlloySet s:i.atom2sets(a)) {DotColor v=nodeColor.get(s); if (v!=null) return v;} return nodeColor.resolve (a.getType()); }
    public DotStyle nodeStyle   (AlloyAtom a, AlloyInstance i) { for(AlloySet s:i.atom2sets(a)) {DotStyle v=nodeStyle.get(s); if (v!=null) return v;} return nodeStyle.resolve (a.getType()); }
    public DotShape shape       (AlloyAtom a, AlloyInstance i) { for(AlloySet s:i.atom2sets(a)) {DotShape v=shape.get(s);     if (v!=null) return v;} return shape.resolve     (a.getType()); }
+   public HairCut haircut     (AlloyAtom a, AlloyInstance i) { for(AlloySet s:i.atom2sets(a)) {HairCut v=haircut.get(s);     if (v!=null) return v;} return haircut.resolve     (a.getType()); }
    public boolean  nodeVisible (AlloyAtom a, AlloyInstance i) {
       // If it's in 1 or more set, then TRUE if at least one of them is TRUE.
       // If it's in 0 set, then travel up the chain of AlloyType and return the first non-null value.

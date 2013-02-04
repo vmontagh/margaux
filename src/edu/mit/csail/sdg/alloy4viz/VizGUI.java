@@ -721,6 +721,7 @@ public final class VizGUI implements ComponentListener {
       filename = Util.canon(filename);
       try {
          myState.savePaletteXML(filename);
+         System.out.println("SAVED"+filename);
          filename = Util.canon(filename); // Since the canon name may have changed
          addThemeHistory(filename);
       } catch (Throwable er) {
@@ -903,6 +904,18 @@ public final class VizGUI implements ComponentListener {
       updateDisplay();
       return null;
    }
+   
+   public Runner doMagicLayout(String yes) {
+	      if (wrap) return wrapMe();
+	      if (myState==null) return null;
+	      myState.resetTheme();
+	      try { MagicLayout.magic(myState);  MagicColor.magic(myState); } catch(Throwable ex) { }
+	      repopulateProjectionPopup();
+	      if (myCustomPanel!=null) myCustomPanel.remakeAll();
+	      if (myGraphPanel!=null) myGraphPanel.remakeAll();
+	      updateDisplay();
+	      return null;
+	   }
 
    /** This method refreshes the "window" menu. */
    private Runner doRefreshWindow() {

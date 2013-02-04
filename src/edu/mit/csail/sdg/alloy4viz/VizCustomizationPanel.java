@@ -396,7 +396,7 @@ public final class VizCustomizationPanel extends JPanel {
 
    /** Generates the "default type and set settings" widgets, and add them to "parent". */
    private void createDefaultNodeWidget(JPanel parent) {
-      JComboBox color = new OurCombobox(false, DotColor.valuesWithout(DotColor.MAGIC), 110, 35, vizState.nodeColor.get(null)) {
+      JComboBox color = new OurCombobox(false, DotColor.valuesWithout(DotColor.MAGIC, DotColor.BLACK), 110, 35, vizState.nodeColor.get(null)) {
          private static final long serialVersionUID = 0;
          @Override public String do_getText(Object value) { return ((DotColor)value).getDisplayedText(); }
          @Override public Icon   do_getIcon(Object value) { return ((DotColor)value).getIcon(vizState.getNodePalette()); }

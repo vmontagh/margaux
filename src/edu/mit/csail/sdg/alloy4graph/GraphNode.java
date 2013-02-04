@@ -130,6 +130,12 @@ public final strictfp class GraphNode {
     * <p> When this value changes, we should invalidate the previously computed bounds information.
     */
    private DotShape shape = DotShape.BOX;
+   
+   /** The node haircut; if null, then the node is a dummy node.
+    * <p> When this value changes, we should invalidate the previously computed bounds information.
+    */
+   
+   private HairCut haircut = HairCut.Bald;
 
    // ============================ these fields are computed by calcBounds() =========================================
 
@@ -242,6 +248,11 @@ public final strictfp class GraphNode {
       if (this.style!=style && style!=null) { this.style = style; updown = (-1); }
       return this;
    }
+   
+   public GraphNode set(HairCut haircut){
+	   if (this.haircut!=haircut && haircut!=null) { this.haircut = haircut; updown = (-1); }
+	   return this;
+   }
 
    /** Changes the font boldness, then invalidate the computed bounds. */
    public GraphNode setFontBoldness(boolean bold) {
@@ -304,7 +315,7 @@ public final strictfp class GraphNode {
          }
          if (shape==DotShape.DOUBLE_CIRCLE) gr.drawCircle(radius-5);
       } else {
-         gr.draw(poly,true);
+    	 gr.draw(poly,true);
          gr.setColor(Color.BLACK);
          gr.draw(poly,false);
          if (poly2!=null) gr.draw(poly2,false);
@@ -314,10 +325,13 @@ public final strictfp class GraphNode {
             gr.drawLine(-side+8, -8, -side+8, 8); gr.drawLine(-8, -side+8, 8, -side+8);
             gr.drawLine(side-8, -8, side-8, 8); gr.drawLine(-8, side-8, 8, side-8);
          }
-         if (shape==DotShape.M_SQUARE) {
-            gr.drawLine(-side, -side+8, -side+8, -side); gr.drawLine(side, -side+8, side-8, -side);
-            gr.drawLine(-side, side-8, -side+8, side); gr.drawLine(side, side-8, side-8, side);
-         }
+         //if (shape==DotShape.M_SQUARE) {
+           // gr.drawLine(-side, -side+8, -side+8, -side); gr.drawLine(side, -side+8, side-8, -side);
+            //gr.drawLine(-side, side-8, -side+8, side); gr.drawLine(side, side-8, side-8, side);
+         //}
+         
+//         gr.draw(this.haircut.render(this));
+//         System.out.println("Hair"+this.x()+this.y());
       }
       gr.set(DotStyle.SOLID, scale);
       int clr = color.getRGB() & 0xFFFFFF;
@@ -472,8 +486,9 @@ public final strictfp class GraphNode {
          case INV_HOUSE: {
             yShift = -ad/2;
             updown = updown - yShift;
-            poly.addPoint(-hw,yShift-hh); poly.addPoint(hw,yShift-hh); poly.addPoint(hw,yShift+hh);
-            poly.addPoint(0,updown); poly.addPoint(-hw,yShift+hh);
+//          poly.addPoint(-hw,yShift-hh); poly.addPoint(hw,yShift-hh); poly.addPoint(hw,yShift+hh);
+//          poly.addPoint(0,updown); poly.addPoint(-hw,yShift+hh);
+            this.poly=DotShape.INV_HOUSE.render(haircut, hw, hh, yShift, updown);
             break;
          }
          case TRIANGLE: case INV_TRIANGLE: {
@@ -482,32 +497,39 @@ public final strictfp class GraphNode {
             side += dx; updown += dy/2;
             if (shape==DotShape.TRIANGLE) {
                yShift = dy/2;
+               GeneralPath path = new GeneralPath();
+               this.poly = path;
                poly.addPoint(0, -updown); poly.addPoint(hw+dx, updown); poly.addPoint(-hw-dx, updown);
             } else {
                yShift = -dy/2;
-               poly.addPoint(0, updown); poly.addPoint(hw+dx, -updown); poly.addPoint(-hw-dx, -updown);
+//             poly.addPoint(0, updown); poly.addPoint(hw+dx, -updown); poly.addPoint(-hw-dx, -updown);
+               this.poly=DotShape.INV_TRIANGLE.render(haircut, hw, updown, dx);
             }
             break;
          }
          case HEXAGON: {
             side += ad;
-            poly.addPoint(-hw-ad, 0); poly.addPoint(-hw, -hh); poly.addPoint(hw, -hh);
-            poly.addPoint(hw+ad, 0); poly.addPoint(hw, hh); poly.addPoint(-hw, hh);
+//          poly.addPoint(-hw-ad, 0); poly.addPoint(-hw, -hh); poly.addPoint(hw, -hh);
+//          poly.addPoint(hw+ad, 0); poly.addPoint(hw, hh); poly.addPoint(-hw, hh);
+            this.poly=DotShape.HEXAGON.render(haircut, hw, hh, ad);
             break;
          }
          case TRAPEZOID: {
             side += ad;
-            poly.addPoint(-hw,-hh); poly.addPoint(hw,-hh); poly.addPoint(hw+ad,hh); poly.addPoint(-hw-ad,hh);
+// 			poly.addPoint(-hw,-hh); poly.addPoint(hw,-hh); poly.addPoint(hw+ad,hh); poly.addPoint(-hw-ad,hh);
+            this.poly=DotShape.TRAPEZOID.render(haircut, hw, hh, ad);
             break;
          }
          case INV_TRAPEZOID: {
             side += ad;
-            poly.addPoint(-hw-ad, -hh); poly.addPoint(hw+ad, -hh); poly.addPoint(hw, hh); poly.addPoint(-hw, hh);
+//          poly.addPoint(-hw-ad, -hh); poly.addPoint(hw+ad, -hh); poly.addPoint(hw, hh); poly.addPoint(-hw, hh);
+            this.poly=DotShape.INV_TRAPEZOID.render(haircut, hw, hh, ad);
             break;
          }
          case PARALLELOGRAM: {
             side += ad;
-            poly.addPoint(-hw, -hh); poly.addPoint(hw+ad, -hh); poly.addPoint(hw, hh); poly.addPoint(-hw-ad, hh);
+//          poly.addPoint(-hw, -hh); poly.addPoint(hw+ad, -hh); poly.addPoint(hw, hh); poly.addPoint(-hw-ad, hh);
+            this.poly=DotShape.PARALLELOGRAM.render(haircut, hw, hh, ad);
             break;
          }
          case M_DIAMOND: case DIAMOND: {
@@ -525,32 +547,38 @@ public final strictfp class GraphNode {
             this.width=hw*2;  this.side=hw;
             this.height=hh*2; this.updown=hh;
             side += 4; updown +=4;
-            poly.addPoint(-hw-4,-hh-4); poly.addPoint(hw+4,-hh-4); poly.addPoint(hw+4,hh+4); poly.addPoint(-hw-4,hh+4);
+//          poly.addPoint(-hw-4,-hh-4); poly.addPoint(hw+4,-hh-4); poly.addPoint(hw+4,hh+4); poly.addPoint(-hw-4,hh+4);
+            this.poly=DotShape.M_SQUARE.render(haircut, hw, hh, side);
             break;
          }
          case OCTAGON: case DOUBLE_OCTAGON: case TRIPLE_OCTAGON: {
             int dx=(width)/3, dy=ad;
             updown += dy;
-            poly.addPoint(-hw, -hh); poly.addPoint(-hw+dx, -hh-dy); poly.addPoint(hw-dx, -hh-dy); poly.addPoint(hw, -hh);
-            poly.addPoint(hw, hh); poly.addPoint(hw-dx, hh+dy); poly.addPoint(-hw+dx, hh+dy); poly.addPoint(-hw, hh);
+//          poly.addPoint(-hw, -hh); poly.addPoint(-hw+dx, -hh-dy); poly.addPoint(hw-dx, -hh-dy); poly.addPoint(hw, -hh);
+//          poly.addPoint(hw, hh); poly.addPoint(hw-dx, hh+dy); poly.addPoint(-hw+dx, hh+dy); poly.addPoint(-hw, hh);
+            this.poly=DotShape.OCTAGON.render(haircut, hw, hh, dx, dy);
             if (shape==DotShape.OCTAGON) break;
             double c=sqrt(dx*dx+dy*dy), a=(dx*dy)/c, k=((a+5)*dy)/dx, r=sqrt((a+5)*(a+5)+k*k)-dy;
             double dx1=((r-5)*dx)/dy, dy1=-(((dx+5D)*dy)/dx-dy-r);
             int x1=(int)(round(dx1)), y1=(int)(round(dy1));
             updown+=5; side+=5;
             poly2=poly; poly=new Polygon();
-            poly.addPoint(-hw-5, -hh-y1); poly.addPoint(-hw+dx-x1, -hh-dy-5); poly.addPoint(hw-dx+x1, -hh-dy-5);
-            poly.addPoint(hw+5, -hh-y1); poly.addPoint(hw+5, hh+y1); poly.addPoint(hw-dx+x1, hh+dy+5);
-            poly.addPoint(-hw+dx-x1, hh+dy+5); poly.addPoint(-hw-5, hh+y1);
+//          poly.addPoint(-hw-5, -hh-y1); poly.addPoint(-hw+dx-x1, -hh-dy-5); poly.addPoint(hw-dx+x1, -hh-dy-5);
+//          poly.addPoint(hw+5, -hh-y1); poly.addPoint(hw+5, hh+y1); poly.addPoint(hw-dx+x1, hh+dy+5);
+//          poly.addPoint(-hw+dx-x1, hh+dy+5); poly.addPoint(-hw-5, hh+y1);
+            this.poly2=DotShape.DOUBLE_OCTAGON.render(haircut, hw, hh, dx, dy, x1, y1);
             if (shape==DotShape.DOUBLE_OCTAGON) break;
             updown+=5; side+=5;
             poly3=poly; poly=new Polygon(); x1=(int)(round(dx1*2)); y1=(int)(round(dy1*2));
-            poly.addPoint(-hw-10, -hh-y1); poly.addPoint(-hw+dx-x1, -hh-dy-10); poly.addPoint(hw-dx+x1, -hh-dy-10);
-            poly.addPoint(hw+10, -hh-y1); poly.addPoint(hw+10, hh+y1); poly.addPoint(hw-dx+x1, hh+dy+10);
-            poly.addPoint(-hw+dx-x1, hh+dy+10); poly.addPoint(-hw-10, hh+y1);
+//          poly.addPoint(-hw-10, -hh-y1); poly.addPoint(-hw+dx-x1, -hh-dy-10); poly.addPoint(hw-dx+x1, -hh-dy-10);
+//          poly.addPoint(hw+10, -hh-y1); poly.addPoint(hw+10, hh+y1); poly.addPoint(hw-dx+x1, hh+dy+10);
+//          poly.addPoint(-hw+dx-x1, hh+dy+10); poly.addPoint(-hw-10, hh+y1);
+            this.poly3=DotShape.TRIPLE_OCTAGON.render(haircut, hw, hh, dx, dy, x1, y1);
             break;
          }
          case M_CIRCLE: case CIRCLE: case DOUBLE_CIRCLE: {
+        	GeneralPath path = new GeneralPath();
+        	this.poly = path;
             int radius = ((int) (sqrt( hw*((double)hw) + ((double)hh)*hh ))) + 2;
             if (shape==DotShape.DOUBLE_CIRCLE) radius=radius+5;
             int L = ((int) (radius / cos18))+2, a = (int) (L * sin36), b = (int) (L * cos36), c = (int) (radius * tan18);
@@ -573,10 +601,11 @@ public final strictfp class GraphNode {
          }
          default: { // BOX
             if (shape!=DotShape.BOX) { int d=ad/2; hw=hw+d; side=hw; hh=hh+d; updown=hh; }
-            poly.addPoint(-hw,-hh); poly.addPoint(hw,-hh); poly.addPoint(hw,hh); poly.addPoint(-hw,hh);
+//            poly.addPoint(-hw,-hh); poly.addPoint(hw,-hh); poly.addPoint(hw,hh); poly.addPoint(-hw,hh);
+            this.poly=DotShape.BOX.render(haircut, hw, hh);
          }
       }
-      if (shape!=DotShape.EGG && shape!=DotShape.ELLIPSE) this.poly = poly;
+//      if (shape!=DotShape.EGG && shape!=DotShape.ELLIPSE) this.poly = poly;
       for(int i=0; i<selfs.size(); i++) {
          if (i==0) { reserved=side+selfLoopA; continue; }
          String label = selfs.get(i-1).label();

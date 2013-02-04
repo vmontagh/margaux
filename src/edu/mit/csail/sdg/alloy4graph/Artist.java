@@ -26,6 +26,7 @@ import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import edu.mit.csail.sdg.alloy4.OurPDFWriter;
@@ -99,6 +100,9 @@ public final strictfp class Artist {
 
     /** Draws the outline of the given shape. */
     public void draw(Shape shape, boolean fillOrNot)  { if (gr==null) pdf.drawShape(shape, fillOrNot); else if (fillOrNot) gr.fill(shape); else gr.draw(shape); }
+    
+    /**Draws the given path*/
+    public void draw(Path2D path){gr.draw(path);}
 
     /** The pattern for dotted line. */
     private static float[] dot = new float[]{1f,3f};

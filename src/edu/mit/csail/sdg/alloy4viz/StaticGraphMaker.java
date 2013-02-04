@@ -35,6 +35,9 @@ import edu.mit.csail.sdg.alloy4graph.GraphEdge;
 import edu.mit.csail.sdg.alloy4graph.Graph;
 import edu.mit.csail.sdg.alloy4graph.GraphNode;
 import edu.mit.csail.sdg.alloy4graph.GraphViewer;
+import edu.mit.csail.sdg.alloy4graph.HairCut;
+import edu.mit.csail.sdg.alloy4graph.StableGraph;
+import edu.mit.csail.sdg.alloy4graph.SugiyamaGraph;
 
 /** This utility class generates a graph for a particular index of the projection.
  *
@@ -70,11 +73,17 @@ public final class StaticGraphMaker {
    /** Produces a single Graph from the given Instance and View and choice of Projection */
    public static JPanel produceGraph(AlloyInstance instance, VizState view, AlloyProjection proj) throws ErrorFatal {
       view = new VizState(view);
-      if (proj == null) proj = new AlloyProjection();
-      Graph graph = new Graph(view.getFontSize() / 12.0D);
-      new StaticGraphMaker(graph, instance, view, proj);
-      if (graph.nodes.size()==0) new GraphNode(graph, "", "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
-      return new GraphViewer(graph);
+      final Graph graph;
+      if (proj == null){ 
+    	  proj = new AlloyProjection();
+    	  graph = new SugiyamaGraph(view.getFontSize() / 12.0D);
+    	 
+      } else{
+    	  graph = new StableGraph(view.getFontSize() / 12.0D);
+      }
+       new StaticGraphMaker(graph, instance, view, proj);
+       if (graph.nodes.size()==0) new GraphNode(graph, "", "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
+       return new GraphViewer(graph); 
    }
 
    /** The list of colors, in order, to assign each legend. */
@@ -181,8 +190,9 @@ public final class StaticGraphMaker {
       DotColor color = view.nodeColor(atom, instance);
       DotStyle style = view.nodeStyle(atom, instance);
       DotShape shape = view.shape(atom, instance);
+      HairCut hair = view.haircut(atom, instance);
       String label = atomname(atom, false);
-      node = new GraphNode(graph, atom, label).set(shape).set(color.getColor(view.getNodePalette())).set(style);
+      node = new GraphNode(graph, atom, label).set(shape).set(color.getColor(view.getNodePalette())).set(style).set(hair);
       // Get the label based on the sets and relations
       String setsLabel="";
       boolean showLabelByDefault = view.showAsLabel.get(null);

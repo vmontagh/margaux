@@ -41,6 +41,9 @@ public enum DotColor {
 
    /** The text to display. */
    private final String displayText;
+   
+   /**Default Node Color*/
+   public static DotColor nodeDefault(){return YELLOW;}
 
    /** The list of colors to use, corresponding to the current palette;
     * if there are more palette choices than colors.size(), then the extra palettes would all use the first color. */
@@ -63,10 +66,16 @@ public enum DotColor {
    private static final Map<String,Color> name2color = new HashMap<String,Color>();
 
    /** Returns the list of values that the user is allowed to select from. */
-   public static Object[] valuesWithout(DotColor exclude) {
+   public static Object[] valuesWithout(DotColor... exclude) {
       Object[] ans = new Object[values().length - 1];
       int i = 0;
-      for(DotColor d: values()) if (d != exclude) ans[i++] = d;
+      for(DotColor d: values()) {
+    	  boolean flagged = false;
+    	  for(DotColor e: exclude){
+    		 flagged = (d == e) ? true: false;
+    	  }
+    	  if(!flagged) ans[i++] = d;
+      }
       return ans;
    }
 
