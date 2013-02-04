@@ -48,8 +48,16 @@ public final class RunVizTest {
     	Execute(args);
        
     }
-    
+
+	public final File OUT_DIR = new File("tmp/TestInstances/");
+
     public List<String> Execute(String[] args)throws Err{
+    	
+    	if (!OUT_DIR.exists()) {
+    		final boolean result = OUT_DIR.mkdirs();
+    		assert result : "couldn't make " + OUT_DIR;
+    	}
+    	
     	 // The visualizer (We will initialize it to nonnull when we visualize an Alloy solution)
         List<String> list_instances_xml = new ArrayList<String>();
         String alloyinstance_xml;
@@ -98,6 +106,6 @@ public final class RunVizTest {
     }
     
     public String IntanceFileName(String filename, Object command){
-    	return "TestInstances/"+filename.replace(".als", "_"+"Command"+command.toString()+".xml");
+    	return OUT_DIR.getAbsolutePath() +filename.replace(".als", "_"+"Command"+command.toString()+".xml");
     }
 }
