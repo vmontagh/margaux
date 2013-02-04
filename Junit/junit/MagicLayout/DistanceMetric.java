@@ -45,15 +45,15 @@ public class DistanceMetric {
 	
 	@AfterClass
 //	public static void RenderHTML() throws IOException{
-//		HTMLRender render = new HTMLRender("DistanceMetric3.html");
+//		HTMLRender render = new HTMLRender("tmp/DistanceMetric3.html");
 //		render.doHTMLRender(doDistanceMetric.DiffsList);
 //	}
 	
 	public static void RenderCSV() throws IOException{
-		CSVRender csvrender =  new CSVRender("DistanceMetric1.csv");
+		CSVRender csvrender =  new CSVRender("tmp/DistanceMetric1.csv");
 		csvrender.doCSVRender(doDistanceMetric.DiffsList);
 		
-		HTMLRender render = new HTMLRender("DistanceMetric1.html");
+		HTMLRender render = new HTMLRender("tmp/DistanceMetric1.html");
 		render.doHTMLRender(doDistanceMetric.DiffsList);
 	}
 	
