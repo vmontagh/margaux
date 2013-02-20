@@ -1,0 +1,6 @@
+Some examples using the different projection algorithms in the Harmon
+et al paper.
+
+dotisomorph: when there is only a singleton atom as a place-holder for
+declaring global relations we want to project over that singleton
+(e.g., Mapping)

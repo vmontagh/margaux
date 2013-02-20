@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view nodetheme="Martha">
+
+<projection> <type name="State"/> </projection>
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Int"/>
+   <type name="State"/>
+   <type name="String"/>
+   <type name="univ"/>
+   <type name="seq/Int"/>
+   <set name="$ConvergingRun_t" type="State"/>
+</node>
+
+<node shape="Ellipse" color="Yellow">
+   <type name="Process"/>
+</node>
+
+<node shape="Parallelogram" color="Green">
+   <type name="Val"/>
+</node>
+
+<node style="Bold">
+   <set name="First" type="so/Ord"/>
+   <set name="Next" type="so/Ord"/>
+   <set name="running" type="Process"/>
+</node>
+
+<node style="Bold" label="p">
+   <set name="$OneAtATimeTrans_p" type="Process"/>
+</node>
+
+<node visible="no">
+   <type name="po/Ord"/>
+   <type name="so/Ord"/>
+   <type name="vo/Ord"/>
+</node>
+
+<edge color="Gray" constraint="no">
+   <relation name="Next"> <type name="po/Ord"/> <type name="Process"/> <type name="Process"/> </relation>
+   <relation name="Next"> <type name="vo/Ord"/> <type name="Val"/> <type name="Val"/> </relation>
+</edge>
+
+</view>
+
+</alloy>

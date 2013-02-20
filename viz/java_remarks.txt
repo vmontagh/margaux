@@ -1,0 +1,65 @@
+MagicLayout.java
+- Constructor (N/A)
+- identifyEnumerationTypes ()
+	- don't understand, will look into this function further
+- projection (determines if a projection should be made and if so, over what the projection should be made)
+	- already checks for ternary relations
+	- already checks if there is a sig named time, state, tick, or timestep to give them projection priority
+	- uses a scoring system, different properties give it priority and a higher score
+	- highest score will be projected over
+	- if none of the scores are greater than 1, there is no projection
+		- commented to log the occurance, should this be implemented?
+	- if the scores are tied, we don't know what to do at this time
+		- currently, an arbitrary winner is determined, there will probably be a better way to determine a winner
+		- once again, attempts to log  are commented in, possibly needing to be implemented
+- list of likely projection type names
+	- possibly can be added on to, check examples again
+- spine (tries to intelligently determine which relations should be used to influence the layout of the model visualization)
+	- 
+- attributes ()
+	- 
+- edgeLabels ()
+	- 
+- nodeVisibility ()
+	- 
+
+MagicUtil.java (have to look through each function in here separately for more info, any combination of them could be the source of the idle node problems)
+- Constructor (N/A)
+- isActuallyVisible (determines whether or not the type should be made visible to the user)
+- visibleUserTypes (returns all of the visible user types)
+- topLevelTypes (returns all the top-level types in the original model)
+- partiallyVisibleUserTopLevelTypes (Returns every top-level user type that is visible or has visible subtypes)
+- visibleSubTypes (returns the list of visible subtypes for a type)
+
+MagicColor.java
+- Constructor (N/A)
+- nodeColor (determines colours for nodes)
+	- don't understand the shape code in this function
+- skolemColour
+	- not sure what skolem constants are, will look into this further
+- list of shape families 
+	- nothing to report
+- nodeShape
+	- ellipse is the default shape
+		- circle if special extension of ellipse
+	- rectangle if lots of attributes
+		- square if special extension of rectangle
+	- shapes matter
+		- don't break symmetry
+	- matches to a shape family
+		- 1. look for exact match
+		- 2. look for approximate match
+		- 3. re-use a shape family matched to something else -> ie give up for now
+			- can be improved to include this or make it better, as there is seemingly no code for this currently
+- assignNodeShape (helps nodeShape find what it's looking for)
+- nodeNames (determines if node names need to be displayed on the node) (trims name, should also be mentioned in documentation)
+	- trim name, trim label before last slash, hide name when only one node type visible
+	- in comments it mentions that there are 3 things to consider but they are not all considered
+		- do not show name when only a single sig
+			- seemingly implemented
+		- do not show name when only a single relation
+			- seemingly not implemented
+		- check for single things after hiding the names by default, show after if checks fail
+			- seemingly not implemented
+
+NOTE: Reccuring issue: Log is always commented, doesn't ever seem to be implemented

@@ -1,0 +1,7 @@
+- backedges
+    - ignore some edges during layout
+    - infer back edges / spine
+- infer view relations as attributes
+- filter atoms by regex or skolem
+- consistent placement through projections
+- pictures for nodes
