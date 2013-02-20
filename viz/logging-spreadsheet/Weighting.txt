@@ -1,0 +1,17 @@
+Apply Projection				8
+Symmetrical Backedges				6
+Colours						2
+Project over subtype				5
+Visual Improvements				4
+Wrong Label substitution/Obscure Naming		4
+Particular					Varies
+Back Edge					5
+Static Node Positioning				4
+Idle Nodes					4
+Radial Layout					6
+Recognize Common Shapes				6
+Attribute Minimization				5
+Edge Intersection				4
+Text Overlap					3
+
+Also: http://perlmeme.org/tutorials/parsing_csv.html

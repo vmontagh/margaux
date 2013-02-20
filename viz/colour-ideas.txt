@@ -1,0 +1,11 @@
+1. Most occuring relation
+	- State in farmer model
+	- Default to colouring by type if no relations
+	- Project over type -> auto colour over it?
+2. Relational dependency
+	- Use for 2+ relations (unary only?)
+	- For 1 is trivial
+	- Default to colouring by type if no relations
+3. Colouring by state change
+	- Colour changes to highlight them and draw attention to them
+		- By attribute

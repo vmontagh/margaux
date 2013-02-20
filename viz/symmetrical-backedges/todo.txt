@@ -1,1 +1,11 @@
 Symmetrical back-edges
+
+- book/appendixE/hotel-303.als is a good one
+    - Key has incoming edges from multiple types: segregate them
+    - look at run commands to see only one Room, 3 or 4 cards
+    - look at sig declarations to see only one Desk
+    - separate out highest cardinality sig (Card)
+    - then invert Guest->Card rel cards to keep metamodel visually hierarchical
+    - other note: compute ranks for node kinds based on meta-model,
+      then layout atoms in lexicographic order within their rank
+

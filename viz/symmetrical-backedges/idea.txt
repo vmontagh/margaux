@@ -1,0 +1,20 @@
+Detect Backedge Problem
+
+1) How many edges are in the lane?
+   - Count number of inbound edges and outbound edges.
+   - Iterate through.
+      - Iterate through layers, then nodes, then inbound edges.
+      - Create an array with the lanes (size of layers - 1).
+      - Look at edge, get the "from" node, and based on current layer  		and the layer of the "from" node, increment the proper lane 		array element (if not adjacent lanes, ignore for now (ie layer 		difference of 1)).
+      - Once iterations are complete, iterate through the lane array 		and determine which lanes have more than "x" edges in them, 		where "x" is an adjustable value to be tweaked later.
+
+2) Are there only inbound edges (/ only outbound edges)?
+   - Take the candidate lanes and iterate through the two associated 	  layers, iterating through each node inside them.
+      - If the node only has inbound edges, reverse the relations 	  associated with the edges.
+
+Possible problems:
+
+- A node may have only inbound edges, but those relations may be involved in nodes with both inbound and outbound edges.
+   - Possible additional rule: Make sure there is only one instance of 	    that relation OR make sure that relation is only present in the 	  node with only inbound edges so as to not mess anything else up.
+
+
