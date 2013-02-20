@@ -17,13 +17,18 @@ package edu.mit.csail.sdg.alloy4viz;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
+import com.sun.corba.se.impl.orbutil.graph.Graph;
+
 import edu.mit.csail.sdg.alloy4.ConstSet;
 import edu.mit.csail.sdg.alloy4.MailBug;
 import edu.mit.csail.sdg.alloy4.OurCheckbox;
@@ -32,6 +37,8 @@ import edu.mit.csail.sdg.alloy4graph.DotColor;
 import edu.mit.csail.sdg.alloy4graph.DotPalette;
 import edu.mit.csail.sdg.alloy4graph.DotShape;
 import edu.mit.csail.sdg.alloy4graph.DotStyle;
+import edu.mit.csail.sdg.alloy4graph.GraphNode;
+import edu.mit.csail.sdg.alloy4graph.GraphViewer;
 
 /** Mutable; this stores an unprojected model as well as the current theme customization.
  *
@@ -136,6 +143,7 @@ public final class VizState {
       for (AlloyType t:getProjectedTypes()) if (!unprojectedInstance.model.hasType(t)) projectedTypes.remove(t);
       currentModel = StaticProjector.project(unprojectedInstance.model, projectedTypes);
       cache.clear();
+      mostRecentProj.clear();
    }
 
    /** Erase the current theme customizations and then load it from a file.
@@ -157,28 +165,64 @@ public final class VizState {
    }
 
    /** Caches previously generated graphs. */
-   private LinkedHashMap<AlloyProjection,JPanel> cache=new LinkedHashMap<AlloyProjection,JPanel>();
+   private LinkedHashMap<AlloyProjection,GraphViewer> cache=new LinkedHashMap<AlloyProjection,GraphViewer>();
+
+   /** Caches previously generated projection for each Projection */
+   private LinkedHashMap<AlloyProjection, GraphViewer> mostRecentProj = new LinkedHashMap<AlloyProjection,GraphViewer>();
 
    /** Generate a VizGraphPanel for a given projection choice, using the current settings. */
    public JPanel getGraph(AlloyProjection projectionChoice) {
-      JPanel ans = cache.get(projectionChoice);
-      if (ans!=null) return ans;
+      GraphViewer ans = cache.get(projectionChoice);
       AlloyInstance inst = originalInstance;
       try {
-         ans = StaticGraphMaker.produceGraph(inst, this, projectionChoice);
-         cache.put(projectionChoice, ans);
+    	  GraphViewer oldFrame = null;
+    	  for (AlloyProjection proj : mostRecentProj.keySet())
+    	  {
+    		  if (proj.getProjectedTypes().equals(projectionChoice.getProjectedTypes()))
+    		  {
+    	    	  oldFrame = mostRecentProj.get(proj);
+    		  }
+    	  }
+    	  //If the projection already has a layout, then use this.
+    	  if (ans!=null&&oldFrame!=null)
+    	  {
+    		  ans.modifyNodePositions(oldFrame.getGraphNodes());
+    		  updateCache(projectionChoice, ans);
+    		  return ans;
+    	  }
+    	  else if (ans==null&&oldFrame!=null)
+    	  {
+    		  GraphViewer gv = StaticGraphMaker.produceFrame(inst, this, projectionChoice, oldFrame);
+    		  updateCache(projectionChoice, gv);
+    		  gv.setBorder(null);
+    		  return gv;
+    	  }
+    	  //else//(ans==null&&mostRecentProj.get(inst)==null)
+    	  //{
+    		  ans = StaticGraphMaker.produceGraph(inst, this, projectionChoice);
+    	      updateCache(projectionChoice, ans);
+    	      ans.setBorder(null);
+    	      return ans;
+    	  //}
       } catch(Throwable ex) {
          String msg = "An error has occurred: " + ex + "\n\nStackTrace:\n" + MailBug.dump(ex) + "\n";
          JScrollPane scroll = OurUtil.scrollpane(OurUtil.textarea(msg, 0, 0, false, false));
-         ans = new JPanel();
-         ans.setLayout(new BorderLayout());
-         ans.add(scroll, BorderLayout.CENTER);
-         ans.setBackground(Color.WHITE);
+         JPanel ans1 = new JPanel();
+         ans1.setLayout(new BorderLayout());
+         ans1.add(scroll, BorderLayout.CENTER);
+         ans1.setBackground(Color.WHITE);
+         ans1.setBorder(null);
+         return ans1;
       }
-      ans.setBorder(null);
-      return ans;
    }
 
+   private void updateCache(AlloyProjection proj, GraphViewer ans)
+   {
+	   mostRecentProj.remove(proj);
+	   mostRecentProj.put(proj, ans);
+	   cache.put(proj, ans);
+   }
+   
    /** True if the theme has been modified since last save. */
    private boolean changedSinceLastSave=false;
 

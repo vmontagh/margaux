@@ -16,6 +16,11 @@
 package edu.mit.csail.sdg.alloy4viz;
 
 import java.awt.Color;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,17 +71,42 @@ public final class StaticGraphMaker {
 
    /** The resulting graph. */
    private final Graph graph;
-
-   /** Produces a single Graph from the given Instance and View and choice of Projection */
-   public static JPanel produceGraph(AlloyInstance instance, VizState view, AlloyProjection proj) throws ErrorFatal {
-      view = new VizState(view);
+      
+   /** The list of node positions for new frame */
+   private List<GraphNode> oldGraphNodes = new ArrayList<GraphNode>();
+   
+   /** Produces a single Graph from the given Instance and View and choice of Projection.*/
+   public static GraphViewer produceGraph(AlloyInstance instance, VizState view, AlloyProjection proj) throws ErrorFatal {
       if (proj == null) proj = new AlloyProjection();
-      Graph graph = new Graph(view.getFontSize() / 12.0D);
-      new StaticGraphMaker(graph, instance, view, proj);
-      if (graph.nodes.size()==0) new GraphNode(graph, "", "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
-      return new GraphViewer(graph);
+      Graph graph = getNewGraph(view);
+      AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
+      Graph tempGraph = new Graph(1, Graph.LayoutStrat.ByType);
+      new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
+      /*GraphViewer temp = */return new GraphViewer(tempGraph, false, -1);
+      /*if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
+      return produceFrame(instance, view, proj, temp);
+      projInstance = StaticProjector.project(instance, proj, true);
+      new StaticGraphMaker(graph, instance, view, projInstance, temp);
+      return new GraphViewer(graph, false, -1);*/
    }
-
+    
+   /** Produces a another frame of the projection based on the given GraphViewer. */
+   public static GraphViewer produceFrame(AlloyInstance instance, VizState view, AlloyProjection proj, GraphViewer gv) throws ErrorFatal 
+   {
+	   if (proj==null) proj = new AlloyProjection();
+	   Graph graph = getNewGraph(view);
+	   AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
+	   new StaticGraphMaker(graph, instance, view, projInstance, gv);
+	   if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
+	   return new GraphViewer(graph, true, gv.getGraphPosition());
+   }
+   
+   private static Graph getNewGraph(VizState view)
+   {
+	  view = new VizState(view);
+	  return new Graph(view.getFontSize() / 12.0D, Graph.LayoutStrat.ByType);
+   }
+   
    /** The list of colors, in order, to assign each legend. */
    private static final List<Color> colorsClassic = Util.asList(
          new Color(228,26,28)
@@ -114,16 +144,21 @@ public final class StaticGraphMaker {
          ,new Color(27,158,119)
          ,new Color(117,112,179)
    );
-
+   
    /** The constructor takes an Instance and a View, then insert the generate graph(s) into a blank cartoon. */
-   private StaticGraphMaker (Graph graph, AlloyInstance originalInstance, VizState view, AlloyProjection proj) throws ErrorFatal {
+   private StaticGraphMaker (Graph graph, AlloyInstance originalInstance, VizState view, AlloyInstance projectedInstance, GraphViewer gv) throws ErrorFatal {
+      //If this is just another frame of the projection, then get the old graph nodes.
+	  if (gv!=null)
+      {
+    	  oldGraphNodes = gv.getGraphNodes();
+      }
       final boolean hidePrivate = view.hidePrivate();
       final boolean hideMeta = view.hideMeta();
       final Map<AlloyRelation,Color> magicColor = new TreeMap<AlloyRelation,Color>();
       final Map<AlloyRelation,Integer> rels = new TreeMap<AlloyRelation,Integer>();
       this.graph = graph;
       this.view = view;
-      instance = StaticProjector.project(originalInstance, proj);
+      instance = projectedInstance;	
       model = instance.model;
       for (AlloyRelation rel: model.getRelations()) {
          rels.put(rel, null);
@@ -172,18 +207,30 @@ public final class StaticGraphMaker {
     * @return null if the atom is explicitly marked as "Don't Show".
     */
    private GraphNode createNode(final boolean hidePrivate, final boolean hideMeta, final AlloyAtom atom) {
-      GraphNode node = atom2node.get(atom);
+	  GraphNode node;
+      node = atom2node.get(atom);
       if (node!=null) return node;
       if ( (hidePrivate && atom.getType().isPrivate)
             || (hideMeta    && atom.getType().isMeta)
             || !view.nodeVisible(atom, instance)) return null;
-      // Make the node
-      DotColor color = view.nodeColor(atom, instance);
-      DotStyle style = view.nodeStyle(atom, instance);
-      DotShape shape = view.shape(atom, instance);
-      String label = atomname(atom, false);
-      node = new GraphNode(graph, atom, label).set(shape).set(color.getColor(view.getNodePalette())).set(style);
-      // Get the label based on the sets and relations
+	  //If the graph nodes are layed out from previous frame of projection.
+      for (GraphNode n : oldGraphNodes)
+      {
+    	  if (atom!=null&&n.getAtom()!=null&&atom.equals(n.getAtom()))
+    	  {
+        	  node = new GraphNode(graph, atom, atom, n.x(), n.y(), n.layer(), n.getPos(), atomname(atom, false)).set(n.shape()).set(n.getColor()).set(n.getStyle());
+    	  }
+      }
+	  if (oldGraphNodes.isEmpty()||node==null)
+	  {
+          // Make the node
+          DotColor color = view.nodeColor(atom, instance);
+          DotStyle style = view.nodeStyle(atom, instance);
+          DotShape shape = view.shape(atom, instance);
+          String label = atomname(atom, false);
+          node = new GraphNode(graph, atom, atom, label).set(shape).set(color.getColor(view.getNodePalette())).set(style);
+	  }
+	// Get the label based on the sets and relations
       String setsLabel="";
       boolean showLabelByDefault = view.showAsLabel.get(null);
       for (AlloySet set: instance.atom2sets(atom)) {

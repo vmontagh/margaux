@@ -111,7 +111,7 @@ public final class StaticProjector {
     * <br> else projection.getProjectedAtom(t) must be null.
     * <br> If rule (2) is violated, then some tuples may not show up in the return value.
     */
-   public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection) {
+   public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection, boolean checkAtom) {
       Map<AlloyRelation,List<Integer>> data=new LinkedHashMap<AlloyRelation,List<Integer>>();
       Map<AlloyAtom,Set<AlloySet>> atom2sets = new LinkedHashMap<AlloyAtom,Set<AlloySet>>();
       Map<AlloyRelation,Set<AlloyTuple>> rel2tuples = new LinkedHashMap<AlloyRelation,Set<AlloyTuple>>();
@@ -126,13 +126,16 @@ public final class StaticProjector {
          if (list==null) continue; // This means that relation was deleted entirely
          tupleLabel:
             for(AlloyTuple oldTuple:oldInstance.relation2tuples(r)) {
-               for (Integer i:list) {
+               if (checkAtom)
+               {
+            	   for (Integer i:list) {
                   // If an atom in the original tuple should be projected, but it doesn't match the
                   // chosen atom for that type, then this tuple must not be included in the new instance
                   AlloyAtom a=oldTuple.getAtoms().get(i);
                   AlloyType bt=r.getTypes().get(i);
                   bt=oldInstance.model.getTopmostSuperType(bt);
                   if (!a.equals(projection.getProjectedAtom(bt))) continue tupleLabel;
+            	  }
                }
                List<AlloyAtom> newTuple=oldTuple.project(list);
                List<AlloyType> newObj=r.project(list);

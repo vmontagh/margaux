@@ -120,6 +120,18 @@ public final strictfp class GraphEdge {
       this(from, to, uuid, label, false, true, null, null, group);
    }
 
+   /** Returns whether to draw arrow head on from */
+   public boolean getAhead()
+   {
+	   return ahead;
+   }
+   
+   /** Returns whether to draw arrow head on to */
+   public boolean getBhead()
+   {
+	   return bhead;
+   }
+   
    /** Returns the "from" node. */
    public GraphNode a() { return a; }
 

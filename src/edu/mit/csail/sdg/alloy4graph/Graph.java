@@ -16,19 +16,27 @@
 package edu.mit.csail.sdg.alloy4graph;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.RoundRectangle2D;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4viz.AlloyType;
 import static edu.mit.csail.sdg.alloy4graph.Artist.getBounds;
 
 /** Mutable; represents a graph.
@@ -40,6 +48,9 @@ public final strictfp class Graph {
 
    //================================ adjustable options ========================================================================//
 
+	/** The starting gap between the nodes and the top edge of the window. */
+   private final int py = 5;
+   
    /** Minimum horizontal distance between adjacent nodes. */
    static final int xJump = 30;
 
@@ -64,22 +75,28 @@ public final strictfp class Graph {
    final double defaultScale;
 
    /** The left edge. */
-   private int left = 0;
+   private static int left = 0;
 
    /** The top edge. */
-   private int top = 0;
+   private static int top = 0;
 
    /** The bottom edge. */
-   private int bottom = 0;
+   private static int bottom = 0;
 
    /** The total width of the graph; this value is computed by layout(). */
-   private int totalWidth = 0;
+   private static int totalWidth = 0;
 
    /** The total height of the graph; this value is computed by layout(). */
-   private int totalHeight = 0;
+   private static int totalHeight = 0;
+   
+   /** The position of the left most non-dummy node relative to the containing component. Used for layout consistency between projection frames. */
+   private static int xPositionOfGraph = 0;
 
    /** The height of each layer. */
-   int[] layerPH = null;
+    int[] layerPH = null;
+    
+    /** */
+    private LayoutStrat strat = LayoutStrat.BySink;
 
    /** The list of layers;  must stay in sync with GraphNode.graph and GraphNode.layer
     * (empty iff there are no nodes; every node is always in exactly one layer, and appears exactly once in that layer)
@@ -108,7 +125,7 @@ public final strictfp class Graph {
    //============================================================================================================================//
 
    /** Constructs an empty Graph object. */
-   public Graph(double defaultScale)  { this.defaultScale = defaultScale; }
+   public Graph(double defaultScale, LayoutStrat lay)  { this.defaultScale = defaultScale; this.strat = lay; }
 
    /** Assuming layout() has been called, this returns the left edge. */
    public int getLeft() { return left; }
@@ -128,6 +145,9 @@ public final strictfp class Graph {
       return emptyListOfNodes;
    }
 
+   /**enum to indicate which layout strategy to use. */
+   public enum LayoutStrat {ByType, BySink}
+   
    /** Return the number of layers; can be 0. */
    int layers() { return layerlist.size(); }
 
@@ -264,12 +284,84 @@ public final strictfp class Graph {
          }
          if (!changed) break;
       }
+     
       // All done!
       return layers();
    }
 
+   /**This method assigns each type its own layer. 
+ * @return */
+   private int layout_assignTypeToLayer()
+   {
+	   //Assign an initial layer to each type.
+	      Map<String, List<GraphNode>> typeList = new HashMap<String, List<GraphNode>>();
+	      for (GraphNode node : nodes)
+	      {
+	    	  List<GraphNode> list = typeList.get(node.getAtom().getType().getName());
+	    	  if (list!=null)
+	    	  {
+	    		  node.setLayer(list.get(0).layer());
+	    		  list.add(node);
+	    	  }
+	    	  else
+	    	  {
+	    		  node.setLayer(typeList.keySet().size());
+	    		  list = new ArrayList<GraphNode>();
+	    		  list.add(node);
+	    		  typeList.put(node.getAtom().getType().getName(), list); 		  
+	    	  }
+	      }
+	      
+	      //For each layer, find the layer that has the highest number of edges going from/to it and put that layer immediately next to it.
+	      for (int i = 0;i<layerlist.size();i++)
+	      {
+	    	  Map<Integer, Integer> layerDependencies = new HashMap<Integer, Integer>();
+	    	  for (GraphNode node : layerlist.get(i))
+	    	  {
+	    		 for (GraphEdge edge : node.ins)
+	    		 {
+	    			 Integer r = layerDependencies.remove(edge.a().layer());
+	    			 if (r==null){r = 0;}
+	    		     layerDependencies.put(edge.a().layer(), new Integer(r.intValue()+1));
+	    		 }
+	    		 for (GraphEdge edge : node.outs)
+	    		 {
+	    			 Integer r = layerDependencies.remove(edge.b().layer());
+	    			 if (r==null){r = 0;}
+	    			 layerDependencies.put(edge.b().layer(), new Integer(r.intValue()+1));
+	    		 }
+	    	  }
+	    	  int maxLayer = 0;
+	    	  int max = 0;
+	    	  for (Integer j : layerDependencies.keySet())
+	    	  {
+	    		  if (layerDependencies.get(j).intValue()>max&&j>i)
+	    		  {
+	    			  max = layerDependencies.get(j).intValue();
+	    			  maxLayer = j.intValue();
+	    		  }
+	    	  }
+	    	  //Switch the next layer with the maximum layer.
+	    	  if (maxLayer!=i+1)
+	    	  {
+	    		  List<GraphNode> m = layerlist.get(maxLayer);
+	    		  List<GraphNode> l = layerlist.get(i);
+	    		  int size = m.size();
+	    		  for (int k = l.size()-1;k>0;k--)
+	    		  {
+	    			  l.get(k).setLayer(maxLayer);
+	    		  }
+	    		  for (int p = 0;p<size;p++)
+	    		  {
+	    			  m.get(0).setLayer(i);
+	    		  }
+	    		  l.get(0).setLayer(maxLayer);
+	    	  }
+	      }
+	      return layers();
+   }
+   
    //============================================================================================================================//
-
    /** Layout step #4: add dummy nodes so that each edge only goes between adjacent layers. */
    private void layout_dummyNodesIfNeeded() {
       for(final GraphEdge edge: new ArrayList<GraphEdge>(edges)) {
@@ -277,7 +369,7 @@ public final strictfp class Graph {
          GraphNode a = e.a(), b=e.b();
          while(a.layer() - b.layer() > 1) {
             GraphNode tmp = a;
-            a = new GraphNode(a.graph, e.uuid).set((DotShape)null);
+            a = new GraphNode(a.graph, e.uuid, null).set((DotShape)null);
             a.setLayer(tmp.layer()-1);
             // now we have three nodes in the vertical order of "tmp", "a", then "b"
             e.change(a);                                                                           // let old edge go from "tmp" to "a"
@@ -339,12 +431,16 @@ public final strictfp class Graph {
       while(true) {
          Block b = block[i];
          double tmp = b.posn + (nodes.get(b.first-1).getWidth() + nodes.get(b.first-1).getReserved() + xJump)/2D;
-         nodes.get(i-1).setX((int)tmp);
-         for(i=i+1; i<=b.last; i++) {
-            GraphNode v1 = nodes.get(i-1);
-            GraphNode v2 = nodes.get(i-2);
-            int xsep = (v1.getWidth() + v1.getReserved() + v2.getWidth() + v2.getReserved())/2 + xJump;
-            v1.setX(v2.x() + xsep);
+         //if (!layedOut||nodes.get(i-1).shape()==null)
+         {	 
+        	 GraphNode node = nodes.get(i-1);
+        	 nodes.get(i-1).setX((int)tmp);
+		     for(i=i+1; i<=b.last; i++) {
+		        GraphNode v1 = nodes.get(i-1);
+		        GraphNode v2 = nodes.get(i-2);
+		        int xsep = (v1.getWidth() + v1.getReserved() + v2.getWidth() + v2.getReserved())/2 + xJump;	        
+		        v1.setX(v2.x() + xsep);
+		     }
          }
          i=b.last+1;
          if (i>n) break;
@@ -457,62 +553,317 @@ public final strictfp class Graph {
    }
 
    //============================================================================================================================//
-
    /** (Re-)perform the layout. */
    public void layout() {
-
       // The rest of the code below assumes at least one node, so we return right away if nodes.size()==0
       if (nodes.size()==0) return;
 
       // Calculate each node's width and height
       for(GraphNode n:nodes) n.calcBounds();
-
+      
       // Layout the nodes
       layout_assignOrder();
       layout_backEdges();
-      final int layers = layout_decideLayer();
+	  int layers;
+	  //if (strat == LayoutStrat.BySink)
+	  //{
+		  layers = layout_decideLayer();
+	  /*}
+	  else
+	  {
+		  layers = layout_assignTypeToLayer();
+	  }*/
       layout_dummyNodesIfNeeded();
       layout_reorderPerLayer();
-
+  
       // For each layer, this array stores the height of its tallest node
       layerPH = new int[layers];
 
-      // figure out the Y position of each layer, and also give each component an initial X position
-      for(int layer=layers-1; layer>=0; layer--) {
-         int x=5; // So that we're not touching the left-edge of the window
-         int h=0;
-         for(GraphNode n: layer(layer)) {
-            int nHeight = n.getHeight(), nWidth = n.getWidth();
-            n.setX(x + nWidth/2);
-            if (h < nHeight) h = nHeight;
-            x = x + nWidth + n.getReserved() + 20;
-         }
-         layerPH[layer] = h;
-      }
-
+      layerYCoord(true, layers);
+        
       // If there are more than one layer, then iteratively refine the X position of each component 3 times; 4 is a good number
       if (layers>1) {
          // It's important to NOT DO THIS when layers<=1, because without edges the nodes will overlap each other into the center
          for(int i=0; i<3; i++) for(int layer=0; layer<layers; layer++) layout_xAssignment(layer(layer));
       }
-
       // Calculate each node's y; we start at y==5 so that we're not touching the top-edge of the window
-      int py=5;
+      int pytemp=py;
       for(int layer=layers-1; layer>=0; layer--) {
          final int ph = layerPH[layer];
-         for(GraphNode n:layer(layer)) n.setY(py + ph/2);
-         py = py + ph + yJump;
+         for(GraphNode n:layer(layer))
+         {
+        	 n.setY(pytemp + ph/2);
+         }
+         pytemp = pytemp + ph + yJump;
       }
-
-      relayout_edges(true);
-
+	  relayout_edges(true, false);
       // Since we're doing layout for the first time, we need to explicitly set top and bottom, since
       // otherwise "recalcBound" will merely "extend top and bottom" as needed.
       recalcBound(true);
+}
+   
+   public void calcFrame(int xPosition)
+   {
+	  if (nodes.size()==0) return;
+	  for(GraphNode n:nodes) n.calcBounds();
+	  layerPH=new int[layerlist.size()];
+ 	  layerYCoord(false, layerlist.size());
+ 	  layoutNewFrameOfProjection();
+ 	  relayout_edges(true, true);
+ 	  recalcBound(true);
+ 	  //Move the graph so that the nodes are in the same place as in the previous frame.
+ 	  int move = xPosition - xPositionOfGraph;
+ 	  left += move;
    }
-
+   
+   private int calcLeftMostNode()
+   {
+	   	  int leftMostNonDummy = -1;
+	      for (GraphNode node : nodelist)
+	      {
+	    	  if (node.shape()!=null&&(node.x()<leftMostNonDummy||leftMostNonDummy == -1))
+	    	  {
+	    		  leftMostNonDummy = node.x();
+	    	  }
+	      }
+	      return leftMostNonDummy;
+   }
    //============================================================================================================================//
 
+	/** figure out the Y position of each layer, and also give each component an initial X position, if the node position has not been determined.*/
+   private void layerYCoord(boolean xCoord, int layers)
+   {
+	      for(int layer=layers-1; layer>=0; layer--) {
+	         int x=5; // So that we're not touching the left-edge of the window
+	         int h=0;
+	         for(GraphNode n: layer(layer)) {
+	            int nHeight = n.getHeight(), nWidth = n.getWidth();
+	            if (xCoord)
+	            {
+	            	n.setX(x + nWidth/2);
+		            x = x + nWidth + n.getReserved() + 20;
+	            }
+	            if (h < nHeight) h = nHeight;
+	         }
+	         layerPH[layer] = h;
+	      }
+   }
+   
+   /** Lay out different frame current projection */
+   private void layoutNewFrameOfProjection()
+   {
+ 	   layout_dummyNodesIfNeeded();
+ 	   setDummyLayer();
+ 	   setDummyNodeCoords();
+   }
+   
+   /** Set the layer of the dummy nodes for new frame of current projection */
+   private void setDummyLayer()
+   {
+	   for (GraphNode n: nodelist)
+	   {
+		   if (n.shape()==null)
+		   {
+			   n.setLayer(0);
+		   }
+	   }
+	   for (GraphNode n: nodelist)
+  	   {
+  		 if (n.shape()!=null)
+  		 {
+  			 for (GraphEdge e : n.outEdges())
+  			 {
+  				 int i = 0;
+  				 GraphNode to = e.b();
+  				 //Determine the destination node and how many dummies are in between.
+  				 while(to.shape()==null && to.layer()==0)
+  				 {
+  					 i++;
+  					 to = to.outEdges().get(0).b();
+  				 }
+  				 GraphNode dummy = e.b();
+  				 //Set one dummy on each layer in between the two nodes.
+  				 for (int j = 0;j<i;j++)
+  				 {
+	  				 if (to.layer()-n.layer()>1)
+	  				 {
+	  					 dummy.setLayer(n.layer()+j+1);
+	  				 }
+	  				 else if (n.layer()-to.layer()>1)
+	  				 {
+	  					 dummy.setLayer(n.layer()-j-1);
+	  				 }
+	  				 dummy = dummy.outEdges().get(0).b();
+  				 }
+  			 }
+  		 }
+  	   }
+   }
+   
+   /** Set dummy node coords for new frame of current projection*/
+   private void setDummyNodeCoords()
+   {
+	   setRelOrderOfDummies();
+	   int y = py;
+	   for (int k = layerlist.size()-1;k>=0;k--)
+	   {
+		   List<GraphNode> layer = layerlist.get(k);
+		   int lastNodeNum = -1;
+	  	   for (int i = 0;i < layer.size(); i++)
+		   {
+	  		   //Set the dummy nodes in order up to the last non-dummy node.
+			   if (layer.get(i).shape()!=null)
+			   {
+				   for (int j = i-1;j>lastNodeNum;j--)
+				   {
+					    layNode(layer.get(j), layer.get(j+1), y, k);
+				   }
+				   lastNodeNum = i;	
+			   }
+	       }
+		   if (lastNodeNum==-1)
+		   {
+			   GraphNode node = layer.get(0);
+			   node.setX(0);
+			   node.setY(y + layerPH[k]/2);
+			   lastNodeNum++;
+		   }
+		   for (int i = lastNodeNum + 1;i<layer.size();i++)
+		   {
+			   layNode(layer.get(i), layer.get(i-1), y, k);
+		   }
+	  	   y+=yJump+layerPH[k];
+   	    } 
+   }
+   
+   /** Lays out a node relative to another node on the same layer */
+   private void layNode(GraphNode newNode, GraphNode prev, int y, int layer)
+   {
+	   int xsep = (newNode.getWidth() + newNode.getReserved() + prev.getWidth() + prev.getReserved())/2 + xJump;	        
+       newNode.setX(prev.x() + xsep);
+       checkWidth(newNode);
+       newNode.setY(y + layerPH[layer]/2);
+   }
+   
+   /** Set total width if node goes over boundary*/
+   private void checkWidth(GraphNode v1)
+   {
+	   if (v1.x()+v1.getWidth()>left+totalWidth)
+       {
+       		totalWidth = v1.x() + v1.getWidth();
+       }
+   }
+   
+   /** Set the relative order of the dummies. */
+   private void setRelOrderOfDummies()
+   {
+	   int start = layerlist.size()-1;
+	   for (int c = 0; c<4;c++)
+	   {
+		   if (start == 0)
+		   {
+			   start = layerlist.size() - 1;
+		   }
+		   else
+		   {
+			   start = 0;
+		   }
+		   for (int l = start;l>=0&&l<layerlist.size();)
+		   {
+			   //Calculate BaryCenter.
+			   List<GraphNode> layer = layerlist.get(l);
+			   ArrayList<Integer> bc;
+			   if (start==0)
+			   {
+				   bc = calcBaryForDummies(layer, true);
+			   }
+			   else
+			   {
+				   bc = calcBaryForDummies(layer, false);
+			   }
+			   boolean sorted = false;
+			   //Bubble sort the dummy nodes. Assuming the inefficiency of bubble sort is negligible for any graph.
+			   while (!sorted)
+			   {
+				   sorted = true;
+				   for (int i = 0;i<layer.size()-1;)
+				   {
+					   while (i<layer.size()-1&&layer.get(i).shape()!=null)
+					   {
+						   i++;
+					   }
+					   int j = i+1;
+					   while (j<layer.size()&&layer.get(j).shape()!=null)
+					   {
+						   j++;
+					   }
+					   if (j>=layer.size())
+					   {
+						   break;
+					   }
+					   else
+					   {
+						   if (bc.get(j)<bc.get(i))
+						   {
+							   int temp = bc.remove(j);
+							   int temp2 = bc.remove(i);
+							   bc.add(i, temp);
+							   bc.add(j, temp2);
+							   GraphNode tempnode = layer.remove(j);
+							   GraphNode tempnode2 = layer.remove(i);
+							   layer.add(i, tempnode);
+							   layer.add(j, tempnode2);						   
+							   sorted = false;
+						   }
+					   }
+					   i=j;
+				   }
+				   if(start == 0) {l++;} else {l--;}
+			   }
+		   }
+	   }
+   }
+   
+   private ArrayList<Integer> calcBaryForDummies(List<GraphNode> layer, boolean outEdges)
+   {
+	   ArrayList<Integer> bc = new ArrayList<Integer>();
+	   for (GraphNode n : layer)
+	   {
+			   int count = 0;
+			   int sum = 0;
+			   List<GraphEdge> edges;
+			   if (outEdges)
+			   {
+				   edges = n.outEdges();
+			   }
+			   else
+			   {
+				   edges = n.inEdges();
+			   }
+			   for (GraphEdge e : edges)
+			   {
+				   if (outEdges)
+				   {
+					   sum+=e.b().pos;
+				   }
+				   else
+				   {
+					   sum+=e.a().pos;
+				   }
+				   count++;
+			   }
+			   if (count!=0)
+			   {
+				   bc.add((int)(sum/count));
+			   }
+			   else
+			   {
+				   bc.add(0);
+			   }
+	   }
+	   return bc;
+   }
+   
    /** Re-establish top/left/width/height. */
    void recalcBound(boolean fresh) {
       if (nodes.size()==0) { top=0; bottom=10; totalHeight=10; left=0; totalWidth=10; return; }
@@ -525,9 +876,9 @@ public final strictfp class Graph {
          int max = n.x() + n.getWidth()/2 + n.getReserved() + 5; if (maxX<max) maxX=max;
       }
       for(GraphEdge e: edges) if (e.getLabelW()>0 && e.getLabelH()>0) {
-         int x1=e.getLabelX(), x2=x1+e.getLabelW()-1;
-         if (minX>x1) minX=x1;
-         if (maxX<x2) maxX=x2;
+    	  int x1=e.getLabelX(), x2=x1+e.getLabelW()-1;
+      	  if (minX>x1) minX=x1;
+         	if (maxX<x2) maxX=x2;
       }
       left = minX-20;
       totalWidth = maxX-minX+20;
@@ -551,12 +902,13 @@ public final strictfp class Graph {
          totalWidth += (widestLegend*2+10);
          if (totalHeight<legendHeight) { bottom=bottom+(legendHeight-totalHeight); totalHeight=legendHeight; }
       }
+      xPositionOfGraph = left + calcLeftMostNode();
    }
 
    //============================================================================================================================//
 
    /** Assuming everything was laid out already, but at least one node just moved, this re-layouts ALL edges. */
-   void relayout_edges(boolean straighten) {
+   void relayout_edges(boolean straighten, boolean layedOut) {
       // Move pairs of virtual nodes to straighten the lines if possible
       if (straighten) for(int i=0; i<5; i++) for(GraphNode n:nodes) if (n.shape()==null) {
          GraphEdge e1 = n.ins.get(0), e2 = n.outs.get(0);
@@ -597,28 +949,38 @@ public final strictfp class Graph {
             GraphNode a=layer.get(j), b=layer.get(j+1);
             int ax = a.shape()==null ? a.x() : (a.x()+a.getWidth()/2+a.getReserved());
             int bx = b.shape()==null ? b.x() : (b.x()-b.getWidth()/2);
-            if (bx<=ax || bx-ax<5) b.setX(ax+5+b.getWidth()/2);
+            if (!layedOut||a.shape()==null)
+            {
+            	if (bx<=ax || bx-ax<5) b.setX(ax+5+b.getWidth()/2);
+            }
          }
          for(int j=layer.size()/2; j>0 && j<layer.size(); j--) {
             GraphNode a=layer.get(j-1), b=layer.get(j);
             int ax = a.shape()==null ? a.x() : (a.x()+a.getWidth()/2+a.getReserved());
             int bx = b.shape()==null ? b.x() : (b.x()-b.getWidth()/2);
-            if (bx<=ax || bx-ax<5) a.setX(bx-5-a.getWidth()/2-a.getReserved());
+            if (!layedOut||a.shape()==null)
+            {
+            	if (bx<=ax || bx-ax<5) a.setX(bx-5-a.getWidth()/2-a.getReserved());
+            }
          }
       }
-      // Now layout the edges, initially as straight lines
-      for(GraphEdge e:edges) e.resetPath();
-      // Now, scan layer-by-layer to find edges that intersect nodes improperly, and bend them accordingly
-      for(int layer=layers()-1; layer>0; layer--) {
-         List<GraphNode> top=layer(layer), bottom=layer(layer-1);
-         checkUpperCollision(top); checkLowerCollision(bottom); checkUpperCollision(top);
-      }
-      // Now, for each edge, adjust its arrowhead and label.
-      AvailableSpace sp = new AvailableSpace();
-      for(GraphNode n: nodes) if (n.shape()!=null) sp.add(n.x()-n.getWidth()/2, n.y()-n.getHeight()/2, n.getWidth()+n.getReserved(), n.getHeight());
-      for(GraphEdge e: edges) { e.layout_arrowHead(); e.repositionLabel(sp); }
+      drawEdges();
    }
-
+   
+   private void drawEdges()
+   {
+	      // Now layout the edges, initially as straight lines
+	      for(GraphEdge e:edges) e.resetPath();
+	      // Now, scan layer-by-layer to find edges that intersect nodes improperly, and bend them accordingly
+	      for(int layer=layers()-1; layer>0; layer--) {
+	         List<GraphNode> top=layer(layer), bottom=layer(layer-1);
+	         checkUpperCollision(top); checkLowerCollision(bottom); checkUpperCollision(top);
+	      }
+	      // Now, for each edge, adjust its arrowhead and label.
+	      AvailableSpace sp = new AvailableSpace();
+	      for(GraphNode n: nodes) if (n.shape()!=null) sp.add(n.x()-n.getWidth()/2, n.y()-n.getHeight()/2, n.getWidth()+n.getReserved(), n.getHeight());
+	      for(GraphEdge e: edges) { e.layout_arrowHead(); e.repositionLabel(sp); }
+   }
    //============================================================================================================================//
 
    /** Assuming everything was laid out already, but nodes in layer[i] just moved horizontally, this re-layouts edges to+from layer i. */
@@ -733,7 +1095,17 @@ public final strictfp class Graph {
          y = y + ad;
       }
    }
-
+   
+   public List<GraphNode> getGraphNodes()
+   {
+	   return Collections.unmodifiableList(nodelist);
+   }
+   
+   public int getLeftMostPos()
+   {
+	   return xPositionOfGraph;
+   }
+   
    //============================================================================================================================//
 
    /** Helper method that encodes a String for printing into a DOT file. */
@@ -758,5 +1130,20 @@ public final strictfp class Graph {
       for (GraphNode n: nodes) sb.append(n);
       sb.append("}\n");
       return sb.toString();
+   }
+
+   public void modifyNodePositions(List<GraphNode> graphNodes) {
+	// TODO Auto-generated method stub
+	   for (GraphNode node : nodelist)
+		{
+		    for (GraphNode node1 : graphNodes)
+		    {
+		    	if ( (node.shape()!=null)&&node1.shape()!=null&&node1.getAtom().equals(node.getAtom()))
+		    	{
+		    		node.setX(node1.x());
+		    		node.setY(node1.y());
+		    	}
+		    }
+		}
    }
 }

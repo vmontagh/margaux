@@ -20,10 +20,13 @@ import java.awt.Polygon;
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
 import static java.lang.StrictMath.sqrt;
 import static java.lang.StrictMath.round;
 import static edu.mit.csail.sdg.alloy4graph.Artist.getBounds;
@@ -78,6 +81,9 @@ public final strictfp class GraphNode {
    /** a user-provided annotation that will be associated with this node (can be null) (need not be unique) */
    public final Object uuid;
 
+   /** The atom this GraphNode represents.*/
+   private final AlloyAtom atom;
+   
    /** The X coordinate of the center of the node;  modified by tweak(), layout_computeX(), layout(), and relayout_edges() */
    private int centerX = 0;
 
@@ -169,9 +175,10 @@ public final strictfp class GraphNode {
    //===================================================================================================
 
    /** Create a new node with the given list of labels, then add it to the given graph. */
-   public GraphNode(Graph graph, Object uuid, String... labels) {
+   public GraphNode(Graph graph, Object uuid, AlloyAtom atom, String... labels) {
       this.uuid = uuid;
       this.graph = graph;
+      this.atom = atom;
       this.pos = graph.nodelist.size();
       graph.nodelist.add(this);
       if (graph.layerlist.size()==0) graph.layerlist.add(new ArrayList<GraphNode>());
@@ -182,11 +189,21 @@ public final strictfp class GraphNode {
       }
    }
 
+   /** Create a new node with the following coordinates and labels and add it to the given graph. */
+   public GraphNode(Graph graph, Object uuid, AlloyAtom atom, int x, int y, int layer, int position, String... labels)
+   {
+	   this(graph, uuid, atom, labels);
+	   this.setX(x);
+	   this.setY(y);
+	   this.setLayer(layer);
+	   this.pos = position;
+   }
+   
    /** Changes the layer that this node is in; the new layer must be 0 or greater.
     * <p> If a node is removed from a layer, the order of the other nodes in that layer remain unchanged.
     * <p> If a node is added to a new layer, then it is added to the right of the original rightmost node in that layer.
     */
-   void setLayer(int newLayer) {
+    void setLayer(int newLayer) {
       if (newLayer < 0) throw new IllegalArgumentException("The layer cannot be negative!");
       if (layer == newLayer) return;
       graph.layerlist.get(layer).remove(this);
@@ -208,22 +225,25 @@ public final strictfp class GraphNode {
    int pos() { return pos; }
 
    /** Returns the layer that this node is in. */
-   int layer() { return layer; }
+   public int layer() { return layer; }
 
    /** Returns the X coordinate of the center of the node. */
    public int x() { return centerX; }
 
    /** Returns the Y coordinate of the center of the node. */
    public int y() { return centerY; }
+   
+   /** Changes the pos of the node */
+   public int getPos() { return pos; }
 
    /** Changes the X coordinate of the center of the node, without invalidating the computed bounds. */
    void setX(int x) { centerX = x;}
 
    /** Changes the Y coordinate of the center of the node, without invalidating the computed bounds. */
    void setY(int y) { centerY = y; }
-
+   
    /** Returns the node shape (or null if the node is a dummy node). */
-   DotShape shape() { return shape; }
+   public DotShape shape() { return shape; }
 
    /** Changes the node shape (where null means change the node into a dummy node), then invalidate the computed bounds. */
    public GraphNode set(DotShape shape) {
@@ -353,7 +373,7 @@ public final strictfp class GraphNode {
          if (first.centerY+ph[i]/2+yJump > y) setY(i, y-ph[i]/2-yJump);
          y=first.centerY-ph[i]/2;
       }
-      graph.relayout_edges(false);
+      graph.relayout_edges(false, false);
    }
 
    /** Helper method that shifts a node down. */
@@ -369,7 +389,7 @@ public final strictfp class GraphNode {
          if (first.centerY-ph[i]/2-yJump < y) setY(i, y+ph[i]/2+yJump);
          y=first.centerY+ph[i]/2;
       }
-      graph.relayout_edges(false);
+      graph.relayout_edges(false, false);
    }
 
    /** Helper method that shifts a node left. */
@@ -588,6 +608,21 @@ public final strictfp class GraphNode {
       }
    }
 
+   
+   public AlloyAtom getAtom()
+   {
+	   return atom;
+   }
+   
+   public Color getColor()
+   {
+	   return color;
+   }
+   
+   public DotStyle getStyle()
+   {
+	   return style;
+   }
    //===================================================================================================
 
    /** Returns a DOT representation of this node (or "" if this is a dummy node) */
@@ -614,4 +649,5 @@ public final strictfp class GraphNode {
       out.append("]\n");
       return out.toString();
    }
+
 }

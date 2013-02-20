@@ -36,7 +36,12 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -47,13 +52,17 @@ import javax.swing.JViewport;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import com.sun.tools.javac.util.List;
+
 import edu.mit.csail.sdg.alloy4.OurDialog;
 import edu.mit.csail.sdg.alloy4.OurPDFWriter;
 import edu.mit.csail.sdg.alloy4.OurPNGWriter;
 import edu.mit.csail.sdg.alloy4.OurUtil;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
 
-/** This class displays the graph.
+/** This class displays a graph of the current projection.
  *
  * <p><b>Thread Safety:</b> Can be called only by the AWT event thread.
  */
@@ -65,7 +74,7 @@ public final strictfp class GraphViewer extends JPanel {
 
     /** The graph that we are displaying. */
     private final Graph graph;
-
+    
     /** The current amount of zoom. */
     private double scale = 1d;
 
@@ -117,13 +126,21 @@ public final strictfp class GraphViewer extends JPanel {
         if (c!=null) { c.invalidate(); c.repaint(); c.validate(); } else { invalidate(); repaint(); validate(); }
     }
 
-    /** Construct a GraphViewer that displays the given graph. */
-    public GraphViewer(final Graph graph) {
+    /** Construct a GraphViewer that displays the given graph. 
+     * @return */
+    public GraphViewer(final Graph graph, boolean layedOut, int graphPosition) {
         OurUtil.make(this, BLACK, WHITE, new EmptyBorder(0,0,0,0));
         setBorder(null);
         this.scale = graph.defaultScale;
         this.graph = graph;
-        graph.layout();
+        if (!layedOut)
+        {
+        	this.graph.layout();
+        }
+        else
+        {
+        	this.graph.calcFrame(graphPosition);
+        }
         final JMenuItem zoomIn = new JMenuItem("Zoom In");
         final JMenuItem zoomOut = new JMenuItem("Zoom Out");
         final JMenuItem zoomToFit = new JMenuItem("Zoom to Fit");
@@ -412,7 +429,17 @@ public final strictfp class GraphViewer extends JPanel {
     public void alloyPopup(Component c, int x, int y) {
        pop.show(c,x,y);
     }
-
+    
+    public java.util.List<GraphNode> getGraphNodes()
+    {
+    	return Collections.unmodifiableList(graph.getGraphNodes());
+    }
+    
+    public int getGraphPosition()
+    {
+    	return graph.getLeftMostPos();
+    }
+    
     /** Returns a DOT representation of the current graph. */
     @Override public String toString() {
        return graph.toString();
@@ -437,4 +464,9 @@ public final strictfp class GraphViewer extends JPanel {
         if (c!=null) { gr.setColor(((GraphEdge)sel).color()); gr.fillArc(c.x()-5-graph.getLeft(), c.y()-5-graph.getTop(), 10, 10, 0, 360); }
         g2.setTransform(oldAF);
     }
+
+	public void modifyNodePositions(java.util.List<GraphNode> graphNodes) {
+		// TODO Auto-generated method stub
+		graph.modifyNodePositions(graphNodes);
+	}
 }
