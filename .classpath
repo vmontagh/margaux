@@ -5,8 +5,7 @@
 	<classpathentry kind="lib" path="lib/apple-osx-ui.jar"/>
 	<classpathentry kind="lib" path="lib/extra.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/moolloy"/>
-	<classpathentry kind="lib" path="/Users/rafaelolaechea/clafer-moo-models-workshop-software/lib-sdg/sdg-util.jar"/>
-	<classpathentry kind="lib" path="/Users/rafaelolaechea/clafer-moo-models-workshop-software/lib-sdg-exernal/sat4j.jar"/>
-	<classpathentry kind="lib" path="/Users/rafaelolaechea/clafer-moo-models-workshop-software/lib-sdg/sdg-util-0.1.jar"/>
+	<classpathentry kind="lib" path="/lib-sdg/jars-sdg/sdg-util-0.1.jar"/>
+	<classpathentry kind="lib" path="/lib-sdg/jars-external/sat4j.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
