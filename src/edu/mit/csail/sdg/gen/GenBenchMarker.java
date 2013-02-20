@@ -146,10 +146,14 @@ public class GenBenchMarker {
 			}
 
 			while(WorkerEngine.isBusy() &&  ((System.currentTimeMillis() - startTime) < timeout /*timeOutMin*2L*1000L*/)){
-				Thread.sleep(500L);
+				try{Thread.sleep(500L);}catch(Exception e){}
 			}
 			if(WorkerEngine.isBusy()){
 				task.updateResult(System.currentTimeMillis(), fileName, -1, -1, -1, -1, -1, false);
+				//Wait until write everything, eh?
+				try{Thread.sleep(1000L);}catch(Exception e){}
+				WorkerEngine.stop();
+				break;
 			}
 			// sched.shutdown(false);
 			WorkerEngine.stop();
@@ -189,9 +193,9 @@ public class GenBenchMarker {
 	}
 
 	/** The amount of memory (in M) to allocate for Kodkod and the SAT solvers. */
-	private static final int SubMemory = 1024;
+	private static  int SubMemory = 1024;
 	/** The amount of stack (in K) to allocate for Kodkod and the SAT solvers. */
-	private static final int SubStack = 8192;
+	private static  int SubStack = 8192;
 	private static final String fs = System.getProperty("file.separator");
 
 
@@ -200,12 +204,67 @@ public class GenBenchMarker {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		final long timeOutMin = 30; 
-		final int experiments = 3;
-		final String report = "report"+System.currentTimeMillis()+".txt";
+		long timeOutMin = 30; 
+		int experiments = 3;
+		 String report = "report"+System.currentTimeMillis()+".txt";
+		final List<String> fileGroups = new ArrayList<String>();
+		int numbers = 5;
+		int suits = 2;
+		int players = 2;
 		
-		for(String arg:args){
-			List<String> fileNames = getInstance().makeSmaples(arg, 2, 5, 2, arg.contains("old"));
+		
+		for(int i=0; i<args.length;i++ ){
+			String arg = args[i];
+			if(arg.equals("-n")){ //new syntax file path
+				if(i+1 < args.length) 
+					fileGroups.add(args[i+1]);
+			}else if(arg.equals("-o")){ //old syntax file path
+				if(i+1 < args.length)
+					fileGroups.add(args[i+1]);
+			}else if(arg.equals("-m")){ // SubMemory size
+				if(i+1 < args.length)
+					SubMemory = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-s")){ // SubStack Size
+				if(i+1 < args.length)
+					SubStack = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-nm")){ //numbers
+				if(i+1 < args.length)
+					numbers = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-st")){ //suits
+				if(i+1 < args.length)
+					suits = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-x")){ // experiments
+				if(i+1 < args.length)
+					experiments = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-t")){ //timeout in minute
+				if(i+1 < args.length)
+					timeOutMin = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-p")){ //Player
+				if(i+1 < args.length)
+					players = Integer.valueOf(args[i+1]);
+			}else if(arg.equals("-f")){ //file name
+				if(i+1 < args.length)
+					report = args[i+1];
+			}
+		}
+		
+		System.out.println(
+				"The Configuration is: "+
+				", Old and New File templates are: "+fileGroups.toString()+
+				", SubMemory: "+SubMemory +
+				", SubStack: "+SubStack+
+				", #Numbers: "+numbers+
+				", #Suits: "+suits+
+				", #Playres: "+players+
+				", #Experiments: "+experiments+
+				", Timeout in minutes: "+ timeOutMin+
+				", Report file: "+report
+				
+				);
+		
+		
+		for(String arg:fileGroups){
+			List<String> fileNames = getInstance().makeSmaples(arg, players, numbers, suits, arg.contains("old"));
 			for(String fileName:fileNames){
 				getInstance().executeTask(experiments, 
 						arg.contains("old") ? new OldSyntaxExecuterJob(report) : new NewSyntaxExecuterJob(report), 

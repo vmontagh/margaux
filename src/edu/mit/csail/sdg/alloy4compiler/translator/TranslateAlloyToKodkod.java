@@ -443,7 +443,34 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
            if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
        }
    }
-    
+
+   
+   public static Object evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt, Expr expr) throws Err {
+	   	if (rep==null) rep = A4Reporter.NOP;
+	       TranslateAlloyToKodkod tr = null;
+	       try {
+	           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+	           /*System.out.println("Max tuples="+tr.frame.getMaxPossibleTuples());
+	           Map<Sig,Integer> newCmdBnds = tr.frame.getMaxPossibleTuples();
+	           for(Sig sig : newCmdBnds.keySet()){
+	               cmd = cmd.change(sig, true, newCmdBnds.get(sig));
+	           }
+	           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+	           */
+	           return tr.frame.eval_woSolveFormula(expr);
+	       } catch(UnsatisfiedLinkError ex) {
+	           throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
+	       } catch(CapacityExceededException ex) {
+	           throw rethrow(ex);
+	       } catch(HigherOrderDeclException ex) {
+	           Pos p = tr!=null ? tr.frame.kv2typepos(ex.decl().variable()).b : Pos.UNKNOWN;
+	           throw new ErrorType(p, "Analysis cannot be performed since it requires higher-order quantification that could not be skolemized.");
+	       } catch(Throwable ex) {
+	           if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
+	       }
+	   }
+
+   
     /** Based on the specified "options", execute one command and return the resulting A4Solution object.
      *
      * <p> Note: it will first test whether the model fits one of the model from the "Software Abstractions" book;

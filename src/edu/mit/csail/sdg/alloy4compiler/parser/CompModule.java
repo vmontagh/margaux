@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.sun.mirror.declaration.FieldDeclaration;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -681,6 +680,7 @@ public final class CompModule extends Browsable implements Module {
 		final Sig oldName;
 		final ExprHasName newName;
 		final Expr expr;
+		boolean replaced = false;
 
 
 		public SigInstanceReplacement(CompModule rootmodule,Sig oldName, ExprHasName newName, Expr expr){
@@ -691,22 +691,22 @@ public final class CompModule extends Browsable implements Module {
 		}
 
 		public Expr replace() throws Err{
-			return visitThis(expr);
+			Expr ret = visitThis(expr);
+			return ret;
 		}
 
 
 
 		@Override public Expr visit(ExprBadJoin x) throws Err {
-
-			return ExprBadJoin.make(x.pos, x.closingBracket, visitThis( x.left), visitThis( x.right));
+			return x;
 		}
 
 		@Override
 		public Expr visit(ExprBinary x) throws Err {
-
-			Expr left = visitThis(x.left);
-			Expr right = visitThis(x.right);
-
+			Expr left;
+			Expr right;
+			left = visitThis(x.left);
+			right = visitThis(x.right);
 			return x.op.make(x.pos, x.closingBracket, left, right);
 		}
 
@@ -721,7 +721,6 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprCall x) throws Err {
-			//System.out.println("In call->"+x);
 			return x;
 		}
 
@@ -751,9 +750,12 @@ public final class CompModule extends Browsable implements Module {
 		@Override
 		public Expr visit(ExprQt x) throws Err {
 			List<Decl> declz = new ArrayList<Decl>();
-			for(Decl decl:x.decls)
-				declz.add(new Decl(decl.isPrivate, decl.disjoint, decl.disjoint2, decl.names, visitThis(decl.expr))); 
-			return x.op.make(x.pos, x.closingBracket, declz, visitThis(x.sub));
+			for(Decl decl:x.decls){
+				Expr declExpr = visitThis(decl.expr);
+				declz.add(new Decl(decl.isPrivate, decl.disjoint, decl.disjoint2, decl.names, declExpr));
+			}
+			Expr ret = x.op.make(x.pos, x.closingBracket, declz, visitThis(x.sub));
+			return ret;
 		}
 
 		@Override
@@ -764,7 +766,6 @@ public final class CompModule extends Browsable implements Module {
 		@Override
 		public Expr visit(ExprVar x) throws Err {
 			String name = x.label;
-			//name = newName.get(name) 			}
 			return ExprVar.make(x.pos, name, x.type());
 
 		}
@@ -773,8 +774,10 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(Sig x) throws Err {
-			if(x.label.equals(oldName.label))
+			if(x.label.equals(oldName.label)){
+				replaced = true;
 				return newName;
+			}
 			else 
 				return x;
 		}
@@ -786,6 +789,212 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(Bounds bounds) throws Err {
+			return null;
+		}
+	}
+
+
+	//A visitor class to decompose a field expression, which should be ExprBinary to the Sognatures or other relations.
+	//For example A->B->C decomposed into [A,B,C]
+	public static final class FieldDecomposer extends VisitReturn<Expr> {
+
+		//final Expr expr;
+		 List<Expr> sigs = null;
+		 List<ExprUnary.Op> mults = null;
+		 Set<Sig.Field> fields = null;
+
+		public FieldDecomposer() {
+		}
+
+		public Set<Sig.Field> extractFieldsInExpr(Expr expr) throws Err{
+			fields = new HashSet<Sig.Field>();
+			sigs=null;
+			mults=null;
+			visitThis( expr);
+			return this.fields;
+		}
+
+		public List<Expr> extractFieldsItems(Sig.Field fld) throws Err{
+			fields =null;
+			sigs = new ArrayList<Expr>();
+			mults = new ArrayList<ExprUnary.Op>();
+			visitThis( fld.decl().expr);
+			return this.sigs;
+		}
+		
+		public List<ExprUnary.Op> getMultiplicities(Sig.Field fld) throws Err{
+			fields =null;
+			sigs = new ArrayList<Expr>();
+			mults = new ArrayList<ExprUnary.Op>();
+			visitThis( fld.decl().expr);
+			return this.mults;
+		}
+		
+		
+		@Override public Expr visit(ExprBadJoin x) throws Err {
+			visitThis(x.left);
+			visitThis(x.right);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprBinary x) throws Err {
+			switch(((ExprBinary)x).op){
+			case LONE_ARROW_LONE:
+				mults.add( ExprUnary.Op.LONEOF);
+				mults.add(ExprUnary.Op.LONEOF);
+				break;
+			case LONE_ARROW_ONE:
+				mults.add(ExprUnary.Op.LONEOF);
+				mults.add(ExprUnary.Op.ONEOF);
+				break;
+			case LONE_ARROW_ANY:
+				mults.add(ExprUnary.Op.LONE);
+				mults.add(ExprUnary.Op.NOOP);
+				break;				
+			case LONE_ARROW_SOME:
+				mults.add(ExprUnary.Op.LONEOF);
+				mults.add(ExprUnary.Op.SOME);
+				break;	
+				
+			case ONE_ARROW_ONE:
+				mults.add(ExprUnary.Op.ONEOF);
+				mults.add(ExprUnary.Op.ONEOF);
+				break;
+			case ONE_ARROW_LONE:
+				mults.add(ExprUnary.Op.ONEOF);
+				mults.add(ExprUnary.Op.LONEOF);
+				break;
+			case ONE_ARROW_SOME:
+				mults.add(ExprUnary.Op.ONEOF);
+				mults.add(ExprUnary.Op.SOMEOF);
+				break;
+			case ONE_ARROW_ANY:
+				mults.add(ExprUnary.Op.ONEOF);
+				mults.add(ExprUnary.Op.NOOP);
+				break;
+				
+			case SOME_ARROW_ONE:
+				mults.add(ExprUnary.Op.SOMEOF);
+				mults.add(ExprUnary.Op.ONEOF);
+				break;
+			case SOME_ARROW_LONE:
+				mults.add(ExprUnary.Op.SOMEOF);
+				mults.add(ExprUnary.Op.LONE);
+				break;
+			case SOME_ARROW_SOME:
+				mults.add(ExprUnary.Op.SOMEOF);
+				mults.add(ExprUnary.Op.SOMEOF);
+				break;
+			case SOME_ARROW_ANY:
+				mults.add(ExprUnary.Op.SOMEOF);
+				mults.add(ExprUnary.Op.NOOP);
+				break;
+	
+			case ANY_ARROW_ONE:
+				mults.add(ExprUnary.Op.NOOP);
+				mults.add(ExprUnary.Op.ONEOF);
+				break;
+			case ANY_ARROW_LONE:
+				mults.add(ExprUnary.Op.NOOP);
+				mults.add(ExprUnary.Op.LONEOF);
+				break;
+			case ANY_ARROW_SOME:
+				mults.add(ExprUnary.Op.NOOP);
+				mults.add(ExprUnary.Op.SOMEOF);
+				break;
+			case ARROW:
+				mults.add( ExprUnary.Op.NOOP);
+				mults.add(ExprUnary.Op.NOOP);
+				break;
+			
+
+			}
+			visitThis(x.left);
+			visitThis(x.right);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprList x) throws Err {
+			for(int i=0; i<x.args.size(); i++) {
+				visitThis(x.args.get(i));
+			}
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprCall x) throws Err {
+
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprConstant x) throws Err {
+
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprITE x) throws Err {
+			visitThis(x.cond);
+			visitThis(x.left);
+			visitThis(x.right);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprLet x) throws Err {
+			visitThis(x.expr);
+			visitThis(x.var);
+			visitThis(x.sub);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprQt x) throws Err {
+			for(Decl decl:x.decls){
+				visitThis(decl.expr);
+			}
+			visitThis(x.sub);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprUnary x) throws Err {
+			if(x.op.equals(ExprUnary.Op.SETOF) 
+					|| x.op.equals(ExprUnary.Op.LONEOF)
+					|| x.op.equals(ExprUnary.Op.ONEOF)
+					|| x.op.equals(ExprUnary.Op.SOMEOF))
+				if(mults!=null) mults.add( x.op);
+			visitThis(x.sub);
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprVar x) throws Err {
+			if(sigs!=null && !x.label.equals("this")) sigs.add(x);
+			return x;
+
+		}
+
+
+
+		@Override
+		public Expr visit(Sig x) throws Err {
+			if(sigs!=null) sigs.add(x);
+			return x;
+		}
+
+		@Override
+		public Expr visit(Field x) throws Err {
+			if(sigs!=null) sigs.add(x);
+			if(fields!=null) fields.add(x);
+			return x;
+		}
+
+		@Override
+		public Expr visit(Bounds x) throws Err {
 			return null;
 		}
 	}
@@ -1346,7 +1555,7 @@ public final class CompModule extends Browsable implements Module {
 	public Bounds replaceBound(Bounds oBound, Bounds nBound) throws Err{
 		Bounds obj = new Bounds(nBound.pos, nBound.label, new ArrayList<CommandScope>(nBound.scope) ,nBound.fact);
 		Map<String, Sig> atoms = new LinkedHashMap<String, Sig>();
-		
+
 		Map<String, Sig> oldAtoms =  bnd2atoms.get(bounds.get(oBound.label));
 		if(oldAtoms==null) new ErrorSyntax(oBound.pos, "There was nothing to be replaced with a new Bound in the current CompModule");
 		//Map<String, String> names = new HashMap<String, String>();
@@ -1488,7 +1697,6 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 	public Expr getUniqueFieldFact(String field){
-
 		return uniqFldSetDcl.get(field);
 	}
 
@@ -1922,7 +2130,8 @@ public final class CompModule extends Browsable implements Module {
 						String fSigName = fSig.label.replace("this/", "");
 						ExprHasName varName = ExprVar.make(sig.closingBracket, fSigName+ Math.abs(fSigName.hashCode()));
 						names.add(varName);
-						declz.add(new Decl(null, null, null,names , mult( fSig)));
+						
+						declz.add(new Decl(null, null, null,names.subList(names.size()-1, names.size()) , mult( fSig)));
 						left = ExprBinary.Op.ARROW.make(sig.closingBracket, f.pos, left, varName);
 					}
 
@@ -1937,13 +2146,32 @@ public final class CompModule extends Browsable implements Module {
 					//	cx.put("this", sig.decl.get());
 					//	setF = cx.check(setF).resolve_as_set(warns);
 					//} else {
+					//System.out.println("The final Fact:"+setF);
 					setF = cx.check(setF).resolve_as_set(warns);
+					
 					if (setF.errors.size()>0) 
 						errors = errors.make(formula.errors);
 					else{
 						uniqFldSetDcl.put(fDecl.get().toString(), setF);
 						rep.typecheck("Generator Fact "+sig+"$gen_fact: " + setF.type()+"\n");  }
 				}
+				
+				String sigInstName = sName+ Math.abs(sName.hashCode());
+				ExprHasName sigVar = ExprVar.make(sig.closingBracket, sigInstName);
+				SigInstanceReplacement sir = new SigInstanceReplacement(res, sig, sigVar, formula);
+				Expr setF = sir.replace();
+				ArrayList<Decl> declz = new ArrayList<Decl>();
+				List<ExprHasName> names = new ArrayList<ExprHasName>();
+				names.add(sigVar);
+				declz.add(new Decl(null,null,null,names,sig));
+				setF = ExprQt.Op.ONE.make(sig.closingBracket, f.closingBracket, declz, setF);
+				setF = cx.check(setF).resolve_as_formula(warns);
+
+				if (setF.errors.size()>0) 
+					errors = errors.make(formula.errors);
+				else{
+					uniqFldSetDcl.put(sName, setF);
+					rep.typecheck("Generator Fact "+sig+"$gen_fact: " + setF.type()+"\n");  }
 			}				
 		}
 		return errors;

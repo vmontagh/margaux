@@ -24,6 +24,7 @@ import static kodkod.engine.Solution.Outcome.UNSATISFIABLE;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,11 +37,12 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import com.sun.xml.internal.ws.model.FieldSignature;
 
 import kodkod.ast.BinaryExpression;
 import kodkod.ast.BinaryFormula;
@@ -97,6 +99,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
+import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
@@ -276,15 +279,15 @@ public final class A4Solution {
 			}
 
 			for(Integer i: ints) { // Safe since we know 1 <= bitwidth <= 30
-					Tuple ii = factory.tuple(""+i);
-					TupleSet is = factory.range(ii, ii);
-					bounds.boundExactly(i, is);
-					sigintBounds.add(ii);
-					if (i>=0 && i<maxseq) seqidxBounds.add(ii);
-					if (i < ints.last()) next.add(factory.tuple(""+i, ""+(ints.ceiling(i+1))));
-					if (i==ints.first()) bounds.boundExactly(KK_MIN,  is);
-					if (i==ints.last()) bounds.boundExactly(KK_MAX,  is);
-					if (i==0)   bounds.boundExactly(KK_ZERO, is);
+				Tuple ii = factory.tuple(""+i);
+				TupleSet is = factory.range(ii, ii);
+				bounds.boundExactly(i, is);
+				sigintBounds.add(ii);
+				if (i>=0 && i<maxseq) seqidxBounds.add(ii);
+				if (i < ints.last()) next.add(factory.tuple(""+i, ""+(ints.ceiling(i+1))));
+				if (i==ints.first()) bounds.boundExactly(KK_MIN,  is);
+				if (i==ints.last()) bounds.boundExactly(KK_MAX,  is);
+				if (i==0)   bounds.boundExactly(KK_ZERO, is);
 			}
 		}
 		this.sigintBounds = sigintBounds.unmodifiableView();
@@ -684,49 +687,110 @@ public final class A4Solution {
 
 	//private List<Integer> indices =  new ArrayList<Integer>();
 
-	private List<Set> getAllSubsets(List atoms){
-		List<Set> pre_subsets = new ArrayList<Set>();
-		List<Set> cur_subsets = new ArrayList<Set>();
-		Set fstSet = new HashSet();
-		fstSet.add(atoms.get(0));
-		pre_subsets.add(fstSet);
-		for(int i=1; i < atoms.size(); i++){
-			cur_subsets = new ArrayList<Set>();
-			Set iSet = new HashSet();
-			iSet.add(atoms.get(i));
+	private AlloyTuplesList getAllSubsets(TupleSet tuples){
+
+
+		TupleSet emptyTupleSet = tuples.clone();
+		emptyTupleSet.clear();
+
+		AlloyTuplesList cur_subsets = new AlloyTuplesList();
+		AlloyTuplesList pre_subsets = new AlloyTuplesList();
+
+		TupleSet fstSet = emptyTupleSet.clone();
+
+		//Convert the TupleSet to a list.
+		List<Tuple> tuples_list = TupleSet2List(tuples);
+
+		if(tuples_list.size()>0){
+			fstSet.add(tuples_list.get(0));
+			pre_subsets.add(fstSet);
+			//cur_subsets.add(new HashSet());
+			cur_subsets.add(fstSet);
+		}
+
+		for(int i=1; i < tuples_list.size(); i++){
+			cur_subsets = new AlloyTuplesList();
+			TupleSet iSet = emptyTupleSet.clone();
+			iSet.add(tuples_list.get(i));
 			cur_subsets.add(iSet);
 			//merging
-			for(Set set: pre_subsets){
-				cur_subsets.add(new HashSet(set));
-				set.add(atoms.get(i));
+			for(TupleSet set: pre_subsets){
+				cur_subsets.add(set.clone());
+				set.add(tuples_list.get(i));
 				cur_subsets.add(set);
 			}
 			pre_subsets = cur_subsets;
 		}
+
 		return cur_subsets;
 	}
 
-	private List<Set> getAllElements(List atoms){
-		List<Set> ret = new ArrayList<Set>();
-		for(int i=0; i< atoms.size(); i++){
-			HashSet iSet = new HashSet();
-			iSet.add(atoms.get(i));
-			ret.add(iSet);
+	private AlloyTuplesList getAllSubsetsWithEmptySubSet(final TupleSet tuples){
+
+		TupleSet emptyTupleSet = tuples.clone();
+		emptyTupleSet.clear();
+
+		AlloyTuplesList ret = new AlloyTuplesList();
+
+		ret.add(emptyTupleSet);
+		ret.addAll(getAllSubsets(tuples));
+
+		return ret;
+	}
+
+
+	private List<Tuple> TupleSet2List(final TupleSet tuples){
+		List<Tuple> tuples_list = new ArrayList<Tuple>();
+		Iterator<Tuple> itrTuples = tuples.iterator();
+		while(itrTuples.hasNext()){
+			tuples_list.add(itrTuples.next());
+		}
+		return tuples_list;
+	}
+
+	private AlloyTuplesList getAllElements(final TupleSet tuples){
+		AlloyTuplesList ret = new AlloyTuplesList();
+
+		//Convert the TupleSet to a list.
+		List<Tuple> tuples_list = TupleSet2List(tuples);
+
+		//Make an empty TupleSet
+		TupleSet emptyTupleSet = tuples.clone();
+		emptyTupleSet.clear();
+
+		for(int i=0; i< tuples_list.size(); i++){
+			TupleSet newTupleSet = emptyTupleSet.clone();
+			newTupleSet.add(tuples_list.get(i));
+			ret.add(newTupleSet);
 		}
 		return ret;
 	}
 
 	protected class Counter implements Iterator<List<Integer>>{
-		private final ArrayList<Integer> current= new ArrayList<Integer>();
-		private final ArrayList<Integer> max= new ArrayList<Integer>();
+
+		private final ArrayList<Integer> current ;
+		private final ArrayList<Integer> max;
 		private int maxCap = 1;
+
+		public Counter(final ArrayList<Integer> current,final  ArrayList<Integer> max, final int maxCap){
+			this.current = new ArrayList<Integer>(current);
+			this.max = new ArrayList<Integer>(max);
+			this.maxCap = maxCap;
+		}
+
+
 		public Counter(List<Integer> max){
+			this();
 			for(int i=0; i < max.size(); i++){
 				addMax(max.get(i));
 			}
 		}
 
 		public Counter(){
+			this.current = new ArrayList<Integer>();
+			this.max = new ArrayList<Integer>();
+			this.maxCap = 1;
+
 		}
 
 		public void addMax(int max){
@@ -766,8 +830,10 @@ public final class A4Solution {
 			}while(true);
 		}
 
-		public void remove() {
+		public void remove() {}
 
+		public Counter clone(){
+			return new Counter(this.current, this.max, this.maxCap);
 		}
 	}
 
@@ -776,35 +842,41 @@ public final class A4Solution {
 		 * (Sig->Field)
 		 * (Sig,Int)->Field
 		 */
-		 Map<String ,Sig.Field> fieldOrder = new HashMap<String, Sig.Field>();
-		 Map<String, Set<Sig.Field>> sigFields = new HashMap<String, Set<Field>>();  
+		Map<String ,Sig.Field> sigFieldOrder = new HashMap<String, Sig.Field>();
+		Map<String, Set<Sig.Field>> sigFields = new HashMap<String, Set<Field>>();
+		Map<String, Integer> fieldIntOrder = new HashMap<String, Integer>();
 
-		 public void putFields(Sig sig, Sig.Field field){
-			 Set<Sig.Field> set;
-			 if(!this.sigFields.containsKey(sig.label)){
-				 set = new HashSet<Sig.Field>();
-			 }else{
-				 set = sigFields.remove(sig.label);
-			 }
-			 set.add(field);
-			 sigFields.put(sig.label, set);
-		 }
+		public void putFields(Sig sig, Sig.Field field){
+			Set<Sig.Field> set;
+			if(!this.sigFields.containsKey(sig.label)){
+				set = new HashSet<Sig.Field>();
+			}else{
+				set = sigFields.remove(sig.label);
+			}
+			set.add(field);
+			sigFields.put(sig.label, set);
+		}
 
-		 public void putFieldOrder(Sig sig, Integer i, Sig.Field field){
-			 this.fieldOrder.put(sig.label+i, field);
-		 }
+		public void putFieldOrder(Sig sig, Integer i, Sig.Field field){
+			this.sigFieldOrder.put(sig.label+i, field);
+			this.fieldIntOrder.put(field.label, i);
+		}
 
-		 public Set<Sig.Field>  getFields(Sig sig){
-			 return this.sigFields.get(sig.label);
-		 }
+		public Set<Sig.Field>  getFields(Sig sig){
+			return this.sigFields.get(sig.label);
+		}
 
-		 public Sig.Field getFieldOrder(Sig sig, Integer i){
-			 return this.fieldOrder.get(sig.label+i);
-		 }
+		public Sig.Field getFieldOrder(Sig sig, Integer i){
+			return this.sigFieldOrder.get(sig.label+i);
+		}
+
+		public Integer getFieldOrder(Sig.Field field){
+			return fieldIntOrder.get(field.label);
+		}
 	}
 
 	private Map<Field,TupleSet> getTupleSet(Object atom1, Sig sig, List<Integer> indices, Universe universe, 
-			List<List<Set>> allInstances, FieldOrder fieldsOrder){
+			List<List<Set<List>>> allInstances, FieldOrder fieldsOrder){
 
 		Map<Field,TupleSet> tupleSets = new HashMap<Sig.Field, TupleSet>();
 		//List of list of tuple sets
@@ -814,7 +886,7 @@ public final class A4Solution {
 		}
 		//Set a counter to generate all possible tuples
 		Counter tupleCntr = new Counter();
-		List<Set> tuples = new ArrayList<Set>();
+		List<Set<List>> tuples = new ArrayList<Set<List>>();
 		for(int i=0; i < indices.size(); i++){
 			tuples.add(allInstances.get(i).get(indices.get(i)));
 			tupleCntr.addMax(tuples.get(tuples.size()-1).size());
@@ -831,7 +903,10 @@ public final class A4Solution {
 			}
 
 			for(int i=0; i<next.size(); i++){
-				tuplesList.get(fieldsOrder.getFieldOrder(sig, i)).add(((Tuple)tuples.get(i).toArray()[next.get(i)]).atom(0));
+				Set ts = tuples.get(i);
+				List iTh = (List)ts.toArray()[next.get(i)];
+
+				tuplesList.get(fieldsOrder.getFieldOrder(sig, i)).add(((Tuple)iTh.get(0)).atom(0));
 			}
 
 			//Add all the extracted tuples with respect to their fields
@@ -878,7 +953,6 @@ public final class A4Solution {
 			result = findMultiplicity(((ExprBinary)expr).right);
 			switch(((ExprBinary)expr).op){
 			case LONE_ARROW_LONE:
-				System.out.println();
 				result.set(0, ExprUnary.Op.LONEOF);
 				result.addFirst(ExprUnary.Op.LONEOF);
 				break;
@@ -963,23 +1037,28 @@ public final class A4Solution {
 		return maxNums;
 	}
 
-	private TupleSet changeTupleSet(Universe universe, TupleSet oldTupleSet){
-		//System.out.println("oldTupleSet->"+oldTupleSet);
-		
+	private final TupleSet changeTupleSetUniverse(final Universe universe, final TupleSet oldTupleSet){
 		if (oldTupleSet.size() == 0)
 			return universe.factory().noneOf(oldTupleSet.arity());
 		else{
-		List<Tuple> newTuples = new ArrayList<Tuple>();
-		for(Tuple oldTuple: oldTupleSet){
-			List newTuple = new ArrayList();
-			for(int i=0; i < oldTuple.arity(); i++)
-				newTuple.add(oldTuple.atom(i));
-			newTuples.add(universe.factory().tuple(newTuple));
-		}
-		return universe.factory().setOf(newTuples);
+			List<Tuple> newTuples = new ArrayList<Tuple>();
+			for(Tuple oldTuple: oldTupleSet){
+				List<Object> newTuple = new ArrayList<Object>();
+				for(int i=0; i < oldTuple.arity(); i++)
+					newTuple.add(oldTuple.atom(i));
+				try{
+					newTuples.add(universe.factory().tuple(newTuple));
+				}catch( java.lang.IllegalArgumentException e){}
+			}
+			if(newTuples.size()>0){
+				return universe.factory().setOf(newTuples);
+			}else{
+				return universe.factory().noneOf(oldTupleSet.arity());
+			}
+
 		}
 	}
-	
+
 	private Map<Field,TupleSet> mergeFieldsTupleSets(Map<Field,TupleSet> oldMap, Map<Field,TupleSet> newMap){
 		for(Sig.Field newField: newMap.keySet()){
 			if(!oldMap.containsKey(newField)){
@@ -993,155 +1072,709 @@ public final class A4Solution {
 		}
 		return oldMap;
 	}
-	
-	/** This method intended to solve the expression wit respect to the bound */
-	public Object eval_woSolve(Expr expr) throws Err {
-		try {
+
+	private TupleSet TupleSetsProduct(final TupleSet ts1, final TupleSet ts2){
+		Counter counter = new Counter();
+		TupleFactory factory = ts1.universe().factory();
+		counter.addMax(ts1.size());
+		counter.addMax(ts1.size());
+		List<Tuple> tupleList = new ArrayList<Tuple>();
+
+		List<Tuple> ts1lst = TupleSet2List(ts1);
+		List<Tuple> ts2lst = TupleSet2List(ts2);
+
+		while(counter.hasNext()){
+			List<Integer> current = counter.next();
+			tupleList.add(factory.tuple(ts1lst.get(current.get(0)), ts2lst.get(current.get(1))));
+		}
+		return factory.setOf(tupleList);
+	}
+
+	private class MultipleAlloyTuples extends HashSet<AlloyTuples>{
+
+		public MultipleAlloyTuples(){
+			super();
+		}
+
+		public MultipleAlloyTuples(Collection<AlloyTuples> items ){
+			super();
+			for(AlloyTuples item : items){
+				this.add(item);
+			}
+		}
+
+		public String toString(){
+			Object[] items = super.toArray();
+			StringBuilder ret = new StringBuilder();
+			ret.append("[");
+			for(int i=0; i < items.length; i++){
+				ret.append( items[i]).append("+");
+			}
+			ret.delete(ret.length()-1, ret.length());
+			ret.append("]");
+			return ret.toString();	
+		}	
+
+	}
+
+	private class AlloyDependentTuplesList extends AlloyTuplesList/* implements Iterable<TupleSet> */{
+
+		//Map the dependent tupleset to the range
+		private final HashMap<String, AlloyTuplesList> lists = new HashMap<String, AlloyTuplesList>();
+		private final static String UNKNOWN = "unknown";
+
+		public AlloyDependentTuplesList(){}
+
+
+		public AlloyDependentTuplesList(AlloyDependentTuplesList that){
+			super();
+			super.addAll(that);
+			this.lists.putAll(that.lists);
+		}
+
+		public AlloyDependentTuplesList(final TupleSet tupleSet, final Collection<TupleSet> alloyTuplesList){
+			super(alloyTuplesList);
+			lists.put(tupleSet.toString(), new AlloyTuplesList(alloyTuplesList));
+		}
+
+		private boolean addLocal(final String key, final TupleSet e){
+			AlloyTuplesList currentList = lists.get(key);
+			if(currentList == null){
+				currentList = new AlloyTuplesList();
+			}
+			return (currentList.add(e)) && (lists.put(key, currentList)!=null);
+		}
+
+		private boolean add(final String key, final TupleSet e){
+			boolean ret = false;
+			ret = super.add(e);
+			ret = ret & addLocal(key,e);
+			return ret;
+		}
+
+		public boolean add(final TupleSet tupleSet, final TupleSet e){
+			return add(tupleSet.toString(),e);
+		}
+
+
+		public boolean add(TupleSet e){
+			return add(UNKNOWN,e);
+		}
+
+		private boolean addAllLocal(final String key, final AlloyTuplesList e){
+			AlloyTuplesList currentList = lists.get(key);
+			if(currentList == null){
+				currentList = new AlloyTuplesList();
+			}
+			return (currentList.addAll(e)) && (lists.put(key, currentList)!=null);
+		}
+
+		private boolean addAll(final String key, final AlloyTuplesList e){
+			boolean ret = true;
+			for(TupleSet ts:e){
+				ret = ret & super.add(ts);
+			}
+			return ret & this.addAllLocal(key,e) ;
+		}
+
+		public boolean addAll(final TupleSet tupleSet, final AlloyTuplesList group){
+			return addAll(tupleSet.toString(),group);
+		}
+
+		private boolean addAll(final String key, final Collection<TupleSet> c){
+			AlloyTuplesList alloyTuplesList = new AlloyTuplesList();
+			alloyTuplesList.addAll(c);
+			return addAll(key,alloyTuplesList);
+		}
+
+		public boolean addAll(final TupleSet key, final Collection<TupleSet> c){
+			return this.addAll(key.toString(),c);
+		}
 
 
 
-			if (expr instanceof Sig) return eval((Sig)expr);
-			if (expr instanceof Field) return eval((Field)expr);
+		public void add(int index,TupleSet element){
+			addLocal(UNKNOWN,element);
+			super.add(index, element); 
+		}
 
+		public final AlloyTuplesList getAllAlloyTuplesLists(){
+			AlloyTuplesList ret = new AlloyTuplesList();
+			for(AlloyTuplesList alloyTuplesList: lists.values()){
+				ret.addAll(alloyTuplesList);
+			}
+			return ret;
+		}
 
-			Map<Sig,List<List<Set>>> uniqueSigs = new HashMap<Sig,List<List<Set>>>(); 
-			Map<Sig,Counter> uniqueInstsCntr = new HashMap<Sig,Counter>(); 
-			Map<Sig, Integer> maxNums = new HashMap<Sig, Integer>();
-			FieldOrder fieldOrder = new FieldOrder();
-			Map<String,Sig> uSigNames = new HashMap<String, Sig>();
-			Map<String,Sig.Field> uFieldNames = new HashMap<String, Sig.Field>();
-			for(Sig s: sigs){
-				
-				//Find the sigs supposed to be unique
-				if(s.isUnique != null){
-					uSigNames.put(s.label,s);
-					List<List<Set>> allInstances = new ArrayList<List<Set>>();
-					Counter instCounter = new Counter();
-					//Find the related sigs
-					int iFldPos = 0;
-					int upperB = 1;
-					for(Field d: s.getFields()){
-						uFieldNames.put(s.label+"."+d.label, d);
-						fieldOrder.putFields(s, d);
-						List<Integer> cardinals = new ArrayList<Integer>();
-						List<List<PrimSig>> f = s.join(d).type().fold();
-						List<ExprUnary.Op> mults = findMultiplicity(d.decl().expr);
-						for(Sig sig: f.get(0)){
-							cardinals.add(abstractSUB.get(sig).size());
-							//Temporarly decide the multiplicity
-							if(mults.get(0)==Op.ONEOF){
-								allInstances.add(getAllElements(new ArrayList( abstractSUB.get(sig))));
-							}else if(mults.get(0)==Op.SETOF){
-								allInstances.add(getAllSubsets(new ArrayList( abstractSUB.get(sig))));
-							}
-							instCounter.addMax(allInstances.get(allInstances.size()-1).size());
-							fieldOrder.putFieldOrder(s, iFldPos++, d);
-						}
-						//Decide how many unique atoms should be existed regarding the relations
-						upperB *= computeUBField(mults,cardinals);
-					}
-					maxNums.put(s, upperB);
-					uniqueSigs.put(s, allInstances);
-					uniqueInstsCntr.put(s,instCounter);
-				}
+		public AlloyDependentTuplesList clone(){
+			return new AlloyDependentTuplesList(this);
+		}
+
+		public String toString(){
+			StringBuilder ret = new StringBuilder();
+			ret.append("#").append(this.size());
+			for(String key:lists.keySet()){
+				ret.append("{#").append(key).append("=").append(lists.get(key).size()).append("->").append(lists.get(key)).append("}").append("\n");
+			}
+			if(ret.length() > 0) ret.delete(ret.length()-1, ret.length());
+
+			ret.insert(0,"<").append(">");
+			return ret.toString();
+		}
+		/*
+		@Override
+		public Iterator<TupleSet> iterator() {
+			// TODO Auto-generated method stub
+			return new AlloyDependentTuplesListIterator();
+		}
+
+		private class AlloyDependentTuplesListIterator implements Iterator<TupleSet>{
+
+			private int currentRow;
+			private int currentCol;
+			//private final  HashMap<String, AlloyTuplesList> lists;
+			private final String[] keys;
+
+			public AlloyDependentTuplesListIterator(/*final HashMap<String, AlloyTuplesList> lists*//*){
+				//this.lists = lists;
+				keys = (String[]) lists.keySet().toArray();
+				currentRow = 0;
+				currentCol = -1;
 			}
 
-			//System.out.println(maxNums);
-			
-			//System.exit(-10);
-			//Making the universe. Add enough atoms for the first signature in the relations
-			Universe universe =  bounds.universe();
-			List universeList = new ArrayList();
-			Map<Sig, List> newUnqUB = new HashMap<Sig, List>();
-
-			if(uSigNames.size() ==0)
-				for(Object atom: universe){
-					universeList.add(atom);
-				}
-			else
-				//The new atoms that should be added into signatures upperbound in the instance object.
-				for(Sig uSig: uniqueSigs.keySet()){
-					for(Object atom: universe){
-						if(!atom.toString().startsWith(uSig.label.replace("this/", ""))){
-							universeList.add(atom);
-						}
-					}
-					List ub = new ArrayList();
-					for(int i=0; i < maxNums.get(uSig); i++){
-						String newAtom = uSig.label.replace("this/", "")+"$"+i;
-						universeList.add(newAtom);
-						ub.add( newAtom);
-					}
-					newUnqUB.put(uSig,ub);
-				}
-
-			
-			
-			//Now Make a new univrese which should be unique in all tuple sets.
-			universe = new Universe(universeList);
-
-			//System.out.println("universe1->"+universe);
-			
-			int i =0;
-			Map<Field,TupleSet> tupleSets = new HashMap<Sig.Field, TupleSet>();
-			//Generate all the possible instances for all unique signatures.
-			for(Sig uSig: uniqueSigs.keySet()){
-				while(uniqueInstsCntr.get(uSig).hasNext()){
-					String newAtom = uSig.label.replace("this/", "")+"$"+i++;
-					//The returned tuple set has all the possible instances. But it should be split
-					//regarding to the order of the columns in each field. For example, sig A{r:B,s:C}
-					//has a tuple set of <A$0,B$0,C$0>, but it should be passed to the kodkod in
-					//r:<A$0,B$0> and s:<A$0,C$0>
-					tupleSets = mergeFieldsTupleSets( tupleSets ,getTupleSet(newAtom,uSig, uniqueInstsCntr.get(uSig).next(),
-							universe, uniqueSigs.get(uSig),fieldOrder)) ;
-					
-				}
+			@Override
+			public boolean hasNext() {
+				if((currentRow == keys.length-1) && 
+						(currentCol == lists.get(keys[currentRow]).size()) )
+					return true;
+				return false;
 			}
 
-			//System.out.println("tupleSets->"+tupleSets);
+			@Override
+			public TupleSet next() {
 
-			Instance inst = new Instance(universe);
-			//System.out.println("universe->"+universe);
-			//System.out.println("inst->"+inst);
-			//System.exit(-10);
-			/*
-			for(Sig s:abstractSUB.keySet()){
-				Relation r = Relation.nary(s.label, 1);
-				if(s.isUnique == null){
-					inst.add(r,changeTupleSet(universe, abstractSUB.get(s)) );
+				if(currentCol < lists.get(keys[currentRow]).size()){
+					currentCol++;
+				}else if(currentRow < keys.length){
+					currentRow++;
+					currentCol=0;
 				}else{
-					List<Tuple> tuples = new ArrayList<Tuple>();
-					for(Object atom: newUnqUB.get(s)){
-						tuples.add(universe.factory().tuple(atom));
-					}
-					inst.add(r, universe.factory().setOf(tuples));
+					return null;
+				}
+				return lists.get(keys[currentRow]).get(currentCol);
+			}
+
+			@Override
+			public void remove() {
+				altered = true;
+				lists.get(keys[keys.length-1]).removeLast();
+			}
+
+		}
+			 */
+
+	}
+
+	private class AlloyTuplesList extends ArrayList<TupleSet> {
+
+
+		private static final long serialVersionUID = 11478473247238472L;
+
+		public AlloyTuplesList() {
+			super();
+		}
+
+		public AlloyTuplesList(Collection<TupleSet> alloyTuplesList) {
+			super(alloyTuplesList);
+		}
+
+		public final TupleSet list2TupleSet(){
+			if(!isEmpty()){
+				TupleSet empty_tupleSet = get(0).clone();
+				empty_tupleSet.clear();
+				TupleSet ret = empty_tupleSet.clone();
+				for(int i=0;i<size();i++){
+					ret.addAll(get(i));
+				}
+				return ret;
+			}else{
+				return null;
+			}
+		}
+
+		public final AlloyTuples getFieldTuple(final Tuple uniqSigTuple) throws Exception{
+			AlloyTuples ret = new AlloyTuples();
+			if(this.size() > 1)
+				throw new Exception("Each instances is supposed to have one TupleSet");
+
+			//Get first
+			TupleSet firstTuple = this.get(0);
+
+			for(Tuple rightTuple:firstTuple){
+				List<Object> notPrccsed = new ArrayList<Object>();
+				notPrccsed.add(uniqSigTuple.atom(0));
+				for(int i=0;i<rightTuple.arity();i++){
+					notPrccsed.add(rightTuple.atom(i));
+				}
+				Tuple urightTuple = uniqSigTuple.universe().factory().tuple(notPrccsed);
+				ret.add(urightTuple);
+			}
+			return ret;
+		}
+
+		public String toString(){
+			Object[] items = super.toArray();
+			StringBuilder ret = new StringBuilder();
+
+			for(int i=0; i < items.length; i++){
+				ret.append( items[i].toString()).append( ",");
+			}
+			if(ret.length() > 0) ret.delete(ret.length()-1, ret.length());
+			ret.insert(0, "(").append(")");
+			return ret.toString();	
+		}	
+
+		public AlloyTuplesList clone(){
+			return new AlloyTuplesList(this);
+		}
+	}
+
+	private class FieldDependecyGroup{
+
+		private final HashMap<String, Integer> fldLevel = new HashMap<String, Integer>();  
+		private final HashMap<String, Set<String>> depTable = new HashMap<String, Set<String>>();
+		private final HashMap<String, Sig.Field> name2Field = new HashMap<String, Sig.Field>();
+
+		private void putDepField_(final String key,final String value) {
+			Set<String> crntFldSet = this.depTable.get(key);
+			if(crntFldSet == null){
+				crntFldSet = new HashSet<String>();
+			}
+			if (value!=null)
+				crntFldSet.add(value);
+			this.depTable.put(key.toString(), crntFldSet);
+			for(String fld: this.depTable.keySet()){
+				this.fldLevel.put(fld,getLevel_(fld));
+			}
+		}
+
+		public void putDepField(final Sig.Field key,final Sig.Field value) {
+			if(key!=null)
+				this.name2Field.put(key.toString(), key);
+			if(value!=null)
+				this.name2Field.put(value.toString(), value);
+			putDepField_(key.toString(),value != null ?value.toString():null);
+		}
+
+		public void putDepExprs(final Sig.Field key,final Collection<Expr> c) {
+			boolean added = false;
+			for(Expr expr:c){
+				if (expr instanceof Sig.Field) {
+					putDepField(key,(Sig.Field)expr);
+					added = true;
+				}
+			}	
+			if(!added)
+				putInpendent(key);
+		}
+
+		public void putInpendent(final Sig.Field key){
+
+			putDepField(key, null);
+		}
+
+		private int getLevel_(final String key){
+			String crnt = key;
+			Set<String> crntFldSet = this.depTable.get(crnt);
+			int level = 0;
+			if(crntFldSet!=null && !crntFldSet.isEmpty()){
+				level++;
+				for(String prntfld: crntFldSet){
+					level = Math.max(level, getLevel_(prntfld)+1);
 				}
 			}
-			System.out.println("inst2->"+inst);
-*/
-//System.exit(-10);
+			return level;
+		}
+
+		public int getLevel(final Sig.Field key){
+			return fldLevel.get(key);
+		}
+
+		public Set<Sig.Field> getLeveli(int i){
+			Set<Sig.Field> ret = new HashSet<Sig.Field>();
+			for(String fld:fldLevel.keySet()){
+				if(fldLevel.get(fld) == i ){
+					ret.add(name2Field.get(fld));
+				}
+			}
+			return ret;
+		}
+
+		public int maxLevel(){
+			int ret = 0;
+			for(Integer i: fldLevel.values()){
+				ret = Math.max(ret, i);
+			}
+			return ret;
+		}
+
+		public String toString(){
+
+			for(String fld: this.depTable.keySet()){
+				this.fldLevel.put(fld,getLevel_(fld));
+			}
+
+			StringBuilder ret =  new StringBuilder();
+			ret.append("{");
+			for(String fld:depTable.keySet())
+				ret.append("[Name=").append(fld).append(",Level=").append(getLevel_(fld)).append(",Deps=").append(depTable.get(fld)).append("]\n");
+			if(ret.length() > 0) ret.delete(ret.length()-1, ret.length());
+			ret.append("}"); 
+			return ret.toString();
+		}
+	}
+
+	private class AlloyTuplesTable extends TreeMap<String, AlloyTuplesList>{
+
+		private Counter counter;
+
+		public AlloyTuplesTable(AlloyTuplesTable that){
+			super(that);
+			this.counter = that.counter.clone();
+		}
+
+		public AlloyTuplesTable clone(){
+
+			return new AlloyTuplesTable(this);
+		}
+
+		public AlloyTuplesTable(){
+			super();
+			this.counter = new Counter();;
+		}
+
+		public String toString(){
+			StringBuilder ret = new StringBuilder();
+			ret.append("\n{");
+			for(String key: keySet()){
+				ret.append(key).append("=").append(get(key).toString()).append(",");
+			}
+			ret.delete(ret.length()-1, ret.length());
+			ret.append("}");
+			return ret.toString();	
+		}	
+
+
+		private class InstancesIterator implements Iterable<AlloyTuplesTable>,Iterator<AlloyTuplesTable>{
+
+			final AlloyTuplesTable table;
+			final Counter counter = new Counter();
+
+			public InstancesIterator(AlloyTuplesTable outerClass){
+				table = outerClass;
+				for(String key:descendingKeySet()){
+					counter.addMax(get(key).size());
+				}
+			}
+
+			@Override
+			public boolean hasNext() {
+				return counter.hasNext();
+			}
+
+			@Override
+			public AlloyTuplesTable next() {
+				AlloyTuplesTable ret = new AlloyTuplesTable();
+				if (!counter.hasNext())
+					return null;
+				else{
+					List<Integer> inst = counter.next();
+					int i=0;
+					for(String key:table.descendingKeySet()){
+						//A unary tupleList
+						AlloyTuplesList tuplesList = new AlloyTuplesList();
+						tuplesList.add(table.get(key).get(inst.get(i)));
+						ret.put(key, tuplesList);
+						i++;
+					}
+				}
+				return ret;
+			}
+
+			@Override
+			public void remove() {}
+
+			@Override
+			public Iterator<AlloyTuplesTable> iterator() {
+				// TODO Auto-generated method stub
+				return this;
+			}
+		}
+
+		public Iterable<AlloyTuplesTable> getInstanceIterator(){
+			return new InstancesIterator(this);
+		}
+	}
+
+
+	private class AlloyTuples extends ArrayList<Tuple> {
+
+		public String toString(){
+			StringBuilder ret = new StringBuilder();
+			ret.append("<");
+			for(int i=0; i < this.size(); i++){
+				ret.append( get(i).getClass()).append( "->");
+			}
+			ret.delete(ret.length()-2, ret.length());
+			ret.append(">");
+			return ret.toString();
+
+		}
+
+	}
+
+
+
+
+
+
+
+
+
+
+	private Instance getEvalInstace() throws Exception{
+		//if (evaInst == null){
+
+		Map<Sig,List<AlloyTuplesTable>> unqSig2InstsTbl = new HashMap<Sig,List<AlloyTuplesTable>>();
+		Map<String,Sig> uSigNames = new HashMap<String, Sig>();
+		for(Sig s: sigs){
+
+			//Find the sigs supposed to be unique
+			if(s.isUnique != null){
+				uSigNames.put(s.label, s);
+				//Find the dependecies
+				FieldDependecyGroup fDeps = new FieldDependecyGroup();
+				for(Field d: s.getFields()){
+					CompModule.FieldDecomposer fdcmpsr = new CompModule.FieldDecomposer();
+					fDeps.putDepExprs(d, fdcmpsr.extractFieldsItems(d));
+				}
+
+				List<AlloyTuplesTable> newTables = new LinkedList<A4Solution.AlloyTuplesTable>();
+
+				AlloyTuplesTable lvl0Instances = new AlloyTuplesTable();
+				for(Field d:fDeps.getLeveli(0)){
+					List<List<PrimSig>> f = s.join(d).type().fold();
+					List<Integer> cardinals = new ArrayList<Integer>();
+					CompModule.FieldDecomposer fdcmpsr = new CompModule.FieldDecomposer();
+					List<ExprUnary.Op> mults = fdcmpsr.getMultiplicities(d);
+					Sig sig = f.get(0).get(0);
+					cardinals.add(abstractSUB.get(sig).size());
+					AlloyTuplesList alloyTuplesList = null;
+					if(mults.get(0)==Op.ONEOF){
+						alloyTuplesList = getAllElements(abstractSUB.get(sig));
+					}else if(mults.get(0)==Op.SETOF){
+						alloyTuplesList = getAllSubsetsWithEmptySubSet(abstractSUB.get(sig));
+					}
+					lvl0Instances.put(d.label,  alloyTuplesList);
+				}
+
+
+				for(AlloyTuplesTable att : lvl0Instances.getInstanceIterator()){
+					boolean invalidInst = false;
+					for(Field d:fDeps.getLeveli(1)){
+						CompModule.FieldDecomposer fdcmpsr = new CompModule.FieldDecomposer();
+						List<Expr> fieldItems = fdcmpsr.extractFieldsItems(d);
+						List<ExprUnary.Op> fieldMults = fdcmpsr.getMultiplicities(d);
+
+						for(int i=fieldItems.size()-2; i>=0; i-- ){
+							Expr fieldItem = fieldItems.get(i);
+							Expr nxtfieldItem = fieldItems.get(i+1);
+							String nxtLabel = "lastProduct";							
+							ExprUnary.Op crntOP = fieldMults.get(i);
+							ExprUnary.Op nxtOP = fieldMults.get(i+1);
+
+							AlloyTuplesList fldList = new AlloyTuplesList( 
+									fieldItem instanceof Sig ? 
+											getAllElements(abstractSUB.get((Sig)fieldItem)):
+												att.get(((Sig.Field)fieldItem).label));
+							AlloyTuplesList nxtList = new AlloyTuplesList( 
+									nxtfieldItem instanceof Sig ? 
+											getAllElements(abstractSUB.get((Sig)nxtfieldItem)):
+												att.get(((Sig.Field)nxtfieldItem).label));
+
+							TupleSet nxtTuple = nxtList.list2TupleSet();
+							TupleSet fldTuple = fldList.list2TupleSet();
+
+							TupleSet producted = fldTuple.product(nxtTuple);
+
+							List<TupleSet> resultTupleSet;
+
+							if(crntOP.equals(ExprUnary.Op.NOOP) && nxtOP.equals(ExprUnary.Op.NOOP)){
+								resultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+							}else if(crntOP.equals(ExprUnary.Op.NOOP) && nxtOP.equals(ExprUnary.Op.ONEOF)){
+								AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+								resultTupleSet = new ArrayList<TupleSet>();
+								for(TupleSet ts: tmpResultTupleSet){
+									if(ts.project(0).containsAll(fldTuple) && ts.size() == fldTuple.size()){
+										resultTupleSet.add(ts);
+									}
+								}
+								if(resultTupleSet.isEmpty()){
+									invalidInst = true;
+									break;
+								}
+							}else if(crntOP.equals(ExprUnary.Op.NOOP) && nxtOP.equals(ExprUnary.Op.LONEOF)){
+								AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+								resultTupleSet = new ArrayList<TupleSet>();
+								for(TupleSet ts: tmpResultTupleSet){
+									if(ts.project(0).size() == ts.size() ){
+										resultTupleSet.add(ts);
+									}
+								}
+								if(resultTupleSet.isEmpty()){
+									invalidInst = true;
+									break;
+								}
+							}else if(crntOP.equals(ExprUnary.Op.ONEOF) && nxtOP.equals(ExprUnary.Op.ONEOF)){
+								AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+								resultTupleSet = new ArrayList<TupleSet>();
+								for(TupleSet ts: tmpResultTupleSet){
+									if(
+											ts.project(0).containsAll(fldTuple) && ts.size() == fldTuple.size() //For right one
+											&&
+											ts.project(1).containsAll(nxtTuple) && ts.size() == nxtTuple.size()
+											){
+										resultTupleSet.add(ts);
+									}
+								}
+								if(resultTupleSet.isEmpty()){
+									invalidInst = true;
+									break;
+								}
+							}else if(crntOP.equals(ExprUnary.Op.ONEOF) && nxtOP.equals(ExprUnary.Op.LONEOF)){
+								AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+								resultTupleSet = new ArrayList<TupleSet>();
+								for(TupleSet ts: tmpResultTupleSet){
+									if(
+											ts.project(0).size() == ts.size() //For right lone
+											&&
+											ts.project(1).containsAll(nxtTuple) && ts.size() == nxtTuple.size()
+											){
+										resultTupleSet.add(ts);
+									}
+								}
+								if(resultTupleSet.isEmpty()){
+									invalidInst = true;
+									break;
+								}
+							}else{
+								resultTupleSet = null;
+								throw new Exception("Other multiplicitities have not been implemented yet. Please contanct to Vajih");
+							}
+							if(invalidInst)
+								break;
+							att.put(d.label, new AlloyTuplesList(resultTupleSet));
+						}//end of field items iterator
+					}//end of level iterator
+					if(!invalidInst)
+						newTables.add(att);
+				}//end of instance iterator
+
+				unqSig2InstsTbl.put(s, newTables);
+
+			}//End of if for filtering unique sig
+		}//End of all sigs
+
+
+
+		Universe kkUniv = bounds.universe();
+		Instance inst2Run = null;
+		for(Sig s:unqSig2InstsTbl.keySet()){
+			String sigLabel = s.label.replace("this/", "");
+			List<AlloyTuplesTable> newTables = unqSig2InstsTbl.get(s);
+			//Finding the number of instances.
+			int numSum = 0;
+			for(AlloyTuplesTable att:newTables){
+				for(AlloyTuplesTable inst: att.getInstanceIterator()){
+					numSum++;
+				}
+			}
+
+			List<String> newKKUnivList = new LinkedList<String>();
+			//Adding the new atoms for the uniqueSig to the universe
+			for(Object atom:kkUniv){
+				if(!atom.toString().startsWith(sigLabel))
+					newKKUnivList.add(atom.toString());
+			}
+			for(int i=0; i < numSum ; i++){
+				newKKUnivList.add(sigLabel+"$"+i);
+			}
+
+			kkUniv = new Universe(newKKUnivList);
+			//Put the tuples for each realtion in the map
+			numSum = 0;
+			Map<String, List<Tuple>> fldsTpls = new HashMap<String, List<Tuple>>();
+			for(AlloyTuplesTable att:newTables){
+				for(AlloyTuplesTable inst: att.getInstanceIterator()){
+					Tuple uniqSigTuple = kkUniv.factory().tuple(sigLabel+"$"+numSum);
+					for(Field fld: s.getFields()){
+						String fldLabel = sigLabel+"."+fld.label;
+						List<Tuple> tplsList = fldsTpls.get(fldLabel);
+						if(tplsList == null) tplsList = new ArrayList<Tuple>();
+						tplsList.addAll(inst.get(fld.label).getFieldTuple(uniqSigTuple));
+						fldsTpls.put(fldLabel, tplsList);
+					}
+					numSum++;
+				}
+			}
+
+			inst2Run = new Instance(kkUniv);
 			for(Relation r: bounds.relations()){
+				String name = r.name().replace("this/", "");
 				if (uSigNames.containsKey(r.name())){
 					List<Tuple> tuples = new ArrayList<Tuple>();
-					for(Object atom: newUnqUB.get(uSigNames.get(r.name()))){
-						tuples.add(universe.factory().tuple(atom));
+					for(int i=0; i<numSum; i++){
+						tuples.add(kkUniv.factory().tuple(name+"$"+i));
 					}
-					inst.add(r, universe.factory().setOf(tuples));
-				}
-				else if(tupleSets != null && uFieldNames.containsKey(r.name())  )
-					inst.add(r,tupleSets.get(uFieldNames.get(r.name())));
-				else
-					inst.add(r, changeTupleSet(universe,bounds.upperBound(r))); 
+					inst2Run.add(r, kkUniv.factory().setOf(tuples));
+
+				}else if(fldsTpls != null && fldsTpls.containsKey(name)  ){
+					inst2Run.add(r, kkUniv.factory().setOf(fldsTpls.get(name)));
+				}else
+					inst2Run.add(r, changeTupleSetUniverse(kkUniv,bounds.upperBound(r))); 
 			}
 
-			//System.out.println("inst->"+inst);
-			//System.exit(-10);
-			
+		}
+		//}
+		return inst2Run.unmodifiableView();
+	}
+
+
+	/** This method intended to solve the expression wit respect to the bound 
+	 * @throws Exception */
+	public Object eval_woSolve(Expr expr) throws Exception {
+		//		try {
+
+
+
+		if (expr instanceof Sig) return eval((Sig)expr);
+		if (expr instanceof Field) return eval((Field)expr);
+
+
+
+		try{
+			Instance inst2Run = getEvalInstace();
+
+			if(inst2Run==null)
+				throw new Exception("Unable to find the instance object");
 
 			solver.options().setBitwidth(31);
-
-			Evaluator eval = new Evaluator(inst,solver.options());
+			Evaluator eval = new Evaluator(inst2Run,solver.options());
 			Object result = TranslateAlloyToKodkod.alloy2kodkod(this, expr);
+
+			//System.exit(-10);
+			//evaInst = null;
+
 			if (result instanceof IntExpression) 
 				return eval.evaluate((IntExpression)result) + (eval.wasOverflow() ? " (OF)" : "");
 			if (result instanceof Formula) 
@@ -1150,6 +1783,397 @@ public final class A4Solution {
 				return new A4TupleSet(eval.evaluate((Expression)result), this);
 			throw new ErrorFatal("Unknown internal error encountered in the evaluator.");
 		} catch(CapacityExceededException ex) {
+			ex.printStackTrace();
+			throw TranslateAlloyToKodkod.rethrow(ex);
+		}
+	}
+
+
+
+	/**
+	 * 
+	 * @param field
+	 * @param att pass by reference. This object will be effected in the method for the memory saving.
+	 * @return
+	 * @throws Exception
+	 */
+	private AlloyTuplesTable extendInstances(final Sig.Field  field, AlloyTuplesTable att2) throws Exception{
+
+		boolean ret = true;
+		AlloyTuplesTable att = att2.clone();
+		CompModule.FieldDecomposer fdcmpsr = new CompModule.FieldDecomposer();
+		List<Expr> fieldItems = fdcmpsr.extractFieldsItems(field);
+		List<ExprUnary.Op> fieldMults = fdcmpsr.getMultiplicities(field);
+
+		if(fieldMults.size() == 1){
+			fdcmpsr = new CompModule.FieldDecomposer();
+			Expr fieldItem = fieldItems.get(0);
+			ExprUnary.Op crntOP = fieldMults.get(0);
+			AlloyTuplesList alloyTuplesList = null;
+			if(crntOP.equals(Op.ONEOF)){
+				alloyTuplesList = fieldItem instanceof Sig ? 
+						getAllElements(abstractSUB.get((Sig)fieldItem)):
+							att.get(((Sig.Field)fieldItem).label);
+			}else if(crntOP.equals(Op.SETOF)){
+				alloyTuplesList = fieldItem instanceof Sig ? 
+						getAllSubsetsWithEmptySubSet(abstractSUB.get((Sig)fieldItem)):
+							att.get(((Sig.Field)fieldItem).label);
+			}
+			att.put(field.label, new AlloyTuplesList(alloyTuplesList));
+		}else{
+			for(int i=fieldItems.size()-2; i>=0; i-- ){
+				Expr fieldItem = fieldItems.get(i);
+				Expr nxtfieldItem = fieldItems.get(i+1);
+				String nxtLabel = "lastProduct";							
+				ExprUnary.Op crntOP = fieldMults.get(i);
+				ExprUnary.Op nxtOP = fieldMults.get(i+1);
+
+				AlloyTuplesList fldList = new AlloyTuplesList( 
+						fieldItem instanceof Sig ? 
+								getAllElements(abstractSUB.get((Sig)fieldItem)):
+									att.get(((Sig.Field)fieldItem).label));
+				AlloyTuplesList nxtList = new AlloyTuplesList( 
+						nxtfieldItem instanceof Sig ? 
+								getAllElements(abstractSUB.get((Sig)nxtfieldItem)):
+									att.get(((Sig.Field)nxtfieldItem).label));
+
+				TupleSet nxtTuple = nxtList.list2TupleSet();
+				TupleSet fldTuple = fldList.list2TupleSet();
+
+				TupleSet producted = fldTuple.product(nxtTuple);
+
+				List<TupleSet> resultTupleSet;
+
+				if(crntOP.equals(ExprUnary.Op.NOOP) && nxtOP.equals(ExprUnary.Op.NOOP)){
+					resultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+				}else if(crntOP.equals(ExprUnary.Op.NOOP) && nxtOP.equals(ExprUnary.Op.ONEOF)){
+					AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+					resultTupleSet = new ArrayList<TupleSet>();
+					for(TupleSet ts: tmpResultTupleSet){
+						if(ts.project(0).containsAll(fldTuple) && ts.size() == fldTuple.size()){
+							resultTupleSet.add(ts);
+						}
+					}
+					if(resultTupleSet.isEmpty()){
+						ret = false;
+						break;
+					}
+				}else if(crntOP.equals(ExprUnary.Op.NOOP) && nxtOP.equals(ExprUnary.Op.LONEOF)){
+					AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+					resultTupleSet = new ArrayList<TupleSet>();
+					for(TupleSet ts: tmpResultTupleSet){
+						if(ts.project(0).size() == ts.size() ){
+							resultTupleSet.add(ts);
+						}
+					}
+					if(resultTupleSet.isEmpty()){
+						ret = false;
+						break;
+					}
+				}else if(crntOP.equals(ExprUnary.Op.ONEOF) && nxtOP.equals(ExprUnary.Op.ONEOF)){
+					AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+					resultTupleSet = new ArrayList<TupleSet>();
+					for(TupleSet ts: tmpResultTupleSet){
+						if(
+								ts.project(0).containsAll(fldTuple) && ts.size() == fldTuple.size() //For right one
+								&&
+								ts.project(1).containsAll(nxtTuple) && ts.size() == nxtTuple.size()
+								){
+							resultTupleSet.add(ts);
+						}
+					}
+					if(resultTupleSet.isEmpty()){
+						ret = false;
+						break;
+					}
+				}else if(crntOP.equals(ExprUnary.Op.ONEOF) && nxtOP.equals(ExprUnary.Op.LONEOF)){
+					AlloyTuplesList tmpResultTupleSet = getAllSubsetsWithEmptySubSet(producted);
+					resultTupleSet = new ArrayList<TupleSet>();
+					for(TupleSet ts: tmpResultTupleSet){
+						if(
+								ts.project(0).size() == ts.size() //For right lone
+								&&
+								ts.project(1).containsAll(nxtTuple) && ts.size() == nxtTuple.size()
+								){
+							resultTupleSet.add(ts);
+						}
+					}
+					if(resultTupleSet.isEmpty()){
+						ret = false;
+						break;
+					}
+				}else{
+					resultTupleSet = null;
+					throw new Exception("Other multiplicitities have not been implemented yet. Please contanct to Vajih");
+				}
+				if(!ret)
+					return null;
+				att.put(field.label, new AlloyTuplesList(resultTupleSet));
+			}//end of field items iterator
+
+		}
+
+		return att;
+	}
+
+
+	private List<String> convertOldUnivToList(Sig s){
+		String sigLabel = s.label.replace("this/", "");
+		Universe kkUniv = bounds.universe();
+		List<String> oldKKUnivList = new LinkedList<String>();
+		//Adding the new atoms for the uniqueSig to the universe
+		for(Object atom:kkUniv){
+			if(!atom.toString().startsWith(sigLabel))
+				oldKKUnivList.add(atom.toString());
+		}	
+		return oldKKUnivList;
+	}
+
+	private Instance convertAlloyTupleListToInstance(Sig s, AlloyTuplesTable inst, long uIndex,List<String> oldKKUnivList, Set<Sig.Field> flds) throws Exception{
+
+		Instance inst2Run = null;
+		String sigLabel = s.label.replace("this/", "");
+
+		Map<String, List<Tuple>> fldsTpls = new HashMap<String, List<Tuple>>();
+		List<String> newKKUnivList = new ArrayList<String>( oldKKUnivList) ;
+		newKKUnivList.add(sigLabel+"$"+uIndex);
+		Universe kkUniv = new Universe(newKKUnivList);
+		Tuple uniqSigTuple = kkUniv.factory().tuple(sigLabel+"$"+uIndex);
+
+
+		for(Field fld: flds){
+			String fldLabel = sigLabel+"."+fld.label;
+			List<Tuple> tplsList = new ArrayList<Tuple>();
+			tplsList.addAll(inst.get(fld.label).getFieldTuple(uniqSigTuple));
+			fldsTpls.put(fldLabel, tplsList);
+		}
+
+		inst2Run = new Instance(kkUniv);
+
+		for(Relation r: bounds.relations()){
+			String name = r.name().replace("this/", "");
+			if (s.label.equals(r.name())){
+				List<Tuple> tuples = new ArrayList<Tuple>();
+				tuples.add(kkUniv.factory().tuple(name+"$"+uIndex));
+				inst2Run.add(r, kkUniv.factory().setOf(tuples));
+			}else if(fldsTpls != null && fldsTpls.containsKey(name)  ){
+
+				if(fldsTpls.get(name).size() > 0)
+					inst2Run.add(r,kkUniv.factory().setOf(fldsTpls.get(name)) );
+				else
+					inst2Run.add(r,kkUniv.factory().noneOf(r.arity()) );
+			}else{
+				TupleSet ts = changeTupleSetUniverse(kkUniv,bounds.upperBound(r));
+				if(!ts.isEmpty())
+					inst2Run.add(r,ts ); 
+			}
+
+		}
+		return inst2Run;
+
+	}
+
+
+	private List<Instance> getEvalInstaces(Expr expr, Sig uniqSig) throws Exception{
+		//if (evaInst == null){
+
+		CompModule.FieldDecomposer fdcmpsr = new CompModule.FieldDecomposer();
+		List<AlloyTuplesTable> newTables = new LinkedList<A4Solution.AlloyTuplesTable>();
+		List<Instance> insts = new ArrayList<Instance>();
+		List<String> oldKKUnivList = convertOldUnivToList(uniqSig);
+
+		//Find the dependecies
+		FieldDependecyGroup fDeps = new FieldDependecyGroup();
+		for(Field d: uniqSig.getFields()){
+			fDeps.putDepExprs(d, fdcmpsr.extractFieldsItems(d));
+		}
+
+
+		Set<Sig.Field> refFields = fdcmpsr.extractFieldsInExpr(expr);
+		Set<Sig.Field> fldsLevel0 = fDeps.getLeveli(0);
+		Set<Sig.Field> fldsLevel1 = fDeps.getLeveli(1);
+		Set<Sig.Field> fldsLevel01 = new HashSet<Sig.Field>();
+		fldsLevel01.addAll(fldsLevel0);
+		fldsLevel01.addAll(fldsLevel1);
+
+
+		Set<Sig.Field> fldsLevelE0 = new HashSet<>(fldsLevel0);
+		fldsLevelE0.removeAll(refFields);
+		Set<Sig.Field> fldsLevelI0 = new HashSet<>(fldsLevel0);
+		fldsLevelI0.removeAll(fldsLevelE0);
+		Set<Sig.Field> fldsLevelE1 = new HashSet<>(fldsLevel1);
+		fldsLevelE1.removeAll(refFields);
+		Set<Sig.Field> fldsLevelI1 = new HashSet<>(fldsLevel1);
+		fldsLevelI1.removeAll(fldsLevelE1);
+		Set<Sig.Field> fldsLevelI0I1 = new HashSet<>(fldsLevelI1);
+		fldsLevelI0I1.addAll(fldsLevelI0);
+
+
+
+
+		AlloyTuplesTable lvl0Instances = new AlloyTuplesTable();
+		for(Field d:fldsLevelI0){
+			lvl0Instances = extendInstances(d,lvl0Instances);
+		}
+
+		System.out.println("The first level is finished.");
+
+		long i =0;
+		long all = 0;
+		//Already enrolled
+		for(AlloyTuplesTable att : lvl0Instances.getInstanceIterator()){
+			AlloyTuplesTable extendedAtt = att;
+			for(Field d:fldsLevelI1){
+				extendedAtt = extendInstances(d,extendedAtt);
+			}//end of level iterator
+			for(AlloyTuplesTable newAtt:extendedAtt.getInstanceIterator()){
+				all++;
+				if(extendedAtt != null && checkInstance(
+						convertAlloyTupleListToInstance(uniqSig,newAtt,0,oldKKUnivList,fldsLevelI0I1)
+						,expr)){
+					i++;
+					newTables.add(newAtt);
+					System.out.println("Found Object("+i +","+all +","+((double)i/(double)all )*100+"):"+newAtt);
+				}
+			}
+
+		}//end of instance iterator
+
+		System.out.println("The second level is finished."+newTables.size());
+
+
+		List<AlloyTuplesTable> newTables2 = new ArrayList<A4Solution.AlloyTuplesTable>();
+		for(AlloyTuplesTable atts: newTables){
+			for(AlloyTuplesTable att : atts.getInstanceIterator()){
+				AlloyTuplesTable extendedAtt = att;
+				for(Field d:fldsLevelE0){
+					extendedAtt = extendInstances(d,extendedAtt);
+				}//end of level iterator
+				newTables2.add(extendedAtt);
+			}//end of instance iterator
+		}
+		System.out.println("The third level is finished."+newTables2.size());
+
+		List<AlloyTuplesTable> newTables3 = new ArrayList<A4Solution.AlloyTuplesTable>();
+		for(AlloyTuplesTable atts: newTables2){
+			for(AlloyTuplesTable att : atts.getInstanceIterator()){
+				AlloyTuplesTable extendedAtt = att;
+				for(Field d:fldsLevelE1){
+					extendedAtt = extendInstances(d,extendedAtt);
+				}//end of level iterator
+				newTables3.add(extendedAtt);
+			}//end of instance iterator
+		}
+
+		System.out.println("The fourth level is finished."+newTables3.size());
+
+		System.out.println("-------------------------------------------------------");
+		long num = 0;
+		for(AlloyTuplesTable atts: newTables3){
+			for(AlloyTuplesTable att : atts.getInstanceIterator()){
+				insts.add(convertAlloyTupleListToInstance(uniqSig,att,num++,oldKKUnivList,new TreeSet<Sig.Field> (uniqSig.getFields().makeCopy())));
+			}//end of instance iterator
+		}
+
+
+		return insts;
+	}
+
+
+	private boolean checkInstance(Instance inst, Expr expr) throws Err{
+		solver.options().setBitwidth(31);
+		Evaluator eval = new Evaluator(inst,solver.options());
+		Object result = TranslateAlloyToKodkod.alloy2kodkod(this, expr);
+		if (result instanceof Formula) 
+			return eval.evaluate((Formula)result);
+		else
+			return false;
+	}
+
+	public  A4TupleSet getfieldSolutions(List<Instance> insts, String fldName){
+
+		TupleSet ret =null;
+		List<List<Object>> tupleSets = new ArrayList<List<Object>>();
+		Set<Object> univAtoms = new HashSet<Object>(); 
+		int arity = 0;
+		for(Instance inst:insts){
+			for(Relation r: inst.relations()){
+
+				if(r.name().equals(fldName)){
+					for(Tuple tuple: inst.tuples(r)){
+						arity = tuple.arity();
+						List<Object> tupleList = new ArrayList<Object>();
+						for(int i=0; i<tuple.arity();i++){
+							tupleList.add(tuple.atom(i));
+						}
+						tupleSets.add(tupleList);
+					}
+
+					for(int i=0;i<inst.universe().size();i++){
+						univAtoms.add(inst.universe().atom(i));
+					}
+				}
+			}
+		}
+		Universe newUniv = new Universe(univAtoms);
+		List<Tuple> tuples = new ArrayList<Tuple>(); 
+		for(List<Object> atoms: tupleSets){
+			tuples.add(newUniv.factory().tuple(atoms));
+		}
+		if(tuples.size() == 0)
+			ret = newUniv.factory().noneOf(arity);
+		else
+			ret = newUniv.factory().setOf(tuples);
+		return new A4TupleSet(ret, this);
+	}
+
+
+	public  Object getEmpty(List<Instance> insts, Set<String> fldName, String sigName){
+
+		Object ret = null;
+		for(Instance inst:insts){
+			boolean isAllNone = true;
+			Object emptySig = null;
+			for(Relation r: inst.relations()){
+				if(fldName.contains(r.name()) && !inst.tuples(r).isEmpty()){
+					isAllNone = false;
+					if(emptySig != null)
+						break;
+				}
+				if(sigName.equals(r.name())
+						&& !inst.tuples(r).isEmpty()
+						&& inst.tuples(r).iterator().hasNext()
+						&& inst.tuples(r).iterator().next().arity()==1){
+					emptySig = inst.tuples(r).iterator().next().atom(0);
+					if(isAllNone)
+						break;
+				}
+			}
+			if(isAllNone){
+				ret = emptySig;
+				break;
+			}
+		}
+		return ret;
+	}
+
+
+	/** This method intended to solve the expression wit respect to the bound 
+	 * @throws Exception */
+	public Object eval_woSolveFormula(Expr expr) throws Exception {
+
+		if (expr instanceof Sig) return eval((Sig)expr);
+		if (expr instanceof Field) return eval((Field)expr);
+
+		try{
+			List<Instance> ret = new ArrayList<Instance>();
+			for(Sig s: sigs){
+				if(s.isUnique != null)
+					ret.addAll(getEvalInstaces(expr,s));
+			}
+			return new Pair<A4Solution,List<Instance>>(this,ret) ;
+		} catch(CapacityExceededException ex) {
+			ex.printStackTrace();
 			throw TranslateAlloyToKodkod.rethrow(ex);
 		}
 	}

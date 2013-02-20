@@ -192,7 +192,7 @@ public class NewSyntaxExecuterJob extends ExecuterJob  {
 				System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 				time = System.currentTimeMillis();
 				System.out.println("Starting to execute the commmand....");
-				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+/*				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 
 
 				System.out.println("The execution has been done in: "+(System.currentTimeMillis()- time)+" mSec");
@@ -200,10 +200,11 @@ public class NewSyntaxExecuterJob extends ExecuterJob  {
 				updateResult(System.currentTimeMillis(), fileName, evaluationTime,
 						rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,ans.satisfiable());
 
-				
-
 				if (ans.satisfiable()) {ans.writeXML(fileName+".xml");}
-
+*/
+				updateResult(System.currentTimeMillis(), fileName, evaluationTime,
+						rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/false);
+	
 			}
 
 		} catch (Err e) {
