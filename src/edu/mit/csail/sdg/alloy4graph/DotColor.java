@@ -72,7 +72,7 @@ public enum DotColor {
       for(DotColor d: values()) {
     	  boolean flagged = false;
     	  for(DotColor e: exclude){
-    		 flagged = (d == e) ? true: false;
+    		 if (d == e) flagged = true;
     	  }
     	  if(!flagged) ans[i++] = d;
       }
