@@ -316,7 +316,7 @@ private void nodeHair(){
 	   return subrelations;
    }
    
-   /**Returns a list of Sets that that correspond to the list of given relations*/
+   /**Returns a list of Sets that correspond to the list of given relations*/
    private List<AlloySet> getSets(List<AlloyRelation> SubRelation){
 	   List<AlloySet> ProjectSets = new ArrayList<AlloySet>();
 	   Set<AlloySet> CurrentSets = new TreeSet<AlloySet>(vizState.getCurrentModel().getSets());

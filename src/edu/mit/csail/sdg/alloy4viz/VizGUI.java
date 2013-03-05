@@ -64,6 +64,8 @@ import edu.mit.csail.sdg.alloy4.Util.StringPref;
 import edu.mit.csail.sdg.alloy4graph.GraphViewer;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
+import org.jdom.Attribute;
+import org.jdom.Document;
 
 /** GUI main window for the visualizer.
  *
@@ -100,7 +102,7 @@ public final class VizGUI implements ComponentListener {
    private final JButton projectionButton, openSettingsButton, closeSettingsButton,
    magicLayout, loadSettingsButton, saveSettingsButton, saveAsSettingsButton,
    resetSettingsButton, updateSettingsButton, openEvaluatorButton, closeEvaluatorButton, enumerateButton,
-   vizButton, treeButton, txtButton/*, dotButton, xmlButton*/;
+   vizButton, treeButton, txtButton, tableButton/*, dotButton, xmlButton*/;
 
    /** This list must contain all the display mode buttons (that is, vizButton, xmlButton...) */
    private final List<JButton> solutionButtons = new ArrayList<JButton>();
@@ -212,6 +214,7 @@ public final class VizGUI implements ComponentListener {
 //      /** See the DOT content. */             DOT("dot"),
 //      /** See the XML content. */             XML("xml"),
       /** See the instance as text. */        TEXT("txt"),
+      /** See the instance as table. */		  Table("table"),
       /** See the instance as a tree. */      Tree("tree");
       /** This is a unique String for this value; it should be kept consistent in future versions. */
       private final String id;
@@ -402,6 +405,7 @@ public final class VizGUI implements ComponentListener {
 //         xmlButton=makeSolutionButton("XML", "Show XML", "images/24_plaintext.gif", doShowXML());
          txtButton=makeSolutionButton("Txt", "Show the textual output for the Graph", "images/24_plaintext.gif", doShowTxt());
          treeButton=makeSolutionButton("Tree", "Show Tree", "images/24_texttree.gif", doShowTree());
+         tableButton= makeSolutionButton("Table", "Show Table", "images/24_table.gif", doTableViz());
          if (frame!=null) addDivider();
          toolbar.add(closeSettingsButton=OurUtil.button("Close", "Close the theme customization panel", "images/24_settings_close2.gif", doCloseThemePanel()));
          toolbar.add(updateSettingsButton=OurUtil.button("Apply", "Apply the changes to the current theme", "images/24_settings_apply2.gif", doApply()));
@@ -500,6 +504,7 @@ public final class VizGUI implements ComponentListener {
       switch (currentMode) {
          case Tree: treeButton.setEnabled(false); break;
          case TEXT: txtButton.setEnabled(false); break;
+         case Table:tableButton.setEnabled(false); break;
 //         case XML: xmlButton.setEnabled(false); break;
 //         case DOT: dotButton.setEnabled(false); break;
          default: vizButton.setEnabled(false);
@@ -541,6 +546,20 @@ public final class VizGUI implements ComponentListener {
             String textualOutput = myState.getOriginalInstance().originalA4.toString();
             content = getTextComponent(textualOutput);
             break;
+         }
+         case Table:{
+        	 //For Prototype, using Farmer. X =  State. Y = Objects. Relations = [far, near]
+        	 AlloyType Object = myState.getCurrentModel().getType("Object");
+        	 AlloyType State = myState.getCurrentModel().getType("State");
+        	 AlloyRelation far = myState.getCurrentModel().getRelation("far");
+        	 AlloyRelation near = myState.getCurrentModel().getRelation("near");
+        	 AlloyRelation[] alloyRelation;
+        	 alloyRelation = new AlloyRelation[2];
+        	 alloyRelation[0] = far;
+        	 alloyRelation[1] = near;
+        	 
+        	 VizTable vizTable = new VizTable(Object, State, alloyRelation);
+        	 Document doc = vizTable.createXML(myState);
          }
 //         case XML: {
 //            content=getTextComponent(xmlFileName);
@@ -897,7 +916,7 @@ public final class VizGUI implements ComponentListener {
       if (myState==null) return null;
       if (!OurDialog.yesno("This will clear your original customizations. Are you sure?", "Yes, clear them", "No, keep them")) return null;
       myState.resetTheme();
-      try { MagicLayout.magic(myState);  MagicColor.magic(myState); } catch(Throwable ex) { }
+      try { MagicLayout.magic(myState);  MagicColor.magic(myState); } catch (Throwable ex) { }
       repopulateProjectionPopup();
       if (myCustomPanel!=null) myCustomPanel.remakeAll();
       if (myGraphPanel!=null) myGraphPanel.remakeAll();
@@ -1013,7 +1032,14 @@ public final class VizGUI implements ComponentListener {
       if (!wrap) { currentMode=VisualizerMode.Tree; updateDisplay(); return null; }
       return wrapMe();
    }
-
+   
+   public Runner doTableViz(){
+	   if (wrap) return wrapMe();
+	      if (myState==null) return null;
+	      if (!OurDialog.yesno("This will clear your original customizations. Are you sure?", "Yes, clear them", "No, keep them")) return null;
+	      if (!wrap) { currentMode=VisualizerMode.Table; updateDisplay(); return null; }
+	      return wrapMe();
+   }
     /**
      * This method changes the display mode to show the equivalent dot text (the
      * return value is always null).

@@ -230,6 +230,20 @@ public final class AlloyModel {
       return null;
    }
 
+   public AlloyType getType(String TypeName){
+	   for(AlloyType t: types){
+		   if(t.toString().equals(TypeName)){return t;}
+	   }
+	   return null;
+   }
+   
+   public AlloyRelation getRelation(String RelationName){
+	   for(AlloyRelation r: relations){
+		   if(r.getName().equals(RelationName)){return r;}
+	   }
+	   return null;
+   }
+   
    /** Returns an unmodifiable sorted set of all AlloyType(s) in this model. */
    public Set<AlloyType> getTypes() { return types; }
 

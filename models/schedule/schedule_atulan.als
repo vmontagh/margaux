@@ -40,6 +40,12 @@ sig Session {
     teams : set Team
 }
 
+fun datavalue[] : Day->Time->Team {
+    {d : Day, t : Time, m : Team | some s : Session | s.day=d and s.time=t and s.teams=m}
+}
+
+fact what { some datavalue }
+
 fact sanity {
     // sessions are unique
     all s1, s2 : Session | s1.day = s2.day and s1.time = s2.time implies s1=s2
@@ -174,8 +180,8 @@ pred winterNoSplit() { winter[] and noSplit[] }
 
 
 // 12 sessions can support 12 teams
-run novNoSplit for exactly 2 Mite, exactly 3 Squirt, exactly 2 Peewee,  exactly 1 Bantam, exactly 2 Midget, exactly 2 Girls, exactly 0 Goalies, 
+run novNoSplit for exactly 2 Mite, exactly 2 Squirt, exactly 2 Peewee,  exactly 1 Bantam, exactly 2 Midget, exactly 2 Girls, exactly 0 Goalies, 
 12 Session
 
-run winterNoSplit for exactly 2 Mite, exactly 3 Squirt, exactly 2 Peewee, exactly 1 Bantam, exactly 1 Midget, exactly 2 Girls, exactly 1 Goalies, 
+run winterNoSplit for exactly 2 Mite, exactly 2 Squirt, exactly 2 Peewee, exactly 1 Bantam, exactly 1 Midget, exactly 2 Girls, exactly 1 Goalies, 
 12 Session
