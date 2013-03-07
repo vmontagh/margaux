@@ -48,6 +48,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
+import javax.swing.JTable;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 import edu.mit.csail.sdg.alloy4.Computer;
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -548,7 +549,9 @@ public final class VizGUI implements ComponentListener {
             break;
          }
          case Table:{
-        	 //For Prototype, using Farmer. X =  State. Y = Objects. Relations = [far, near]
+        	 //TODO: VIZTABLE: Create a window form to get Sig X, Sig Y and Relations from User
+        	 
+        	 //For Prototype, using Farmer. X =  State. Y = Objects. Relations = [far, near]{
         	 AlloyType Object = myState.getCurrentModel().getType("Object");
         	 AlloyType State = myState.getCurrentModel().getType("State");
         	 AlloyRelation far = myState.getCurrentModel().getRelation("far");
@@ -557,9 +560,20 @@ public final class VizGUI implements ComponentListener {
         	 alloyRelation = new AlloyRelation[2];
         	 alloyRelation[0] = far;
         	 alloyRelation[1] = near;
+        	 // }
         	 
         	 VizTable vizTable = new VizTable(Object, State, alloyRelation);
         	 Document doc = vizTable.createXML(myState);
+        	 final JTable table = vizTable.createTable(doc);
+        	 //vizTable.drawTable(table);
+        	 
+        	 final JScrollPane scroll = OurUtil.scrollpane(table, Color.BLACK, Color.WHITE, new OurBorder(true, false, true, false));
+             scroll.addFocusListener(new FocusListener() {
+                public final void focusGained(FocusEvent e) {table.requestFocusInWindow(); }
+                public final void focusLost(FocusEvent e) { }
+             });
+             content = scroll;
+             break;
          }
 //         case XML: {
 //            content=getTextComponent(xmlFileName);

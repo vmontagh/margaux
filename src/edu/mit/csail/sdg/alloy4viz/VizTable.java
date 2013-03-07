@@ -1,6 +1,10 @@
 package edu.mit.csail.sdg.alloy4viz;
+import java.awt.Dimension;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import javax.swing.JTable;
+
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -13,13 +17,22 @@ public class VizTable {
 	final AlloyType Y;
 	final AlloyRelation[] alloyRelations;
 	
+	/** Constructor for a new vizTable with SigX, SigX and Relations */
 	public VizTable(AlloyType X, AlloyType Y, AlloyRelation ...alloyRelations){
 		this.X = X;
 		this.Y = Y;
 		this.alloyRelations = alloyRelations;
 	}
 	
-	public Document createXML(VizState myState){
+	/** Creates and return an XML instance of the table using the following algorithm:
+	 * - For the given Sigs in Row and Column
+	 * - Select Relation and
+	 * 		- if arity < 2 -> Data value = relation.name
+	 * 		- else if arity = 3 -> Data value =  Third Sig of relation
+	 * 		- else throw exception. (This case should never arise, due to filtering in the GUI)
+	 * - Use JDom to create XML instance*/
+	
+	public Document createXML (VizState myState){
 		Element Model = new Element("Model");
 		Document doc = new Document(Model);
 		
@@ -31,20 +44,62 @@ public class VizTable {
 					if(t_y.getType().equals(Y) || myState.getCurrentModel().getSubTypes(Y).contains(t_y.getType())){
 						for(AlloyRelation r: alloyRelations){
 							if(isConnected(t_x, t_y, myState, r)){
-								System.out.println(r + ": "+myState.getOriginalInstance().relation2tuples(r));
-								//TODO: USE jDOM API to create the XML lines
+								if(r.getArity()< 3){
+									System.out.println(r.getName() + ", "+t_x+", "+t_y);
+								}else if(r.getArity()==3){
+									for(AlloyType t: r.getTypes()){
+										if(!t_x.getType().equals(t) || !t_y.getType().equals(t)){
+											System.out.println(t+", "+t_x+", "+t_y);
+										}
+									}		
+								}else{
+									//TODO:// VIZTABLE: Should throw Exception
+									return null;}
+								}
+								//TODO: VIZTABLE: USE jDOM API to create the XML lines and save in doc under Model
 							}
 						}
 					}
 				}
 			}
-		}
+		
 
 		return doc;
 	}
 	
+	/** Creates a JTable using the XML Document instance*/
+	public JTable createTable(Document doc) {
+		// TODO VIZTABLE: createTable
+		
+		// Test Table. To be replaced with code to create table out of doc.{
+		String[] columnNames = {"First Name",
+                "Last Name",
+                "Sport",
+                "# of Years",
+                "Vegetarian"};
+
+			Object[][] data = {
+			{"Kathy", "Smith",
+			"Snowboarding", new Integer(5), new Boolean(false)},
+			{"John", "Doe",
+			"Rowing", new Integer(3), new Boolean(true)},
+			{"Sue", "Black",
+			"Knitting", new Integer(2), new Boolean(false)},
+			{"Jane", "White",
+			"Speed reading", new Integer(20), new Boolean(true)},
+			{"Joe", "Brown",
+			"Pool", new Integer(10), new Boolean(false)}
+			};
+			
+			final JTable table = new JTable(data, columnNames);
+	        table.setPreferredScrollableViewportSize(new Dimension(500, 70));
+	        table.setFillsViewportHeight(true);
+		
+		return table;
+		//}
+	}
 	
-	
+	/** HELPER function for CreateXML to check if Atoms x2 and y2 are connected by relation r.*/
 	private boolean isConnected(AlloyAtom x2, AlloyAtom y2, VizState myState,
 			AlloyRelation r) {
 		for(AlloyTuple tu: myState.getOriginalInstance().relation2tuples(r)){
@@ -54,6 +109,14 @@ public class VizTable {
 		}
 		return false;
 	}
+
+	/** Draws a Table in JScrollPane in the Alloyviz GUI using the JTable instance*/
+	public void drawTable(JTable table) {
+		// TODO VIZTABLE: drawTable
+		
+	}
+
+
 }
 
 
