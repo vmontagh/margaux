@@ -551,15 +551,17 @@ public final class VizGUI implements ComponentListener {
          case Table:{
         	 //TODO: VIZTABLE: Create a window form to get Sig X, Sig Y and Relations from User
         	 
+        	 OurDialog.showTableOptions(myState);
+        	 
         	 //For Prototype, using Farmer. X =  State. Y = Objects. Relations = [far, near]{
-        	 AlloyType Object = myState.getCurrentModel().getType("Object");
-        	 AlloyType State = myState.getCurrentModel().getType("State");
-        	 AlloyRelation far = myState.getCurrentModel().getRelation("far");
-        	 AlloyRelation near = myState.getCurrentModel().getRelation("near");
+        	 AlloyType Object = myState.getCurrentModel().getType("Day");
+        	 AlloyType State = myState.getCurrentModel().getType("Team");
+        	 //AlloyRelation far = myState.getCurrentModel().getRelation("far");
+        	 AlloyRelation near = myState.getCurrentModel().getRelation("$datavalue");
         	 AlloyRelation[] alloyRelation;
-        	 alloyRelation = new AlloyRelation[2];
-        	 alloyRelation[0] = far;
-        	 alloyRelation[1] = near;
+        	 alloyRelation = new AlloyRelation[1];
+        	 alloyRelation[0] = near;
+        	 //alloyRelation[1] = near;
         	 // }
         	 
         	 VizTable vizTable = new VizTable(Object, State, alloyRelation);

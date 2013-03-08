@@ -41,7 +41,7 @@ sig Session {
 }
 
 fun datavalue[] : Day->Time->Team {
-    {d : Day, t : Time, m : Team | some s : Session | s.day=d and s.time=t and s.teams=m}
+    {d : Day, t : Time, m : Team | some s : Session | d in s.day and t in s.time and m in s.teams}
 }
 
 fact what { some datavalue }
@@ -180,7 +180,7 @@ pred winterNoSplit() { winter[] and noSplit[] }
 
 
 // 12 sessions can support 12 teams
-run novNoSplit for exactly 2 Mite, exactly 2 Squirt, exactly 2 Peewee,  exactly 1 Bantam, exactly 2 Midget, exactly 2 Girls, exactly 0 Goalies, 
+run novNoSplit for exactly 2 Mite, exactly 2 Squirt, exactly 2 Peewee,  exactly 1 Bantam, exactly 1 Midget, exactly 2 Girls, exactly 0 Goalies, 
 12 Session
 
 run winterNoSplit for exactly 2 Mite, exactly 2 Squirt, exactly 2 Peewee, exactly 1 Bantam, exactly 1 Midget, exactly 2 Girls, exactly 1 Goalies, 

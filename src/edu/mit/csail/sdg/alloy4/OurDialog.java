@@ -23,9 +23,12 @@ import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
+
+import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -33,11 +36,15 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileFilter;
+
+import edu.mit.csail.sdg.alloy4viz.VizState;
 import static javax.swing.JOptionPane.YES_NO_OPTION;
 import static javax.swing.JOptionPane.QUESTION_MESSAGE;
 import static javax.swing.JOptionPane.WARNING_MESSAGE;
@@ -52,7 +59,33 @@ public final class OurDialog {
 
    /** The constructor is private, since this utility class never needs to be instantiated. */
    private OurDialog() { }
-
+   
+   //public static void main(String[] args){showTableOptions(VizState.);}
+   
+   public static void showTableOptions(VizState myState) {
+	   	
+//	    String[] items = {"One", "Two", "Three", "Four", "Five"};
+	    JComboBox sig_X = new JComboBox(myState.getCurrentModel().getTypes().toArray());
+	    JTextField field1 = new JTextField("1234.56");
+	    JTextField field2 = new JTextField("9876.54");
+	    JPanel panel = new JPanel(new GridLayout(0, 1));
+	    panel.add(sig_X);
+	    panel.add(new JLabel("Field 1:"));
+	    panel.add(field1);
+	    panel.add(new JLabel("Field 2:"));
+	    panel.add(field2);
+	   int result = JOptionPane.showConfirmDialog(null, panel, "Test",
+	        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+	    if (result == JOptionPane.OK_OPTION) {
+	        System.out.println(sig_X.getSelectedItem()
+	            + " " + field1.getText()
+	            + " " + field2.getText());
+	    } else {
+	        System.out.println("Cancelled");
+	    }
+	}
+	
+   
    /** Helper method for constructing an always-on-top modal dialog. */
    private static Object show(String title, int type, Object message, Object[] options, Object initialOption) {
       if (options == null) { options = new Object[]{"Ok"};  initialOption = "Ok"; }

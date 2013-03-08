@@ -47,16 +47,21 @@ public class VizTable {
 								if(r.getArity()< 3){
 									System.out.println(r.getName() + ", "+t_x+", "+t_y);
 								}else if(r.getArity()==3){
-									for(AlloyType t: r.getTypes()){
-										if(!t_x.getType().equals(t) || !t_y.getType().equals(t)){
-											System.out.println(t+", "+t_x+", "+t_y);
+									for(AlloyTuple t: myState.getOriginalInstance().relation2tuples(r)){
+										if(t.getAtoms().contains(t_x) && t.getAtoms().contains(t_y)){
+											for(AlloyAtom a: t.getAtoms()){
+												if(!a.equals(t_x) && !a.equals(t_y)){
+													System.out.println(a+", "+t_x+", "+t_y);
+													//TODO: VIZTABLE: USE jDOM API to create the XML lines and save in doc under Model
+												}
+											}
 										}
-									}		
+									}
 								}else{
 									//TODO:// VIZTABLE: Should throw Exception
-									return null;}
+										return null;
+									}
 								}
-								//TODO: VIZTABLE: USE jDOM API to create the XML lines and save in doc under Model
 							}
 						}
 					}
