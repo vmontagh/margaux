@@ -25,7 +25,7 @@ sig IntRange {}
 uniq sig WS {
     RoadSegments : set RoadSegment,
     Drivers : set Driver,
-    MapObjects : set MapObject,
+//    MapObjects : set MapObject,
 //    RoadObjects : set RoadObject,
 //    Lanes : set Lane,
 //    AutoSoftCars : set AutoSoftCar,
