@@ -26,9 +26,9 @@ uniq sig WS {
     RoadSegments : set RoadSegment,
     Drivers : set Driver,
     MapObjects : set MapObject,
-    RoadObjects : set RoadObject,
-    Lanes : set Lane,
-    AutoSoftCars : set AutoSoftCar,
+//    RoadObjects : set RoadObject,
+//    Lanes : set Lane,
+//    AutoSoftCars : set AutoSoftCar,
     Drivess : set Drives,
     IsOns : set IsOn,
     AutoSofts : set AutoSoft,
@@ -38,54 +38,72 @@ uniq sig WS {
     HPs : set HP,
     FCAs : set FCA,
     SLCs : set SLC,
-    RoadSegment_speedLimit : RoadSegments-> SpeedLim,
-    MapObject_position : MapObjects-> Coord,
-    MapObject_shape : MapObjects-> Shape,
-    RoadObject_acceleration : RoadObjects-> IntRange,
-    RoadObject_speed : RoadObjects-> IntRange,
-    AutoSoftCar_steerDirection : AutoSoftCars-> Angle,
-    AutoSoftCar_ignition : AutoSoftCars-> IgnitionState,
+    RoadSegment_speedLimit : RoadSegments-> one SpeedLim,
+    MapObject_position : MapObjects-> one Coord,
+    MapObject_shape : MapObjects-> one Shape,
+    RoadObject_acceleration : RoadObjects-> one IntRange,
+    RoadObject_speed : RoadObjects-> one IntRange,
+    AutoSoftCar_steerDirection : AutoSoftCars-> one Angle,
+    AutoSoftCar_ignition : AutoSoftCars-> one IgnitionState,
     Drives_r1 : Drivess-> one Drivers,
     Drives_r2 : Drivess-> one AutoSoftCars,
     IsOn_r1 : IsOns-> one RoadSegments,
     IsOn_r2 : IsOns-> one Lanes,
     AutoSoft_BDS : AutoSofts one->one BDSs,
-    CC_goalAccel : CCs-> IntRange,
-    CC_cruiseSpeed : CCs-> IntRange,
+    CC_goalAccel : CCs-> one IntRange,
+    CC_cruiseSpeed : CCs->one IntRange,
     AutoSoft_CC : AutoSofts one->one CCs,
-    HC_headway : HCs-> IntRange,
+    HC_headway : HCs->one IntRange,
     AutoSoft_HC : AutoSofts one->one HCs,
     AutoSoft_HP : AutoSofts one->one HPs,
-    FCA_alertLevel : FCAs-> IntRange,
+    FCA_alertLevel : FCAs->one IntRange,
     AutoSoft_FCA : AutoSofts one->one FCAs,
     AutoSoft_SLC : AutoSofts one->one SLCs,
 } {
-    all o : RoadSegments | # (o.RoadSegment_speedLimit) = 1
-    all o : MapObjects | # (o.MapObject_shape) = 1
-    all o : MapObjects | # (o.MapObject_position) = 1
-    all o : RoadObjects | # (o.RoadObject_speed) = 1
-    all o : RoadObjects | # (o.RoadObject_acceleration) = 1
-    all o : AutoSoftCars | # (o.AutoSoftCar_ignition) = 1
-    all o : AutoSoftCars | # (o.AutoSoftCar_steerDirection) = 1
-    all o : CCs | # (o.CC_cruiseSpeed) = 1
-    all o : CCs | # (o.CC_goalAccel) = 1
-    all o : HCs | # (o.HC_headway) = 1
-    all o : FCAs | # (o.FCA_alertLevel) = 1
+//    all o : RoadSegments | # (o.RoadSegment_speedLimit) = 1
+//    all o : MapObjects | # (o.MapObject_shape) = 1
+//    all o : MapObjects | # (o.MapObject_position) = 1
+//    all o : RoadObjects | # (o.RoadObject_speed) = 1
+//    all o : RoadObjects | # (o.RoadObject_acceleration) = 1
+//    all o : AutoSoftCars | # (o.AutoSoftCar_ignition) = 1
+//    all o : AutoSoftCars | # (o.AutoSoftCar_steerDirection) = 1
+//    all o : CCs | # (o.CC_cruiseSpeed) = 1
+//    all o : CCs | # (o.CC_goalAccel) = 1
+//    all o : HCs | # (o.HC_headway) = 1
+//    all o : FCAs | # (o.FCA_alertLevel) = 1
 //WSC (ws : WS) is merged into appended fact
-    RoadObjects = MapObjects & RoadObject
-    Lanes = MapObjects & Lane
-    AutoSoftCars = RoadObjects & AutoSoftCar
+//    RoadObjects = MapObjects & RoadObject
+//    Lanes = MapObjects & Lane
+//    AutoSoftCars = RoadObjects & AutoSoftCar
     all autosoftcar : AutoSoftCars | # ((((Drives_r2).autosoftcar)).(Drives_r1)) = 1
     all driver : Drivers | # ((((Drives_r1).driver)).(Drives_r2)) = 1
     all lane : Lanes | # ((((IsOn_r2).lane)).(IsOn_r1)) = 1
     all roadsegment : RoadSegments | # ((((IsOn_r1).roadsegment)).(IsOn_r2)) >= 1
-    MapObjects = Lanes + RoadObjects
+//    MapObjects = Lanes + RoadObjects
 
 }
 pred distinct_valid_WSs {
     all ws, ws1 : WS | (ws.RoadSegments = ws1.RoadSegments and ws.RoadSegment_speedLimit = ws1.RoadSegment_speedLimit and ws.Drivers = ws1.Drivers and ws.MapObjects = ws1.MapObjects and ws.MapObject_position = ws1.MapObject_position and ws.MapObject_shape = ws1.MapObject_shape and ws.RoadObjects = ws1.RoadObjects and ws.RoadObject_acceleration = ws1.RoadObject_acceleration and ws.RoadObject_speed = ws1.RoadObject_speed and ws.Lanes = ws1.Lanes and ws.AutoSoftCars = ws1.AutoSoftCars and ws.AutoSoftCar_steerDirection = ws1.AutoSoftCar_steerDirection and ws.AutoSoftCar_ignition = ws1.AutoSoftCar_ignition and ws.Drivess = ws1.Drivess and ws.Drives_r1 = ws1.Drives_r1 and ws.Drives_r2 = ws1.Drives_r2 and ws.IsOns = ws1.IsOns and ws.IsOn_r1 = ws1.IsOn_r1 and ws.IsOn_r2 = ws1.IsOn_r2 and ws.AutoSofts = ws1.AutoSofts and ws.BDSs = ws1.BDSs and ws.CCs = ws1.CCs and ws.CC_goalAccel = ws1.CC_goalAccel and ws.CC_cruiseSpeed = ws1.CC_cruiseSpeed and ws.HCs = ws1.HCs and ws.HC_headway = ws1.HC_headway and ws.HPs = ws1.HPs and ws.FCAs = ws1.FCAs and ws.FCA_alertLevel = ws1.FCA_alertLevel and ws.SLCs = ws1.SLCs) implies ws = ws1  
     all ws : WS | WSC [ws]
 }
+
+fun Lanes[]:WS->set Lane{
+	MapObjects & Lane
+}
+
+fun RoadObjects[]:WS-> set RoadObject{
+	 MapObjects & RoadObject
+}
+
+fun AutoSoftCars[]:WS-> set AutoSoft{
+	 RoadObjects & AutoSoftCar
+}
+
+fun MapObjects[]: WS-> set MapObjects{
+	Lanes + RoadObjects
+}
+
+
 pred WSC (ws : WS) {
     (ws.RoadObjects = ws.MapObjects & RoadObject)
     (ws.Lanes = ws.MapObjects & Lane)
