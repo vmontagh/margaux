@@ -1,0 +1,14 @@
+---INSTANCE---
+integers={}
+univ={A$0, B$0, C$0, C$1}
+Int={}
+seq/Int={}
+String={}
+none={}
+this/A={A$0}
+this/C={C$0, C$1}
+this/E={}
+this/B={B$0}
+this/B<:As={}
+this/B<:AC={}
+this/B<:AH={}
