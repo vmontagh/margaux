@@ -2623,7 +2623,19 @@ public final class CompModule extends Browsable implements Module {
 			bnd2atoms.put(bound, bnd2atoms.get(bounds.get(bound.label)));
 			bounds.put(bound.label,bound);
 		}
-		return new Command(cmd.pos, cmd.label, cmd.check, cmd.overall, cmd.bitwidth, cmd.maxseq, cmd.expects, sc.makeConst(), exactSigs, globalFacts.and(e), parent,cmd.isSparse,bounds.get(cmd.bound.label) );
+		return new Command(cmd.pos,
+				cmd.label, 
+				cmd.check, 
+				cmd.overall, 
+				cmd.bitwidth,
+				cmd.maxseq, 
+				cmd.expects, 
+				sc.makeConst(), 
+				exactSigs, 
+				globalFacts.and(e),
+				parent,
+				cmd.isSparse,
+				bounds.get(cmd.bound.label) );
 	}
 
 	/** Each command now points to a typechecked Expr. */

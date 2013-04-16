@@ -91,18 +91,12 @@ public final class ExampleUsingTheCompiler {
 
 	}
 
-	/*
-	 * Execute every command in every file.
-	 *
-	 * This method parses every file, then execute every command.
-	 *
-	 * If there are syntax or type errors, it may throw
-	 * a ErrorSyntax or ErrorType or ErrorAPI or ErrorFatal exception.
-	 * You should catch them and display them,
-	 * and they may contain filename/line/column information.
-	 */
-	public static void main(String[] args) throws Err {
-
+	
+	
+	
+	public static String run(String[] args) throws Err{
+		
+		String retString = "";
 		copyFromJAR();
 		final String binary = alloyHome() + fs + "binary";
 		System.out.println(binary);
@@ -240,7 +234,11 @@ public final class ExampleUsingTheCompiler {
 
 					// Print the outcome
 					System.out.println(ans.satisfiable());
-					System.out.println(ans);
+					
+					String output = filename.replace(".als", ".out.xml");
+					
+					ans.writeXML(output);
+					retString = ans.toString();
 					/*					System.exit(-10);
 					Object legal = TranslateAlloyToKodkod.evaluate_command(
 							rep, world.getAllReachableSigs(), command, options,world.getEvalQuery() );
@@ -275,8 +273,24 @@ public final class ExampleUsingTheCompiler {
 				}*/
 			}
 		}
+		
+		return retString;
 
-
+	}
+	
+	
+	/*
+	 * Execute every command in every file.
+	 *
+	 * This method parses every file, then execute every command.
+	 *
+	 * If there are syntax or type errors, it may throw
+	 * a ErrorSyntax or ErrorType or ErrorAPI or ErrorFatal exception.
+	 * You should catch them and display them,
+	 * and they may contain filename/line/column information.
+	 */
+	public static void main(String[] args) throws Err {
+		System.out.println(run(args));
 	}
 
 
