@@ -353,7 +353,7 @@ Angle = Angle0,
 IgnitionState = IgnitionState0,
 SpeedLim = SpeedLim0,
 IntRange = IntRange0 + IntRange1,
-exactly 10 WS
+exactly 450 WS
 }
 
 run distinct_valid_WSs for i

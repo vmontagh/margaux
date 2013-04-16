@@ -793,9 +793,250 @@ public final class CompModule extends Browsable implements Module {
 		}
 	}
 
+	
+	public static class ClosureAssignmentExpressionRemover extends VisitReturn<Expr>{
 
+		final private Expr rm;
+		final private Expr rmed;
+		
+		public ClosureAssignmentExpressionRemover(final Expr expr, final Expr rm) throws Err{
+			this.rm = rm;
+			this.rmed = visitThis(expr);
+		}
+		
+		
+		public final Expr getRemovedPredicate(){
+			return this.rmed;
+		}
+		
+		@Override
+		public Expr visit(ExprBinary x) throws Err {
+			if(x.equals(rm))
+				return null;
+			else if(((ExprBinary)x).op.equals(ExprBinary.Op.AND)){
+				Expr lhs = visitThis(x.left);
+				Expr rhs = visitThis(x.right);
+				if(lhs!=null && rhs!=null)
+					return x.op.make(x.pos, x.closingBracket, rhs, rhs);
+				else if(rhs != null)
+					return rhs;
+				else if(lhs !=null)
+					return lhs;
+			}
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprList x) throws Err {
+			List<Expr> list = new ArrayList<Expr>();
+			for(Expr arg: x.args){
+				Expr ret = visitThis(arg);
+				if(ret !=null)
+					list.add(ret);
+			}
+			return list.size()==1  ?list.get(0) : ExprList.make(x.pos, x.closingBracket, x.op, ConstList.make(list));
+		}
+
+		@Override
+		public Expr visit(ExprCall x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprConstant x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(ExprITE x) throws Err {
+			return x.make(x.pos,visitThis( x.cond), visitThis( x.left), visitThis( x.right));
+		}
+
+		@Override
+		public Expr visit(ExprLet x) throws Err {
+			return x.make(x.pos, x.var, visitThis(x.expr), visitThis(x.sub));
+		}
+
+		@Override
+		public Expr visit(ExprQt x) throws Err {
+			Expr sub = visitThis(x.sub);
+			if(sub!=null)
+				return x.op.make(x.pos, x.closingBracket, x.decls, sub);
+			else
+				return null;
+		}
+
+		@Override
+		public Expr visit(ExprUnary x) throws Err {
+			Expr sub = visitThis( x.sub);
+			return sub !=null ? x.op.make(x.pos, visitThis( x.sub)) : null;
+		}
+
+		@Override
+		public Expr visit(ExprVar x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(Sig x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(Field x) throws Err {
+			return x;
+		}
+
+		@Override
+		public Expr visit(Bounds bounds) throws Err {
+			return bounds;
+		}
+		
+	}
+	
+	
+
+	public static final class ClosureDetector extends VisitReturn<Expr>{
+
+		private  Sig.Field clsredField,clsrField;
+		private   Expr clsrExpr,expr;
+		
+		public ClosureDetector(final Expr expr) throws Err{
+			this.clsredField = null;
+			this.clsrField = null;
+			this.clsrExpr = null;
+			this.expr = null;
+			if(expr!=null){
+				visitThis(expr);
+				ClosureAssignmentExpressionRemover caer = 
+						new ClosureAssignmentExpressionRemover(expr, this.clsrExpr);
+				this.expr = caer.getRemovedPredicate();
+			}
+		}
+		
+		//returns 'sigma' ins cl=^sgima
+		public final Sig.Field getClosuredField(){
+			return this.clsredField;
+		}
+		
+		//returns 'cl' in cl=^sigma
+		public final Sig.Field getClosureField(){
+			return this.clsrField;
+		}
+		
+		public final Expr getRemovedStatement(){
+			return this.expr;
+		}
+		
+		//returns the closure statement
+		public final Expr getClosureStatement(){
+			return this.clsrExpr;
+		}
+		
+		@Override
+		public Expr visit(ExprBinary x) throws Err {
+			if(((ExprBinary)x).op.equals(ExprBinary.Op.EQUALS)){
+				FieldDecomposer fd = new FieldDecomposer();
+				Expr rhs = visitThis(((ExprBinary)x).right);
+				Expr lhs = ((ExprBinary)x).left.typecheck_as_formula();
+				Set<Sig.Field> lhsFlds = fd.extractFieldsInExpr(lhs);
+				if(rhs!=null && lhsFlds.size() ==1){//The rhs is a closure//This rule is not absloutly complete.
+					Set<Sig.Field> rhsFlds = fd.extractFieldsInExpr(rhs);
+					Sig.Field lhsFld = lhsFlds.iterator().next();
+					for(Sig.Field fld: rhsFlds){
+						//The lhs and a filed in the rhs are in the same type.
+						if(fld.type().equals(lhsFld.type())){
+							this.clsredField = fld;
+							this.clsrField = lhsFld;
+							break;
+						}
+					}
+					this.clsrExpr = x;
+				}
+			}else if(((ExprBinary)x).op.equals(ExprBinary.Op.AND)){
+				visitThis(x.left);
+				visitThis(x.right);
+			}
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprList x) throws Err {
+			for(Expr arg:x.args)
+				visitThis(arg);
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprCall x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprConstant x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprITE x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprLet x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprQt x) throws Err {
+			visitThis(x.sub);
+			return null;
+		}
+
+		@Override
+		public Expr visit(ExprUnary x) throws Err {
+			if(!(x.op.equals(ExprUnary.Op.RCLOSURE) || x.op.equals(ExprUnary.Op.CLOSURE))){
+				visitThis(x.sub);
+				return null;
+			}else{
+				return x.typecheck_as_formula();
+			}
+			
+		}
+
+		@Override
+		public Expr visit(ExprVar x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(Sig x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(Field x) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Expr visit(Bounds bounds) throws Err {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		
+	}
+	
 	//A visitor class to decompose a field expression, which should be ExprBinary to the Sognatures or other relations.
 	//For example A->B->C decomposed into [A,B,C]
+	//
 	public static final class FieldDecomposer extends VisitReturn<Expr> {
 
 		//final Expr expr;
@@ -808,6 +1049,8 @@ public final class CompModule extends Browsable implements Module {
 
 		public Set<Sig.Field> extractFieldsInExpr(Expr expr) throws Err{
 			fields = new HashSet<Sig.Field>();
+			if(expr == null)
+				return fields;
 			sigs=null;
 			mults=null;
 			visitThis( expr);
@@ -821,6 +1064,8 @@ public final class CompModule extends Browsable implements Module {
 			visitThis( fld.decl().expr);
 			return this.sigs;
 		}
+		
+		
 		
 		public List<ExprUnary.Op> getMultiplicities(Sig.Field fld) throws Err{
 			fields =null;
@@ -839,6 +1084,7 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(ExprBinary x) throws Err {
+			if(mults!=null)
 			switch(((ExprBinary)x).op){
 			case LONE_ARROW_LONE:
 				mults.add( ExprUnary.Op.LONEOF);
@@ -1696,6 +1942,12 @@ public final class CompModule extends Browsable implements Module {
 		eval = null;
 	}
 
+	public void removeUniquFacts(Sig uSig){
+		uniqFact.remove(uSig.label.replace("this/", ""));
+		for(Decl fDecl:uSig.getFieldDecls())
+			uniqFldSetDcl.remove(fDecl.get().toString());
+	}
+	
 	public Expr getUniqueFieldFact(String field){
 		return uniqFldSetDcl.get(field);
 	}

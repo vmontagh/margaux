@@ -61,6 +61,20 @@ public class Bounds extends Expr {
     }
 
     
+    public Bounds(Pos pos, String label, List<CommandScope> list, List<ExprVar> funcs, Expr fact){
+    	super( Pos.UNKNOWN,Type.FORMULA);
+        this.label = label;
+        //this.scope = ConstList.make(list);
+        this.scope = new ArrayList<CommandScope>(list);
+        this.funcs = new ArrayList<ExprVar>(funcs);
+        this.fact = fact;
+    }
+
+
+    public Bounds(Bounds bounds){
+    	this(bounds.pos, bounds.label,bounds.scope,bounds.funcs,bounds.fact);
+    }
+    
 	@Override
 	public void toString(StringBuilder out, int indent) {
 		// TODO Auto-generated method stub

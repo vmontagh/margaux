@@ -298,6 +298,7 @@ final class BoundsComputer {
 
 	/** Computes the bounds for sigs/fields, then construct a BoundsComputer object that you can query. */
 	private BoundsComputer(A4Reporter rep, A4Solution sol, ScopeComputer sc, Iterable<Sig> sigs) throws Err {
+				
 		this.sc = sc;
 		this.factory = sol.getFactory();
 		this.rep = rep;
@@ -392,7 +393,6 @@ final class BoundsComputer {
 					TupleSet lb = factory.noneOf(t.arity());
 					List<List<String>> pListL = sc.field2PscopeL(f.label);
 					List<List<String>> pListU = sc.field2PscopeU(f.label);
-
 					if( pListU != null ){
 						//upper.add()
 						for(List<String> pl : pListU)

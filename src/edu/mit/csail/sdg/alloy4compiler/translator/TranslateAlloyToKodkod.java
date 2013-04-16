@@ -74,6 +74,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 
@@ -133,7 +134,10 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.max = pair.a.max();
         this.a2k = null;
         this.s2k = null;
+        System.out.println("this.frame->"+this.frame.a2k());
         BoundsComputer.compute(rep, frame, pair.b, sigs);
+        System.out.println("this.frame2->"+this.frame.a2k());
+
     }
 
     /** Construct a translator based on a already-fully-constructed association map.
@@ -187,8 +191,10 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
    /** Conjoin the constraints for "field declarations" and "fact" paragraphs */
    private void makeFacts(Expr facts) throws Err {
       rep.debug("Generating facts...\n");
+
       // convert into a form that hopefully gives better unsat core
       facts = (Expr) (new ConvToConjunction()).visitThis(facts);
+
       // add the field facts and appended facts
       for(Sig s: frame.getAllReachableSigs()) {
          for(Decl d: s.getFieldDecls()) {
@@ -220,6 +226,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
          }
       }
       k2pos_enabled = true;
+
       recursiveAddFormula(facts);
    }
 
@@ -392,7 +399,6 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
 
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
             tr.makeFacts(cmd.formula);
-            
             return tr.frame.solve(rep, cmd, new Simplifier(), false);
         } catch(UnsatisfiedLinkError ex) {
             throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
@@ -445,7 +451,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
    }
 
    
-   public static Object evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt, Expr expr) throws Err {
+   public static Object evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt,Sig uSig,Expr expr) throws Err {
 	   	if (rep==null) rep = A4Reporter.NOP;
 	       TranslateAlloyToKodkod tr = null;
 	       try {
@@ -457,7 +463,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
 	           }
 	           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
 	           */
-	           return tr.frame.eval_woSolveFormula(expr);
+	           return tr.frame.eval_woSolveFormula(uSig,expr,cmd);
 	       } catch(UnsatisfiedLinkError ex) {
 	           throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
 	       } catch(CapacityExceededException ex) {

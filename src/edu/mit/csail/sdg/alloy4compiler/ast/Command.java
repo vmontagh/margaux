@@ -168,6 +168,12 @@ public final class Command extends Browsable {
         this.bound = bound;
     }
 
+    /** Constructs a new Command object where it is the same as the current object, except with a different bound. */
+    public Command change(Bounds bound) {
+        return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, formula, parent,isSparse,bound);
+    }
+
+    
     /** Constructs a new Command object where it is the same as the current object, except with a different formula. */
     public Command change(Expr newFormula) {
         return new Command(pos, label, check, overall, bitwidth, maxseq, expects, scope, additionalExactScopes, newFormula, parent,isSparse,bound);

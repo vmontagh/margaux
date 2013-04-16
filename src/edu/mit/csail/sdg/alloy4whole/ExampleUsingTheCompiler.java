@@ -71,7 +71,26 @@ import edu.mit.csail.sdg.alloy4viz.VizGUI;
 public final class ExampleUsingTheCompiler {
 
 
-	
+	//Exploited as a structure
+	private static class UniqSigMessage{
+		public Map<String,ExprVar> sigAtoms =null;
+		public CommandScope sigScope = null; 
+		public Bounds oBound = null;
+		public CommandScope scope = null;
+		public List<CommandScope> nList = null;
+		public UniqSigMessage(Map<String, ExprVar> sigAtoms,
+				CommandScope sigScope, Bounds oBound, CommandScope scope,
+				List<CommandScope> nList) {
+			super();
+			this.sigAtoms = sigAtoms;
+			this.sigScope = sigScope;
+			this.oBound = oBound;
+			this.scope = scope;
+			this.nList = nList;
+		}
+
+	}
+
 	/*
 	 * Execute every command in every file.
 	 *
@@ -139,13 +158,8 @@ public final class ExampleUsingTheCompiler {
 
 			options.solver = A4Options.SatSolver.MiniSatJNI;
 
-			Map<String,ExprVar> sigAtoms =null;
-			CommandScope sigScope = null; 
-			Bounds oBound = null;
-			CommandScope scope = null;
-			List<CommandScope> nList = null;
 			boolean touched = false;
-			
+
 
 			for (Command command: world.getAllCommands()) {
 				// Execute the command
@@ -154,64 +168,70 @@ public final class ExampleUsingTheCompiler {
 				long time = System.currentTimeMillis();
 				//System.out.println(command.scope.get(0).sig);
 				PrintWriter out=null;
+				int i=0;
 				try {
 					out=new PrintWriter("../tmp/out.xml","UTF-8");
+					UniqSigMessage usm = new UniqSigMessage(
+							new HashMap<String,ExprVar>(),
+							null, command.bound, null,
+							new ArrayList<CommandScope>());
+
 					for(Sig s:world.getAllSigs()){
 						//System.out.println(s.label+"/"+s.isUnique);
+						i++;
 						if(s.isUnique != null )
 						{	
 
-							if(!touched){
-								sigAtoms = new HashMap<String,ExprVar>();
-								 sigScope = null; 
-								oBound = command.bound;
-								scope = null;
-								nList = new ArrayList<CommandScope>();
-								makeWorld(command,world,s,options,rep,sigAtoms,sigScope,oBound,scope,nList);
-								touched = true;
-							}
-							
-							
-							
-							if(sigAtoms.size() > 0){
-								List<ExprVar> pAtoms = new ArrayList<ExprVar>(sigAtoms.values());
+							//if (i==0)
+							//System.exit(-10);
+							usm = makeWorld(command,world,s,options,rep,usm);
+
+							if(usm.sigAtoms.size() > 0){
+								Set<ExprVar> pAtoms = new HashSet<ExprVar>(usm.sigAtoms.values());
 								//Replace the signature bound
-								if(sigScope==null){
+								if(usm.sigScope==null){
 									//Make a new commandscope for each relation declration
-									sigScope = new CommandScope(oBound.pos, 
-											new PrimSig(s.label, AttrType.WHERE.make(oBound.pos)),
-											true, pAtoms.size(), pAtoms.size(), 1, pAtoms,
+									usm.sigScope = new CommandScope(usm.oBound.pos, 
+											new PrimSig(s.label, AttrType.WHERE.make(usm.oBound.pos)),
+											true, pAtoms.size(), pAtoms.size(), 1, new ArrayList<ExprVar>(pAtoms),
 											pAtoms.size(), new ArrayList<List<Expr>>(),
 											true, false, false,false);
 								}else{
 									//Alter the current commandscope
-									pAtoms.addAll(sigScope.pAtoms);
-									sigScope = new CommandScope(sigScope.pos, 
-											sigScope.sig,
-											sigScope.isExact, pAtoms.size(), pAtoms.size(), sigScope.increment, 
-											pAtoms,
-											pAtoms.size()+scope.pAtomsLowerLastIndex, sigScope.pFields,
-											sigScope.isPartial, sigScope.hasLower, sigScope.hasUpper,
-											sigScope.isSparse);
+									System.out.println("pAtoms before:"+pAtoms);
+									System.out.println("usm.sigScope.pAtoms:"+usm.sigScope.pAtoms);
+									pAtoms.addAll(usm.sigScope.pAtoms);
+									
+									System.out.println("pAtoms after:"+pAtoms);
+									usm.sigScope = new CommandScope(usm.sigScope.pos, 
+											usm.sigScope.sig,
+											usm.sigScope.isExact, pAtoms.size(), pAtoms.size(), usm.sigScope.increment, 
+											new ArrayList<>( pAtoms),
+											pAtoms.size()+
+											usm.scope.pAtomsLowerLastIndex, 
+											usm.sigScope.pFields,
+											usm.sigScope.isPartial, usm.sigScope.hasLower, usm.sigScope.hasUpper,
+											usm.sigScope.isSparse);
 								}
 
 								//Now change the scope in the bound object
-								nList.add(sigScope);         
-								Bounds nBound = new Bounds(oBound.pos, oBound.label, nList);
-								nBound = world.replaceBound(oBound, nBound);
+								usm.nList.add(usm.sigScope);      
+								System.out.println("usm.nList->"+usm.nList);
+								Bounds nBound = new Bounds(usm.oBound.pos, usm.oBound.label, usm.nList);
+								usm.oBound = world.replaceBound(usm.oBound, nBound);
 								//Detachbound causes the appended fact of the inst block does not considered.
 								//world.detachBound(command.bound.label);
-								world.removeAllUniquFacts();
-								command = new Command(command.pos, command.label, command.check, command.overall, 
-										command.bitwidth, command.maxseq, command.expects, nBound.scope, 
-										command.additionalExactScopes, command.formula, command.parent, command.isSparse, nBound);
+								world.removeUniquFacts(s);
+								command = command.change( ConstList.make(usm.oBound.scope));
+								command = command.change(usm.oBound); 
+
 							}//End of if
 
 						}//end of if(sig is unique)
 					}//end of sig:Sig loop
-					
-					
-					
+
+
+
 					System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 					time = System.currentTimeMillis();
 					System.out.println("Starting to execute the commmand....");
@@ -221,7 +241,7 @@ public final class ExampleUsingTheCompiler {
 					// Print the outcome
 					System.out.println(ans.satisfiable());
 					System.out.println(ans);
-/*					System.exit(-10);
+					/*					System.exit(-10);
 					Object legal = TranslateAlloyToKodkod.evaluate_command(
 							rep, world.getAllReachableSigs(), command, options,world.getEvalQuery() );
 					//Instance inst = new Instance(half_sol. .universe());
@@ -233,9 +253,9 @@ public final class ExampleUsingTheCompiler {
 					Util.close(out);
 					throw new ErrorFatal("Error writing the solution XML file.", ex);
 				}
-//				System.exit(1);
+				//				System.exit(1);
 
-/*				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+				/*				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 				// Print the outcome
 				System.out.println("------------------ans->---------\n"+ans);
 				// If satisfiable...
@@ -258,56 +278,59 @@ public final class ExampleUsingTheCompiler {
 
 
 	}
-	
-	
-	private static void makeWorld(final Command command, final CompModule world, final Sig s,
-									final  A4Options options, final A4Reporter rep,
-									Map<String,ExprVar> sigAtoms_, CommandScope sigScope,
-									Bounds oBound,CommandScope scope, List<CommandScope> nList) throws Err{
 
-		Map<String,ExprVar> sigAtoms = sigAtoms_==null? new HashMap<String,ExprVar>(): sigAtoms_;
-		sigAtoms_ = sigAtoms;
+
+	private static UniqSigMessage makeWorld(final Command command, final CompModule world, final Sig s,
+			final  A4Options options, final A4Reporter rep,
+			final UniqSigMessage usm) throws Err{
+
 		
-		Expr query = world.getUniqueFieldFact(s.label.replace("this/", ""));
 		
+		Bounds oBound = new Bounds(usm.oBound);
+		List<CommandScope> nList = new ArrayList<CommandScope>(usm.nList);
+
+		CommandScope sigScope = usm.sigScope==null? null : (CommandScope)usm.sigScope.clone();
+		CommandScope scope =  usm.scope == null? null :(CommandScope)usm.scope.clone();		
+
+		Map<String,ExprVar> sigAtoms =  usm.sigAtoms==null? new HashMap<String,ExprVar>():  new HashMap<String,ExprVar>(usm.sigAtoms);
+
+		System.out.println("sigAtoms before->"+sigAtoms);
+		
+		Expr expr = world.getUniqueFieldFact(s.label.replace("this/", ""));
+
 		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
-				rep, world.getAllReachableSigs(), command, options,query);
+				rep, world.getAllReachableSigs(), command, options,s,expr);
 
-		
 		//legalPair.a.getfieldSolutions(legalPair.b, s.label);
-		
+
 		Set<String> fldNames = new HashSet<String>();
-		
-		for(Decl fDecl:s.getFieldDecls()){
-											
-			
+		for(Decl fDecl:s.getFieldDecls()){											
 			A4TupleSet legal =  legalPair.a.getfieldSolutions(legalPair.b, s.label+"."+fDecl.get().label);
 			fldNames.add(s.label+"."+fDecl.get().label);
-			
-			
+
 			List<List<Expr>> pFields = new ArrayList<List<Expr>>();
 
+			System.out.println("sigAtoms2->"+sigAtoms);
+			
 			//Make a list of tuples for the field and a set of atoms for the left-most sig
 			List<Expr> field;
 			for(A4Tuple tuple: (A4TupleSet)legal){
 				field =  new ArrayList<Expr>();
 				for(int i=0; i<tuple.arity(); i++){
-					if(i==0)
+					if(i==0 && s.isOne==null)
 						sigAtoms.put(tuple.atom(i), ExprVar.make(command.bound.pos, tuple.atom(i))) ;
 					field.add(ExprVar.make(command.bound.pos, tuple.atom(i)) );
 				}
 				pFields.add(field);
 
 			}
-			
-			
-			
+			System.out.println("sigAtoms3->"+sigAtoms);
 			//Merge the CommandScope
 			//First find the related commandscope if it exists.
-			List<CommandScope> oList = oBound.scope;
+			List<CommandScope> oScopes =  oBound.scope;
 			nList.clear();
 			scope = null;
-			for(CommandScope sc: oList){
+			for(CommandScope sc: oScopes){
 				if(sc.sig.label.equals(fDecl.get().label)){
 					scope = sc;
 				}else if(sc.sig.label.equals(s.decl.get().label)){
@@ -316,53 +339,110 @@ public final class ExampleUsingTheCompiler {
 					nList.add(sc);
 				}
 			}
-			
-			if(scope==null){
+
+			System.out.println("scope.pAtoms->"+(scope==null?null:scope.pAtoms));
+
+			if( scope==null){
 				//Make a new commandscope for each relation declration
-				scope = new CommandScope(oBound.pos, 
-						new PrimSig(fDecl.get().label, AttrType.WHERE.make(oBound.pos)),
+				scope = new CommandScope( oBound.pos, 
+						new PrimSig(fDecl.get().label, AttrType.WHERE.make( oBound.pos)),
 						true, pFields.size(), pFields.size(), 1, new ArrayList<ExprVar>(),
 						pFields.size(), pFields,
 						true, false, false,false);
 			}else{
 				//Alter the current commandscope
-				pFields.addAll(scope.pFields);
-				scope = new CommandScope(scope.pos, 
+				pFields.addAll( scope.pFields);
+				scope = new CommandScope( scope.pos, 
 						scope.sig,
-						scope.isExact, pFields.size(), pFields.size(), scope.increment, 
+						scope.isExact, pFields.size(), pFields.size(),  scope.increment, 
 						scope.pAtoms,
-						pFields.size()+scope.pAtomsLowerLastIndex, pFields,
-						scope.isPartial, scope.hasLower, scope.hasUpper,
+						pFields.size()+ scope.pAtomsLowerLastIndex, pFields,
+						scope.isPartial,  scope.hasLower,  scope.hasUpper,
 						scope.isSparse);
 			}
 
 
 			//Now change the scope in the bound object
+			System.out.println("scope->"+scope);
+			System.out.println("nList->"+nList);
 
-			nList.add(scope);         
-			Bounds nBound = new Bounds(oBound.pos, oBound.label, nList);
+			nList.add( scope);
 			
-
-			oBound = world.replaceBound(oBound, nBound);
+			System.out.println("nList after->"+nList);
+			
+			Bounds nBound = new Bounds( oBound.pos,  oBound.label,  nList);
+			oBound = world.replaceBound( oBound, nBound);
+			
 
 		}//End of For
 
 		//Add the an empty instance to the solution if it is valid.
-		Object hasEmpty = legalPair.a.getEmpty(legalPair.b, fldNames, s.label);
-		
+		Object hasEmpty = legalPair.a.getEmpty(legalPair.b, fldNames, s);
+
+		System.out.println("sigAtoms4->"+sigAtoms);
 		if(hasEmpty!=null ){
 			sigAtoms.put(hasEmpty.toString(), ExprVar.make(command.bound.pos, hasEmpty.toString()));
 		}
+
+		System.out.println("sigAtoms->"+sigAtoms);
+		return new UniqSigMessage(sigAtoms, sigScope, oBound, scope, nList);
+
+
+
+
 	}
-	
-	
+
+
+	private static Command makeCommand(Sig s, Map<String,ExprVar> sigAtoms,CommandScope sigScope,
+			CommandScope scope,Bounds oBound,List<CommandScope> nList, Command command, CompModule world) throws Err{
+		if(sigAtoms.size() > 0){
+			List<ExprVar> pAtoms = new ArrayList<ExprVar>(sigAtoms.values());
+			//Replace the signature bound
+			if(sigScope==null){
+				//Make a new commandscope for each relation declration
+				sigScope = new CommandScope(oBound.pos, 
+						new PrimSig(s.label, AttrType.WHERE.make(oBound.pos)),
+						true, pAtoms.size(), pAtoms.size(), 1, pAtoms,
+						pAtoms.size(), new ArrayList<List<Expr>>(),
+						true, false, false,false);
+			}else{
+				//Alter the current commandscope
+				pAtoms.addAll(sigScope.pAtoms);
+				sigScope = new CommandScope(sigScope.pos, 
+						sigScope.sig,
+						sigScope.isExact, pAtoms.size(), pAtoms.size(), sigScope.increment, 
+						pAtoms,
+						pAtoms.size()+
+						scope.pAtomsLowerLastIndex, 
+						sigScope.pFields,
+						sigScope.isPartial, sigScope.hasLower, sigScope.hasUpper,
+						sigScope.isSparse);
+			}
+
+			//Now change the scope in the bound object
+			nList.add(sigScope);         
+			Bounds nBound = new Bounds(oBound.pos, oBound.label, nList);
+			oBound = world.replaceBound(oBound, nBound);
+			//Detachbound causes the appended fact of the inst block does not considered.
+			//world.detachBound(command.bound.label);
+			world.removeUniquFacts(s);
+			return new Command(command.pos, command.label, command.check, command.overall, 
+					command.bitwidth, command.maxseq, command.expects, oBound.scope, 
+					command.additionalExactScopes, command.formula, command.parent, command.isSparse, oBound);
+
+		}else
+			//no changes happened
+			return command;
+	}
+
+
 	private static Expr  getEmptyCheckingExpr(Sig sig){
 		//Check to see whether an empty atom is acceptable or not
 		Expr epmtyChkrExpr = null;
 		ExprHasName uSigName = ExprVar.make(null, sig.label+Math.abs(sig.label.hashCode()),sig.type()) ; 
-		
+
 		for(Decl fDecl:sig.getFieldDecls()){
-			
+
 			Expr right = ExprBinary.Op.JOIN.make(null, null, uSigName, fDecl.get());
 			Sig.Field fld = (Sig.Field)fDecl.get();
 			Expr empty = ExprConstant.EMPTYNESS;
@@ -383,13 +463,13 @@ public final class ExampleUsingTheCompiler {
 			List<Decl> decls = new ArrayList<Decl>();
 			decls.add(decl);
 			epmtyChkrExpr = ExprQt.Op.ONE.make(null, null, decls, epmtyChkrExpr);
-			
+
 		}
 		return epmtyChkrExpr;
 
 	}
-	
-	
+
+
 	private static boolean loadLibrary(String library) {
 		try { System.loadLibrary(library);      return true; } catch(UnsatisfiedLinkError ex) { }
 		try { System.loadLibrary(library+"x1"); return true; } catch(UnsatisfiedLinkError ex) { }

@@ -769,7 +769,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 						for(Expr ev: pair)
 							if(ev instanceof ExprVar)
 								//Here the Sig in relation can be extended.
-								tmp.add(((ExprVar)ev).label.contains("%") ? ((ExprVar)ev).label : ((ExprVar)ev).label+"%");
+								tmp.add(((ExprVar)ev).label.contains("%") || ((ExprVar)ev).label.contains("$") ? ((ExprVar)ev).label : ((ExprVar)ev).label+"%");
 							else if(ev instanceof ExprConstant ){
 								tmp.add(String.valueOf(((ExprConstant)ev).num));
 								//[VM] putting the mentioned integer inside the set, later out of the range values are added in the universe
@@ -792,9 +792,16 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 					for(Expr var: entry.pAtoms){
 						if(var instanceof ExprVar){
 							if(i < entry.pAtomsLowerLastIndex)
-								listL.add(((ExprVar)var).label+"%");
+								listL.add(
+										
+										((ExprVar)var).label.contains("$") ? ((ExprVar)var).label : ((ExprVar)var).label+"%"
+										//((ExprVar)var).label+"%"
+										);
 							else
-								listU.add(((ExprVar)var).label+"%");
+								listU.add(
+										((ExprVar)var).label.contains("$") ? ((ExprVar)var).label : ((ExprVar)var).label+"%"
+										//((ExprVar)var).label+"%"
+										);
 						}
 						else if(var instanceof ExprConstant ){
 							//[VM] It is not possible to have an Singlton Int, but just in case it is stored.
@@ -947,6 +954,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 		for(int i=0; set.size()<sc.maxstring; i++) set.add("\"String" + i + "\"");
 		sc.atoms.addAll(set);
 		A4Solution sol = new A4Solution(cmd.toString(), sc.bitwidth, sc.maxseq, set, sc.atoms, rep, opt, cmd.expects);
+		System.out.println("a2k_>"+sol.a2k());
 		return new Pair<A4Solution,ScopeComputer>(sol, sc);
 	}
 }

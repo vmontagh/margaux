@@ -25,10 +25,10 @@ sig IntRange {}
 uniq sig WS {
     RoadSegments : set RoadSegment,
     Drivers : set Driver,
-//    MapObjects : set MapObject,
-//    RoadObjects : set RoadObject,
-//    Lanes : set Lane,
-//    AutoSoftCars : set AutoSoftCar,
+    MapObjects : set MapObject,
+    RoadObjects : set RoadObject,
+    Lanes : set Lane,
+    AutoSoftCars : set AutoSoftCar,
     Drivess : set Drives,
     IsOns : set IsOn,
     AutoSofts : set AutoSoft,
@@ -72,21 +72,51 @@ uniq sig WS {
 //    all o : HCs | # (o.HC_headway) = 1
 //    all o : FCAs | # (o.FCA_alertLevel) = 1
 //WSC (ws : WS) is merged into appended fact
-//    RoadObjects = MapObjects & RoadObject
-//    Lanes = MapObjects & Lane
-//    AutoSoftCars = RoadObjects & AutoSoftCar
+    RoadObjects = MapObjects & RoadObject
+    Lanes = MapObjects & Lane
+    AutoSoftCars = RoadObjects & AutoSoftCar
     all autosoftcar : AutoSoftCars | # ((((Drives_r2).autosoftcar)).(Drives_r1)) = 1
     all driver : Drivers | # ((((Drives_r1).driver)).(Drives_r2)) = 1
     all lane : Lanes | # ((((IsOn_r2).lane)).(IsOn_r1)) = 1
     all roadsegment : RoadSegments | # ((((IsOn_r1).roadsegment)).(IsOn_r2)) >= 1
-//    MapObjects = Lanes + RoadObjects
+    MapObjects = Lanes + RoadObjects
 
 }
 pred distinct_valid_WSs {
-    all ws, ws1 : WS | (ws.RoadSegments = ws1.RoadSegments and ws.RoadSegment_speedLimit = ws1.RoadSegment_speedLimit and ws.Drivers = ws1.Drivers and ws.MapObjects = ws1.MapObjects and ws.MapObject_position = ws1.MapObject_position and ws.MapObject_shape = ws1.MapObject_shape and ws.RoadObjects = ws1.RoadObjects and ws.RoadObject_acceleration = ws1.RoadObject_acceleration and ws.RoadObject_speed = ws1.RoadObject_speed and ws.Lanes = ws1.Lanes and ws.AutoSoftCars = ws1.AutoSoftCars and ws.AutoSoftCar_steerDirection = ws1.AutoSoftCar_steerDirection and ws.AutoSoftCar_ignition = ws1.AutoSoftCar_ignition and ws.Drivess = ws1.Drivess and ws.Drives_r1 = ws1.Drives_r1 and ws.Drives_r2 = ws1.Drives_r2 and ws.IsOns = ws1.IsOns and ws.IsOn_r1 = ws1.IsOn_r1 and ws.IsOn_r2 = ws1.IsOn_r2 and ws.AutoSofts = ws1.AutoSofts and ws.BDSs = ws1.BDSs and ws.CCs = ws1.CCs and ws.CC_goalAccel = ws1.CC_goalAccel and ws.CC_cruiseSpeed = ws1.CC_cruiseSpeed and ws.HCs = ws1.HCs and ws.HC_headway = ws1.HC_headway and ws.HPs = ws1.HPs and ws.FCAs = ws1.FCAs and ws.FCA_alertLevel = ws1.FCA_alertLevel and ws.SLCs = ws1.SLCs) implies ws = ws1  
+    all ws, ws1 : WS | (
+ws.RoadSegments = ws1.RoadSegments and 
+ws.RoadSegment_speedLimit = ws1.RoadSegment_speedLimit and 
+ws.Drivers = ws1.Drivers and 
+ws.MapObjects = ws1.MapObjects and 
+ws.MapObject_position = ws1.MapObject_position and
+ ws.MapObject_shape = ws1.MapObject_shape and 
+ws.RoadObjects = ws1.RoadObjects and 
+ws.RoadObject_acceleration = ws1.RoadObject_acceleration and 
+ws.RoadObject_speed = ws1.RoadObject_speed and 
+ws.Lanes = ws1.Lanes and 
+ws.AutoSoftCars = ws1.AutoSoftCars and 
+ws.AutoSoftCar_steerDirection = ws1.AutoSoftCar_steerDirection and 
+ws.AutoSoftCar_ignition = ws1.AutoSoftCar_ignition and 
+ws.Drivess = ws1.Drivess and 
+ws.Drives_r1 = ws1.Drives_r1 and 
+ws.Drives_r2 = ws1.Drives_r2 and 
+ws.IsOns = ws1.IsOns and 
+ws.IsOn_r1 = ws1.IsOn_r1 and 
+ws.IsOn_r2 = ws1.IsOn_r2 and 
+ws.AutoSofts = ws1.AutoSofts and 
+ws.BDSs = ws1.BDSs and 
+ws.CCs = ws1.CCs and 
+ws.CC_goalAccel = ws1.CC_goalAccel and 
+ws.CC_cruiseSpeed = ws1.CC_cruiseSpeed and 
+ws.HCs = ws1.HCs and 
+ws.HC_headway = ws1.HC_headway and 
+ws.HPs = ws1.HPs and 
+ws.FCAs = ws1.FCAs and 
+ws.FCA_alertLevel = ws1.FCA_alertLevel and 
+ws.SLCs = ws1.SLCs) implies ws = ws1  
     all ws : WS | WSC [ws]
 }
-
+/*
 fun Lanes[]:WS->set Lane{
 	MapObjects & Lane
 }
@@ -102,7 +132,7 @@ fun AutoSoftCars[]:WS-> set AutoSoft{
 fun MapObjects[]: WS-> set MapObjects{
 	Lanes + RoadObjects
 }
-
+*/
 
 pred WSC (ws : WS) {
     (ws.RoadObjects = ws.MapObjects & RoadObject)

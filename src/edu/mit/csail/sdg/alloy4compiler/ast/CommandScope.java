@@ -303,6 +303,9 @@ public class CommandScope {
 				+ (endingScope!=startingScope ? (".."+endingScope) : "")
 				+ (increment > 1 ? (":"+increment) : "")
 				+ " "
-				+ Util.tail(sig.label);
+				+ Util.tail(sig.label)
+				+ " "
+				+ (isPartial ? "the atoms are:"+pAtoms : "")
+				+ (isPartial ? " the fields are:"+pFields : "");
 	}
 }
