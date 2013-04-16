@@ -551,27 +551,45 @@ public final class VizGUI implements ComponentListener {
          case Table:{
         	 //TODO: VIZTABLE: Create a window form to get Sig X, Sig Y and Relations from User
         	 
-        	 OurDialog.showTableOptions(myState);
+        	 Object[] table_items = OurDialog.showTableOptions(myState);
         	 
-        	 //For Prototype, using Farmer. X =  State. Y = Objects. Relations = [far, near]{
-        	 AlloyType Object = myState.getCurrentModel().getType("Day");
-        	 AlloyType State = myState.getCurrentModel().getType("Team");
-        	 //AlloyRelation far = myState.getCurrentModel().getRelation("far");
-        	 AlloyRelation near = myState.getCurrentModel().getRelation("$datavalue");
-        	 AlloyRelation[] alloyRelation;
-        	 alloyRelation = new AlloyRelation[1];
-        	 alloyRelation[0] = near;
-        	 //alloyRelation[1] = near;
-        	 // }
+        	 for(Object o: table_items){
+        		 System.out.println((AlloyElement)o);
+        	 }
         	 
-        	 VizTable vizTable = new VizTable(Object, State, alloyRelation);
-        	 Document doc = vizTable.createXML(myState);
-        	 final JTable table = vizTable.createTable(doc);
+        	 AlloyRelation[] table_relations = new AlloyRelation[table_items.length-2];
+        	 for(int i=2; i < table_items.length; i++){
+        		 table_relations[i-2] = (AlloyRelation)table_items[i];
+        	 }
+//        	 //For Schedule
+//        	 AlloyType Object = myState.getCurrentModel().getType("Day");
+//        	 AlloyType State = myState.getCurrentModel().getType("Time");
+//        	 AlloyRelation far = myState.getCurrentModel().getRelation("$datavalue");
+//        	 AlloyRelation[] alloyRelation;
+//        	 alloyRelation = new AlloyRelation[1];
+//        	 alloyRelation[0] = far;
+        	 
+        	 
+        	 //For Prototype, using Farmer. X =  State. Y = Objects. Relations = [far, near]
+        	 table_items = new AlloyType[2];
+        	 table_items[0] = myState.getCurrentModel().getType("Object");
+        	 table_items[1] = myState.getCurrentModel().getType("State");
+        	 AlloyRelation far = myState.getCurrentModel().getRelation("far");
+        	 AlloyRelation near = myState.getCurrentModel().getRelation("near");
+        	 table_relations = new AlloyRelation[2];
+        	 table_relations[0] = far;
+        	 table_relations[1] = near;
+//        	  }
+        	 
+        	 VizTable vizTable = new VizTable((AlloyType)table_items[0], (AlloyType)table_items[1], table_relations);
+
+				final JScrollPane viz = vizTable.getVizTable(myState);
+				        	 
         	 //vizTable.drawTable(table);
         	 
-        	 final JScrollPane scroll = OurUtil.scrollpane(table, Color.BLACK, Color.WHITE, new OurBorder(true, false, true, false));
+        	 final JScrollPane scroll = OurUtil.scrollpane(viz, Color.BLACK, Color.WHITE, new OurBorder(true, false, true, false));
              scroll.addFocusListener(new FocusListener() {
-                public final void focusGained(FocusEvent e) {table.requestFocusInWindow(); }
+                public final void focusGained(FocusEvent e) {viz.requestFocusInWindow(); }
                 public final void focusLost(FocusEvent e) { }
              });
              content = scroll;

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model>
+  <Chicken>
+    <State0>near</State0>
+    <State1>far</State1>
+    <State2>far</State2>
+    <State3>far</State3>
+    <State4>near</State4>
+    <State5>near</State5>
+    <State6>near</State6>
+    <State7>far</State7>
+  </Chicken>
+  <Farmer>
+    <State0>near</State0>
+    <State1>far</State1>
+    <State2>near</State2>
+    <State3>far</State3>
+    <State4>near</State4>
+    <State5>far</State5>
+    <State6>near</State6>
+    <State7>far</State7>
+  </Farmer>
+  <Fox>
+    <State0>near</State0>
+    <State1>near</State1>
+    <State2>near</State2>
+    <State3>far</State3>
+    <State4>far</State4>
+    <State5>far</State5>
+    <State6>far</State6>
+    <State7>far</State7>
+  </Fox>
+  <Grain>
+    <State0>near</State0>
+    <State1>near</State1>
+    <State2>near</State2>
+    <State3>near</State3>
+    <State4>near</State4>
+    <State5>far</State5>
+    <State6>far</State6>
+    <State7>far</State7>
+  </Grain>
+</Model>
+

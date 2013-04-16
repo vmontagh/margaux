@@ -18,6 +18,8 @@ package edu.mit.csail.sdg.alloy4;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FileDialog;
@@ -25,6 +27,8 @@ import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 
@@ -37,6 +41,7 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -44,6 +49,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileFilter;
 
+import edu.mit.csail.sdg.alloy4viz.AlloyRelation;
+import edu.mit.csail.sdg.alloy4viz.AlloyType;
 import edu.mit.csail.sdg.alloy4viz.VizState;
 import static javax.swing.JOptionPane.YES_NO_OPTION;
 import static javax.swing.JOptionPane.QUESTION_MESSAGE;
@@ -62,31 +69,78 @@ public final class OurDialog {
    
    //public static void main(String[] args){showTableOptions(VizState.);}
    
-   public static void showTableOptions(VizState myState) {
+   public static Object[] showTableOptions(final VizState myState) {
 	   	
 //	    String[] items = {"One", "Two", "Three", "Four", "Five"};
-	    JComboBox sig_X = new JComboBox(myState.getCurrentModel().getTypes().toArray());
-	    JTextField field1 = new JTextField("1234.56");
-	    JTextField field2 = new JTextField("9876.54");
+	    final JComboBox sig_X = new JComboBox(myState.getCurrentModel().getKeyTypes().toArray());
+//	    final JComboBox sig_X = new JComboBox(myState.getCurrentModel().getTypes().toArray());
+	    final JComboBox sig_Y = new JComboBox(getSigY(myState, (AlloyType) sig_X.getSelectedItem()));
+	    final JList relations = new JList(myState.getCurrentModel().getRelevantRelations((AlloyType)sig_X.getSelectedItem(), (AlloyType)sig_Y.getSelectedItem()).toArray());
+	    //-----------------------------------------------------------------
+	    sig_X.addActionListener(new ActionListener(){
+	    	public void actionPerformed(ActionEvent e){
+	    		sig_Y.removeAllItems();
+	    		for(Object o: getSigY(myState, (AlloyType) sig_X.getSelectedItem())){
+	    			sig_Y.addItem(o);
+	    		}
+	    		
+	    		relations.setListData(new Object[0]);
+	    		relations.setListData(myState.getCurrentModel().getRelevantRelations((AlloyType)sig_X.getSelectedItem(), (AlloyType)sig_Y.getSelectedItem()).toArray());
+	    	}
+	    });
+	    
+	    sig_Y.addActionListener(new ActionListener(){
+	    	public void actionPerformed(ActionEvent e){
+	    		if(sig_Y.getSelectedItem() != null){
+	    		relations.setListData(new Object[0]);
+	    		relations.setListData(myState.getCurrentModel().getRelevantRelations((AlloyType)sig_X.getSelectedItem(), (AlloyType)sig_Y.getSelectedItem()).toArray());
+	    	}}
+	    });
+   
+	    //-----------------------------------------------------------------
+	    
 	    JPanel panel = new JPanel(new GridLayout(0, 1));
 	    panel.add(sig_X);
-	    panel.add(new JLabel("Field 1:"));
-	    panel.add(field1);
-	    panel.add(new JLabel("Field 2:"));
-	    panel.add(field2);
-	   int result = JOptionPane.showConfirmDialog(null, panel, "Test",
+	    panel.add(sig_Y);
+	    panel.add(relations);
+	   int result = JOptionPane.showConfirmDialog(null, panel, "Options for Table Viz",
 	        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 	    if (result == JOptionPane.OK_OPTION) {
 	        System.out.println(sig_X.getSelectedItem()
-	            + " " + field1.getText()
-	            + " " + field2.getText());
+	            + " " + sig_X.getSelectedItem().toString()
+	            + " " + sig_Y.getSelectedItem().toString());
 	    } else {
 	        System.out.println("Cancelled");
 	    }
+	    
+	    Object[] table_items = new Object[2+relations.getSelectedValues().length];
+	    table_items[0] = sig_X.getSelectedItem();
+	    table_items[1] = sig_Y.getSelectedItem();
+	    for(int i = 2; i< table_items.length; i++){
+	    	table_items[i] = relations.getSelectedValues()[i-2];
+	    }
+	    return table_items;
+	    
 	}
-	
    
-   /** Helper method for constructing an always-on-top modal dialog. */
+//   	private static void SigX_Clicked(ActionEvent e) {
+//			// TODO Auto-generated method stub
+//   			sig_Y.
+//			String event = e.getActionCommand();
+//			JOptionPane.showMessageDialog(null, "You have Selected: "+ event);
+//	}
+   
+   
+	
+   /** Helper method for showTableOptions() that returns all the AlloyTypes related to the sigX and its parents*/
+   private static Object[] getSigY(VizState myState, AlloyType sigX) {
+	   Set<AlloyType> sigs_Y = new TreeSet<AlloyType>();
+	   sigs_Y = myState.getCurrentModel().getRelatedTypes(sigX);
+	// TODO Auto-generated method stub
+	return sigs_Y.toArray();
+}
+
+/** Helper method for constructing an always-on-top modal dialog. */
    private static Object show(String title, int type, Object message, Object[] options, Object initialOption) {
       if (options == null) { options = new Object[]{"Ok"};  initialOption = "Ok"; }
       JOptionPane p = new JOptionPane(message, type, JOptionPane.DEFAULT_OPTION, null, options, initialOption);

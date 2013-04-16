@@ -67,16 +67,17 @@ public enum DotColor {
 
    /** Returns the list of values that the user is allowed to select from. */
    public static Object[] valuesWithout(DotColor... exclude) {
-      Object[] ans = new Object[values().length - 1];
+//      Object[] ans = new Object[values().length - 1];
+	  List<Object> ans = new ArrayList<Object>(); 
       int i = 0;
       for(DotColor d: values()) {
     	  boolean flagged = false;
     	  for(DotColor e: exclude){
     		 if (d == e) flagged = true;
     	  }
-    	  if(!flagged) ans[i++] = d;
+    	  if(!flagged) ans.add(d);
       }
-      return ans;
+      return ans.toArray();
    }
 
    /** Returns the Icon that will be displayed in the GUI to represent this value, when used with the given palette. */
@@ -129,7 +130,7 @@ public enum DotColor {
    }
 
    /** Returns the String that will be displayed in the GUI to represent this value. */
-   public String getDisplayedText() { return displayText; }
+   public String getDisplayedText() { return this==null ? "null" : displayText; }
 
    /** This method is used in parsing the XML value into a valid color; returns null if there is no match. */
    public static DotColor parse(String x) {
@@ -138,5 +139,5 @@ public enum DotColor {
    }
 
    /** This value is used in writing XML. */
-   @Override public String toString() { return displayText; }
+   @Override public String toString() {return displayText; }
 }

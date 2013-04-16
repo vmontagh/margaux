@@ -292,7 +292,7 @@ public final class VizCustomizationPanel extends JPanel {
    //=============================================================================================================//
 
    /** Generates the edge settings widgets for the given relation, and add them to "parent". */
-   private void makeEdgeOptionsPanel(final JPanel parent, final AlloyRelation rel) {
+   	private void makeEdgeOptionsPanel(final JPanel parent, final AlloyRelation rel) {
       final JTextField labelText = OurUtil.textfield(vizState.label.get(rel), 10);
       labelText.setMaximumSize(new Dimension(100, 25));
       labelText.addKeyListener(new KeyAdapter() {
@@ -398,7 +398,7 @@ public final class VizCustomizationPanel extends JPanel {
    private void createDefaultNodeWidget(JPanel parent) {
       JComboBox color = new OurCombobox(false, DotColor.valuesWithout(DotColor.MAGIC, DotColor.BLACK), 110, 35, vizState.nodeColor.get(null)) {
          private static final long serialVersionUID = 0;
-         @Override public String do_getText(Object value) { return ((DotColor)value).getDisplayedText(); }
+         @Override public String do_getText(Object value) { if(value==null) return "null"; else return ((DotColor)value).getDisplayedText(); }
          @Override public Icon   do_getIcon(Object value) { return ((DotColor)value).getIcon(vizState.getNodePalette()); }
          @Override public void   do_changed(Object value) { vizState.nodeColor.put(null, (DotColor)value); }
       };

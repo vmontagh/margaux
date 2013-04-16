@@ -598,6 +598,7 @@ public final strictfp class GraphNode {
             path.quadTo(side,updown,0,updown); path.quadTo(-side,updown,-side,d);
             path.closePath();
             this.poly=path;
+            break;
          }
          default: { // BOX
             if (shape!=DotShape.BOX) { int d=ad/2; hw=hw+d; side=hw; hh=hh+d; updown=hh; }

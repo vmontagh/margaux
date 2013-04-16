@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import javax.swing.ComboBoxModel;
+import javax.swing.ListModel;
+
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 
@@ -142,7 +146,7 @@ public final class AlloyModel {
       }
       return type;
    }
-
+ 
    /** Returns a sorted, unmodifiable list of types that are direct or indirect subtypes of the given type.
     * <br> This method will search recursively, so if the subtypes themselves have subtypes, they too are included.
     * <br> If type==null, or it does not exist in this model, or it has no subsigs, then we return an empty set.
@@ -252,4 +256,66 @@ public final class AlloyModel {
 
    /** Returns an unmodifiable sorted set of all AlloyRelation(s) in this model. */
    public Set<AlloyRelation> getRelations() { return relations; }
+   
+   public Set<AlloyType> getRelatedTypes(AlloyType sig) {
+	   Set<AlloyType> reltypes = new TreeSet<AlloyType>();
+	   for(AlloyRelation rel: relations){
+		   // Need to get a list of all super types, because if the relation applies any of those, it applies to all the subtypes.
+		   for(AlloyType t: getSuperTypes(sig)){
+			   if(rel.getTypes().contains(t)){
+				   for(AlloyType type: rel.getTypes()){
+					   if(!type.equals(sig)) reltypes.add(type);
+				   }
+			   }
+		   }
+	   }
+	   return reltypes;
+   }
+
+private Set<AlloyType> getSuperTypes(AlloyType sig) {
+	Set<AlloyType> superTypes = new TreeSet<AlloyType>();
+	superTypes.add(sig);
+    if (sig==null || sig.equals(AlloyType.UNIV)) return null;
+    while (true) {
+       AlloyType top = getSuperType(sig);
+       if (top==null || top.equals(AlloyType.UNIV)) break;
+       superTypes.add(top);
+       sig=top;
+    }
+    return superTypes;
 }
+
+public Set<AlloyRelation> getRelevantRelations(AlloyType t1,
+		AlloyType t2) {
+	// TODO Auto-generated method stub
+	if(t1 != null && t2 != null){
+		Set<AlloyRelation> rel_relations = new TreeSet<AlloyRelation>();
+		Set<AlloyType> t1_superType = getSuperTypes(t1);
+		Set<AlloyType> t2_superType = getSuperTypes(t2);
+		t1_superType.add(t1);
+		t2_superType.add(t2);
+		for(AlloyRelation r: relations){
+			for(AlloyType t1_s: t1_superType){
+				for(AlloyType t2_s: t2_superType){
+					if(r.getTypes().contains(t1_s) && r.getTypes().contains(t2_s)) rel_relations.add(r);
+				}
+			}
+		}
+		return rel_relations;
+	} else return null;
+		
+}
+
+public Set<AlloyType> getKeyTypes() {
+	// TODO Auto-generated method stub
+	Set<AlloyType> key_types = new TreeSet<AlloyType>();
+	
+	for(AlloyRelation r: relations){
+		key_types.addAll(r.getTypes());
+	}
+	return key_types;
+}
+
+}
+
+
