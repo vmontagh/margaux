@@ -39,6 +39,7 @@ import kodkod.ast.Variable;
 import kodkod.ast.operator.ExprOperator;
 import kodkod.engine.CapacityExceededException;
 import kodkod.engine.fol2sat.HigherOrderDeclException;
+import kodkod.instance.Instance;
 import kodkod.instance.Tuple;
 import kodkod.instance.TupleFactory;
 import kodkod.instance.TupleSet;
@@ -134,9 +135,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.max = pair.a.max();
         this.a2k = null;
         this.s2k = null;
-        System.out.println("this.frame->"+this.frame.a2k());
         BoundsComputer.compute(rep, frame, pair.b, sigs);
-        System.out.println("this.frame2->"+this.frame.a2k());
 
     }
 
@@ -412,7 +411,30 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         }
     }
 
+    public static A4Solution execute_command_includeInstance (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt,Instance inst,Sig uniqSig) throws Err {
+    	if (rep==null) rep = A4Reporter.NOP;
+        TranslateAlloyToKodkod tr = null;
+        try {
+            if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
+
+            tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+            tr.makeFacts(cmd.formula);
+            if(inst != null)
+            	tr.frame.includeIntoLowerbound(inst, uniqSig);
+            return tr.frame.solve(rep, cmd, new Simplifier(), false);
+        } catch(UnsatisfiedLinkError ex) {
+            throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
+        } catch(CapacityExceededException ex) {
+            throw rethrow(ex);
+        } catch(HigherOrderDeclException ex) {
+            Pos p = tr!=null ? tr.frame.kv2typepos(ex.decl().variable()).b : Pos.UNKNOWN;
+            throw new ErrorType(p, "Analysis cannot be performed since it requires higher-order quantification that could not be skolemized.");
+        } catch(Throwable ex) {
+            if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
+        }
+    }
     
+
     /** Based on the specified "options", execute one command and return the resulting A4Solution object.
     *
     * @param rep - if nonnull, we'll send compilation diagnostic messages to it
@@ -451,7 +473,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
    }
 
    
-   public static Object evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt,Sig uSig,Expr expr) throws Err {
+   public static Object evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt,Sig uSig,final Expr expr) throws Err {
 	   	if (rep==null) rep = A4Reporter.NOP;
 	       TranslateAlloyToKodkod tr = null;
 	       try {

@@ -14,6 +14,9 @@ public class MyReporter extends A4Reporter implements Serializable{
 	public long totalVaraibles = 0;
 	public long clauses = 0;
 	public long solveTime = 0;
+	public long evalTime = 0;
+	public long evalInsts = 0;
+	public int sat = 0;
 	// For example, here we choose to display each "warning" by printing it to System.out
 	@Override public void warning(ErrorWarning msg) {
 		System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
@@ -27,15 +30,22 @@ public class MyReporter extends A4Reporter implements Serializable{
 
 	}
 	@Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
-		lastTime = System.currentTimeMillis();
+		this.lastTime = System.currentTimeMillis();
 	}
 
 	@Override public void resultSAT (Object command, long solvingTime, Object solution) {
-		solveTime = solvingTime;
+		this.solveTime = solvingTime;
+		this.sat=1;
 	}
 	
 	public void resultUNSAT (Object command, long solvingTime, Object solution) {
-		solveTime = solvingTime;
+		this.solveTime = solvingTime;
+		this.sat=-1;
+	}
+	
+	public void evalute(long elauationTime, long instances) {
+		this.evalTime = elauationTime;
+		this.evalInsts = instances;
 	}
 	
 }

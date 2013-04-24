@@ -70,6 +70,14 @@ import edu.mit.csail.sdg.alloy4viz.VizGUI;
 
 public final class ExampleUsingTheCompiler {
 
+	
+	 public static int PACE = 10;
+	final public static boolean oneFound = true;
+	final public static boolean usingKodkod = true;
+	final public static boolean usingKKItr = true;
+	public static String reportFileName = "";
+	
+
 
 	//Exploited as a structure
 	private static class UniqSigMessage{
@@ -94,7 +102,33 @@ public final class ExampleUsingTheCompiler {
 	
 	
 	
-	public static String run(String[] args) throws Err{
+	public static class QuickReporter extends A4Reporter{
+		private long lastTime=0;
+
+		// For example, here we choose to display each "warning" by printing it to System.out
+		@Override public void warning(ErrorWarning msg) {
+			System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
+			System.out.flush();
+		}
+		@Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
+			System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
+			lastTime = System.currentTimeMillis();
+			System.out.flush();
+
+		}
+		@Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
+			lastTime = System.currentTimeMillis();
+			System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
+					+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
+					+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
+			System.out.flush();
+
+		}
+
+	}
+	
+	
+	public static String run(String[] args,A4Reporter rep) throws Err{
 		
 		String retString = "";
 		copyFromJAR();
@@ -116,33 +150,9 @@ public final class ExampleUsingTheCompiler {
 
 		// Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
-		A4Reporter rep = new A4Reporter() {
-			private long lastTime=0;
-
-			// For example, here we choose to display each "warning" by printing it to System.out
-			@Override public void warning(ErrorWarning msg) {
-				System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
-				System.out.flush();
-			}
-			@Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
-				System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
-				lastTime = System.currentTimeMillis();
-				System.out.flush();
-
-			}
-			@Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
-				lastTime = System.currentTimeMillis();
-				System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
-						+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
-						+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
-				System.out.flush();
-
-			}
-
-		};
 
 		for(String filename:args) {
-
+			reportFileName = Util.tail(filename).replace(".", "_")+".log";
 			// Parse+typecheck the model
 			System.out.println("=========== Parsing+Typechecking "+filename+" =============");
 			CompModule world = CompUtil.parseEverything_fromFile(rep, null, filename);
@@ -192,11 +202,7 @@ public final class ExampleUsingTheCompiler {
 											true, false, false,false);
 								}else{
 									//Alter the current commandscope
-									System.out.println("pAtoms before:"+pAtoms);
-									System.out.println("usm.sigScope.pAtoms:"+usm.sigScope.pAtoms);
 									pAtoms.addAll(usm.sigScope.pAtoms);
-									
-									System.out.println("pAtoms after:"+pAtoms);
 									usm.sigScope = new CommandScope(usm.sigScope.pos, 
 											usm.sigScope.sig,
 											usm.sigScope.isExact, pAtoms.size(), pAtoms.size(), usm.sigScope.increment, 
@@ -210,7 +216,6 @@ public final class ExampleUsingTheCompiler {
 
 								//Now change the scope in the bound object
 								usm.nList.add(usm.sigScope);      
-								System.out.println("usm.nList->"+usm.nList);
 								Bounds nBound = new Bounds(usm.oBound.pos, usm.oBound.label, usm.nList);
 								usm.oBound = world.replaceBound(usm.oBound, nBound);
 								//Detachbound causes the appended fact of the inst block does not considered.
@@ -225,11 +230,15 @@ public final class ExampleUsingTheCompiler {
 					}//end of sig:Sig loop
 
 
-
+					rep.evalute(System.currentTimeMillis()- time, -1);
 					System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
+					edu.mit.csail.sdg.gen.Util.Logger(ExampleUsingTheCompiler.reportFileName,
+							String.valueOf((System.currentTimeMillis()- time))
+							);
 					time = System.currentTimeMillis();
 					System.out.println("Starting to execute the commmand....");
 					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+					
 					System.out.println("The execution has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 
 					// Print the outcome
@@ -247,6 +256,22 @@ public final class ExampleUsingTheCompiler {
 					System.out.println();
 					//A4SolutionWriter.writeInstance(  );
 					if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");*/
+					if (ans.satisfiable()) {
+						
+						// You can query "ans" to find out the values of each set or type.
+						// This can be useful for debugging.
+						//
+						// You can also write the outcome to an XML file
+						//ans.writeXML("alloy_example_output.xml");
+						//
+						// You can then visualize the XML file by calling this:
+						if (viz==null) {
+							//viz = new VizGUI(false, output, null);
+						} else {
+							//viz.loadXML(output, true);
+						}
+					}
+					
 				} catch(IOException ex) {
 					Util.close(out);
 					throw new ErrorFatal("Error writing the solution XML file.", ex);
@@ -290,9 +315,13 @@ public final class ExampleUsingTheCompiler {
 	 * and they may contain filename/line/column information.
 	 */
 	public static void main(String[] args) throws Err {
-		System.out.println(run(args));
+		System.out.println("The evaluation time is:"+run(args)	);
 	}
 
+	
+	public static String run(String[] args) throws Err{
+		return run(args, new QuickReporter());
+	}
 
 	private static UniqSigMessage makeWorld(final Command command, final CompModule world, final Sig s,
 			final  A4Options options, final A4Reporter rep,
@@ -308,10 +337,11 @@ public final class ExampleUsingTheCompiler {
 
 		Map<String,ExprVar> sigAtoms =  usm.sigAtoms==null? new HashMap<String,ExprVar>():  new HashMap<String,ExprVar>(usm.sigAtoms);
 
-		System.out.println("sigAtoms before->"+sigAtoms);
 		
 		Expr expr = world.getUniqueFieldFact(s.label.replace("this/", ""));
 
+		System.out.println("expr->"+expr);
+		
 		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
 				rep, world.getAllReachableSigs(), command, options,s,expr);
 
@@ -324,7 +354,6 @@ public final class ExampleUsingTheCompiler {
 
 			List<List<Expr>> pFields = new ArrayList<List<Expr>>();
 
-			System.out.println("sigAtoms2->"+sigAtoms);
 			
 			//Make a list of tuples for the field and a set of atoms for the left-most sig
 			List<Expr> field;
@@ -338,7 +367,6 @@ public final class ExampleUsingTheCompiler {
 				pFields.add(field);
 
 			}
-			System.out.println("sigAtoms3->"+sigAtoms);
 			//Merge the CommandScope
 			//First find the related commandscope if it exists.
 			List<CommandScope> oScopes =  oBound.scope;
@@ -354,7 +382,6 @@ public final class ExampleUsingTheCompiler {
 				}
 			}
 
-			System.out.println("scope.pAtoms->"+(scope==null?null:scope.pAtoms));
 
 			if( scope==null){
 				//Make a new commandscope for each relation declration
@@ -377,12 +404,9 @@ public final class ExampleUsingTheCompiler {
 
 
 			//Now change the scope in the bound object
-			System.out.println("scope->"+scope);
-			System.out.println("nList->"+nList);
 
 			nList.add( scope);
 			
-			System.out.println("nList after->"+nList);
 			
 			Bounds nBound = new Bounds( oBound.pos,  oBound.label,  nList);
 			oBound = world.replaceBound( oBound, nBound);
@@ -393,16 +417,11 @@ public final class ExampleUsingTheCompiler {
 		//Add the an empty instance to the solution if it is valid.
 		Object hasEmpty = legalPair.a.getEmpty(legalPair.b, fldNames, s);
 
-		System.out.println("sigAtoms4->"+sigAtoms);
 		if(hasEmpty!=null ){
 			sigAtoms.put(hasEmpty.toString(), ExprVar.make(command.bound.pos, hasEmpty.toString()));
 		}
 
-		System.out.println("sigAtoms->"+sigAtoms);
 		return new UniqSigMessage(sigAtoms, sigScope, oBound, scope, nList);
-
-
-
 
 	}
 

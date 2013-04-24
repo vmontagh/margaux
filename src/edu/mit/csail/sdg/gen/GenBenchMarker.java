@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Set;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.WorkerEngine;
+import edu.uw.ece.alloy.util.TestInputs;
 
 public class GenBenchMarker {
 
@@ -198,6 +200,30 @@ public class GenBenchMarker {
 	private static  int SubStack = 8192;
 	private static final String fs = System.getProperty("file.separator");
 
+	private static void doTest(String name,int experiments,long timeOutMin, Collection<Object[]> tests) throws InterruptedException, Err{
+
+		String report = "report_"+name+"_"+System.currentTimeMillis()+".txt";
+		for(Object[] obj : tests){
+			
+			if(name.toLowerCase().contains("new")){
+				getInstance().executeTask(experiments, 
+						  new NewSyntaxExecuterJob(report), 
+						 obj[0].toString(), timeOutMin*60L*1000L);
+			}else if(name.toLowerCase().contains("new")){
+				getInstance().executeTask(experiments, 
+						new OldSyntaxExecuterJob(report), 
+						 obj[0].toString(), timeOutMin*60L*1000L);
+			}else if(name.toLowerCase().contains("walker")){
+				getInstance().executeTask(experiments, 
+						new WalkerExecuterJob(report), 
+						 obj[0].toString(), timeOutMin*60L*1000L);
+			}
+			
+		}
+
+		
+	}
+	
 
 	/**
 	 * @param args
@@ -205,12 +231,42 @@ public class GenBenchMarker {
 	 */
 	public static void main(String[] args) throws Exception {
 		long timeOutMin = 30; 
-		int experiments = 3;
-		 String report = "report"+System.currentTimeMillis()+".txt";
+		int experiments = 1;
 		final List<String> fileGroups = new ArrayList<String>();
 		int numbers = 5;
+
+		System.out.println(TestInputs.generatorBenchmarkWalker().size());
+		
+		System.exit(-10);
+		
+		doTest("Walker",experiments, timeOutMin, TestInputs.generatorBenchmarkWalker());
+		
+		
+/*		doTest("NewWithConstraint1",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithConstraint1());
+		doTest("NewWithConstraint2",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithConstraint2());
+		doTest("NewWithout",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithoutConstraint());
+
+		
+		doTest("NewWithConstraint1_Itr",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithConstraint1());
+		doTest("NewWithConstraint2_Itr",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithConstraint2());
+		doTest("NewWithout_Itr",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithoutConstraint());
+
+		
+/*		doTest("OldWithConstraint1_Itr",experiments, timeOutMin, TestInputs.generatorBenchmarkNormalWithConstraint1());
+		doTest("OldWithConstraint2_Itr",experiments, timeOutMin, TestInputs.generatorBenchmarkNormalWithConstraint1());
+		doTest("OldWithout_Itr",experiments, timeOutMin, TestInputs.generatorBenchmarkNormal());
+	*/	
+		System.exit(-10);
+		
+		
+		
+		
+		
 		int suits = 2;
 		int players = 2;
+		String report = "";
+		
+		
 		
 		
 		for(int i=0; i<args.length;i++ ){

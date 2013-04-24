@@ -135,7 +135,7 @@ public abstract class ExecuterJob implements WorkerTask {
 
 	public synchronized void updateResult(long time, String name, long evaluationTime, 
 			long executionTime, long traslationTime, long variables, long clauses, boolean sat){
-		String out = "";
+/*		String out = "";
 		try {
 			
 			out = Util.readAll(reportFile);
@@ -146,7 +146,9 @@ public abstract class ExecuterJob implements WorkerTask {
 					","+executionTime+","+traslationTime+","+variables+","+clauses+","+sat);
 		} catch (Err e) {
 			e.printStackTrace();
-		}
+		}*/
+		edu.mit.csail.sdg.gen.Util.Logger(reportFile, String.valueOf(time),  name, String.valueOf( evaluationTime), 
+				String.valueOf( executionTime), String.valueOf( traslationTime), String.valueOf( variables), String.valueOf( clauses), String.valueOf( sat));
 	}
 
 	

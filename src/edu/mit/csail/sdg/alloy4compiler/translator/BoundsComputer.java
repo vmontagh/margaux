@@ -484,6 +484,20 @@ final class BoundsComputer {
 				TupleSet  ts = ub.get(s).clone();
 				this.sol.addAbstractUpperBound(s, ts);		
 		}
+		/*
+		System.out.println("At the end of BoundComputing we do have:");
+		System.out.println("\tsc:\n"+sc);
+		System.out.println("|-----------------------------------------|");
+		System.out.println("\tub\n"+ub);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tlb\n"+lb);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tsol.a2k()\n"+sol.a2k());		
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tsol.bounds\n"+sol.bounds);		
+		System.out.println("|-----------------------------------------|");
+		*/
+		
 	}
 
 	//==============================================================================================================//

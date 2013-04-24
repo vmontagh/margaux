@@ -39,17 +39,17 @@ public class TestGenerator {
 		String alsName = f.getName();
 		String[] inputs = new String[]{alsPath};
 		
-		String instPath = alsPath.replaceAll(".als", ".xml");
-		File instFile = new File(instPath);
-		assertTrue("The answer does not exist!",(instFile).exists());
 		
 		
 		String alsInst = ExampleUsingTheCompiler.run(inputs);
-		
-		
 		String solPath = alsPath.replaceAll(".als", ".out.xml");
 		File outFile = new File(solPath);
-		assertTrue("The answer does not exist!",(outFile).exists());
+		assertTrue("The generated answer does not exist!",(outFile).exists());
+
+		String instPath = alsPath.replaceAll(".als", ".xml");
+		File instFile = new File(instPath);
+		assertTrue("The answer does not exist!",(instFile).exists());
+
 		
 		AlloyInstance inst = StaticInstanceReader.parseInstance(instFile);
 		System.out.println("The expected instance:\n\t\t"+inst);

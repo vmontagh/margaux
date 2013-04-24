@@ -224,7 +224,10 @@ public final class Command extends Browsable {
                 return null;
             }
         };
-        for(Command c=this; c!=null; c=c.parent) c.formula.accept(findString);
+        
+        for(Command c=this; c!=null; c=c.parent) {
+        	c.formula.accept(findString);
+        	}
         for(Sig s: sigs) {
            for(Expr e: s.getFacts()) e.accept(findString);
            for(Decl d: s.getFieldDecls()) d.expr.accept(findString);

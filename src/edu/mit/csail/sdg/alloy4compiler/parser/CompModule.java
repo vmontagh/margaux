@@ -32,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -87,6 +88,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Attr.AttrType;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.SubsetSig;
+import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
 
 /** Mutable; this class represents an Alloy module; equals() uses object identity. */
 
@@ -1057,14 +1059,29 @@ public final class CompModule extends Browsable implements Module {
 			return this.fields;
 		}
 
-		public List<Expr> extractFieldsItems(Sig.Field fld) throws Err{
+		public List<Expr> extractFieldsItems(Sig.Field field) throws Err{
 			fields =null;
 			sigs = new ArrayList<Expr>();
 			mults = new ArrayList<ExprUnary.Op>();
-			visitThis( fld.decl().expr);
+			visitThis( field.decl().expr);
 			return this.sigs;
 		}
 		
+		public Set<Sig> extractSigsFromFields(Collection<Field> fields) throws Err{
+			Set<Sig> sigs = new HashSet<Sig>();
+			for(Sig.Field field:fields){
+				for(Expr sig:extractFieldsItems(field)){
+					if(sig instanceof Sig)
+						sigs.add((Sig)sig);
+					else if(sig instanceof Sig.Field){
+						Collection<Field> subFields = new ArrayList<Sig.Field>();
+						subFields.add((Field)sig);
+						sigs.addAll(extractSigsFromFields(subFields));
+					}
+				}
+			}
+			return sigs;
+		}
 		
 		
 		public List<ExprUnary.Op> getMultiplicities(Sig.Field fld) throws Err{
@@ -1943,7 +1960,6 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 	public void removeUniquFacts(Sig uSig){
-		uniqFact.remove(uSig.label.replace("this/", ""));
 		for(Decl fDecl:uSig.getFieldDecls())
 			uniqFldSetDcl.remove(fDecl.get().toString());
 	}
@@ -2063,7 +2079,7 @@ public final class CompModule extends Browsable implements Module {
 		 */
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
-		if(obj.isUnique == null)
+		if(ExampleUsingTheCompiler.usingKKItr || obj.isUnique == null)
 			old2appendedfacts.put(obj, fact);
 		else
 			uniqFact.put(obj.label.replace("this/", ""), fact);

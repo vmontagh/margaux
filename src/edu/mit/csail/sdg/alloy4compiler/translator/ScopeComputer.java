@@ -903,6 +903,28 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 				atoms.add(String.valueOf(i));
 			}
 		}
+		
+		/*
+		System.out.println("At the end of ScopeComputing we do have:");
+		System.out.println("\tsig2scope:\n"+sig2scope);
+		System.out.println("|-----------------------------------------|");
+		System.out.println("\tsig2PscopeL\n"+sig2PscopeL);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tsig2PscopeU\n"+sig2PscopeU);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tfield2PscopeL\n"+field2PscopeL);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tfield2PscopeU\n"+field2PscopeU);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\texact\n"+exact);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tlower\n"+lower);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tupper\n"+upper);
+		System.out.println("|-----------------------------------------");
+		System.out.println("\tatoms\n"+atoms);
+		System.out.println("|-----------------------------------------|");
+		*/
 
 	}
 
@@ -954,7 +976,6 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 		for(int i=0; set.size()<sc.maxstring; i++) set.add("\"String" + i + "\"");
 		sc.atoms.addAll(set);
 		A4Solution sol = new A4Solution(cmd.toString(), sc.bitwidth, sc.maxseq, set, sc.atoms, rep, opt, cmd.expects);
-		System.out.println("a2k_>"+sol.a2k());
 		return new Pair<A4Solution,ScopeComputer>(sol, sc);
 	}
 }

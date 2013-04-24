@@ -114,7 +114,7 @@ public abstract class Sig extends Expr {
    /** Nonnull if this sig's multiplicity is declared to be one.
     * <p> Note: at most one of "lone", "one", "some" can be nonnull for each sig.
     */
-   public final Pos isOne;
+   public /*final*/ Pos isOne;
 
    /** Nonnull if this sig's multiplicity is declared to be some.
     * <p> Note: at most one of "lone", "one", "some" can be nonnull for each sig.

@@ -23,6 +23,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Tuple;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4TupleSet;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
+import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
 
 public class NewSyntaxExecuterJob extends ExecuterJob  {
 
@@ -42,7 +43,7 @@ public class NewSyntaxExecuterJob extends ExecuterJob  {
 	protected void callExecuter(String fileName) throws Err {
 
 
-		copyFromJAR();
+		/*copyFromJAR();
 
 		final String binary = alloyHome() + fs + "binary";
 		System.out.println(binary);
@@ -202,9 +203,7 @@ public class NewSyntaxExecuterJob extends ExecuterJob  {
 
 				if (ans.satisfiable()) {ans.writeXML(fileName+".xml");}
 */
-				updateResult(System.currentTimeMillis(), fileName, evaluationTime,
-						rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/false);
-	
+/*	
 			}
 
 		} catch (Err e) {
@@ -212,6 +211,13 @@ public class NewSyntaxExecuterJob extends ExecuterJob  {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+*/
+		
+		
+		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
+		
+		updateResult(System.currentTimeMillis(), fileName, rep.evalTime,
+				rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1);
 
 
 	}

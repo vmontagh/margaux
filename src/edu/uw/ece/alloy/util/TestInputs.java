@@ -14,7 +14,37 @@ public class TestInputs {
 		return oneD2twoD(Utils.filesR("models/tests/gen/", "^.*\\.als$"));
 	}
 
+	
+	public static Collection<Object[]> generatorBenchmarkNewWithConstraint1() {
+		return oneD2twoD(Utils.filesR("models/partial/gen/", "^new_\\d_\\d\\.als$"));
+	}
 
+	public static Collection<Object[]> generatorBenchmarkNewWithConstraint2() {
+		return oneD2twoD(Utils.filesR("models/partial/gen", "^new_\\d_\\d_a\\.als"));
+	}
+
+	public static Collection<Object[]> generatorBenchmarkNewWithoutConstraint() {
+		return oneD2twoD(Utils.filesR("models/partial/gen", "^new_\\d_\\d_no\\.als"));
+	}
+
+	public static Collection<Object[]> generatorBenchmarkNormal() {
+		return oneD2twoD(Utils.filesR("models/partial/gen", "^old_\\d_\\d_no\\.als$"));
+	}
+
+	public static Collection<Object[]> generatorBenchmarkNormalWithConstraint1() {
+		return oneD2twoD(Utils.filesR("models/partial/gen", "^old_\\d_\\d\\.als"));
+	}
+
+	public static Collection<Object[]> generatorBenchmarkNormalWithConstraint2() {
+		return oneD2twoD(Utils.filesR("models/partial/gen", "^old_\\d_\\d_a\\.als"));
+	}
+
+	
+	public static Collection<Object[]> generatorBenchmarkWalker() {
+		return oneD2twoD(Utils.filesR("models/partial/gen/stm", "^walker_\\d{1,3}.als"));
+	}
+
+	
 	public static Collection<Object[]> oneD2twoD(final Object[] in) {
 		final Collection<Object[]> out = new ArrayList<Object[]>(in.length);
 		for (final Object obj : in) {
@@ -23,6 +53,9 @@ public class TestInputs {
 		return out;
 	}
 
+	
+	
+	
 	private static Map<String,Set<String>> freeze(final Map<String,Set<String>> m) {
 		final Map<String,Set<String>> n = new TreeMap<String,Set<String>>();
 		for (final Map.Entry<String, Set<String>> e : m.entrySet()) {
