@@ -235,9 +235,6 @@ public class GenBenchMarker {
 		final List<String> fileGroups = new ArrayList<String>();
 		int numbers = 5;
 
-		System.out.println(TestInputs.generatorBenchmarkWalker().size());
-		
-		System.exit(-10);
 		
 		doTest("Walker",experiments, timeOutMin, TestInputs.generatorBenchmarkWalker());
 		
