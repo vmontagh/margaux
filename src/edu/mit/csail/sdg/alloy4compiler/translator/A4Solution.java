@@ -2335,20 +2335,20 @@ public final class A4Solution {
 		Set<Sig.Field> fldsRefPlusDep = new HashSet<Sig.Field>(fldsRefDep);
 		fldsRefDep.removeAll(refFields);
 
-		Set<Sig.Field> fldsLevelI0 = new HashSet<>(fldsLevel0);
-		Set<Sig.Field> fldsLevelE0 = new HashSet<>(fldsLevel0);
+		Set<Sig.Field> fldsLevelI0 = new HashSet<Sig.Field>(fldsLevel0);
+		Set<Sig.Field> fldsLevelE0 = new HashSet<Sig.Field>(fldsLevel0);
 		fldsLevelI0.retainAll(fldsRefPlusDep);
 		//fldsLevelI0.retainAll(fldsRefPlusDep);
 		fldsLevelE0.removeAll(fldsRefPlusDep);
 
-		Set<Sig.Field> fldsLevelI1 = new HashSet<>(fldsLevel1);
-		Set<Sig.Field> fldsLevelE1 = new HashSet<>(fldsLevel1);
+		Set<Sig.Field> fldsLevelI1 = new HashSet<Sig.Field>(fldsLevel1);
+		Set<Sig.Field> fldsLevelE1 = new HashSet<Sig.Field>(fldsLevel1);
 		fldsLevelI1.addAll(fldsRefPlusDep);
 		fldsLevelI1.removeAll(fldsLevelI0);
 		fldsLevelE1.removeAll(fldsRefPlusDep);
 
 
-		Set<Sig.Field> fldsLevelI0I1MinusRefDep = new HashSet<>(fldsLevel0);
+		Set<Sig.Field> fldsLevelI0I1MinusRefDep = new HashSet<Sig.Field>(fldsLevel0);
 		fldsLevelI0I1MinusRefDep.addAll(fldsLevel1);
 		fldsLevelI0I1MinusRefDep.removeAll(fldsRefPlusDep);
 
@@ -2452,14 +2452,14 @@ public final class A4Solution {
 				//I am trying to make each signature one, then iterativly run the solver.
 				ExprHasName u1 =  ExprVar.make(Pos.UNKNOWN,Util.tail(uniqSig.label).toLowerCase()+"_1",uniqSig.type());
 				ExprHasName u2 =  ExprVar.make(Pos.UNKNOWN,Util.tail(uniqSig.label).toLowerCase()+"_2",uniqSig.type());
-				List<ExprHasName> names = new ArrayList<>();
+				List<ExprHasName> names = new ArrayList<ExprHasName>();
 				names.add(u1);
 				names.add(u2);
 				edu.mit.csail.sdg.alloy4compiler.ast.Decl decl = 
 						new edu.mit.csail.sdg.alloy4compiler.ast.Decl(null, Pos.UNKNOWN, null, names, mult( uniqSig));
 				List<edu.mit.csail.sdg.alloy4compiler.ast.Decl> decls = new ArrayList<edu.mit.csail.sdg.alloy4compiler.ast.Decl>();
 				decls.add(decl);
-				List<Expr> orOprands = new ArrayList<>();
+				List<Expr> orOprands = new ArrayList<Expr>();
 				for(Sig.Field field:uniqSig.getFields()){
 					orOprands.add(
 							ExprBinary.Op.NOT_EQUALS.make(Pos.UNKNOWN, Pos.UNKNOWN, 
