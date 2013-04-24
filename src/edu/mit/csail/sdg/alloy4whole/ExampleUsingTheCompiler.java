@@ -206,7 +206,7 @@ public final class ExampleUsingTheCompiler {
 									usm.sigScope = new CommandScope(usm.sigScope.pos, 
 											usm.sigScope.sig,
 											usm.sigScope.isExact, pAtoms.size(), pAtoms.size(), usm.sigScope.increment, 
-											new ArrayList<>( pAtoms),
+											new ArrayList( pAtoms),
 											pAtoms.size()+
 											usm.scope.pAtomsLowerLastIndex, 
 											usm.sigScope.pFields,
