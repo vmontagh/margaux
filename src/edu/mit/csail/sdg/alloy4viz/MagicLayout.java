@@ -163,7 +163,6 @@ private void projection() {
 			     //If all visible nodes are projected then flush the ternary projections
 			     if(ProjectedEverything(LoneSingleton, TernaryTypes, Existential, model)) TernaryTypes.clear();     
 			   
-//			   System.out.println(TernaryTypes);
 			     
 			   winners.addAll(LoneSingleton);  
 			   winners.addAll(Existential);
@@ -183,7 +182,6 @@ private void projection() {
 							   		break;
 							   }
 						   }
-//						   System.out.println(winners);
 				   }
 				   
 			   }
@@ -288,12 +286,9 @@ private final static ConstList<String> LIKELY_PROJECTION_TYPE_NAMES = Util.asLis
     	  if(visRelation.size()>1){
          List<AlloyType> rTypes = r.getTypes();
          
-//         System.out.println(r.getArity());
-//         if (r.getArity()==2 && !rTypes.contains(projectionType) && !spineRelations.contains(r)) {
          if (r.getArity()==2 && !rTypes.contains(projectionType)){
             // it's binary, non-projection and non-spine
             AlloyType targetType = rTypes.get(1);
-            System.out.println(targetType.toString()+":"+enumerationTypes.contains(targetType)+","+(isLonely(targetType) && isSilent(targetType)));
             if (enumerationTypes.contains(targetType) || (isLonely(targetType) && isSilent(targetType))) {
                // target is an enumeration: we have an attribute
                vizState.attribute.put(r, true);
@@ -406,8 +401,7 @@ private boolean isLonely(AlloyType targetType) {
     * - is member of ternary relations */
    
    private boolean isLoneSingleton(AlloyModel currentmodel ,AlloyType t){
-//	   	 System.out.println(t+":"+t.isOne+currentmodel.getSubTypes(t).isEmpty()+currentmodel.getSuperType(t).toString().equals("univ")+hasTernary(currentmodel, t));
-	     return(t.isOne && currentmodel.getSubTypes(t).isEmpty() && currentmodel.getSuperType(t).toString().equals("univ") && hasTernary(currentmodel, t) && ProjectableTypes(currentmodel).contains(t)) ? true : false;	
+	   return(t.isOne && currentmodel.getSubTypes(t).isEmpty() && currentmodel.getSuperType(t).toString().equals("univ") && hasTernary(currentmodel, t) && ProjectableTypes(currentmodel).contains(t)) ? true : false;	
    } 
    
    /**Function to check whether the subject type is the wrapper type {r.getTypes().get(0)} of a ternary relation*/
