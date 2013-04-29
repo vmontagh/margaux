@@ -126,10 +126,15 @@ public final strictfp class GraphViewer extends JPanel {
         if (c!=null) { c.invalidate(); c.repaint(); c.validate(); } else { invalidate(); repaint(); validate(); }
     }
 
+    public GraphViewer(final Graph graph)
+    {
+    	this(graph, false, -1, -1);
+    }
+    
     /** Construct a GraphViewer that displays the given graph. 
      * @return */
-    public GraphViewer(final Graph graph, boolean layedOut, int graphPosition) {
-        OurUtil.make(this, BLACK, WHITE, new EmptyBorder(0,0,0,0));
+    public GraphViewer(final Graph graph, boolean layedOut, int left, int top) {
+    	OurUtil.make(this, BLACK, WHITE, new EmptyBorder(0,0,0,0));
         setBorder(null);
         this.scale = graph.defaultScale;
         this.graph = graph;
@@ -139,7 +144,7 @@ public final strictfp class GraphViewer extends JPanel {
         }
         else
         {
-        	this.graph.calcFrame(graphPosition);
+        	this.graph.calcFrame(left, top);
         }
         final JMenuItem zoomIn = new JMenuItem("Zoom In");
         final JMenuItem zoomOut = new JMenuItem("Zoom Out");
@@ -430,14 +435,25 @@ public final strictfp class GraphViewer extends JPanel {
        pop.show(c,x,y);
     }
     
+    /** Returns the graph nodes of the graph.*/
     public java.util.List<GraphNode> getGraphNodes()
     {
     	return Collections.unmodifiableList(graph.getGraphNodes());
     }
     
-    public int getGraphPosition()
+    public int calculateEdgeCrossings()
     {
-    	return graph.getLeftMostPos();
+    	return graph.calculateEdgeCrossings();
+    }
+    
+    public int getLeftMostPos()
+    {
+    	return graph.getLeft();
+    }
+    
+    public int getTopMostPos()
+    {
+    	return graph.getTop();
     }
     
     /** Returns a DOT representation of the current graph. */

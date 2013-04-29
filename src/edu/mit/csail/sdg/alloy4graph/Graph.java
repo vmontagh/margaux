@@ -95,7 +95,7 @@ public final strictfp class Graph {
    /** The height of each layer. */
     int[] layerPH = null;
     
-    /** */
+    /** This variables indicates the layout strategy that should be used.*/
     private LayoutStrat strat = LayoutStrat.BySink;
 
    /** The list of layers;  must stay in sync with GraphNode.graph and GraphNode.layer
@@ -565,14 +565,14 @@ public final strictfp class Graph {
       layout_assignOrder();
       layout_backEdges();
 	  int layers;
-	  //if (strat == LayoutStrat.BySink)
-	  //{
+	  if (strat == LayoutStrat.BySink)
+	  {
 		  layers = layout_decideLayer();
-	  /*}
+	  }
 	  else
 	  {
 		  layers = layout_assignTypeToLayer();
-	  }*/
+	  }
       layout_dummyNodesIfNeeded();
       layout_reorderPerLayer();
   
@@ -602,7 +602,7 @@ public final strictfp class Graph {
       recalcBound(true);
 }
    
-   public void calcFrame(int xPosition)
+   public void calcFrame(int left, int top)
    {
 	  if (nodes.size()==0) return;
 	  for(GraphNode n:nodes) n.calcBounds();
@@ -611,9 +611,8 @@ public final strictfp class Graph {
  	  layoutNewFrameOfProjection();
  	  relayout_edges(true, true);
  	  recalcBound(true);
- 	  //Move the graph so that the nodes are in the same place as in the previous frame.
- 	  int move = xPosition - xPositionOfGraph;
- 	  left += move;
+ 	  this.left = left;
+ 	  this.top = top;
    }
    
    private int calcLeftMostNode()
@@ -965,6 +964,71 @@ public final strictfp class Graph {
          }
       }
       drawEdges();
+   }
+   
+   public int calculateEdgeCrossings()
+   {
+	   int readability = 0;
+	   for (int i = 0;i<layerlist.size()-1;i++)
+	   {
+		   List<GraphNode> layer1 = layerlist.get(i);
+		   List<GraphNode> layer2 = layerlist.get(i+1);
+		   List<GraphEdge> AcrossSameLayers = new ArrayList<GraphEdge>();
+		   AcrossSameLayers.addAll(getEdgesBetweenLayers(layer1, i));
+		   AcrossSameLayers.addAll(getEdgesBetweenLayers(layer2, i));
+		   for (GraphEdge e1 : AcrossSameLayers)
+		   {
+			   for (GraphEdge e2 : AcrossSameLayers)
+			   {
+				   int high1;
+				   int high2;
+				   int low1;
+				   int low2;
+				   if (e1.a().layer()==i)
+				   {
+					   high1 = e1.a().pos;
+					   low1 = e1.b().pos;
+				   }
+				   else
+				   {
+					   high1 = e1.b().pos;
+					   low1 = e1.a().pos;
+				   }
+				   if (e2.a().layer()==i)
+				   {
+					   high2 = e1.a().pos;
+					   low2 = e1.b().pos;
+				   }
+				   else
+				   {
+					   high2 = e1.b().pos;
+					   low2 = e1.a().pos;
+				   }
+				   if ((high1<high2&&low1>low2)||(high2<high1&&low2>low1))
+				   {
+					   readability++;
+				   }
+			   }
+		   }
+	   }
+	   return readability;
+   }
+   
+   private List<GraphEdge> getEdgesBetweenLayers(List<GraphNode> layer, int i)
+   {
+	   List<GraphEdge> AcrossSameLayers = new ArrayList<GraphEdge>();
+	   for (int j = 0;j<layer.size();j++)
+	   {
+		   GraphNode n = layer.get(j);
+		   for (GraphEdge e : n.edges())
+		   {
+			   if (e.a().layer()==i+1 || e.b().layer()==i+1)
+			   {
+				   AcrossSameLayers.add(e);
+			   }
+		   }
+	   }
+	   return AcrossSameLayers;
    }
    
    private void drawEdges()

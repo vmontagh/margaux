@@ -131,7 +131,7 @@ public final class VizState {
       edgeColor.put(ext,DotColor.BLACK); weight.put(ext,100); layoutBack.put(ext,true);
       edgeColor.put(in,DotColor.BLACK); weight.put(in,100); layoutBack.put(in,true);
       // Done
-      cache.clear();
+      //cache.clear();
       changedSinceLastSave=false;
    }
 
@@ -142,8 +142,8 @@ public final class VizState {
       this.originalInstance=unprojectedInstance;
       for (AlloyType t:getProjectedTypes()) if (!unprojectedInstance.model.hasType(t)) projectedTypes.remove(t);
       currentModel = StaticProjector.project(unprojectedInstance.model, projectedTypes);
-      cache.clear();
-      mostRecentProj.clear();
+      //cache.clear();
+      //mostRecentProj.clear();
    }
 
    /** Erase the current theme customizations and then load it from a file.
@@ -152,7 +152,7 @@ public final class VizState {
    public void loadPaletteXML(String filename) throws IOException {
       resetTheme();
       StaticThemeReaderWriter.readAlloy(filename,this);
-      cache.clear();
+      //cache.clear();
       changedSinceLastSave=false;
    }
 
@@ -165,45 +165,30 @@ public final class VizState {
    }
 
    /** Caches previously generated graphs. */
-   private LinkedHashMap<AlloyProjection,GraphViewer> cache=new LinkedHashMap<AlloyProjection,GraphViewer>();
+  // private LinkedHashMap<AlloyProjection,GraphViewer> cache=new LinkedHashMap<AlloyProjection,GraphViewer>();
 
    /** Caches previously generated projection for each Projection */
-   private LinkedHashMap<AlloyProjection, GraphViewer> mostRecentProj = new LinkedHashMap<AlloyProjection,GraphViewer>();
-
+   //private LinkedHashMap<AlloyProjection, GraphViewer> mostRecentProj = new LinkedHashMap<AlloyProjection,GraphViewer>();
+   private AlloyProjection curProjection;
+   
+   GraphViewer currentGraphViewer;
+   
    /** Generate a VizGraphPanel for a given projection choice, using the current settings. */
    public JPanel getGraph(AlloyProjection projectionChoice) {
-      GraphViewer ans = cache.get(projectionChoice);
       AlloyInstance inst = originalInstance;
       try {
-    	  GraphViewer oldFrame = null;
-    	  for (AlloyProjection proj : mostRecentProj.keySet())
+    	  if (curProjection!=null&&projectionChoice!=null&&curProjection.getProjectedTypes().equals(projectionChoice.getProjectedTypes()))
     	  {
-    		  if (proj.getProjectedTypes().equals(projectionChoice.getProjectedTypes()))
-    		  {
-    	    	  oldFrame = mostRecentProj.get(proj);
-    		  }
+    		  currentGraphViewer = StaticGraphMaker.produceFrame(inst, this, projectionChoice, currentGraphViewer);
+    		  currentGraphViewer.setBorder(null);
     	  }
-    	  //If the projection already has a layout, then use this.
-    	  if (ans!=null&&oldFrame!=null)
+    	  else
     	  {
-    		  ans.modifyNodePositions(oldFrame.getGraphNodes());
-    		  updateCache(projectionChoice, ans);
-    		  return ans;
+    		  currentGraphViewer = StaticGraphMaker.produceGraph(inst, this, projectionChoice);
+    	      currentGraphViewer.setBorder(null);
+    	      curProjection = projectionChoice;
     	  }
-    	  else if (ans==null&&oldFrame!=null)
-    	  {
-    		  GraphViewer gv = StaticGraphMaker.produceFrame(inst, this, projectionChoice, oldFrame);
-    		  updateCache(projectionChoice, gv);
-    		  gv.setBorder(null);
-    		  return gv;
-    	  }
-    	  //else//(ans==null&&mostRecentProj.get(inst)==null)
-    	  //{
-    		  ans = StaticGraphMaker.produceGraph(inst, this, projectionChoice);
-    	      updateCache(projectionChoice, ans);
-    	      ans.setBorder(null);
-    	      return ans;
-    	  //}
+    	  return currentGraphViewer;
       } catch(Throwable ex) {
          String msg = "An error has occurred: " + ex + "\n\nStackTrace:\n" + MailBug.dump(ex) + "\n";
          JScrollPane scroll = OurUtil.scrollpane(OurUtil.textarea(msg, 0, 0, false, false));
@@ -216,12 +201,12 @@ public final class VizState {
       }
    }
 
-   private void updateCache(AlloyProjection proj, GraphViewer ans)
+   /*private void updateCache(AlloyProjection proj, GraphViewer ans)
    {
 	   mostRecentProj.remove(proj);
 	   mostRecentProj.put(proj, ans);
 	   cache.put(proj, ans);
-   }
+   }*/
    
    /** True if the theme has been modified since last save. */
    private boolean changedSinceLastSave=false;
@@ -230,13 +215,13 @@ public final class VizState {
    public boolean changedSinceLastSave() { return changedSinceLastSave; }
 
    /** Sets the "changed since last save" flag, then flush any cached generated graphs. */
-   private void change() { changedSinceLastSave=true; cache.clear(); }
+  // private void change() { changedSinceLastSave=true; cache.clear(); }
 
    /** If oldValue is different from newValue, then sets the "changed since last save" flag and flush the cache. */
-   private void changeIf(Object oldValue, Object newValue) {
+   /*private void changeIf(Object oldValue, Object newValue) {
       if (oldValue==null) { if (newValue==null) return; } else { if (oldValue.equals(newValue)) return; }
       change();
-   }
+   }*/
 
    /*============================================================================================*/
 
@@ -289,7 +274,7 @@ public final class VizState {
    public void project(AlloyType type) {
       if (canProject(type)) if (projectedTypes.add(type)) {
          currentModel = StaticProjector.project(originalInstance.model, projectedTypes);
-         change();
+         //change();
       }
    }
 
@@ -297,7 +282,7 @@ public final class VizState {
    public void deproject(AlloyType type) {
       if (projectedTypes.remove(type)) {
          currentModel = StaticProjector.project(originalInstance.model, projectedTypes);
-         change();
+         //change();
       }
    }
 
@@ -306,7 +291,7 @@ public final class VizState {
       if (projectedTypes.size()>0) {
          projectedTypes.clear();
          currentModel = StaticProjector.project(originalInstance.model, projectedTypes);
-         change();
+         //change();
       }
    }
 
@@ -320,7 +305,7 @@ public final class VizState {
 
    /** Sets whether we will use original atom names or not. */
    public void useOriginalName(Boolean newValue) {
-      if (newValue!=null && useOriginalNames!=newValue) { change(); useOriginalNames=newValue; }
+      if (newValue!=null && useOriginalNames!=newValue) { /*change();*/ useOriginalNames=newValue; }
    }
 
    /*============================================================================================*/
@@ -333,7 +318,7 @@ public final class VizState {
 
    /** Sets whether we will hide private sigs/fields/relations. */
    public void hidePrivate(Boolean newValue) {
-      if (newValue!=null && hidePrivate!=newValue) { change(); hidePrivate=newValue; }
+      if (newValue!=null && hidePrivate!=newValue) { /*change();*/ hidePrivate=newValue; }
    }
 
    /*============================================================================================*/
@@ -346,7 +331,7 @@ public final class VizState {
 
    /** Sets whether we will hide meta sigs/fields/relations. */
    public void hideMeta(Boolean newValue) {
-      if (newValue!=null && hideMeta!=newValue) { change(); hideMeta=newValue; }
+      if (newValue!=null && hideMeta!=newValue) { /*change();*/ hideMeta=newValue; }
    }
 
    /*============================================================================================*/
@@ -358,7 +343,7 @@ public final class VizState {
    public int getFontSize() { return fontSize; }
 
    /** Sets the font size. */
-   public void setFontSize(int n) { if (fontSize!=n && fontSize>0) { change(); fontSize=n; } }
+   public void setFontSize(int n) { if (fontSize!=n && fontSize>0) { /*change();*/ fontSize=n; } }
 
    /*============================================================================================*/
 
@@ -370,7 +355,7 @@ public final class VizState {
 
    /** Sets the default node palette. */
    public void setNodePalette(DotPalette x) {
-      if (nodePalette!=x && x!=null) {change(); nodePalette=x;}
+      if (nodePalette!=x && x!=null) {/*change();*/ nodePalette=x;}
    }
 
    /*============================================================================================*/
@@ -383,7 +368,7 @@ public final class VizState {
 
    /** Sets the default edge palette. */
    public void setEdgePalette(DotPalette x) {
-      if (edgePalette!=x && x!=null) {change(); edgePalette=x;}
+      if (edgePalette!=x && x!=null) {/*change();*/ edgePalette=x;}
    }
 
    /*============================================================================================*/
@@ -411,19 +396,19 @@ public final class VizState {
    public final class MInt {
       private final LinkedHashMap<AlloyElement,Integer> map = new LinkedHashMap<AlloyElement,Integer>();
       private MInt() { }
-      private void clear() { map.clear(); change(); }
-      private void putAll(MInt x) { map.putAll(x.map); change(); }
+      private void clear() { map.clear(); /*change();*/ }
+      private void putAll(MInt x) { map.putAll(x.map); /*change();*/ }
       public int get(AlloyElement x)             { Integer ans=map.get(x); if (ans==null) return 0; else return ans; }
-      public void put(AlloyElement x, Integer v) { if (v==null || v<0) v=0; changeIf(map.put(x,v), v); }
+      public void put(AlloyElement x, Integer v) { if (v==null || v<0) v=0; /*changeIf(map.put(x,v), v);*/ }
    }
 
    public final class MString {
       private final LinkedHashMap<AlloyElement,String> map = new LinkedHashMap<AlloyElement,String>();
       private MString() { }
-      private void clear() { map.clear(); change(); }
-      private void putAll(MString x) { map.putAll(x.map); change(); }
+      private void clear() { map.clear(); /*change();*/ }
+      private void putAll(MString x) { map.putAll(x.map); /*change();*/ }
       public String get(AlloyElement x)         { String ans=map.get(x); if (ans==null) ans=x.getName().trim(); return ans; }
-      public void put(AlloyElement x, String v) { if (x==null && v==null) v=""; if (x!=null && x.getName().equals(v)) v=null; changeIf(map.put(x,v), v); }
+      public void put(AlloyElement x, String v) { if (x==null && v==null) v=""; if (x!=null && x.getName().equals(v)) v=null; /*changeIf(map.put(x,v), v);*/ }
    }
 
    public final class MMap<T> {
@@ -432,8 +417,8 @@ public final class VizState {
       private final T offValue;
       private MMap() { onValue=null; offValue=null; }
       private MMap(T on, T off) { this.onValue=on; this.offValue=off; }
-      private void clear() { map.clear(); change(); }
-      private void putAll(MMap<T> x) { map.putAll(x.map); change(); }
+      private void clear() { map.clear(); /*change();*/ }
+      private void putAll(MMap<T> x) { map.putAll(x.map); /*change();*/ }
       public T get(AlloyElement obj) { return map.get(obj); }
       public T resolve(AlloyElement obj) {
          AlloyModel m = currentModel;
@@ -443,7 +428,7 @@ public final class VizState {
       public void put(AlloyElement obj, T value) {
          if (obj==null && value==null) return;
          Object old = map.put(obj, value);
-         if ((old==null && value!=null) || (old!=null && !old.equals(value))) change();
+         /*if ((old==null && value!=null) || (old!=null && !old.equals(value))) change();*/
       }
       OurCheckbox pick(String label, String tooltip) {
          return new OurCheckbox(label, tooltip, (Boolean.TRUE.equals(get(null)) ? OurCheckbox.ON : OurCheckbox.OFF)) {

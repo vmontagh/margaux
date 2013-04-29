@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -75,21 +78,210 @@ public final class StaticGraphMaker {
    /** The list of node positions for new frame */
    private List<GraphNode> oldGraphNodes = new ArrayList<GraphNode>();
    
+   /** Contains a list of lists of all labels associated with the atom through the projection. */
+   private static Map<AlloyAtom, List<List<String>>> atomLabels = new HashMap<AlloyAtom, List<List<String>>>();
+   
+   private static enum LayoutScheme {compSink, compType, repSink, repType}
+   
    /** Produces a single Graph from the given Instance and View and choice of Projection.*/
    public static GraphViewer produceGraph(AlloyInstance instance, VizState view, AlloyProjection proj) throws ErrorFatal {
-      if (proj == null) proj = new AlloyProjection();
-      Graph graph = getNewGraph(view);
-      AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
-      Graph tempGraph = new Graph(1, Graph.LayoutStrat.ByType);
-      new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
-      /*GraphViewer temp = */return new GraphViewer(tempGraph, false, -1);
-      /*if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
-      return produceFrame(instance, view, proj, temp);
-      projInstance = StaticProjector.project(instance, proj, true);
-      new StaticGraphMaker(graph, instance, view, projInstance, temp);
-      return new GraphViewer(graph, false, -1);*/
+         resetProjectionAnalysis();
+	     if (proj.getProjectedTypes().size()==0)
+         {
+        	 return produceRepGraph(instance, view, proj, Graph.LayoutStrat.BySink);
+         }
+		 Map<AlloyType, AlloyAtom> m = generateMap(proj);
+	     AnalyzeProjection(instance, view, m, proj.getProjectedTypes(), 0, Graph.LayoutStrat.BySink);
+	     GraphViewer comp = produceCompositeGraph(instance, new VizState(view), proj, Graph.LayoutStrat.BySink);
+	     GraphViewer compType = produceCompositeGraph(instance, new VizState(view), proj, Graph.LayoutStrat.ByType);
+	     GraphViewer rep = produceRepGraph(instance, new VizState(view), proj, Graph.LayoutStrat.BySink);
+	     GraphViewer repType = produceRepGraph(instance, new VizState(view), proj, Graph.LayoutStrat.ByType);
+         int compRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, comp);
+         int compTypeRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, compType);
+         int repRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, rep);
+         int repTypeRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, repType);
+         Map<StaticGraphMaker.LayoutScheme, Integer> readMap = new EnumMap<StaticGraphMaker.LayoutScheme, Integer>(StaticGraphMaker.LayoutScheme.class);
+         readMap.put(StaticGraphMaker.LayoutScheme.compSink, compRead);
+         readMap.put(StaticGraphMaker.LayoutScheme.compType, compTypeRead);
+         readMap.put(StaticGraphMaker.LayoutScheme.repSink, repRead);
+         readMap.put(StaticGraphMaker.LayoutScheme.repType, repTypeRead);
+         StaticGraphMaker.LayoutScheme best = getLowestReadScore(readMap);
+         if (best == StaticGraphMaker.LayoutScheme.compSink)
+         {
+        	 return produceCompositeGraph(instance, view, proj, Graph.LayoutStrat.BySink);
+         }
+         else if (best == StaticGraphMaker.LayoutScheme.compType)
+         {
+        	 return produceCompositeGraph(instance, view, proj, Graph.LayoutStrat.ByType);
+         }
+         else if (best == StaticGraphMaker.LayoutScheme.repSink)
+         {
+        	 return produceRepGraph(instance, view, proj, Graph.LayoutStrat.BySink);
+         }
+         else //if (best == StaticGraphMaker.layoutScheme.repType)
+         {
+        	 return produceRepGraph(instance, view, proj, Graph.LayoutStrat.ByType);
+         }
    }
-    
+   
+   private static GraphViewer produceRepGraph(AlloyInstance instance, VizState view, AlloyProjection proj, Graph.LayoutStrat strat) throws ErrorFatal
+   {
+	    if (proj == null) proj = new AlloyProjection();
+	    if (proj.getProjectedTypes().size()==0)
+	    {
+	    	Graph tempGraph = new Graph(1, strat);
+	    	new StaticGraphMaker(tempGraph, instance, view, instance, null);
+	    	return new GraphViewer(tempGraph);
+	    }
+	    Graph graph = getNewGraph(view);
+	    AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
+	    Graph tempGraph = new Graph(1, strat);
+	    Map<AlloyType, AlloyAtom> m = generateMap(proj);
+	    GraphViewer gv = getMaxReadability(instance, view, m, proj.getProjectedTypes(), 0, -1, strat, null);
+	    return produceFrame(instance, view, proj, gv);
+   }
+   
+   private static GraphViewer produceCompositeGraph(AlloyInstance instance, VizState view, AlloyProjection proj, Graph.LayoutStrat strat) throws ErrorFatal
+   {
+	   if (proj == null) proj = new AlloyProjection();
+	      Graph graph = getNewGraph(view);
+	      AlloyInstance projInstance = StaticProjector.project(instance, proj, false);
+	      Graph tempGraph = new Graph(1, strat);
+	      new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
+	      GraphViewer temp = new GraphViewer(tempGraph);
+	      if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
+	      return produceFrame(instance, view, proj, temp);
+   }
+   
+   private static void resetProjectionAnalysis()
+   {
+	   atomLabels.clear();
+   }
+   
+   private static void AnalyzeProjection(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, Graph.LayoutStrat strat) throws ErrorFatal
+   {
+	   AlloyType type = types.toArray(new AlloyType[1])[recNum];
+	   List<AlloyAtom> atoms = instance.type2atoms(type);
+	   for (int i = 0;i<atoms.size();i++)
+	   {
+		   map.remove(type);
+		   map.put(type, atoms.get(i));
+		   if (recNum<types.size()-1)
+		   {
+			   AnalyzeProjection(instance, view, map, types, recNum+1, strat);
+		   }
+		   else
+		   {
+			   Graph g = new Graph(1, strat);
+			   AlloyInstance projInst = StaticProjector.project(instance, new AlloyProjection(map), true);
+			   new StaticGraphMaker(g, instance, view, projInst, null);
+			   GraphViewer graph = new GraphViewer(g);
+			   for (GraphNode node : graph.getGraphNodes())
+			   {
+				   if (!atomLabels.keySet().contains(node.getAtom()))
+				   {
+					   atomLabels.put(node.getAtom(), new ArrayList<List<String>>());
+				   }
+				   List<List<String>> listOfLists = atomLabels.get(node.getAtom());
+				   List<String> newList = new ArrayList<String>();
+				   
+				   if (node.getLabels()!=null)for (int j = 0;j<node.getLabels().size();j++)
+				   {
+					   String label = node.getLabels().get(j);
+					   newList.add(label);
+				   }
+				   listOfLists.add(newList);
+				   atomLabels.remove(node.getAtom());
+				   atomLabels.put(node.getAtom(), listOfLists);
+			   }
+		   }
+	   }
+   }
+   
+   private static GraphViewer getMaxReadability(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, int max, Graph.LayoutStrat strat, GraphViewer gv) throws ErrorFatal
+   {
+	   int readability = 0;
+	   AlloyType type = types.toArray(new AlloyType[1])[recNum];
+	   List<AlloyAtom> atoms = instance.type2atoms(type);
+	   int numOfTypes = types.size();
+	   GraphViewer graphViewer = gv;
+	   for (int i = 0;i<atoms.size();i++)
+	   {
+		   map.remove(type);
+		   map.put(type, atoms.get(i));
+		   if (recNum<types.size()-1)
+		   {
+			   GraphViewer graph = getMaxReadability(instance, view, map, types, recNum+1, max, strat, gv);
+			   int maximum = graph.calculateEdgeCrossings();
+			   return graph;
+		   }
+		   else
+		   {
+			   Graph g = new Graph(1, strat);
+			   AlloyInstance projInst = StaticProjector.project(instance, new AlloyProjection(map), true);
+			   new StaticGraphMaker(g, instance, view, projInst, null);
+			   GraphViewer graph = new GraphViewer(g);
+			   if (max==-1||max>(graph.calculateEdgeCrossings()^2))
+			   {
+				   graphViewer = graph;
+				   max=graph.calculateEdgeCrossings();
+			   }
+		   }
+	   }
+	   return graphViewer;
+   }
+   
+   private static int calculateReadability(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, GraphViewer gv) throws ErrorFatal
+   {
+	   int readability = 0;
+	   AlloyType type = types.toArray(new AlloyType[1])[recNum];
+	   List<AlloyAtom> atoms = instance.type2atoms(type);
+	   int numOfTypes = types.size();
+	   for (int i = 0;i<atoms.size();i++)
+	   {
+		   map.remove(type);
+		   map.put(type, atoms.get(i));
+		   if (recNum<types.size()-1)
+		   {
+			   readability += calculateReadability(instance, view, map, types, recNum+1, gv)^2;
+		   }
+		   else
+		   {
+			  int crossingsScore = produceFrame(instance, view, new AlloyProjection(map), gv).calculateEdgeCrossings();
+			  readability += crossingsScore;
+		   }
+	   }
+	   return readability;
+   }
+   
+   private static Map<AlloyType, AlloyAtom> generateMap(AlloyProjection proj)
+   {
+	   Map<AlloyType, AlloyAtom> map = new HashMap<AlloyType, AlloyAtom>();
+	   Collection<AlloyType> types = proj.getProjectedTypes();
+	   for (AlloyType t : types)
+	   {
+		   map.put(t, null);
+	   }
+	   return map;
+   }
+   
+   private static StaticGraphMaker.LayoutScheme getLowestReadScore(Map<StaticGraphMaker.LayoutScheme, Integer> map)
+   {
+	   Set<StaticGraphMaker.LayoutScheme> gvs = map.keySet();
+	   StaticGraphMaker.LayoutScheme [] gvsArr = gvs.toArray(new StaticGraphMaker.LayoutScheme[1]);
+	   int min = -1;
+	   StaticGraphMaker.LayoutScheme layScheme = null;
+	   for (int i = 0;i<gvs.size();i++)
+	   {
+		   if (min==-1 || map.get(gvsArr[i])<min)
+		   {
+			   layScheme = gvsArr[i];
+			   min = map.get(gvsArr[i]);
+		   }
+	   }
+	   return layScheme;
+   }
+   
    /** Produces a another frame of the projection based on the given GraphViewer. */
    public static GraphViewer produceFrame(AlloyInstance instance, VizState view, AlloyProjection proj, GraphViewer gv) throws ErrorFatal 
    {
@@ -98,7 +290,7 @@ public final class StaticGraphMaker {
 	   AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
 	   new StaticGraphMaker(graph, instance, view, projInstance, gv);
 	   if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
-	   return new GraphViewer(graph, true, gv.getGraphPosition());
+	   return new GraphViewer(graph, true, gv.getLeftMostPos(), gv.getTopMostPos());
    }
    
    private static Graph getNewGraph(VizState view)
@@ -219,6 +411,8 @@ public final class StaticGraphMaker {
     	  if (atom!=null&&n.getAtom()!=null&&atom.equals(n.getAtom()))
     	  {
         	  node = new GraphNode(graph, atom, atom, n.x(), n.y(), n.layer(), n.getPos(), atomname(atom, false)).set(n.shape()).set(n.getColor()).set(n.getStyle());
+        	  //node.setProjTextHeight(n.getProjTextHeight());
+        	  //node.setProjTextWidth(n.getProjTextWidth());
     	  }
       }
 	  if (oldGraphNodes.isEmpty()||node==null)
@@ -229,6 +423,11 @@ public final class StaticGraphMaker {
           DotShape shape = view.shape(atom, instance);
           String label = atomname(atom, false);
           node = new GraphNode(graph, atom, atom, label).set(shape).set(color.getColor(view.getNodePalette())).set(style);
+	  }
+	  
+	  if (atomLabels!=null&&atomLabels.get(node.getAtom())!=null&&!atomLabels.get(node.getAtom()).isEmpty())
+	  {
+		  node.setSizeLabels(atomLabels.get(node.getAtom()));
 	  }
 	// Get the label based on the sets and relations
       String setsLabel="";

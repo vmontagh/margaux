@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
 import static java.lang.StrictMath.sqrt;
@@ -122,6 +123,9 @@ public final strictfp class GraphNode {
     */
    private List<String> labels = null;
 
+   /** Use these labels to determine the width and height (for projection node size consistency) */
+   private List<List<String>> labelSize = null;
+   
    /** The node color; never null.
     * <p> When this value changes, we should invalidate the previously computed bounds information.
     */
@@ -218,6 +222,14 @@ public final strictfp class GraphNode {
    /** Returns an unmodifiable view of the list of "out" edges. */
    public List<GraphEdge> outEdges() { return Collections.unmodifiableList(outs); }
 
+   /** Returns an unmodifiable view of the list of edges. */
+   public List<GraphEdge> edges() { 
+	   List<GraphEdge> edgeList = new ArrayList<GraphEdge>();
+	   edgeList.addAll(ins);
+	   edgeList.addAll(outs);
+	   return Collections.unmodifiableList(edgeList);
+   }
+   
    /** Returns an unmodifiable view of the list of "self" edges. */
    public List<GraphEdge> selfEdges() { return Collections.unmodifiableList(selfs); }
 
@@ -464,6 +476,16 @@ public final strictfp class GraphNode {
 
    //===================================================================================================
 
+   private void calcHeightWidth(List<String> tempLabels)
+   {
+	   for(int i=0; i<tempLabels.size(); i++) {
+	         String t = tempLabels.get(i);
+	         Rectangle2D rect = getBounds(fontBold, t);
+	         int ww = ((int)(rect.getWidth())) + 1; // Round it up
+	         if (width<ww) width=ww;
+	         height=height+ad;
+	  }
+   }
    /** (Re-)calculate this node's bounds. */
    void calcBounds() {
       reserved=(yShift=0);
@@ -472,13 +494,20 @@ public final strictfp class GraphNode {
       poly=(poly2=(poly3=null));
       if (shape==null) return;
       Polygon poly=new Polygon();
-      if (labels!=null) for(int i=0; i<labels.size(); i++) {
-         String t = labels.get(i);
-         Rectangle2D rect = getBounds(fontBold, t);
-         int ww = ((int)(rect.getWidth())) + 1; // Round it up
-         if (width<ww) width=ww;
-         height=height+ad;
+      
+      if (labelSize!=null)
+      {
+    	  int maxHeight = 0;
+    	  for (List<String> tempLabels : labelSize)
+    	  {
+    		  if (height>maxHeight) maxHeight = height;
+    		  height = 0;
+    		  calcHeightWidth(tempLabels);
+    	  }
+    	  height = maxHeight;
       }
+      else if (labels!=null) calcHeightWidth(labels);
+      
       int hw=((width+1)/2)+labelPadding;  if (hw<ad/2) hw=ad/2; width=hw*2; side=hw;
       int hh=((height+1)/2)+labelPadding; if (hh<ad/2) hh=ad/2; height=hh*2; updown=hh;
       switch(shape) {
@@ -622,6 +651,21 @@ public final strictfp class GraphNode {
    public DotStyle getStyle()
    {
 	   return style;
+   }
+   
+   public List<String> getLabels()
+   {
+	   return labels;
+   }
+   
+   public List<List<String>> getSizeLabels()
+   {
+	   return labelSize;
+   }
+   
+   public void setSizeLabels(List<List<String>> labs)
+   {
+	   labelSize = labs;
    }
    //===================================================================================================
 
