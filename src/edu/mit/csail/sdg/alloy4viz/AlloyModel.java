@@ -240,17 +240,17 @@ public final class AlloyModel {
    public Set<AlloyRelation> getRelations() { return relations; }
 
    /** Returns the AlloyType that matches the given name, or null if no such AlloyType. */
-   public AlloyType getType(String TypeName){
+   public AlloyType getType(final String typeName){
 	   for(AlloyType t: types){
-		   if(t.toString().equals(TypeName)){return t;}
+		   if (t.getName().equals(typeName)) { return t; }
 	   }
 	   return null;
    }
 
    /** Returns the AlloyRelation that matches the given name, or null if no such AlloyRelation. */
-   public AlloyRelation getRelation(String RelationName){
+   public AlloyRelation getRelation(final String relationName){
 	   for(AlloyRelation r: relations){
-		   if(r.getName().equals(RelationName)){return r;}
+		   if(r.getName().equals(relationName)) {return r;}
 	   }
 	   return null;
    }
