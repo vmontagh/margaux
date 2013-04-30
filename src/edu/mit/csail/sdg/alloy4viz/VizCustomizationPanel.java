@@ -358,6 +358,7 @@ public final class VizCustomizationPanel extends JPanel {
       JLabel pLabel = OurUtil.label("Hide private sigs/relations:");
       JLabel mLabel = OurUtil.label("Hide meta sigs/relations:");
       JLabel fLabel = OurUtil.label("Font Size:");
+      JLabel stabilityLabel = OurUtil.label("Stable Graph Projection:");
       JComboBox fontSize = new OurCombobox(false, fontSizes.toArray(), 60, 32, vizState.getFontSize()) {
          private static final long serialVersionUID = 0;
          @Override public void do_changed(Object value) { if (fontSizes.contains(value)) vizState.setFontSize((Integer)value); }
@@ -384,12 +385,17 @@ public final class VizCustomizationPanel extends JPanel {
          private static final long serialVersionUID = 0;
          public Icon do_action() { boolean x = vizState.hideMeta();  vizState.hideMeta(!x); remakeAll(); return (!x ? ON : OFF); }
       };
+      JPanel Stability = new OurCheckbox("", "Whether the visualizer should keep the node positions and sizes stable across frames.", StaticGraphMaker.stableGraphs ? OurCheckbox.ON : OurCheckbox.OFF){
+    	 private static final long serialVersionUID = 0;
+    	 public Icon do_action(){boolean x = StaticGraphMaker.stableGraphs;StaticGraphMaker.stableGraphs = !StaticGraphMaker.stableGraphs;return (!x ? ON :OFF);}
+      };
       parent.add(makelabel(" General Graph Settings:"));
       parent.add(OurUtil.makeH(wcolor, new Dimension(6, 6)));
       parent.add(OurUtil.makeH(wcolor, 25, nLabel, 5, nodepal, 8, aLabel, 5, name, 2, null));
       parent.add(OurUtil.makeH(wcolor, 25, eLabel, 5, edgepal, 8, fLabel, 5, fontSize, 2, null));
       parent.add(OurUtil.makeH(wcolor, 25, pLabel, 5, priv,    2, null));
       parent.add(OurUtil.makeH(wcolor, 25, mLabel, 5, meta,    2, null));
+      parent.add(OurUtil.makeH(wcolor, 25, stabilityLabel, 5, Stability, 2, null));
    }
 
    //=============================================================================================================//

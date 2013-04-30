@@ -78,6 +78,9 @@ public final class StaticGraphMaker {
    /** The list of node positions for new frame */
    private List<GraphNode> oldGraphNodes = new ArrayList<GraphNode>();
    
+   /** Flag variable to turn stable graph projections on and off. */
+   public static boolean stableGraphs = true;
+   
    /** Contains a list of lists of all labels associated with the atom through the projection. */
    private static Map<AlloyAtom, List<List<String>>> atomLabels = new HashMap<AlloyAtom, List<List<String>>>();
    
@@ -86,9 +89,12 @@ public final class StaticGraphMaker {
    /** Produces a single Graph from the given Instance and View and choice of Projection.*/
    public static GraphViewer produceGraph(AlloyInstance instance, VizState view, AlloyProjection proj) throws ErrorFatal {
          resetProjectionAnalysis();
-	     if (proj.getProjectedTypes().size()==0)
+	     if (proj.getProjectedTypes().size()==0||!stableGraphs)
          {
-        	 return produceRepGraph(instance, view, proj, Graph.LayoutStrat.BySink);
+	    	 Graph tempGraph = new Graph(1, Graph.LayoutStrat.BySink);
+		     AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
+		     new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
+		     return new GraphViewer(tempGraph);
          }
 		 Map<AlloyType, AlloyAtom> m = generateMap(proj);
 	     AnalyzeProjection(instance, view, m, proj.getProjectedTypes(), 0, Graph.LayoutStrat.BySink);
@@ -127,15 +133,6 @@ public final class StaticGraphMaker {
    private static GraphViewer produceRepGraph(AlloyInstance instance, VizState view, AlloyProjection proj, Graph.LayoutStrat strat) throws ErrorFatal
    {
 	    if (proj == null) proj = new AlloyProjection();
-	    if (proj.getProjectedTypes().size()==0)
-	    {
-	    	Graph tempGraph = new Graph(1, strat);
-	    	new StaticGraphMaker(tempGraph, instance, view, instance, null);
-	    	return new GraphViewer(tempGraph);
-	    }
-	    Graph graph = getNewGraph(view);
-	    AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
-	    Graph tempGraph = new Graph(1, strat);
 	    Map<AlloyType, AlloyAtom> m = generateMap(proj);
 	    GraphViewer gv = getMaxReadability(instance, view, m, proj.getProjectedTypes(), 0, -1, strat, null);
 	    return produceFrame(instance, view, proj, gv);

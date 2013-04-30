@@ -173,11 +173,16 @@ public final class VizState {
    
    GraphViewer currentGraphViewer;
    
+   public void clearGraphInfo()
+   {
+	   curProjection = null;
+   }
+   
    /** Generate a VizGraphPanel for a given projection choice, using the current settings. */
    public JPanel getGraph(AlloyProjection projectionChoice) {
       AlloyInstance inst = originalInstance;
       try {
-    	  if (curProjection!=null&&projectionChoice!=null&&curProjection.getProjectedTypes().equals(projectionChoice.getProjectedTypes()))
+    	  if ((StaticGraphMaker.stableGraphs)&&(curProjection!=null&&projectionChoice!=null&&curProjection.getProjectedTypes().equals(projectionChoice.getProjectedTypes())))
     	  {
     		  currentGraphViewer = StaticGraphMaker.produceFrame(inst, this, projectionChoice, currentGraphViewer);
     		  currentGraphViewer.setBorder(null);

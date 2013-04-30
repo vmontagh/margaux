@@ -599,6 +599,7 @@ public final class VizGUI implements ComponentListener {
       if (settingsOpen!=2) content.requestFocusInWindow(); else myEvaluatorPanel.requestFocusInWindow();
       repopulateProjectionPopup();
       if (frame!=null) frame.validate(); else splitpane.validate();
+      myState.clearGraphInfo();myGraphPanel.remakeAll();
    }
 
    /** Helper method that creates a button and add it to both the "SolutionButtons" list, as well as the toolbar. */
