@@ -176,7 +176,7 @@ public final class VizState {
    public void clearGraphInfo()
    {
 	   curProjection = null;
-   }
+   } 
    
    /** Generate a VizGraphPanel for a given projection choice, using the current settings. */
    public JPanel getGraph(AlloyProjection projectionChoice) {
