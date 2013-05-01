@@ -98,6 +98,7 @@ public final class StaticProjector {
       return new AlloyModel(types, sets, relations, unprojectedModel);
    }
 
+   
    /** Project an instance over the given list of types (and their associated chosen atom).
     * @param oldInstance - the original unprojected instance
     * @param projection - the list of types to be projected and their associated chosen atoms
@@ -111,6 +112,10 @@ public final class StaticProjector {
     * <br> else projection.getProjectedAtom(t) must be null.
     * <br> If rule (2) is violated, then some tuples may not show up in the return value.
     */
+   public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection) {
+	   return project(oldInstance, projection, true);
+   }
+   
    public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection, boolean checkAtom) {
       Map<AlloyRelation,List<Integer>> data=new LinkedHashMap<AlloyRelation,List<Integer>>();
       Map<AlloyAtom,Set<AlloySet>> atom2sets = new LinkedHashMap<AlloyAtom,Set<AlloySet>>();

@@ -92,7 +92,7 @@ public final class StaticGraphMaker {
 	     if (proj.getProjectedTypes().size()==0||!stableGraphs)
          {
 	    	 Graph tempGraph = new Graph(1, Graph.LayoutStrat.BySink);
-		     AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
+		     AlloyInstance projInstance = StaticProjector.project(instance, proj);
 		     new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
 		     return new GraphViewer(tempGraph);
          }
@@ -170,7 +170,7 @@ public final class StaticGraphMaker {
 		   else
 		   {
 			   Graph g = new Graph(1, strat);
-			   AlloyInstance projInst = StaticProjector.project(instance, new AlloyProjection(map), true);
+			   AlloyInstance projInst = StaticProjector.project(instance, new AlloyProjection(map));
 			   new StaticGraphMaker(g, instance, view, projInst, null);
 			   GraphViewer graph = new GraphViewer(g);
 			   for (GraphNode node : graph.getGraphNodes())
@@ -215,7 +215,7 @@ public final class StaticGraphMaker {
 		   else
 		   {
 			   Graph g = new Graph(1, strat);
-			   AlloyInstance projInst = StaticProjector.project(instance, new AlloyProjection(map), true);
+			   AlloyInstance projInst = StaticProjector.project(instance, new AlloyProjection(map));
 			   new StaticGraphMaker(g, instance, view, projInst, null);
 			   GraphViewer graph = new GraphViewer(g);
 			   if (max==-1||max>(graph.calculateEdgeCrossings()^2))
@@ -284,7 +284,7 @@ public final class StaticGraphMaker {
    {
 	   if (proj==null) proj = new AlloyProjection();
 	   Graph graph = getNewGraph(view);
-	   AlloyInstance projInstance = StaticProjector.project(instance, proj, true);
+	   AlloyInstance projInstance = StaticProjector.project(instance, proj);
 	   new StaticGraphMaker(graph, instance, view, projInstance, gv);
 	   if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
 	   return new GraphViewer(graph, true, gv.getLeftMostPos(), gv.getTopMostPos());
