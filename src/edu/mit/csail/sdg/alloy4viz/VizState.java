@@ -17,18 +17,13 @@ package edu.mit.csail.sdg.alloy4viz;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-
-import com.sun.corba.se.impl.orbutil.graph.Graph;
-
 import edu.mit.csail.sdg.alloy4.ConstSet;
 import edu.mit.csail.sdg.alloy4.MailBug;
 import edu.mit.csail.sdg.alloy4.OurCheckbox;
@@ -37,7 +32,6 @@ import edu.mit.csail.sdg.alloy4graph.DotColor;
 import edu.mit.csail.sdg.alloy4graph.DotPalette;
 import edu.mit.csail.sdg.alloy4graph.DotShape;
 import edu.mit.csail.sdg.alloy4graph.DotStyle;
-import edu.mit.csail.sdg.alloy4graph.GraphNode;
 import edu.mit.csail.sdg.alloy4graph.GraphViewer;
 
 /** Mutable; this stores an unprojected model as well as the current theme customization.
