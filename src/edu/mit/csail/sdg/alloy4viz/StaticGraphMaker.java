@@ -39,6 +39,7 @@ import edu.mit.csail.sdg.alloy4graph.Graph;
 import edu.mit.csail.sdg.alloy4graph.GraphEdge;
 import edu.mit.csail.sdg.alloy4graph.GraphNode;
 import edu.mit.csail.sdg.alloy4graph.GraphViewer;
+import edu.mit.csail.sdg.alloy4graph.LayoutStrategy;
 
 /** This utility class generates a graph for a particular index of the projection.
  *
@@ -87,17 +88,17 @@ public final class StaticGraphMaker {
          resetProjectionAnalysis();
 	     if (proj.getProjectedTypes().size()==0||!stableGraphs)
          {
-	    	 Graph tempGraph = new Graph(1, Graph.LayoutStrat.BySink);
+	    	 Graph tempGraph = new Graph(1, LayoutStrategy.BySink);
 		     AlloyInstance projInstance = StaticProjector.project(instance, proj);
 		     new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
 		     return new GraphViewer(tempGraph);
          }
 		 Map<AlloyType, AlloyAtom> m = generateMap(proj);
-	     AnalyzeProjection(instance, view, m, proj.getProjectedTypes(), 0, Graph.LayoutStrat.BySink);
-	     GraphViewer comp = produceCompositeGraph(instance, new VizState(view), proj, Graph.LayoutStrat.BySink);
-	     GraphViewer compType = produceCompositeGraph(instance, new VizState(view), proj, Graph.LayoutStrat.ByType);
-	     GraphViewer rep = produceRepGraph(instance, new VizState(view), proj, Graph.LayoutStrat.BySink);
-	     GraphViewer repType = produceRepGraph(instance, new VizState(view), proj, Graph.LayoutStrat.ByType);
+	     AnalyzeProjection(instance, view, m, proj.getProjectedTypes(), 0, LayoutStrategy.BySink);
+	     GraphViewer comp = produceCompositeGraph(instance, new VizState(view), proj, LayoutStrategy.BySink);
+	     GraphViewer compType = produceCompositeGraph(instance, new VizState(view), proj, LayoutStrategy.ByType);
+	     GraphViewer rep = produceRepGraph(instance, new VizState(view), proj, LayoutStrategy.BySink);
+	     GraphViewer repType = produceRepGraph(instance, new VizState(view), proj, LayoutStrategy.ByType);
          int compRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, comp);
          int compTypeRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, compType);
          int repRead = calculateReadability(instance, new VizState(view), m, proj.getProjectedTypes(), 0, rep);
@@ -110,23 +111,23 @@ public final class StaticGraphMaker {
          StaticGraphMaker.LayoutScheme best = getLowestReadScore(readMap);
          if (best == StaticGraphMaker.LayoutScheme.compSink)
          {
-        	 return produceCompositeGraph(instance, view, proj, Graph.LayoutStrat.BySink);
+        	 return produceCompositeGraph(instance, view, proj, LayoutStrategy.BySink);
          }
          else if (best == StaticGraphMaker.LayoutScheme.compType)
          {
-        	 return produceCompositeGraph(instance, view, proj, Graph.LayoutStrat.ByType);
+        	 return produceCompositeGraph(instance, view, proj, LayoutStrategy.ByType);
          }
          else if (best == StaticGraphMaker.LayoutScheme.repSink)
          {
-        	 return produceRepGraph(instance, view, proj, Graph.LayoutStrat.BySink);
+        	 return produceRepGraph(instance, view, proj, LayoutStrategy.BySink);
          }
          else //if (best == StaticGraphMaker.layoutScheme.repType)
          {
-        	 return produceRepGraph(instance, view, proj, Graph.LayoutStrat.ByType);
+        	 return produceRepGraph(instance, view, proj, LayoutStrategy.ByType);
          }
    }
    
-   private static GraphViewer produceRepGraph(AlloyInstance instance, VizState view, AlloyProjection proj, Graph.LayoutStrat strat) throws ErrorFatal
+   private static GraphViewer produceRepGraph(AlloyInstance instance, VizState view, AlloyProjection proj, LayoutStrategy strat) throws ErrorFatal
    {
 	    if (proj == null) proj = new AlloyProjection();
 	    Map<AlloyType, AlloyAtom> m = generateMap(proj);
@@ -134,7 +135,7 @@ public final class StaticGraphMaker {
 	    return produceFrame(instance, view, proj, gv);
    }
    
-   private static GraphViewer produceCompositeGraph(AlloyInstance instance, VizState view, AlloyProjection proj, Graph.LayoutStrat strat) throws ErrorFatal
+   private static GraphViewer produceCompositeGraph(AlloyInstance instance, VizState view, AlloyProjection proj, LayoutStrategy strat) throws ErrorFatal
    {
 	   if (proj == null) proj = new AlloyProjection();
 	      Graph graph = getNewGraph(view);
@@ -151,7 +152,7 @@ public final class StaticGraphMaker {
 	   atomLabels.clear();
    }
    
-   private static void AnalyzeProjection(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, Graph.LayoutStrat strat) throws ErrorFatal
+   private static void AnalyzeProjection(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, LayoutStrategy strat) throws ErrorFatal
    {
 	   AlloyType type = types.toArray(new AlloyType[1])[recNum];
 	   List<AlloyAtom> atoms = instance.type2atoms(type);
@@ -191,7 +192,7 @@ public final class StaticGraphMaker {
 	   }
    }
    
-   private static GraphViewer getMaxReadability(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, int max, Graph.LayoutStrat strat, GraphViewer gv) throws ErrorFatal
+   private static GraphViewer getMaxReadability(AlloyInstance instance, VizState view, Map<AlloyType, AlloyAtom> map, Collection<AlloyType> types, int recNum, int max, LayoutStrategy strat, GraphViewer gv) throws ErrorFatal
    {
 	   int readability = 0;
 	   AlloyType type = types.toArray(new AlloyType[1])[recNum];
@@ -289,7 +290,7 @@ public final class StaticGraphMaker {
    private static Graph getNewGraph(VizState view)
    {
 	  view = new VizState(view);
-	  return new Graph(view.getFontSize() / 12.0D, Graph.LayoutStrat.ByType);
+	  return new Graph(view.getFontSize() / 12.0D, LayoutStrategy.ByType);
    }
    
    /** The list of colors, in order, to assign each legend. */
