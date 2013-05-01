@@ -15,11 +15,12 @@
 
 package edu.mit.csail.sdg.alloy4graph;
 
+import static java.awt.Color.BLACK;
+import static java.awt.Color.WHITE;
 import static java.awt.event.InputEvent.BUTTON1_MASK;
 import static java.awt.event.InputEvent.BUTTON3_MASK;
 import static java.awt.event.InputEvent.CTRL_MASK;
-import static java.awt.Color.WHITE;
-import static java.awt.Color.BLACK;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -36,11 +37,8 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -53,14 +51,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.sun.tools.javac.util.List;
-
 import edu.mit.csail.sdg.alloy4.OurDialog;
 import edu.mit.csail.sdg.alloy4.OurPDFWriter;
 import edu.mit.csail.sdg.alloy4.OurPNGWriter;
 import edu.mit.csail.sdg.alloy4.OurUtil;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
 
 /** This class displays a graph of the current projection.
  *
@@ -482,7 +477,6 @@ public final strictfp class GraphViewer extends JPanel {
     }
 
 	public void modifyNodePositions(java.util.List<GraphNode> graphNodes) {
-		// TODO Auto-generated method stub
 		graph.modifyNodePositions(graphNodes);
 	}
 }
