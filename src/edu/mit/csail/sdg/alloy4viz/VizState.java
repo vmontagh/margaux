@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.TreeSet;
+
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+
 import edu.mit.csail.sdg.alloy4.ConstSet;
 import edu.mit.csail.sdg.alloy4.MailBug;
 import edu.mit.csail.sdg.alloy4.OurCheckbox;
@@ -165,7 +167,7 @@ public final class VizState {
    //private LinkedHashMap<AlloyProjection, GraphViewer> mostRecentProj = new LinkedHashMap<AlloyProjection,GraphViewer>();
    private AlloyProjection curProjection;
    
-   GraphViewer currentGraphViewer;
+   private GraphViewer currentGraphViewer;
    
    public void clearGraphInfo()
    {
