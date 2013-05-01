@@ -96,7 +96,7 @@ public final strictfp class Graph {
     int[] layerPH = null;
     
     /** This variables indicates the layout strategy that should be used.*/
-    private LayoutStrat strat = LayoutStrat.BySink;
+    private LayoutStrategy strat = LayoutStrategy.BySink;
 
    /** The list of layers;  must stay in sync with GraphNode.graph and GraphNode.layer
     * (empty iff there are no nodes; every node is always in exactly one layer, and appears exactly once in that layer)
@@ -125,7 +125,7 @@ public final strictfp class Graph {
    //============================================================================================================================//
 
    /** Constructs an empty Graph object. */
-   public Graph(double defaultScale, LayoutStrat lay)  { this.defaultScale = defaultScale; this.strat = lay; }
+   public Graph(double defaultScale, LayoutStrategy lay)  { this.defaultScale = defaultScale; this.strat = lay; }
 
    /** Assuming layout() has been called, this returns the left edge. */
    public int getLeft() { return left; }
@@ -145,9 +145,6 @@ public final strictfp class Graph {
       return emptyListOfNodes;
    }
 
-   /**enum to indicate which layout strategy to use. */
-   public enum LayoutStrat {ByType, BySink}
-   
    /** Return the number of layers; can be 0. */
    int layers() { return layerlist.size(); }
 
@@ -565,7 +562,7 @@ public final strictfp class Graph {
       layout_assignOrder();
       layout_backEdges();
 	  int layers;
-	  if (strat == LayoutStrat.BySink)
+	  if (strat == LayoutStrategy.BySink)
 	  {
 		  layers = layout_decideLayer();
 	  }
