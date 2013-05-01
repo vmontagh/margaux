@@ -15,26 +15,25 @@
 
 package edu.mit.csail.sdg.alloy4graph;
 
+import static edu.mit.csail.sdg.alloy4graph.Artist.getBounds;
+import static edu.mit.csail.sdg.alloy4graph.Graph.esc;
+import static edu.mit.csail.sdg.alloy4graph.Graph.selfLoopA;
+import static edu.mit.csail.sdg.alloy4graph.Graph.selfLoopGL;
+import static edu.mit.csail.sdg.alloy4graph.Graph.selfLoopGR;
+import static java.lang.StrictMath.round;
+import static java.lang.StrictMath.sqrt;
+
 import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
-import static java.lang.StrictMath.sqrt;
-import static java.lang.StrictMath.round;
-import static edu.mit.csail.sdg.alloy4graph.Artist.getBounds;
-import static edu.mit.csail.sdg.alloy4graph.Graph.selfLoopA;
-import static edu.mit.csail.sdg.alloy4graph.Graph.selfLoopGL;
-import static edu.mit.csail.sdg.alloy4graph.Graph.selfLoopGR;
-import static edu.mit.csail.sdg.alloy4graph.Graph.esc;
 
 /** Mutable; represents a graphical node.
  *
@@ -693,5 +692,4 @@ public final strictfp class GraphNode {
       out.append("]\n");
       return out.toString();
    }
-
 }
