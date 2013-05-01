@@ -98,7 +98,6 @@ public final class StaticProjector {
       return new AlloyModel(types, sets, relations, unprojectedModel);
    }
 
-   
    /** Project an instance over the given list of types (and their associated chosen atom).
     * @param oldInstance - the original unprojected instance
     * @param projection - the list of types to be projected and their associated chosen atoms
