@@ -75,22 +75,22 @@ public final strictfp class Graph {
    final double defaultScale;
 
    /** The left edge. */
-   private static int left = 0;
+   private int left = 0;
 
    /** The top edge. */
-   private static int top = 0;
+   private int top = 0;
 
    /** The bottom edge. */
-   private static int bottom = 0;
+   private int bottom = 0;
 
    /** The total width of the graph; this value is computed by layout(). */
-   private static int totalWidth = 0;
+   private int totalWidth = 0;
 
    /** The total height of the graph; this value is computed by layout(). */
-   private static int totalHeight = 0;
+   private int totalHeight = 0;
    
    /** The position of the left most non-dummy node relative to the containing component. Used for layout consistency between projection frames. */
-   private static int xPositionOfGraph = 0;
+   private int xPositionOfGraph = 0;
 
    /** The height of each layer. */
     int[] layerPH = null;
@@ -1197,7 +1197,6 @@ public final strictfp class Graph {
    }
 
    public void modifyNodePositions(List<GraphNode> graphNodes) {
-	// TODO Auto-generated method stub
 	   for (GraphNode node : nodelist)
 		{
 		    for (GraphNode node1 : graphNodes)
