@@ -167,12 +167,13 @@ public final class VizState {
    //private LinkedHashMap<AlloyProjection, GraphViewer> mostRecentProj = new LinkedHashMap<AlloyProjection,GraphViewer>();
    private AlloyProjection curProjection;
    
-   private GraphViewer currentGraphViewer;
-   
    public void clearGraphInfo()
    {
 	   curProjection = null;
    } 
+
+   private GraphViewer currentGraphViewer;
+   
    
    /** Generate a VizGraphPanel for a given projection choice, using the current settings. */
    public JPanel getGraph(AlloyProjection projectionChoice) {
