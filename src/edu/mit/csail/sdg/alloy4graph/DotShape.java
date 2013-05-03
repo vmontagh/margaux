@@ -15,7 +15,6 @@
 
 package edu.mit.csail.sdg.alloy4graph;
 
-import java.awt.Polygon;
 import java.awt.geom.Path2D;
 
 import javax.swing.Icon;
