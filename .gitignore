@@ -1,1 +1,3 @@
-bin
+bin/
+dist/
+src/edu/mit/csail/sdg/alloy4/Version.java.bk

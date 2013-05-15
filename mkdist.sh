@@ -11,17 +11,18 @@ fi
 function compile {
     version_file=src/edu/mit/csail/sdg/alloy4/Version.java
     cp -r $version_file $version_file.bak
-    sed -i \
+    sed -i .bk \
       -e 's/public static String buildDate.*/public static String buildDate() { return "'"$BUILD_DATE"'"; }/' $version_file
       
-    sed -i -e 's/public static String version.*/public static String version() { return "'"$VERSION"'"; }/' $version_file
+    sed -i .bk \
+      -e 's/public static String version.*/public static String version() { return "'"$VERSION"'"; }/' $version_file
 
     echo "[cleaning up the bin folder...]"
     rm -rf bin/*
 
     CP=$KODKOD_HOME/bin:$(ls -1 lib/*.jar | xargs | sed 's/\ /:/g')
     echo "[compiling...]"
-    find src -name "*.java" | xargs javac -cp $CP -d bin -target 1.5
+    find src -name "*.java" | xargs javac -cp $CP -d bin -target 1.7
 
     mv $version_file.bak $version_file
 }
