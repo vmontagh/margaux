@@ -2,13 +2,14 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/Users/macbookpro/Documents/AlloyMOOP/lib-sdg/trunk/jars-external/sat4j.jar"/>
+	<classpathentry kind="lib" path="/home/atulan/FYDP/moolloy/lib-sdg/jars-external/sat4j.jar"/>
 	<classpathentry kind="lib" path="lib/apple-osx-ui.jar"/>
 	<classpathentry kind="lib" path="lib/extra.jar"/>
 	<classpathentry kind="lib" path="lib/kodkod+moolloy+sat4j.jar"/>
 	<classpathentry kind="lib" path="lib/moolloy.jar"/>
-	<classpathentry kind="lib" path="/lib-sdg/trunk/jars-sdg/sdg-util-0.1.jar"/>
-	<classpathentry kind="lib" path="/lib-sdg/trunk/jars-external/tools.jar"/>
-	<classpathentry kind="lib" path="/lib-sdg/trunk/jars-external/trove-2.0.4.jar"/>
+	<classpathentry kind="lib" path="/home/atulan/FYDP/moolloy/lib-sdg/jars-sdg/sdg-util-0.1.jar"/>
+	<classpathentry kind="lib" path="/home/atulan/FYDP/moolloy/lib-sdg/jars-external/tools.jar"/>
+	<classpathentry kind="lib" path="/home/atulan/FYDP/moolloy/lib-sdg/jars-external/trove-2.0.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
