@@ -44,7 +44,7 @@ import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
 public final class RanMultiobjectiveModel {
 
 
-	/*
+    /*
      * Execute every command in every file.
      *
      * This method parses every file, then execute every command.
@@ -55,7 +55,7 @@ public final class RanMultiobjectiveModel {
      * and they may contain filename/line/column information.
      */
     public static void main(String[] args) throws Err, IOException {
-    	copyFromJAR();
+        copyFromJAR();
         final String binary = alloyHome() + fs + "binary";
         System.out.println(binary);
         // Add the new JNI location to the java.library.path
@@ -68,12 +68,12 @@ public final class RanMultiobjectiveModel {
             old.setAccessible(true);
             old.set(null,newarray);
         } catch (Throwable ex) { }
-    	
-    	System.out.println( loadLibrary("minisat"));
+        
+        System.out.println( loadLibrary("minisat"));
 
-    	MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
-    	/* Finished Extracting Arguments */
-    	
+        MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
+        /* Finished Extracting Arguments */
+        
         A4Reporter rep = new A4Reporter() {
             private long lastTime=0;
 
@@ -100,21 +100,21 @@ public final class RanMultiobjectiveModel {
         };
         
 
-    	Module world = CompUtil.parseEverything_fromFile(rep, null, parsedParameters.getFilename());
+        Module world = CompUtil.parseEverything_fromFile(rep, null, parsedParameters.getFilename());
 
         // Choose some default options for how you want to execute the commands
         A4Options options = new A4Options();
-        options.solver = A4Options.SatSolver.MiniSatJNI;
+        options.solver = A4Options.SatSolver.KK;
         options.MoolloyListAllSolutionsForParertoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
         options.MoolloyUseAdaptableMinimumImprovement  = parsedParameters.getUseAdaptableMinimumImprovement();
         
         
         FileWriter fp_logFile = null; 
         FileWriter fp_logFileIndividualCallStats = null;
-        if ( parsedParameters.getLogRunningTimes() ){        	
-        	fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);        	
-        	System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
-        	fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);        	
+        if ( parsedParameters.getLogRunningTimes() ){            
+            fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);            
+            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
+            fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);            
         }
 
         
@@ -133,17 +133,17 @@ public final class RanMultiobjectiveModel {
             ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
             
             try {
-            	if (!parsedParameters.getListOnlyOneSolution()){
-            		System.out.println("To List all Solutions");
-	                A4Solution ans_next = ans.next();
-	                while(ans_next.satisfiable()){            		
-	            		solution_number++;            		
-	            		ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
-	            		ans_next = ans_next.next();            		
-	            	}   
-            	}
+                if (!parsedParameters.getListOnlyOneSolution()){
+                    System.out.println("To List all Solutions");
+                    A4Solution ans_next = ans.next();
+                    while(ans_next.satisfiable()){                    
+                        solution_number++;                    
+                        ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
+                        ans_next = ans_next.next();                    
+                    }   
+                }
             }catch(java.lang.ClassCastException e){
-            	System.out.println("Finished Listing Extra Solutions");            	
+                System.out.println("Finished Listing Extra Solutions");                
             }
             System.out.println("Finished Try");
             long end_time = System.currentTimeMillis();
@@ -164,7 +164,7 @@ public final class RanMultiobjectiveModel {
             
             LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_SOLVING);
             LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_SOLVING); 
-            		
+                    
             LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_TRANSLATION);
             LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_TRANSLATION); 
 
@@ -197,25 +197,25 @@ public final class RanMultiobjectiveModel {
             
             String LogIndividualCallsHeaderLine = parsedParameters.getFilename() +  "\n";
             LogIndividualCallsHeaderLine +=  IndividualStats.getHeaderLine()  + "\n";
-            		
+                    
             
             
             if ( parsedParameters.getLogRunningTimes()  == true){    
-            	System.out.println("Writing LogLine General");            	
-            	if (parsedParameters.getWriteHeaderLogfile()){            		
-                    fp_logFile.write(LogHeaderLine);            		
-            	}
+                System.out.println("Writing LogLine General");                
+                if (parsedParameters.getWriteHeaderLogfile()){                    
+                    fp_logFile.write(LogHeaderLine);                    
+                }
                 fp_logFile.write(LogLine);            
                 fp_logFile.close();
 
-            	System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
+                System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
 
-            	fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
-            	for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
-            		fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
-            	}
-            	
-            	fp_logFileIndividualCallStats.close();
+                fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
+                for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
+                    fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
+                }
+                
+                fp_logFileIndividualCallStats.close();
             }
             
             
@@ -223,7 +223,7 @@ public final class RanMultiobjectiveModel {
             
             
          }
-        				    
+                            
     }
 
     private static boolean loadLibrary(String library) {
@@ -342,7 +342,7 @@ public final class RanMultiobjectiveModel {
     }
     
     private static String alloyHome = null;
-    private static final String fs = System.getProperty("file.separator");	
+    private static final String fs = System.getProperty("file.separator");    
     
 }
 

@@ -35,6 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import kodkod.ast.BinaryExpression;
@@ -257,29 +258,29 @@ public final class A4Solution {
         int min=min(), max=max();
         
         if (max >= min){
-        	ConcurrentSkipListSet<Integer> ints = new ConcurrentSkipListSet<Integer>();
-        	for(String a: atoms){
-        		try{
-        			ints.add(Integer.valueOf(a));
-        		}catch(NumberFormatException e){}
-        	}
-        	if(ints.last() > max() || ints.first() < min){
-        		exceededInt = true;
-        		exceededInts.addAll(ints.subSet(ints.first(), min));
-        		exceededInts.addAll(ints.subSet(max+1, ints.last()+1 ));
-        	}
+            ConcurrentSkipListSet<Integer> ints = new ConcurrentSkipListSet<Integer>();
+            for(String a: atoms){
+                try{
+                    ints.add(Integer.valueOf(a));
+                }catch(NumberFormatException e){}
+            }
+            if(ints.last() > max() || ints.first() < min){
+                exceededInt = true;
+                exceededInts.addAll(ints.subSet(ints.first(), min));
+                exceededInts.addAll(ints.subSet(max+1, ints.last()+1 ));
+            }
 
-        	for(Integer i: ints) { // Safe since we know 1 <= bitwidth <= 30
-        		Tuple ii = factory.tuple(""+i);
-        		TupleSet is = factory.range(ii, ii);
-        		bounds.boundExactly(i, is);
-        		sigintBounds.add(ii);
-        		if (i>=0 && i<maxseq) seqidxBounds.add(ii);
-        		if (i < ints.last()) next.add(factory.tuple(""+i, ""+(ints.ceiling(i+1))));
-        		if (i==ints.first()) bounds.boundExactly(KK_MIN,  is);
-        		if (i==ints.last()) bounds.boundExactly(KK_MAX,  is);
-        		if (i==0)   bounds.boundExactly(KK_ZERO, is);
-        	}
+            for(Integer i: ints) { // Safe since we know 1 <= bitwidth <= 30
+                Tuple ii = factory.tuple(""+i);
+                TupleSet is = factory.range(ii, ii);
+                bounds.boundExactly(i, is);
+                sigintBounds.add(ii);
+                if (i>=0 && i<maxseq) seqidxBounds.add(ii);
+                if (i < ints.last()) next.add(factory.tuple(""+i, ""+(ints.ceiling(i+1))));
+                if (i==ints.first()) bounds.boundExactly(KK_MIN,  is);
+                if (i==ints.last()) bounds.boundExactly(KK_MAX,  is);
+                if (i==0)   bounds.boundExactly(KK_ZERO, is);
+            }
         }
         this.sigintBounds = sigintBounds.unmodifiableView();
         this.seqidxBounds = seqidxBounds.unmodifiableView();
@@ -310,7 +311,7 @@ public final class A4Solution {
             try {
                 File tmp = File.createTempFile("tmp", ".cnf", new File(opt.tempDirectory));
                 tmp.deleteOnExit(); 
-	            solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), "", opt.solver.options()));
+                solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), "", opt.solver.options()));
                 //solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), opt.solver.options()));
             } catch(IOException ex) { throw new ErrorFatal("Cannot create temporary directory.", ex); }
         } else if (opt.solver.equals(A4Options.SatSolver.ZChaffJNI)) {
@@ -435,12 +436,19 @@ public final class A4Solution {
           return TranslateKodkodToJava.convert(Formula.and(formulas), bitwidth, kAtoms, bounds.unmodifiableView(), null);
     }
     
+    public String debugExtractKInput(TreeSet<Objective> objectives) {
+        if (solved)
+           return TranslateKodkodToJava.convert(Formula.and(formulas), bitwidth, kAtoms, bounds, atom2name, objectives);
+        else
+           return TranslateKodkodToJava.convert(Formula.and(formulas), bitwidth, kAtoms, bounds.unmodifiableView(), null, objectives);
+    }
+    
     public List<Integer> getExceededInts(){
-    	return this.exceededInts;
+        return this.exceededInts;
     }
 
     public boolean isExceededInt(){
-    	return this.exceededInt;
+        return this.exceededInt;
     }
     //===================================================================================================//
 
@@ -457,7 +465,7 @@ public final class A4Solution {
      */
     Relation addRel(String label, TupleSet lower, TupleSet upper) throws ErrorFatal {
       
-    	if (solved) throw new ErrorFatal("Cannot add a Kodkod relation since solve() has completed.");
+        if (solved) throw new ErrorFatal("Cannot add a Kodkod relation since solve() has completed.");
        Relation rel = Relation.nary(label, upper.arity());
        if (lower == upper) {
           bounds.boundExactly(rel, upper);
@@ -605,8 +613,8 @@ public final class A4Solution {
 
     /** Returns the short unique name corresponding to the given atom if the problem is solved and is satisfiable; else returns atom.toString(). */
     String atom2name(Object atom) { 
-    	String ans=atom2name.get(atom); return ans==null ? atom.toString() : ans; 
-    	}
+        String ans=atom2name.get(atom); return ans==null ? atom.toString() : ans; 
+        }
 
     /** Returns the most specific sig corresponding to the given atom if the problem is solved and is satisfiable; else returns UNIV. */
     PrimSig atom2sig(Object atom) { PrimSig sig=atom2sig.get(atom); return sig==null ? UNIV : sig; }
@@ -776,12 +784,12 @@ public final class A4Solution {
         /** {@inheritDoc} */
         public T next() {
             if (hasFirst) { 
-            		hasFirst=false; 
-            		T ans=first; 
-            		first=null; 
-            		return ans; 
+                    hasFirst=false; 
+                    T ans=first; 
+                    first=null; 
+                    return ans; 
             } else {
-            	return iterator.next();
+                return iterator.next();
             }
         }
         /** {@inheritDoc} */
@@ -821,7 +829,7 @@ public final class A4Solution {
 
     /** Helper method that chooses a name for each atom based on its most specific sig; (external caller should call this method with s==null and nexts==null) */
     private static void rename (A4Solution frame, PrimSig s, Map<Sig,List<Tuple>> nexts, UniqueNameGenerator un) throws Err {
-    	if (s==null) {
+        if (s==null) {
             for(ExprVar sk:frame.skolems) un.seen(sk.label);
             // Store up the skolems
             List<Object> skolems = new ArrayList<Object>();
@@ -877,24 +885,24 @@ public final class A4Solution {
             }
             // Assign atom->name and atom->MostSignificantSig
             for(Tuple t:frame.eval.evaluate(Relation.INTS)) {
-            	frame.atom2sig.put(t.atom(0), SIGINT); 
-            	}
+                frame.atom2sig.put(t.atom(0), SIGINT); 
+                }
             for(Tuple t:frame.eval.evaluate(KK_SEQIDX))     { 
-            	frame.atom2sig.put(t.atom(0), SEQIDX); 
-            	}
+                frame.atom2sig.put(t.atom(0), SEQIDX); 
+                }
             for(Tuple t:frame.eval.evaluate(KK_STRING))     { 
-            	frame.atom2sig.put(t.atom(0), STRING); 
-            	}
+                frame.atom2sig.put(t.atom(0), STRING); 
+                }
             for(Sig sig:frame.sigs) 
-            	if (sig instanceof PrimSig && !sig.builtin && ((PrimSig)sig).isTopLevel()) 
-            		rename(frame, (PrimSig)sig, nexts, un);
+                if (sig instanceof PrimSig && !sig.builtin && ((PrimSig)sig).isTopLevel()) 
+                    rename(frame, (PrimSig)sig, nexts, un);
             // These are redundant atoms that were not chosen to be in the final instance
             int unused=0;
             for(Tuple tuple:frame.eval.evaluate(Relation.UNIV)) {
                Object atom = tuple.atom(0);
                if (!frame.atom2sig.containsKey(atom)) { 
-            	   frame.atom2name.put(atom, "unused"+unused); unused++; 
-            	   }
+                   frame.atom2name.put(atom, "unused"+unused); unused++; 
+                   }
             }
             // Add the skolems
             for(int num=skolems.size(), i=0; i<num-2; i=i+3) {
@@ -946,7 +954,7 @@ public final class A4Solution {
            for(Integer i: exceededInts){
                Tuple it = factory.tuple(String.valueOf(i));
                inst.add(i, factory.range(it, it));
-        	   
+               
            }
            for(Relation r: bounds.relations()) inst.add(r, bounds.lowerBound(r));
            eval = new Evaluator(inst, solver.options());
@@ -1003,7 +1011,8 @@ public final class A4Solution {
         if (opt.solver.equals(SatSolver.KK)) {
             File tmpCNF = File.createTempFile("tmp", ".java", new File(opt.tempDirectory));
             String out = tmpCNF.getAbsolutePath();
-            Util.writeAll(out, debugExtractKInput());
+            System.err.printf("Writing KK to %s\n", out);
+            Util.writeAll(out, debugExtractKInput(cmd.moolloyObjectives));
             rep.resultCNF(out);
             return null;
          }
@@ -1024,25 +1033,25 @@ public final class A4Solution {
            System.out.println("Non-Incremental");
         } else {
            //kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
-        	System.out.println("Incremental with MagnifierGlass = " + solver.options().MoolloyListAllSolutionsForParertoPoint());
-        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().MoolloyListAllSolutionsForParertoPoint(),
-        			solver.options().MoolloyUseAdaptableMinimumImprovement());    		        	
+            System.out.println("Incremental with MagnifierGlass = " + solver.options().MoolloyListAllSolutionsForParertoPoint());
+            Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().MoolloyListAllSolutionsForParertoPoint(),
+                    solver.options().MoolloyUseAdaptableMinimumImprovement());                        
             kEnumerator =new Peeker<Solution>(itSolutions); // [s26stewa]
-        	if (sol==null) {
-        		sol = kEnumerator.next();  
-        	}
+            if (sol==null) {
+                sol = kEnumerator.next();  
+            }
 
-        	
-        	/*
-        	System.out.println("Start Listing Solutions");
-        	System.out.println("Solution 1: \n\n" + itSolutions.next() + " \n\n");
-        	System.out.println("Solution 2: \n\n" + itSolutions.next() + " \n\n");
-        	System.out.println("Solution 3: \n\n" + itSolutions.next() + " \n\n");
-        	
-        	System.out.println("End Listing Solutions");
-        	
-        	System.exit(0);
-        	*/
+            
+            /*
+            System.out.println("Start Listing Solutions");
+            System.out.println("Solution 1: \n\n" + itSolutions.next() + " \n\n");
+            System.out.println("Solution 2: \n\n" + itSolutions.next() + " \n\n");
+            System.out.println("Solution 3: \n\n" + itSolutions.next() + " \n\n");
+            
+            System.out.println("End Listing Solutions");
+            
+            System.exit(0);
+            */
 
         }
         if (!solved[0]) rep.solve(0, 0, 0);
@@ -1151,10 +1160,10 @@ public final class A4Solution {
     public A4Solution next() throws Err {
         if (!solved) throw new ErrorAPI("This solution is not yet solved, so next() is not allowed.");
         if (eval==null) {
-        	return this;
+            return this;
         }
         if (nextCache==null) { 
-        	nextCache=new A4Solution(this);
+            nextCache=new A4Solution(this);
         }
         return nextCache;
     }
@@ -1261,10 +1270,10 @@ public final class A4Solution {
     }
     
     public GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
-    	return this.solver.getGIACountCallsOnEachMovementToParetoFront();
+        return this.solver.getGIACountCallsOnEachMovementToParetoFront();
     }
 
-	public Stats getStats() {
-		return this.solver.getStats();
-	}
+    public Stats getStats() {
+        return this.solver.getStats();
+    }
 }
