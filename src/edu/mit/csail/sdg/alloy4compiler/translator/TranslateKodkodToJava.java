@@ -834,7 +834,7 @@ public final class TranslateKodkodToJava implements VoidVisitor {
         String d=make(x.decls());
         String f=make(x.intExpr());
         
-        printer.pushDeclaration("Formula " + newname + ";");
+        printer.pushDeclaration("IntExpression " + newname + ";");
         printer.pushStatement(String.format("%s=%s.sum(%s);",newname,f,d));
         //file.printf("IntExpression %s=%s.sum(%s);%n",newname,f,d);
     }
