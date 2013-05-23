@@ -126,7 +126,13 @@ public final class RunBatchCompiler {
             //System.out.println("============ Command "+command+": ============");
             
             long start_time = System.currentTimeMillis();
-            A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+            File tempfile = new File(parsedParameters.getFilename());
+            String filename = tempfile.getName();
+            String[] things = filename.split("\\.");
+            filename = things[0];
+            
+            
+            A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options, filename);
             
             
 

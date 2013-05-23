@@ -127,6 +127,8 @@ public final class A4Solution {
     //====== immutable fields ===========================================================================//
 
     /** The original Alloy options that generated this solution. */
+    
+    // !!! //
     private final A4Options originalOptions;
 
     /** The original Alloy command that generated this solution; can be "" if unknown. */
@@ -1010,6 +1012,7 @@ public final class A4Solution {
         // Now pick the solver and solve it!
         if (opt.solver.equals(SatSolver.KK)) {
             File tmpCNF = File.createTempFile("tmp", ".java", new File(opt.tempDirectory));
+//        	File tmpCNF = File.createTempFile(this.getOriginalFilename(), ".java", new File(opt.tempDirectory));
             String out = tmpCNF.getAbsolutePath();
             System.err.printf("Writing KK to %s\n", out);
             Util.writeAll(out, debugExtractKInput(cmd.moolloyObjectives));
@@ -1105,7 +1108,176 @@ public final class A4Solution {
         
         return this;
     }
+    
+    /** Overload method for solve with filename to create proper tmp files for JavaforKodkod*/
+    A4Solution solve(final A4Reporter rep, Command cmd, Simplifier simp, boolean tryBookExamples, String filename) throws Err, IOException {
+        // If already solved, then return this object as is
+        if (solved) return this;
+        // If cmd==null, then all four arguments are ignored, and we simply use the lower bound of each relation
+        if (cmd==null) {
+           Instance inst = new Instance(bounds.universe());
+           for(int max=max(), i=min(); i<=max; i++) {
+              Tuple it = factory.tuple(""+i);
+              inst.add(i, factory.range(it, it));
+           }
+           //[VM[ Inclue the extra integers into the visulizer. 
+           for(Integer i: exceededInts){
+               Tuple it = factory.tuple(String.valueOf(i));
+               inst.add(i, factory.range(it, it));
+               
+           }
+           for(Relation r: bounds.relations()) inst.add(r, bounds.lowerBound(r));
+           eval = new Evaluator(inst, solver.options());
+           rename(this, null, null, new UniqueNameGenerator());
+           solved();
+           return this;
+        }
+        // Otherwise, prepare to do the solve...        
+        final A4Options opt = originalOptions;
+        long time = System.currentTimeMillis();
 
+        solver.options().setMoolloyListAllSolutionsForParertoPoint(opt.MoolloyListAllSolutionsForParertoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParertoPoint received through opts.
+        solver.options().setMoolloyUseAdaptableMinimumImprovement(opt.MoolloyUseAdaptableMinimumImprovement);
+        
+        System.out.println("Solver has MoolloyListAllSolutionsForParertoPoint of " + solver.options().MoolloyListAllSolutionsForParertoPoint());
+        
+        rep.debug("Simplifying the bounds...\n");
+        if (simp!=null && formulas.size()>0 && !simp.simplify(rep, this, formulas)) addFormula(Formula.FALSE, Pos.UNKNOWN);
+        rep.translate(opt.solver.id(), bitwidth, maxseq, solver.options().skolemDepth(), solver.options().symmetryBreaking());
+        Formula fgoal = Formula.and(formulas);
+        rep.debug("Generating the solution...\n");
+        kEnumerator = null;
+        Solution sol = null;
+        final Reporter oldReporter = solver.options().reporter();
+        final boolean solved[] = new boolean[]{true};
+        solver.options().setReporter(new AbstractReporter() { // Set up a reporter to catch the type+pos of skolems
+            @Override public void skolemizing(Decl decl, Relation skolem, List<Decl> predecl) {
+                try {
+                    Type t=kv2typepos(decl.variable()).a;
+                    if (t==Type.EMPTY) return;
+                    for(int i=(predecl==null ? -1 : predecl.size()-1); i>=0; i--) {
+                        Type pp=kv2typepos(predecl.get(i).variable()).a;
+                        if (pp==Type.EMPTY) return;
+                        t=pp.product(t);
+                    }
+                    kr2type(skolem, t);
+                } catch(Throwable ex) { } // Exception here is not fatal
+            }
+            @Override public void solvingCNF(int primaryVars, int vars, int clauses) {
+               if (solved[0]) return; else solved[0]=true; // initially solved[0] is true, so we won't report the # of vars/clauses
+               if (rep!=null) rep.solve(primaryVars, vars, clauses);
+           }
+        });
+        
+
+        if (!opt.solver.equals(SatSolver.CNF) && !opt.solver.equals(SatSolver.KK) && tryBookExamples) { // try book examples
+           A4Reporter r = "yes".equals(System.getProperty("debug")) ? rep : null;
+           try { sol = BookExamples.trial(r, this, fgoal, solver, cmd.check); } catch(Throwable ex) { sol = null; }
+        }
+        solved[0] = false; // this allows the reporter to report the # of vars/clauses
+        for(Relation r: bounds.relations()) { formulas.add(r.eq(r)); } // Without this, kodkod refuses to grow unmentioned relations
+        fgoal = Formula.and(formulas);
+        // Now pick the solver and solve it!
+        if (opt.solver.equals(SatSolver.KK)) {
+//            File tmpCNF = File.createTempFile("tmp", ".java", new File(opt.tempDirectory));
+        	File tmpCNF = File.createTempFile(filename+"_", ".java", new File(System.getProperty("user.dir")+"/JavaforKodkod"));
+        	System.out.println(System.getProperty("user.dir"));
+            String out = tmpCNF.getAbsolutePath();
+            System.err.printf("Writing KK to %s\n", out);
+            Util.writeAll(out, debugExtractKInput(cmd.moolloyObjectives));
+            rep.resultCNF(out);
+            return null;
+         }
+        if (opt.solver.equals(SatSolver.CNF)) {
+            File tmpCNF = File.createTempFile("tmp", ".cnf", new File(opt.tempDirectory));
+            String out = tmpCNF.getAbsolutePath();
+            solver.options().setSolver(WriteCNF.factory(out));
+            try { sol = solver.solve(fgoal, bounds); } catch(WriteCNF.WriteCNFCompleted ex) { rep.resultCNF(out); return null; }
+            // The formula is trivial (otherwise, it would have thrown an exception)
+            // Since the user wants it in CNF format, we manually generate a trivially satisfiable (or unsatisfiable) CNF file.
+            Util.writeAll(out, sol.instance()!=null ? "p cnf 1 1\n1 0\n" : "p cnf 1 2\n1 0\n-1 0\n");
+            rep.resultCNF(out);
+            return null;
+         }
+        if (solver.options().solver()==SATFactory.ZChaffMincost || !solver.options().solver().incremental()) {
+           if (sol==null) sol = solver.solve(fgoal, bounds);
+           
+           System.out.println("Non-Incremental");
+        } else {
+           //kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
+            System.out.println("Incremental with MagnifierGlass = " + solver.options().MoolloyListAllSolutionsForParertoPoint());
+            Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().MoolloyListAllSolutionsForParertoPoint(),
+                    solver.options().MoolloyUseAdaptableMinimumImprovement());                        
+            kEnumerator =new Peeker<Solution>(itSolutions); // [s26stewa]
+            if (sol==null) {
+                sol = kEnumerator.next();  
+            }
+
+            
+            /*
+            System.out.println("Start Listing Solutions");
+            System.out.println("Solution 1: \n\n" + itSolutions.next() + " \n\n");
+            System.out.println("Solution 2: \n\n" + itSolutions.next() + " \n\n");
+            System.out.println("Solution 3: \n\n" + itSolutions.next() + " \n\n");
+            
+            System.out.println("End Listing Solutions");
+            
+            System.exit(0);
+            */
+
+        }
+        if (!solved[0]) rep.solve(0, 0, 0);
+        final Instance inst = sol.instance();
+        // To ensure no more output during SolutionEnumeration
+        solver.options().setReporter(oldReporter);
+        // If unsatisfiable, then retreive the unsat core if desired
+        if (inst==null && solver.options().solver()==SATFactory.MiniSatProver) {
+           try {
+              lCore = new LinkedHashSet<Node>();
+              Proof p = sol.proof();
+              if (sol.outcome()==UNSATISFIABLE) {
+                 // only perform the minimization if it was UNSATISFIABLE, rather than TRIVIALLY_UNSATISFIABLE
+                 int i = p.highLevelCore().size();
+                 rep.minimizing(cmd, i);
+                 if (opt.coreMinimization==0) try { p.minimize(new RCEStrategy(p.log())); } catch(Throwable ex) {}
+                 if (opt.coreMinimization==1) try { p.minimize(new HybridStrategy(p.log())); } catch(Throwable ex) {}
+                 rep.minimized(cmd, i, p.highLevelCore().size());
+              }
+              for(Iterator<TranslationRecord> it=p.core(); it.hasNext();) {
+                 Object n=it.next().node();
+                 if (n instanceof Formula) lCore.add((Formula)n);
+              }
+              Map<Formula,Node> map = p.highLevelCore();
+              hCore = new LinkedHashSet<Node>(map.keySet());
+              hCore.addAll(map.values());
+           } catch(Throwable ex) {
+              lCore = hCore = null;
+           }
+        }
+        // If satisfiable, then add/rename the atoms and skolems
+        if (inst!=null) {
+           eval = new Evaluator(inst, solver.options());
+           rename(this, null, null, new UniqueNameGenerator());
+        }
+        // report the result
+        solved();
+        time = System.currentTimeMillis() - time;
+        if (inst!=null) rep.resultSAT(cmd, time, this); else rep.resultUNSAT(cmd, time, this);
+        
+        
+        //System.out.println("WILL RETURN \n\n\n\n");
+        
+        //System.out.println("Second Solution" + this.kEnumerator.next());
+        
+        //System.out.println("Third Solution" + this.kEnumerator.next());
+        
+       // System.out.println("Third Solution" + this.kEnumerator.next());
+        
+
+        
+        return this;
+    }
+    
     //===================================================================================================//
 
     /** This caches the toString() output. */
