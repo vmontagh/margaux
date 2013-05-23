@@ -415,10 +415,37 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     		rep = A4Reporter.NOP;
     	tr = null;
         try {
+        	
             if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
             tr.makeFacts(cmd.formula);
             return tr.frame.solve(rep, cmd, new Simplifier(), false);
+        } catch(UnsatisfiedLinkError ex) {
+            throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
+        } catch(CapacityExceededException ex) {
+            throw rethrow(ex);
+        } catch(HigherOrderDeclException ex) {
+            Pos p = tr!=null ? tr.frame.kv2typepos(ex.decl().variable()).b : Pos.UNKNOWN;
+            throw new ErrorType(p, "Analysis cannot be performed since it requires higher-order quantification that could not be skolemized.");
+        } catch(Throwable ex) {
+            if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
+        }
+    }
+    
+    /** Overload method for execute_command with the filename parameter required for 
+     * creating Java_Kodkod instances with proper filename*/
+    public static A4Solution execute_command (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt, String filename) throws Err {
+    	if (rep==null) 
+    		rep = A4Reporter.NOP;
+    	tr = null;
+        try {
+        	
+            if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
+            tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+            tr.makeFacts(cmd.formula);
+//            opt.originalFilename = filename;
+//            tr.frame.originalOptions.originalFilename = filename;
+            return tr.frame.solve(rep, cmd, new Simplifier(), false, filename);
         } catch(UnsatisfiedLinkError ex) {
             throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
         } catch(CapacityExceededException ex) {
