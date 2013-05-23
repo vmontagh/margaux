@@ -383,7 +383,7 @@ public final class TranslateKodkodToJava implements VoidVisitor {
     /** Print the tupleset using the name n. */
     private void printTupleset(String n, TupleSet ts, Map<Object,String> atomMap) {
     	printer.pushDeclaration("TupleSet " + n + ";");
-    	printer.pushStatement(String.format("factory.noneOf(%d);", ts.arity()));
+    	printer.pushStatement(String.format("%s = factory.noneOf(%d);", n, ts.arity()));
         //file.printf("TupleSet %s = factory.noneOf(%d);%n", n, ts.arity());
         
     	for(Tuple t:ts) {
