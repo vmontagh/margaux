@@ -52,16 +52,19 @@ public class JavaFilePrinter {
     	  file.print("\n");
       }
       
-      int numberOfMethods = ( declarations.size() / MAX_STATEMENTS ) + 1;
+      int numberOfMethods = ( statements.size() / MAX_STATEMENTS ) + 1;
       Iterator<String> itr = statements.iterator();
       
       for( int i=0; i<numberOfMethods; i++ ) {
     	  file.printf("static void Do_%d(){", i );
     	  
     	  for( int j=0; j<MAX_STATEMENTS; j++ ) {
-	    	  if(itr.hasNext()) {
-	    		  file.print(itr.next());
-	    		  file.print("\n");
+    		  
+    		  file.print(itr.next());
+    		  file.print("\n");
+    		  
+	    	  if(!itr.hasNext()) {
+	    		  break;
 	    	  }
     	  }
     	  
