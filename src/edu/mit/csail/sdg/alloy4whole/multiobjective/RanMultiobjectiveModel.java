@@ -113,7 +113,7 @@ public final class RanMultiobjectiveModel {
         FileWriter fp_logFileIndividualCallStats = null;
         if ( parsedParameters.getLogRunningTimes() ){            
             fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);            
-            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
+//            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
             fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);            
         }
 

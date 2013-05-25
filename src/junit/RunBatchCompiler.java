@@ -60,7 +60,7 @@ public final class RunBatchCompiler {
     public static void Compile(String[] args) throws Err, IOException {
         copyFromJAR();
         final String binary = alloyHome() + fs + "binary";
-        System.out.println(binary);
+//        System.out.println(binary);
         // Add the new JNI location to the java.library.path
         try {
             System.setProperty("java.library.path", binary);
@@ -72,7 +72,7 @@ public final class RunBatchCompiler {
             old.set(null,newarray);
         } catch (Throwable ex) { }
         
-        System.out.println( loadLibrary("minisat"));
+//        System.out.println( loadLibrary("minisat"));
 
         MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
         /* Finished Extracting Arguments */
@@ -116,7 +116,7 @@ public final class RunBatchCompiler {
         FileWriter fp_logFileIndividualCallStats = null;
         if ( parsedParameters.getLogRunningTimes() ){            
             fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);            
-            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
+//            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
             fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);            
         }
 
@@ -143,7 +143,7 @@ public final class RunBatchCompiler {
             
             try {
                 if (!parsedParameters.getListOnlyOneSolution()){
-                    System.out.println("To List all Solutions");
+//                    System.out.println("To List all Solutions");
                     A4Solution ans_next = ans.next();
                     while(ans_next.satisfiable()){                    
                         solution_number++;                    
@@ -152,9 +152,9 @@ public final class RunBatchCompiler {
                     }   
                 }
             }catch(java.lang.ClassCastException e){
-                System.out.println("Finished Listing Extra Solutions");                
+//                System.out.println("Finished Listing Extra Solutions");                
             }
-            System.out.println("Finished Try");
+//            System.out.println("Finished Try");
             long end_time = System.currentTimeMillis();
             
             long time_taken = end_time - start_time  ;
@@ -210,7 +210,7 @@ public final class RunBatchCompiler {
             
             
             if ( parsedParameters.getLogRunningTimes()  == true){    
-                System.out.println("Writing LogLine General");                
+//                System.out.println("Writing LogLine General");                
                 if (parsedParameters.getWriteHeaderLogfile()){                    
                     fp_logFile.write(LogHeaderLine);                    
                 }
