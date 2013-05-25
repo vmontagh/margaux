@@ -126,7 +126,7 @@ public class JavaFilePrinter {
 
 			file.printf("%nSystem.out.println(\"Solving...\");");
 			file.printf("%nSystem.out.flush();");
-			file.printf("%ngia.moosolve(problem, notifier, true);");
+			file.printf("%ngia.moosolve(problem, notifier, false);");
 		}
 
 		file.printf("%n}}%n");
