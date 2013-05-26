@@ -105,6 +105,7 @@ public final class RanMultiobjectiveModel {
         // Choose some default options for how you want to execute the commands
         A4Options options = new A4Options();
         options.solver = A4Options.SatSolver.KK;
+        //options.solver = A4Options.SatSolver.SAT4J;
         options.MoolloyListAllSolutionsForParertoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
         options.MoolloyUseAdaptableMinimumImprovement  = parsedParameters.getUseAdaptableMinimumImprovement();
         
@@ -116,6 +117,11 @@ public final class RanMultiobjectiveModel {
 //            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
             fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);            
         }
+        
+        File tempfile = new File(parsedParameters.getFilename());
+        String filename = tempfile.getName();
+        String[] things = filename.split("\\.");
+        filename = things[0];
 
         
         for (Command command: world.getAllCommands()) {
@@ -123,100 +129,100 @@ public final class RanMultiobjectiveModel {
             //System.out.println("============ Command "+command+": ============");
             
             long start_time = System.currentTimeMillis();
-            A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+            A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options, filename);
             
             
 
-            int solution_number = 1;
-            
-            
-            ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
-            
-            try {
-                if (!parsedParameters.getListOnlyOneSolution()){
-                    System.out.println("To List all Solutions");
-                    A4Solution ans_next = ans.next();
-                    while(ans_next.satisfiable()){                    
-                        solution_number++;                    
-                        ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
-                        ans_next = ans_next.next();                    
-                    }   
-                }
-            }catch(java.lang.ClassCastException e){
-                System.out.println("Finished Listing Extra Solutions");                
-            }
-            System.out.println("Finished Try");
-            long end_time = System.currentTimeMillis();
-            
-            long time_taken = end_time - start_time  ;
-            
-            String LogLine = parsedParameters.getFilename() + ",";
-            LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
-            LogLine += "," + time_taken;
-            LogLine += "," + "SummaryStatsNext";
-
-            Stats SummaryStatistics  = TranslateAlloyToKodkod.getStats();
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_CALL);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_CALL) ;
-
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME);
-            
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_SOLVING);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_SOLVING); 
-                    
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_TRANSLATION);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_TRANSLATION); 
-
-            
-            LogLine += "," + "GiaCountCallsOnEachMovementToParetoFront";            
-            LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() + "\n";;
-
-            
-            String LogHeaderLine = "";
-
-            LogHeaderLine += "Filename";
-            LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
-            LogHeaderLine += "," + "Total Time(ms)";
-            LogHeaderLine += "," + "SummaryStatsNext";
-
-            LogHeaderLine += "," + "# of Regular Sat Calls";
-            LogHeaderLine += "," + "# f Regular Unsat Calls";
-
-            
-            LogHeaderLine += "," + "Total Time of Regular Sat Calls";
-            LogHeaderLine += "," + "Total Time of Regular Unsat Calls";
-
-            LogHeaderLine += "," + "Total Time Solving Regular Sat Calls";
-            LogHeaderLine += "," + "Total Time Solving Regular Unsat Calls"; 
-            
-            LogHeaderLine += "," + "Total Time Translating Regular Sat Calls";
-            LogHeaderLine += "," + "Total Time Translating Regular Unsat Calls"; 
-
-            LogHeaderLine += "," + "GiaCountCallsOnEachMovementToParetoFront" + "\n" ;
-            
-            String LogIndividualCallsHeaderLine = parsedParameters.getFilename() +  "\n";
-            LogIndividualCallsHeaderLine +=  IndividualStats.getHeaderLine()  + "\n";
-                    
-            
-            
-            if ( parsedParameters.getLogRunningTimes()  == true){    
-                System.out.println("Writing LogLine General");                
-                if (parsedParameters.getWriteHeaderLogfile()){                    
-                    fp_logFile.write(LogHeaderLine);                    
-                }
-                fp_logFile.write(LogLine);            
-                fp_logFile.close();
-
-                System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
-
-                fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
-                for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
-                    fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
-                }
-                
-                fp_logFileIndividualCallStats.close();
-            }
+//            int solution_number = 1;
+//            
+//            
+//            ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
+//            
+//            try {
+//                if (!parsedParameters.getListOnlyOneSolution()){
+//                    System.out.println("To List all Solutions");
+//                    A4Solution ans_next = ans.next();
+//                    while(ans_next.satisfiable()){                    
+//                        solution_number++;                    
+//                        ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
+//                        ans_next = ans_next.next();                    
+//                    }   
+//                }
+//            }catch(java.lang.ClassCastException e){
+//                System.out.println("Finished Listing Extra Solutions");                
+//            }
+//            System.out.println("Finished Try");
+//            long end_time = System.currentTimeMillis();
+//            
+//            long time_taken = end_time - start_time  ;
+//            
+//            String LogLine = parsedParameters.getFilename() + ",";
+//            LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
+//            LogLine += "," + time_taken;
+//            LogLine += "," + "SummaryStatsNext";
+//
+//            Stats SummaryStatistics  = TranslateAlloyToKodkod.getStats();
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_CALL);
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_CALL) ;
+//
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME);
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME);
+//            
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_SOLVING);
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_SOLVING); 
+//                    
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_TRANSLATION);
+//            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_TRANSLATION); 
+//
+//            
+//            LogLine += "," + "GiaCountCallsOnEachMovementToParetoFront";            
+//            LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() + "\n";;
+//
+//            
+//            String LogHeaderLine = "";
+//
+//            LogHeaderLine += "Filename";
+//            LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
+//            LogHeaderLine += "," + "Total Time(ms)";
+//            LogHeaderLine += "," + "SummaryStatsNext";
+//
+//            LogHeaderLine += "," + "# of Regular Sat Calls";
+//            LogHeaderLine += "," + "# f Regular Unsat Calls";
+//
+//            
+//            LogHeaderLine += "," + "Total Time of Regular Sat Calls";
+//            LogHeaderLine += "," + "Total Time of Regular Unsat Calls";
+//
+//            LogHeaderLine += "," + "Total Time Solving Regular Sat Calls";
+//            LogHeaderLine += "," + "Total Time Solving Regular Unsat Calls"; 
+//            
+//            LogHeaderLine += "," + "Total Time Translating Regular Sat Calls";
+//            LogHeaderLine += "," + "Total Time Translating Regular Unsat Calls"; 
+//
+//            LogHeaderLine += "," + "GiaCountCallsOnEachMovementToParetoFront" + "\n" ;
+//            
+//            String LogIndividualCallsHeaderLine = parsedParameters.getFilename() +  "\n";
+//            LogIndividualCallsHeaderLine +=  IndividualStats.getHeaderLine()  + "\n";
+//                    
+//            
+//            
+//            if ( parsedParameters.getLogRunningTimes()  == true){    
+//                System.out.println("Writing LogLine General");                
+//                if (parsedParameters.getWriteHeaderLogfile()){                    
+//                    fp_logFile.write(LogHeaderLine);                    
+//                }
+//                fp_logFile.write(LogLine);            
+//                fp_logFile.close();
+//
+//                System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
+//
+//                fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
+//                for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
+//                    fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
+//                }
+//                
+//                fp_logFileIndividualCallStats.close();
+//            }
             
             
             
