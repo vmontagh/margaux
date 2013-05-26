@@ -42,7 +42,8 @@ public class JavaFilePrinter {
       file.printf("import kodkod.engine.*;%n");
       file.printf("import kodkod.engine.satlab.SATFactory;%n");
       file.printf("import kodkod.engine.config.Options;%n%n");
-      file.printf("import edu.mit.csail.sdg.moolloy.solver.kodkod.api.*;%n%n");
+      file.printf("import kodkod.multiobjective.api.*;%n%n");
+//      file.printf("import edu.mit.csail.sdg.moolloy.solver.kodkod.api.*;%n%n");
       
       file.printf("public final class Test {%n%n");
       
