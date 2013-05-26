@@ -1180,7 +1180,8 @@ public final class A4Solution {
         // Now pick the solver and solve it!
         if (opt.solver.equals(SatSolver.KK)) {
 //            File tmpCNF = File.createTempFile("tmp", ".java", new File(opt.tempDirectory));
-        	File tmpCNF = File.createTempFile(filename+"_", ".java", new File(System.getProperty("user.dir")+"/JavaforKodkod"));
+        	//File tmpCNF = File.createTempFile(filename+"_", ".java", new File(System.getProperty("user.dir")+"/JavaforKodkod"));
+        	File tmpCNF = new File(filename + ".java");
         	System.out.println(System.getProperty("user.dir"));
             String out = tmpCNF.getAbsolutePath();
             System.err.printf("Writing KK to %s\n", out);
