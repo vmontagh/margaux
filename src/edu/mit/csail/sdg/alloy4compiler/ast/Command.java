@@ -27,7 +27,7 @@ import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
+import kodkod.multiobjective.api.Objective;
 
 /** Immutable; reresents a "run" or "check" command.
  *

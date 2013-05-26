@@ -92,9 +92,10 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.evaluation.GIAStepCounter;
+
+import kodkod.multiobjective.api.Objective;
+import kodkod.multiobjective.api.Stats;
+import kodkod.multiobjective.api.GIAStepCounter;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
@@ -310,11 +311,12 @@ public final class A4Solution {
             try {
                 File tmp = File.createTempFile("tmp", ".cnf", new File(opt.tempDirectory));
                 tmp.deleteOnExit(); 
-	            solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), "", opt.solver.options()));
-                //solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), opt.solver.options()));
+	            //solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), "", opt.solver.options()));
+                solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), opt.solver.options()));
             } catch(IOException ex) { throw new ErrorFatal("Cannot create temporary directory.", ex); }
-        } else if (opt.solver.equals(A4Options.SatSolver.ZChaffJNI)) {
-            solver.options().setSolver(SATFactory.ZChaff);
+        // [TeamAmalgam] - ZChaff no longer in Kodkod 2.0
+        //} else if (opt.solver.equals(A4Options.SatSolver.ZChaffJNI)) {
+        //    solver.options().setSolver(SATFactory.ZChaff);
         } else if (opt.solver.equals(A4Options.SatSolver.MiniSatJNI)) {
             solver.options().setSolver(SATFactory.MiniSat);
         } else if (opt.solver.equals(A4Options.SatSolver.MiniSatProverJNI)) {
@@ -1018,7 +1020,9 @@ public final class A4Solution {
             rep.resultCNF(out);
             return null;
          }
-        if (solver.options().solver()==SATFactory.ZChaffMincost || !solver.options().solver().incremental()) {
+        // [TeamAmalgam] - ZChaff no longer in Kodkod 2.0
+        //if (solver.options().solver()==SATFactory.ZChaffMincost || !solver.options().solver().incremental()) {
+        if (!solver.options().solver().incremental()) {
            if (sol==null) sol = solver.solve(fgoal, bounds);
            
            System.out.println("Non-Incremental");

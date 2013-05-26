@@ -34,10 +34,11 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.IndividualStats;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.MeasuredSolution;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.StatKey;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
+
+import kodkod.multiobjective.api.IndividualStats;
+import kodkod.multiobjective.api.MeasuredSolution;
+import kodkod.multiobjective.api.StatKey;
+import kodkod.multiobjective.api.Stats;
 
 /** This class demonstrates how to access Alloy4 via the compiler methods. */
 

@@ -17,7 +17,7 @@ package edu.mit.csail.sdg.alloy4compiler.translator;
 
 import static edu.mit.csail.sdg.alloy4.Util.tail;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.UNIV;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.evaluation.GIAStepCounter;
+import kodkod.multiobjective.api.GIAStepCounter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -77,8 +77,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Objective;
-import edu.mit.csail.sdg.moolloy.solver.kodkod.api.Stats;
+import kodkod.multiobjective.api.Objective;
+import kodkod.multiobjective.api.Stats;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 
@@ -530,7 +530,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         throw new ErrorFatal(x.span(), "This should have been an integer expression.\nInstead it is "+y);
     }
 
-    /** Convenience method that evaluаtes x and cast the result to be a Kodkod Expression.
+    /** Convenience method that evaluates x and cast the result to be a Kodkod Expression.
      * @return the expression - if x evaluates to an Expression
      * @throws ErrorFatal - if x does not evaluate to an Expression
      */
