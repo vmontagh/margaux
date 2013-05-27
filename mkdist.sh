@@ -17,7 +17,10 @@ function compile {
     sed -i -e 's/public static String version.*/public static String version() { return "'"$VERSION"'"; }/' $version_file
 
     echo "[cleaning up the bin folder...]"
-    rm -rf bin/*
+    rm -rf bin
+
+    echo "[creating the bin folder...]"
+    mkdir -p bin
 
     CP=$KODKOD_HOME/build/src/kodkod:$(ls -1 lib/*.jar | xargs | sed 's/\ /:/g')
     echo "[compiling...]"
