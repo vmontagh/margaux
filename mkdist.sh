@@ -19,9 +19,9 @@ function compile {
     echo "[cleaning up the bin folder...]"
     rm -rf bin/*
 
-    CP=$KODKOD_HOME/bin:$(ls -1 lib/*.jar | xargs | sed 's/\ /:/g')
+    CP=$KODKOD_HOME/build/src/kodkod:$(ls -1 lib/*.jar | xargs | sed 's/\ /:/g')
     echo "[compiling...]"
-    find src -name "*.java" | xargs javac -cp $CP -d bin -target 1.5
+    find src -name "*.java" | xargs javac -cp $CP -d bin -target 1.7
 
     mv $version_file.bak $version_file
 }
@@ -42,7 +42,7 @@ function dist {
     cp -r bin/* $DST/alloy/
     cp -r src/* $DST/alloy/
     rm -rf $DST/alloy/kodkod
-    cp -r $KODKOD_HOME/bin/kodkod $DST/alloy/kodkod
+    cp -r $KODKOD_HOME/build/src/kodkod/kodkod $DST/alloy/kodkod
     cp -r $KODKOD_HOME/src/kodkod/* $DST/alloy/kodkod/
     rm -rf $DST/alloy/META-INF
  
