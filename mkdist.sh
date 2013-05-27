@@ -70,19 +70,19 @@ function dist {
 
     echo " *** jar file created:    $DST/alloy-dev.jar"
 
-    echo "[building OSX app...]"
-    ant
-
-    echo "[packaging OSX...]"
-    osxdir="alloy-osx"
-    rm -rf $DST/$osxdir
-    mkdir -p $DST/$osxdir/dist
-    cp -r $DST/*.app $DST/$osxdir/dist
-    cp -r OSX-extra/* $DST/$osxdir/dist
-    cp build-dmg.sh $DST/$osxdir/
-    cd $DST
-    zip -q -r $osxdir.zip $osxdir
-    rm -rf $osxdir
+    #echo "[building OSX app...]"
+    #ant
+    #
+    #echo "[packaging OSX...]"
+    #osxdir="alloy-osx"
+    #rm -rf $DST/$osxdir
+    #mkdir -p $DST/$osxdir/dist
+    #cp -r $DST/*.app $DST/$osxdir/dist
+    #cp -r OSX-extra/* $DST/$osxdir/dist
+    #cp build-dmg.sh $DST/$osxdir/
+    #cd $DST
+    #zip -q -r $osxdir.zip $osxdir
+    #rm -rf $osxdir
     
 
     # cp $MACOSDST.zip $DST
