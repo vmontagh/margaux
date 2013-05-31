@@ -127,7 +127,6 @@ public final class VizState {
       edgeColor.put(ext,DotColor.BLACK); weight.put(ext,100); layoutBack.put(ext,true);
       edgeColor.put(in,DotColor.BLACK); weight.put(in,100); layoutBack.put(in,true);
       // Done
-      cache.clear();
       changedSinceLastSave=false;
    }
 
@@ -138,7 +137,6 @@ public final class VizState {
       this.originalInstance=unprojectedInstance;
       for (AlloyType t:getProjectedTypes()) if (!unprojectedInstance.model.hasType(t)) projectedTypes.remove(t);
       currentModel = StaticProjector.project(unprojectedInstance.model, projectedTypes);
-      cache.clear();
    }
 
    /** Erase the current theme customizations and then load it from a file.
@@ -147,7 +145,6 @@ public final class VizState {
    public void loadPaletteXML(String filename) throws IOException {
       resetTheme();
       StaticThemeReaderWriter.readAlloy(filename,this);
-      cache.clear();
       changedSinceLastSave=false;
    }
 
@@ -159,11 +156,6 @@ public final class VizState {
       changedSinceLastSave=false;
    }
 
-   /** Caches previously generated graphs. */
-   private LinkedHashMap<AlloyProjection,JPanel> cache=new LinkedHashMap<AlloyProjection,JPanel>();
-
-   /** Caches previously generated projection for each Projection */
-   //private LinkedHashMap<AlloyProjection, GraphViewer> mostRecentProj = new LinkedHashMap<AlloyProjection,GraphViewer>();
    private AlloyProjection curProjection;
 
    public void clearGraphInfo()
@@ -208,8 +200,8 @@ public final class VizState {
    /** True if the theme has been modified since last save. */
    public boolean changedSinceLastSave() { return changedSinceLastSave; }
 
-   /** Sets the "changed since last save" flag, then flush any cached generated graphs. */
-   private void change() { changedSinceLastSave=true; cache.clear(); }
+   /** Sets the "changed since last save" flag. */
+   private void change() { changedSinceLastSave=true; }
 
    /** If oldValue is different from newValue, then sets the "changed since last save" flag and flush the cache. */
    private void changeIf(Object oldValue, Object newValue) {
