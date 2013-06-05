@@ -107,7 +107,6 @@ public final class RanMultiobjectiveModel {
         A4Options options = new A4Options();
         options.solver = A4Options.SatSolver.MiniSatJNI;
         options.MoolloyListAllSolutionsForParetoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
-        options.MoolloyUseAdaptableMinimumImprovement  = parsedParameters.getUseAdaptableMinimumImprovement();
         
         
         FileWriter fp_logFile = null; 

@@ -182,9 +182,6 @@ public final class A4Options implements Serializable {
     /** This option controls when using Moolloy whether all the solutions for a given pareto point are computed or not (e.g GIA magnifying glass option). Defaults to True */
     public boolean MoolloyListAllSolutionsForParetoPoint = true ;
 
-    /** This option controls when using Moolloy whether an adaptable minimum improvement at each step is used (it grows and reduces exponentially) */
-	public Boolean MoolloyUseAdaptableMinimumImprovement;
-
     /** This method makes a copy of this Options object. */
     public A4Options dup() {
         A4Options x = new A4Options();
@@ -200,7 +197,6 @@ public final class A4Options implements Serializable {
         x.noOverflow = noOverflow;
         x.coreGranularity = coreGranularity;
         x.MoolloyListAllSolutionsForParetoPoint = MoolloyListAllSolutionsForParetoPoint;
-        x.MoolloyUseAdaptableMinimumImprovement = MoolloyUseAdaptableMinimumImprovement;
         return x;
     }
 }
