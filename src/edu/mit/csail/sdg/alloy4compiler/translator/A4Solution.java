@@ -299,10 +299,9 @@ public final class A4Solution {
         bounds.boundExactly(KK_STRING, this.stringBounds);
         int sym = (expected==1 ? 0 : opt.symmetry);
         solver = new Solver();
-        solver.options().setNoOverflow(opt.noOverflow);
         solver.options().setFlatten(false); // added for now, since multiplication and division circuit takes forever to flatten
         
-        solver.options().setMoolloyListAllSolutionsForParertoPoint(opt.MoolloyListAllSolutionsForParertoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParertoPoint received through opts.
+        solver.options().setMoolloyListAllSolutionsForParetoPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
         solver.options().setMoolloyUseAdaptableMinimumImprovement(opt.MoolloyUseAdaptableMinimumImprovement);
         
         if (opt.solver.external()!=null) {
@@ -960,10 +959,10 @@ public final class A4Solution {
         final A4Options opt = originalOptions;
         long time = System.currentTimeMillis();
 
-        solver.options().setMoolloyListAllSolutionsForParertoPoint(opt.MoolloyListAllSolutionsForParertoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParertoPoint received through opts.
+        solver.options().setMoolloyListAllSolutionsForParetoPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
         solver.options().setMoolloyUseAdaptableMinimumImprovement(opt.MoolloyUseAdaptableMinimumImprovement);
         
-        System.out.println("Solver has MoolloyListAllSolutionsForParertoPoint of " + solver.options().MoolloyListAllSolutionsForParertoPoint());
+        System.out.println("Solver has MoolloyListAllSolutionsForParetoPoint of " + solver.options().MoolloyListAllSolutionsForParetoPoint());
         
         rep.debug("Simplifying the bounds...\n");
         if (simp!=null && formulas.size()>0 && !simp.simplify(rep, this, formulas)) addFormula(Formula.FALSE, Pos.UNKNOWN);
@@ -1028,8 +1027,8 @@ public final class A4Solution {
            System.out.println("Non-Incremental");
         } else {
            //kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
-        	System.out.println("Incremental with MagnifierGlass = " + solver.options().MoolloyListAllSolutionsForParertoPoint());
-        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().MoolloyListAllSolutionsForParertoPoint(),
+        	System.out.println("Incremental with MagnifierGlass = " + solver.options().MoolloyListAllSolutionsForParetoPoint());
+        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().MoolloyListAllSolutionsForParetoPoint(),
         			solver.options().MoolloyUseAdaptableMinimumImprovement());    		        	
             kEnumerator =new Peeker<Solution>(itSolutions); // [s26stewa]
         	if (sol==null) {

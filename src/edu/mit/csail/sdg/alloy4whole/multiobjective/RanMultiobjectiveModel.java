@@ -106,7 +106,7 @@ public final class RanMultiobjectiveModel {
         // Choose some default options for how you want to execute the commands
         A4Options options = new A4Options();
         options.solver = A4Options.SatSolver.MiniSatJNI;
-        options.MoolloyListAllSolutionsForParertoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
+        options.MoolloyListAllSolutionsForParetoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
         options.MoolloyUseAdaptableMinimumImprovement  = parsedParameters.getUseAdaptableMinimumImprovement();
         
         
