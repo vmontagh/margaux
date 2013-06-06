@@ -301,7 +301,7 @@ public final class A4Solution {
         solver = new Solver();
         solver.options().setFlatten(false); // added for now, since multiplication and division circuit takes forever to flatten
         
-        solver.options().setMoolloyListAllSolutionsForParetoPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
+        solver.options().setAllSolutionsPerPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
         
         if (opt.solver.external()!=null) {
             String ext = opt.solver.external();
@@ -958,9 +958,9 @@ public final class A4Solution {
         final A4Options opt = originalOptions;
         long time = System.currentTimeMillis();
 
-        solver.options().setMoolloyListAllSolutionsForParetoPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
+        solver.options().setAllSolutionsPerPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
         
-        System.out.println("Solver has MoolloyListAllSolutionsForParetoPoint of " + solver.options().MoolloyListAllSolutionsForParetoPoint());
+        System.out.println("Solver has allSolutionsPerPoint of " + solver.options().allSolutionsPerPoint());
         
         rep.debug("Simplifying the bounds...\n");
         if (simp!=null && formulas.size()>0 && !simp.simplify(rep, this, formulas)) addFormula(Formula.FALSE, Pos.UNKNOWN);
@@ -1025,8 +1025,8 @@ public final class A4Solution {
            System.out.println("Non-Incremental");
         } else {
            //kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
-        	System.out.println("Incremental with MagnifierGlass = " + solver.options().MoolloyListAllSolutionsForParetoPoint());
-        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().MoolloyListAllSolutionsForParetoPoint());
+        	System.out.println("Incremental with MagnifierGlass = " + solver.options().allSolutionsPerPoint());
+        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.options().allSolutionsPerPoint());
             kEnumerator =new Peeker<Solution>(itSolutions); // [s26stewa]
         	if (sol==null) {
         		sol = kEnumerator.next();  
