@@ -7,6 +7,7 @@ public class MultiObjectiveArguments {
 	static final String LogRunningTimesArg = "--LogRunningTimesArg=";
 	static final String MinMaxBoundsForGoals = "--MinMaxBoundsForGoals=";
 	static final String LogPrintHeadersArg = "--LogPrintHeaders";
+	static final String SymmetryBreakingArg = "--SymmetryBreaking=";
 	
 	Boolean ListAllSolutionsForAParetoPoint = true;
 
@@ -21,6 +22,8 @@ public class MultiObjectiveArguments {
 	private String filename;
 	private String MinMaxBoundsContent = "";
 	
+	private int SymmetryBreaking = 1000;
+	
 	public static MultiObjectiveArguments parseCommandLineArguments(final String args[]){
 		MultiObjectiveArguments  parsedParams =  new MultiObjectiveArguments();
 
@@ -28,6 +31,8 @@ public class MultiObjectiveArguments {
     	for (int i = 0;i < (args.length-1);i++){
     		if  (args[i].equals(MultiObjectiveArguments.SingleSolutionPerParetoPointArg) || args[i].equals(MultiObjectiveArguments.SingleSolutionPerParetoPointArg_short)){
     			parsedParams.ListAllSolutionsForAParetoPoint = false;
+    		}else if (args[i].startsWith(MultiObjectiveArguments.SymmetryBreakingArg)) {
+    			parsedParams.SymmetryBreaking = Integer.parseInt(args[i].substring(MultiObjectiveArguments.SymmetryBreakingArg.length()));
     		}else if (args[i].startsWith(MultiObjectiveArguments.LogRunningTimesArg)) {
     			parsedParams.LogRunningTimes = true;
     			parsedParams.LogFilename = args[i].substring(MultiObjectiveArguments.LogRunningTimesArg.length());    
@@ -85,5 +90,9 @@ public class MultiObjectiveArguments {
 
 	public String getLogFilenameIndividualStats() {
 		return this.LogFilenameIndividualCallsStats;
-	}	
+	}
+	
+	public int getSymmetryBreaking() {
+		return this.SymmetryBreaking;
+	}
 }

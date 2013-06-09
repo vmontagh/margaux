@@ -52,7 +52,6 @@ import kodkod.engine.CapacityExceededException;
 import kodkod.engine.Evaluator;
 import kodkod.engine.Proof;
 import kodkod.engine.Solution;
-import kodkod.engine.Solver;
 import kodkod.engine.config.AbstractReporter;
 import kodkod.engine.config.Options;
 import kodkod.engine.config.Reporter;
@@ -94,7 +93,6 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 
 import kodkod.multiobjective.api.MultiObjectiveSolver;
-import kodkod.multiobjective.api.Objective;
 import kodkod.multiobjective.api.Stats;
 import kodkod.multiobjective.api.GIAStepCounter;
 
@@ -1027,7 +1025,7 @@ public final class A4Solution {
         } else {
            //kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
         	System.out.println("Incremental with MagnifierGlass = " + solver.multiObjectiveOptions().allSolutionsPerPoint());
-        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives, solver.multiObjectiveOptions().allSolutionsPerPoint());
+        	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives);
             kEnumerator =new Peeker<Solution>(itSolutions); // [s26stewa]
         	if (sol==null) {
         		sol = kEnumerator.next();  

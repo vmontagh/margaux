@@ -107,6 +107,7 @@ public final class RanMultiobjectiveModel {
         A4Options options = new A4Options();
         options.solver = A4Options.SatSolver.MiniSatJNI;
         options.MoolloyListAllSolutionsForParetoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
+        options.symmetry = parsedParameters.getSymmetryBreaking();
         
         
         FileWriter fp_logFile = null; 
@@ -152,6 +153,7 @@ public final class RanMultiobjectiveModel {
             
             String LogLine = parsedParameters.getFilename() + ",";
             LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
+            LogLine += "," + Integer.toString(parsedParameters.getSymmetryBreaking());
             LogLine += "," + time_taken;
             LogLine += "," + "SummaryStatsNext";
 
@@ -177,6 +179,7 @@ public final class RanMultiobjectiveModel {
 
             LogHeaderLine += "Filename";
             LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
+            LogHeaderLine += "," + "SymmetryBreaking";
             LogHeaderLine += "," + "Total Time(ms)";
             LogHeaderLine += "," + "SummaryStatsNext";
 
