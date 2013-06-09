@@ -17,7 +17,7 @@ package edu.mit.csail.sdg.alloy4compiler.translator;
 
 import static edu.mit.csail.sdg.alloy4.Util.tail;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.UNIV;
-import kodkod.multiobjective.api.GIAStepCounter;
+import kodkod.multiobjective.api.StepCounter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -1089,8 +1089,8 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         return ans;
     }
     
-    public static GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
-    	return tr.frame.getGIACountCallsOnEachMovementToParetoFront();
+    public static StepCounter getGIACountCallsOnEachMovementToParetoFront(){
+    	return tr.frame.getCountCallsOnEachMovementToParetoFront();
     }
     
     public static Stats getStats(){

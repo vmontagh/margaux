@@ -94,7 +94,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 
 import kodkod.multiobjective.api.MultiObjectiveSolver;
 import kodkod.multiobjective.api.Stats;
-import kodkod.multiobjective.api.GIAStepCounter;
+import kodkod.multiobjective.api.StepCounter;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
@@ -1259,8 +1259,8 @@ public final class A4Solution {
         if (writer.checkError()) throw new ErrorFatal("Error writing the solution XML file.");
     }
     
-    public GIAStepCounter getGIACountCallsOnEachMovementToParetoFront(){
-    	return this.solver.getGIACountCallsOnEachMovementToParetoFront();
+    public StepCounter getCountCallsOnEachMovementToParetoFront(){
+    	return this.solver.getCountCallsOnEachMovementToParetoFront();
     }
 
 	public Stats getStats() {
