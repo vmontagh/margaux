@@ -93,6 +93,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 
+import kodkod.multiobjective.api.MultiObjectiveSolver;
 import kodkod.multiobjective.api.Objective;
 import kodkod.multiobjective.api.Stats;
 import kodkod.multiobjective.api.GIAStepCounter;
@@ -157,7 +158,7 @@ public final class A4Solution {
     private final TupleSet stringBounds;
 
     /** The Kodkod Solver object. */
-    private final Solver solver;
+    private final MultiObjectiveSolver solver;
 
     /** The default bitwidth to set the kodkod bidwidth in case of having out-of-bound numbers*/
     final int exceedBitWidth = 31;
@@ -298,7 +299,7 @@ public final class A4Solution {
         this.stringBounds = stringBounds.unmodifiableView();
         bounds.boundExactly(KK_STRING, this.stringBounds);
         int sym = (expected==1 ? 0 : opt.symmetry);
-        solver = new Solver();
+        solver = new MultiObjectiveSolver();
         solver.options().setFlatten(false); // added for now, since multiplication and division circuit takes forever to flatten
         
         solver.options().setAllSolutionsPerPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
@@ -993,7 +994,7 @@ public final class A4Solution {
 
         if (!opt.solver.equals(SatSolver.CNF) && !opt.solver.equals(SatSolver.KK) && tryBookExamples) { // try book examples
            A4Reporter r = "yes".equals(System.getProperty("debug")) ? rep : null;
-           try { sol = BookExamples.trial(r, this, fgoal, solver, cmd.check); } catch(Throwable ex) { sol = null; }
+           try { sol = BookExamples.trial(r, this, fgoal, solver.getKodkodSolver(), cmd.check); } catch(Throwable ex) { sol = null; }
         }
         solved[0] = false; // this allows the reporter to report the # of vars/clauses
         for(Relation r: bounds.relations()) { formulas.add(r.eq(r)); } // Without this, kodkod refuses to grow unmentioned relations
