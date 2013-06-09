@@ -4,8 +4,10 @@ import java.util.List;
 import kodkod.ast.*;
 import kodkod.ast.operator.*;
 import kodkod.instance.*;
+import kodkod.multiobjective.api.MultiObjectiveSolver;
 import kodkod.util.nodes.PrettyPrinter;
-import kodkod.engine.*;
+import kodkod.engine.Evaluator;
+import kodkod.engine.Solution;
 import kodkod.engine.satlab.SATFactory;
 import kodkod.engine.config.Options;
 
@@ -79,10 +81,10 @@ public final class Test1 {
         Formula x21 = x6.eq(x6);
         Formula x7 = Formula.compose(FormulaOperator.AND, x8, x15, x16, x17, x18, x19, x20, x21);
 
-        Solver solver = new Solver();
+        MultiObjectiveSolver solver = new MultiObjectiveSolver();
         solver.options().setSolver(SATFactory.DefaultSAT4J);
         solver.options().setBitwidth(2);
-        solver.options().setFlatten(false);
+        solver.multiObjectiveOptions().setFlatten(false);
         solver.options().setIntEncoding(Options.IntEncoding.TWOSCOMPLEMENT);
         solver.options().setSymmetryBreaking(20);
         solver.options().setSkolemDepth(0);

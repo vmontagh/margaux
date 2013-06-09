@@ -8,7 +8,6 @@ import kodkod.ast.IntExpression;
 import kodkod.ast.Relation;
 import kodkod.engine.Evaluator;
 import kodkod.engine.Solution;
-import kodkod.engine.Solver;
 import kodkod.engine.config.Options;
 import kodkod.engine.satlab.SATFactory;
 import kodkod.instance.Bounds;
@@ -16,6 +15,7 @@ import kodkod.instance.Instance;
 import kodkod.instance.TupleFactory;
 import kodkod.instance.TupleSet;
 import kodkod.instance.Universe;
+import kodkod.multiobjective.api.MultiObjectiveSolver;
 import kodkod.util.nodes.PrettyPrinter;
 
 public final class KK {
@@ -50,10 +50,10 @@ public final class KK {
         Formula x9 = x11.implies(x5.gt(IntConstant.constant(0)));
         Formula x7 = x9.not();
 
-        Solver solver = new Solver();
+        MultiObjectiveSolver solver = new MultiObjectiveSolver();
         solver.options().setSolver(SATFactory.DefaultSAT4J);
         solver.options().setBitwidth(2);
-        solver.options().setFlatten(false);
+        solver.multiObjectiveOptions().setFlatten(false);
         solver.options().setIntEncoding(Options.IntEncoding.TWOSCOMPLEMENT);
         solver.options().setSymmetryBreaking(20);
         solver.options().setSkolemDepth(0);

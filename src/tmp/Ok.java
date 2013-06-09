@@ -4,7 +4,8 @@ import java.util.List;
 import kodkod.ast.*;
 import kodkod.ast.operator.*;
 import kodkod.instance.*;
-import kodkod.engine.*;
+import kodkod.multiobjective.api.MultiObjectiveSolver;
+import kodkod.engine.Solution;
 import kodkod.engine.satlab.SATFactory;
 import kodkod.engine.config.Options;
 
@@ -2214,10 +2215,10 @@ public final class Ok {
                 x120, x123, x134, x135, x136, x137, x138, x139, x140, x141, x142, x143, x144, x145,
                 x146, x147, x148, x149);
 
-        Solver solver = new Solver();
+        MultiObjectiveSolver solver = new MultiObjectiveSolver();
         solver.options().setSolver(SATFactory.DefaultSAT4J);
         solver.options().setBitwidth(4);
-        solver.options().setFlatten(false);
+        solver.multiObjectiveOptions().setFlatten(false);
         solver.options().setIntEncoding(Options.IntEncoding.TWOSCOMPLEMENT);
         solver.options().setSymmetryBreaking(20);
         solver.options().setSkolemDepth(0);

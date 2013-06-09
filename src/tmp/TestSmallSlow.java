@@ -4,8 +4,10 @@ import java.util.List;
 import kodkod.ast.*;
 import kodkod.ast.operator.*;
 import kodkod.instance.*;
+import kodkod.multiobjective.api.MultiObjectiveSolver;
 import kodkod.util.nodes.PrettyPrinter;
-import kodkod.engine.*;
+import kodkod.engine.Evaluator;
+import kodkod.engine.Solution;
 import kodkod.engine.satlab.SATFactory;
 import kodkod.engine.config.Options;
 
@@ -336,10 +338,10 @@ public final class TestSmallSlow {
         Formula x9 = Formula.compose(FormulaOperator.AND, x10, x67, x71, x72, x73, x74, x75, x76,
                 x77, x78, x79);
 
-        Solver solver = new Solver();
+        MultiObjectiveSolver solver = new MultiObjectiveSolver();
         solver.options().setSolver(SATFactory.DefaultSAT4J);
         solver.options().setBitwidth(4);
-        solver.options().setFlatten(false);
+        solver.multiObjectiveOptions().setFlatten(false);
         solver.options().setIntEncoding(Options.IntEncoding.TWOSCOMPLEMENT);
         solver.options().setSymmetryBreaking(20);
         solver.options().setSkolemDepth(0);
