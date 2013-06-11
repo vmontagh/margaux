@@ -1070,6 +1070,7 @@ public final class CompModule extends Browsable implements Module {
 		public Set<Sig> extractSigsFromFields(Collection<Field> fields) throws Err{
 			Set<Sig> sigs = new HashSet<Sig>();
 			for(Sig.Field field:fields){
+				sigs.add(field.sig);
 				for(Expr sig:extractFieldsItems(field)){
 					if(sig instanceof Sig)
 						sigs.add((Sig)sig);
@@ -1902,6 +1903,7 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 	public Expr getUniqueFact(String sigLabel){
+		System.out.println("uniqFact->"+uniqFact);
 		return uniqFact.get(sigLabel);
 	}
 
@@ -1965,6 +1967,7 @@ public final class CompModule extends Browsable implements Module {
 	}
 	
 	public Expr getUniqueFieldFact(String field){
+		System.out.println("uniqFldSetDcl->"+uniqFldSetDcl);
 		return uniqFldSetDcl.get(field);
 	}
 
@@ -2079,7 +2082,7 @@ public final class CompModule extends Browsable implements Module {
 		 */
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
-		if(ExampleUsingTheCompiler.usingKKItr || obj.isUnique == null)
+		if(/*ExampleUsingTheCompiler.usingKKItr ||*/ obj.isUnique == null)
 			old2appendedfacts.put(obj, fact);
 		else
 			uniqFact.put(obj.label.replace("this/", ""), fact);
@@ -2360,6 +2363,7 @@ public final class CompModule extends Browsable implements Module {
 	}
 
 	private JoinableList<Err> resolveGenFacts(CompModule res, A4Reporter rep, JoinableList<Err> errors, List<ErrorWarning> warns) throws Err {
+		System.out.println("I am in the resolveGenFacts");
 		Context cx = new Context(this, warns);
 		for(String sName: uniqFact.keySet()) {
 			Expr f = res.uniqFact.get(sName);
@@ -2417,6 +2421,8 @@ public final class CompModule extends Browsable implements Module {
 					//System.out.println("The final Fact:"+setF);
 					setF = cx.check(setF).resolve_as_set(warns);
 					
+					System.out.println("setF.errors->"+setF.errors);
+					
 					if (setF.errors.size()>0) 
 						errors = errors.make(formula.errors);
 					else{
@@ -2442,6 +2448,7 @@ public final class CompModule extends Browsable implements Module {
 					rep.typecheck("Generator Fact "+sig+"$gen_fact: " + setF.type()+"\n");  }
 			}				
 		}
+		System.out.println(errors+"uniqFldSetDcl->"+uniqFldSetDcl);
 		return errors;
 
 	}

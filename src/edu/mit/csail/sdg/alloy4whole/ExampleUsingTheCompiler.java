@@ -41,6 +41,7 @@ import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.alloy4.OurDialog;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
+import edu.mit.csail.sdg.alloy4.SafeList;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Attr.AttrType;
 import edu.mit.csail.sdg.alloy4compiler.ast.Bounds;
@@ -55,6 +56,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprQt;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
@@ -70,13 +72,13 @@ import edu.mit.csail.sdg.alloy4viz.VizGUI;
 
 public final class ExampleUsingTheCompiler {
 
-	
-	 public static int PACE = 10;
+
+	public static int PACE = 4;
 	final public static boolean oneFound = true;
-	final public static boolean usingKodkod = true;
+	final public static boolean usingKodkod = false;
 	final public static boolean usingKKItr = true;
 	public static String reportFileName = "";
-	
+
 
 
 	//Exploited as a structure
@@ -99,9 +101,9 @@ public final class ExampleUsingTheCompiler {
 
 	}
 
-	
-	
-	
+
+
+
 	public static class QuickReporter extends A4Reporter{
 		private long lastTime=0;
 
@@ -126,10 +128,10 @@ public final class ExampleUsingTheCompiler {
 		}
 
 	}
-	
-	
+
+
 	public static String run(String[] args,A4Reporter rep) throws Err{
-		
+
 		String retString = "";
 		copyFromJAR();
 		final String binary = alloyHome() + fs + "binary";
@@ -143,7 +145,7 @@ public final class ExampleUsingTheCompiler {
 			java.lang.reflect.Field old = ClassLoader.class.getDeclaredField("usr_paths");
 			old.setAccessible(true);
 			old.set(null,newarray);
-		} catch (Throwable ex) { }
+		} catch (Throwable ex) {System.out.println(ex); }
 
 		// The visualizer (We will initialize it to nonnull when we visualize an Alloy solution)
 		VizGUI viz = null;
@@ -169,6 +171,7 @@ public final class ExampleUsingTheCompiler {
 				// Execute the command
 				System.out.println("============ Command "+command+": ============");
 				System.out.println("Starting to evlauate the code....");
+				System.out.println("command.label:\n\t"+command.label);
 				long time = System.currentTimeMillis();
 				//System.out.println(command.scope.get(0).sig);
 				PrintWriter out=null;
@@ -190,17 +193,34 @@ public final class ExampleUsingTheCompiler {
 							//System.exit(-10);
 							usm = makeWorld(command,world,s,options,rep,usm);
 
+							System.out.println("usm->"+usm);
+							System.out.println("usm.sigAtoms->"+usm.sigAtoms);
+							System.out.println("usm.nList->"+usm.nList);
+							System.out.println("usm.sigScope->"+usm.sigScope);
+
+							System.out.println("Before the changes nList->");
+							for(Object l:usm.nList)
+								System.out.println("\t"+l);
+
+
 							if(usm.sigAtoms.size() > 0){
 								Set<ExprVar> pAtoms = new HashSet<ExprVar>(usm.sigAtoms.values());
+								System.out.println("pAtoms->"+pAtoms);
 								//Replace the signature bound
 								if(usm.sigScope==null){
 									//Make a new commandscope for each relation declration
 									usm.sigScope = new CommandScope(usm.oBound.pos, 
+											
+											//Just like the parser, I made a new PrimSig object.
 											new PrimSig(s.label, AttrType.WHERE.make(usm.oBound.pos)),
+											//s,
 											true, pAtoms.size(), pAtoms.size(), 1, new ArrayList<ExprVar>(pAtoms),
 											pAtoms.size(), new ArrayList<List<Expr>>(),
 											true, false, false,false);
 								}else{
+									System.out.println("usm.sigScope.pFields->"+usm.sigScope.pFields);
+									System.out.println("usm.sigScope->"+usm.sigScope);
+
 									//Alter the current commandscope
 									pAtoms.addAll(usm.sigScope.pAtoms);
 									usm.sigScope = new CommandScope(usm.sigScope.pos, 
@@ -215,7 +235,12 @@ public final class ExampleUsingTheCompiler {
 								}
 
 								//Now change the scope in the bound object
-								usm.nList.add(usm.sigScope);      
+								usm.nList.add(usm.sigScope); 
+								System.out.println("usm.nList->"+usm.nList);
+								System.out.println("After the changes nList->");
+								for(Object l:usm.nList)
+									System.out.println("\t"+l);
+
 								Bounds nBound = new Bounds(usm.oBound.pos, usm.oBound.label, usm.nList);
 								usm.oBound = world.replaceBound(usm.oBound, nBound);
 								//Detachbound causes the appended fact of the inst block does not considered.
@@ -237,16 +262,23 @@ public final class ExampleUsingTheCompiler {
 							);
 					time = System.currentTimeMillis();
 					System.out.println("Starting to execute the commmand....");
-					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+					System.out.println("command->\n\t"+command);
+					System.out.println("command.bound->\n\t"+command.bound);
+					System.out.println("command.formula->\n\t"+command.formula);
+					System.out.println("command.label:\n\t"+command.label);
+
 					
+					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+
 					System.out.println("The execution has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 
 					// Print the outcome
 					System.out.println(ans.satisfiable());
+					System.out.println(ans);
 					
 					String output = filename.replace(".als", ".out.xml");
-					
-					ans.writeXML(output);
+
+					//ans.writeXML(output);
 					retString = ans.toString();
 					/*					System.exit(-10);
 					Object legal = TranslateAlloyToKodkod.evaluate_command(
@@ -257,7 +289,7 @@ public final class ExampleUsingTheCompiler {
 					//A4SolutionWriter.writeInstance(  );
 					if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");*/
 					if (ans.satisfiable()) {
-						
+
 						// You can query "ans" to find out the values of each set or type.
 						// This can be useful for debugging.
 						//
@@ -271,7 +303,7 @@ public final class ExampleUsingTheCompiler {
 							//viz.loadXML(output, true);
 						}
 					}
-					
+
 				} catch(IOException ex) {
 					Util.close(out);
 					throw new ErrorFatal("Error writing the solution XML file.", ex);
@@ -298,12 +330,12 @@ public final class ExampleUsingTheCompiler {
 				}*/
 			}
 		}
-		
+
 		return retString;
 
 	}
-	
-	
+
+
 	/*
 	 * Execute every command in every file.
 	 *
@@ -318,7 +350,7 @@ public final class ExampleUsingTheCompiler {
 		System.out.println("The evaluation time is:"+run(args)	);
 	}
 
-	
+
 	public static String run(String[] args) throws Err{
 		return run(args, new QuickReporter());
 	}
@@ -327,34 +359,54 @@ public final class ExampleUsingTheCompiler {
 			final  A4Options options, final A4Reporter rep,
 			final UniqSigMessage usm) throws Err{
 
-		
-		
+
+
 		Bounds oBound = new Bounds(usm.oBound);
 		List<CommandScope> nList = new ArrayList<CommandScope>(usm.nList);
 
-		CommandScope sigScope = usm.sigScope==null? null : (CommandScope)usm.sigScope.clone();
+		CommandScope sigScope = null;
+		if(usm.sigScope!=null && usm.sigScope.sig.label.equals(s.label)){
+			sigScope =  (CommandScope)usm.sigScope.clone();
+		}
+		
 		CommandScope scope =  usm.scope == null? null :(CommandScope)usm.scope.clone();		
 
-		Map<String,ExprVar> sigAtoms =  usm.sigAtoms==null? new HashMap<String,ExprVar>():  new HashMap<String,ExprVar>(usm.sigAtoms);
-
 		
+		Map<String,ExprVar> sigAtoms = new HashMap<String,ExprVar>();  
+		//usm.sigAtoms==null? new HashMap<String,ExprVar>():  new HashMap<String,ExprVar>(usm.sigAtoms);
+
+
 		Expr expr = world.getUniqueFieldFact(s.label.replace("this/", ""));
+		System.out.println("expr-->"+expr);
 
-		System.out.println("expr->"+expr);
-		
+
+		System.out.println("command->"+command);
 		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
 				rep, world.getAllReachableSigs(), command, options,s,expr);
 
 		//legalPair.a.getfieldSolutions(legalPair.b, s.label);
 
+		System.out.println("Done with the Partial solver.....");
 		Set<String> fldNames = new HashSet<String>();
-		for(Decl fDecl:s.getFieldDecls()){											
-			A4TupleSet legal =  legalPair.a.getfieldSolutions(legalPair.b, s.label+"."+fDecl.get().label);
-			fldNames.add(s.label+"."+fDecl.get().label);
+		SafeList<Field> flds = s instanceof PrimSig ? ((PrimSig)s).getFieldsWithParents() : s.getFields();
+		System.out.println("flds->"+flds);
+		System.out.println("----------->"+((PrimSig)s).getFieldsWithParents().get(0).sig);
+		System.out.println("s:"+s+", fldDecls="+flds);
+		for(Field fDecl:flds){		
+			System.out.println("decls->"+fDecl);
+			System.out.println("legalPair.b->\n"+legalPair.b);
+			//System.out.println("fDecl.get().label->"+fDecl.get().label);
+			//A4TupleSet legal =  legalPair.a.getfieldSolutions(legalPair.b, s.label+"."+fDecl.get().label);
+			String fldFullName = fDecl.sig.label+"."+fDecl.label;
+			if(legalPair.b.isEmpty())
+				continue;
+			A4TupleSet legal =  legalPair.a.getfieldSolutions(legalPair.b, fldFullName);
+			
+			fldNames.add(fldFullName);
 
 			List<List<Expr>> pFields = new ArrayList<List<Expr>>();
 
-			
+
 			//Make a list of tuples for the field and a set of atoms for the left-most sig
 			List<Expr> field;
 			for(A4Tuple tuple: (A4TupleSet)legal){
@@ -362,20 +414,26 @@ public final class ExampleUsingTheCompiler {
 				for(int i=0; i<tuple.arity(); i++){
 					if(i==0 && s.isOne==null)
 						sigAtoms.put(tuple.atom(i), ExprVar.make(command.bound.pos, tuple.atom(i))) ;
-					field.add(ExprVar.make(command.bound.pos, tuple.atom(i)) );
+					try{
+						field.add(ExprConstant.makeNUMBER(Integer.parseInt(tuple.atom(i))));
+					}catch(NumberFormatException nfe){
+						field.add(ExprVar.make(command.bound.pos, tuple.atom(i)) );
+					}
 				}
 				pFields.add(field);
 
 			}
+			System.out.println("sigAtoms->"+sigAtoms);
 			//Merge the CommandScope
 			//First find the related commandscope if it exists.
 			List<CommandScope> oScopes =  oBound.scope;
 			nList.clear();
 			scope = null;
 			for(CommandScope sc: oScopes){
-				if(sc.sig.label.equals(fDecl.get().label)){
+				if(sc.sig.label.equals(fDecl.label)){
 					scope = sc;
 				}else if(sc.sig.label.equals(s.decl.get().label)){
+					System.out.println("Has the sigScope->"+sigScope);
 					sigScope = sc;
 				}else{
 					nList.add(sc);
@@ -386,7 +444,7 @@ public final class ExampleUsingTheCompiler {
 			if( scope==null){
 				//Make a new commandscope for each relation declration
 				scope = new CommandScope( oBound.pos, 
-						new PrimSig(fDecl.get().label, AttrType.WHERE.make( oBound.pos)),
+						new PrimSig(fDecl.label, AttrType.WHERE.make( oBound.pos)),
 						true, pFields.size(), pFields.size(), 1, new ArrayList<ExprVar>(),
 						pFields.size(), pFields,
 						true, false, false,false);
@@ -406,11 +464,10 @@ public final class ExampleUsingTheCompiler {
 			//Now change the scope in the bound object
 
 			nList.add( scope);
-			
-			
+
 			Bounds nBound = new Bounds( oBound.pos,  oBound.label,  nList);
 			oBound = world.replaceBound( oBound, nBound);
-			
+
 
 		}//End of For
 
@@ -421,6 +478,11 @@ public final class ExampleUsingTheCompiler {
 			sigAtoms.put(hasEmpty.toString(), ExprVar.make(command.bound.pos, hasEmpty.toString()));
 		}
 
+		System.out.println("the resulted nList at the end of the makeworld->");
+		for(Object l:nList)
+			System.out.println("\t"+l);
+		
+		System.out.println("scope->"+scope+"\nsigScope->"+sigScope);
 		return new UniqSigMessage(sigAtoms, sigScope, oBound, scope, nList);
 
 	}
