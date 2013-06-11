@@ -21,13 +21,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import kodkod.multiobjective.Objective;
+
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 import edu.mit.csail.sdg.alloy4.ErrorSyntax;
-import kodkod.multiobjective.api.Objective;
 
 /** Immutable; reresents a "run" or "check" command.
  *

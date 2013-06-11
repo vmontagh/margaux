@@ -15,7 +15,7 @@ import kodkod.instance.Instance;
 import kodkod.instance.TupleFactory;
 import kodkod.instance.TupleSet;
 import kodkod.instance.Universe;
-import kodkod.multiobjective.api.MultiObjectiveSolver;
+import kodkod.multiobjective.MultiObjectiveSolver;
 import kodkod.util.nodes.PrettyPrinter;
 
 public final class KK {

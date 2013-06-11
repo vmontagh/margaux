@@ -4,7 +4,7 @@ import java.util.List;
 import kodkod.ast.*;
 import kodkod.ast.operator.*;
 import kodkod.instance.*;
-import kodkod.multiobjective.api.MultiObjectiveSolver;
+import kodkod.multiobjective.MultiObjectiveSolver;
 import kodkod.util.nodes.PrettyPrinter;
 import kodkod.engine.Evaluator;
 import kodkod.engine.Solution;

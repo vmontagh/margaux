@@ -17,7 +17,6 @@ package edu.mit.csail.sdg.alloy4compiler.translator;
 
 import static edu.mit.csail.sdg.alloy4.Util.tail;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.UNIV;
-import kodkod.multiobjective.api.StepCounter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -77,8 +76,9 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
-import kodkod.multiobjective.api.Objective;
-import kodkod.multiobjective.api.Stats;
+import kodkod.multiobjective.Objective;
+import kodkod.multiobjective.statistics.Stats;
+import kodkod.multiobjective.statistics.StepCounter;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 

@@ -92,9 +92,9 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 
-import kodkod.multiobjective.api.MultiObjectiveSolver;
-import kodkod.multiobjective.api.Stats;
-import kodkod.multiobjective.api.StepCounter;
+import kodkod.multiobjective.MultiObjectiveSolver;
+import kodkod.multiobjective.statistics.Stats;
+import kodkod.multiobjective.statistics.StepCounter;
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
