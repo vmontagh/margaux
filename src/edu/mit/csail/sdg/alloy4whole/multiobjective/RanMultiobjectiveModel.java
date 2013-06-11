@@ -20,6 +20,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
@@ -133,20 +134,22 @@ public final class RanMultiobjectiveModel {
             
             ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
             
-            try {
+            if (ans.hasNext()) {
             	if (!parsedParameters.getListOnlyOneSolution()){
             		System.out.println("To List all Solutions");
 	                A4Solution ans_next = ans.next();
 	                while(ans_next.satisfiable()){            		
 	            		solution_number++;            		
 	            		ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
+	            		if (!ans_next.hasNext()) {
+	            			break;
+	            		}
 	            		ans_next = ans_next.next();            		
-	            	}   
+	            	}
             	}
-            }catch(java.lang.ClassCastException e){
+            } else {
             	System.out.println("Finished Listing Extra Solutions");            	
             }
-            System.out.println("Finished Try");
             long end_time = System.currentTimeMillis();
             
             long time_taken = end_time - start_time  ;
