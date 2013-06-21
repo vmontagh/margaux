@@ -143,7 +143,7 @@ public final class StaticGraphMaker {
 	      Graph tempGraph = new Graph(1, strat);
 	      new StaticGraphMaker(tempGraph, instance, view, projInstance, null);
 	      GraphViewer temp = new GraphViewer(tempGraph);
-	      if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
+	      if (graph.nodes.size()==0) new GraphNode(graph, "", null, true, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
 	      return produceFrame(instance, view, proj, temp);
    }
    
@@ -283,7 +283,7 @@ public final class StaticGraphMaker {
 	   Graph graph = getNewGraph(view);
 	   AlloyInstance projInstance = StaticProjector.project(instance, proj);
 	   new StaticGraphMaker(graph, instance, view, projInstance, gv);
-	   if (graph.nodes.size()==0) new GraphNode(graph, "", null, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
+	   if (graph.nodes.size()==0) new GraphNode(graph, "", null, true, "Due to your theme settings, every atom is hidden.", "Please click Theme and adjust your settings.");
 	   return new GraphViewer(graph, true, gv.getLeftMostPos(), gv.getTopMostPos());
    }
    
@@ -365,12 +365,19 @@ public final class StaticGraphMaker {
       }
       for (AlloyAtom atom: instance.getAllAtoms()) {
          List<AlloySet> sets = instance.atom2sets(atom);
+         boolean created = false;
          if (sets.size()>0) {
             for (AlloySet s: sets)
                if (view.nodeVisible.resolve(s) && !view.hideUnconnected.resolve(s))
-               {createNode(hidePrivate, hideMeta, atom); break;}
-         } else if (view.nodeVisible.resolve(atom.getType()) && !view.hideUnconnected.resolve(atom.getType())) {
-            createNode(hidePrivate, hideMeta, atom);
+               {createNode(hidePrivate, hideMeta, atom, false); created = true;break;}
+         } else if (view.nodeVisible.resolve(atom.getType()) && !view.hideUnconnected.resolve(atom.getType())) 
+        	 {
+            createNode(hidePrivate, hideMeta, atom, true);
+            created = true;
+         }
+         if (!created)
+         {
+        	 createNode(hidePrivate, hideMeta, atom, false);
          }
       }
       for (AlloyRelation rel: model.getRelations())
@@ -392,19 +399,19 @@ public final class StaticGraphMaker {
    /** Return the node for a specific AlloyAtom (create it if it doesn't exist yet).
     * @return null if the atom is explicitly marked as "Don't Show".
     */
-   private GraphNode createNode(final boolean hidePrivate, final boolean hideMeta, final AlloyAtom atom) {
+   private GraphNode createNode(final boolean hidePrivate, final boolean hideMeta, final AlloyAtom atom, boolean visible) {
 	  GraphNode node;
       node = atom2node.get(atom);
       if (node!=null) return node;
       if ( (hidePrivate && atom.getType().isPrivate)
             || (hideMeta    && atom.getType().isMeta)
-            || !view.nodeVisible(atom, instance)) return null;
+            || !view.nodeVisible(atom, instance)) visible = false;
 	  //If the graph nodes are layed out from previous frame of projection.
       for (GraphNode n : oldGraphNodes)
       {
     	  if (atom!=null&&n.getAtom()!=null&&atom.equals(n.getAtom()))
     	  {
-        	  node = new GraphNode(graph, atom, atom, n.x(), n.y(), n.layer(), n.getPos(), atomname(atom, false)).set(n.shape()).set(n.getColor()).set(n.getStyle());
+        	  node = new GraphNode(graph, atom, atom, n.x(), n.y(), n.layer(), n.getPos(), visible, atomname(atom, false)).set(n.shape()).set(n.getColor()).set(n.getStyle());
         	  //node.setProjTextHeight(n.getProjTextHeight());
         	  //node.setProjTextWidth(n.getProjTextWidth());
     	  }
@@ -416,7 +423,7 @@ public final class StaticGraphMaker {
           DotStyle style = view.nodeStyle(atom, instance);
           DotShape shape = view.shape(atom, instance);
           String label = atomname(atom, false);
-          node = new GraphNode(graph, atom, atom, label).set(shape).set(color.getColor(view.getNodePalette())).set(style);
+          node = new GraphNode(graph, atom, atom, visible, label).set(shape).set(color.getColor(view.getNodePalette())).set(style);
 	  }
 	  
 	  if (atomLabels!=null&&atomLabels.get(node.getAtom())!=null&&!atomLabels.get(node.getAtom()).isEmpty())
@@ -457,8 +464,8 @@ public final class StaticGraphMaker {
       if ((hidePrivate && tuple.getEnd().getType().isPrivate)
             ||(hideMeta    && tuple.getEnd().getType().isMeta)
             || !view.nodeVisible(tuple.getEnd(), instance)) return false;
-      GraphNode start = createNode(hidePrivate, hideMeta, tuple.getStart());
-      GraphNode end = createNode(hidePrivate, hideMeta, tuple.getEnd());
+      GraphNode start = createNode(hidePrivate, hideMeta, tuple.getStart(), true);
+      GraphNode end = createNode(hidePrivate, hideMeta, tuple.getEnd(), true);
       if (start==null || end==null) return false;
       boolean layoutBack = view.layoutBack.resolve(rel);
       String label = view.label.get(rel);

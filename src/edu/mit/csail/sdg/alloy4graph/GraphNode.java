@@ -175,11 +175,14 @@ public final strictfp class GraphNode {
     */
    private Shape poly3 = null;
 
+   /** Variable to check whether the node is visible. */
+   boolean visible = true;
    //===================================================================================================
 
    /** Create a new node with the given list of labels, then add it to the given graph. */
-   public GraphNode(Graph graph, Object uuid, AlloyAtom atom, String... labels) {
-      this.uuid = uuid;
+   public GraphNode(Graph graph, Object uuid, AlloyAtom atom, boolean visible, String... labels) {
+      this.visible = visible;
+	  this.uuid = uuid;
       this.graph = graph;
       this.atom = atom;
       this.pos = graph.nodelist.size();
@@ -193,9 +196,9 @@ public final strictfp class GraphNode {
    }
 
    /** Create a new node with the following coordinates and labels and add it to the given graph. */
-   public GraphNode(Graph graph, Object uuid, AlloyAtom atom, int x, int y, int layer, int position, String... labels)
+   public GraphNode(Graph graph, Object uuid, AlloyAtom atom, int x, int y, int layer, int position, boolean visible, String... labels)
    {
-	   this(graph, uuid, atom, labels);
+	   this(graph, uuid, atom, visible, labels);
 	   this.setX(x);
 	   this.setY(y);
 	   this.setLayer(layer);
@@ -315,6 +318,7 @@ public final strictfp class GraphNode {
 
    /** Draws this node at its current (x, y) location; this method will call calcBounds() if necessary. */
    void draw(Artist gr, double scale, boolean highlight) {
+	  if (!visible) return;
       if (shape==null) return; else if (updown<0) calcBounds();
       final int top = graph.getTop(), left = graph.getLeft();
       gr.set(style, scale);

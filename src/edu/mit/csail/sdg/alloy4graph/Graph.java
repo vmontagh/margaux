@@ -366,7 +366,7 @@ public final strictfp class Graph {
          GraphNode a = e.a(), b=e.b();
          while(a.layer() - b.layer() > 1) {
             GraphNode tmp = a;
-            a = new GraphNode(a.graph, e.uuid, null).set((DotShape)null);
+            a = new GraphNode(a.graph, e.uuid, null, true).set((DotShape)null);
             a.setLayer(tmp.layer()-1);
             // now we have three nodes in the vertical order of "tmp", "a", then "b"
             e.change(a);                                                                           // let old edge go from "tmp" to "a"
@@ -717,7 +717,7 @@ public final strictfp class Graph {
 				   lastNodeNum = i;	
 			   }
 	       }
-		   if (lastNodeNum==-1)
+		   if (lastNodeNum==-1&&layer.size()>0)
 		   {
 			   GraphNode node = layer.get(0);
 			   node.setX(0);
