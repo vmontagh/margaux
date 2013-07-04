@@ -959,7 +959,7 @@ public final class A4Solution {
 
         solver.multiObjectiveOptions().setAllSolutionsPerPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
         
-        System.out.println("Solver has allSolutionsPerPoint of " + solver.multiObjectiveOptions().allSolutionsPerPoint());
+        rep.debug("Solver has allSolutionsPerPoint of " + solver.multiObjectiveOptions().allSolutionsPerPoint());
         
         rep.debug("Simplifying the bounds...\n");
         if (simp!=null && formulas.size()>0 && !simp.simplify(rep, this, formulas)) addFormula(Formula.FALSE, Pos.UNKNOWN);
@@ -1021,10 +1021,10 @@ public final class A4Solution {
         if (!solver.options().solver().incremental()) {
            if (sol==null) sol = solver.solve(fgoal, bounds);
            
-           System.out.println("Non-Incremental");
+           rep.debug("Non-Incremental");
         } else {
            //kEnumerator = new Peeker<Solution>(solver.solveAll(fgoal, bounds));
-        	System.out.println("Incremental with MagnifierGlass = " + solver.multiObjectiveOptions().allSolutionsPerPoint());
+            rep.debug("Incremental with MagnifierGlass = " + solver.multiObjectiveOptions().allSolutionsPerPoint());
         	Iterator<Solution> itSolutions = solver.solveAll(fgoal, bounds, cmd.moolloyObjectives);
             kEnumerator =new Peeker<Solution>(itSolutions); // [s26stewa]
         	if (sol==null) {
@@ -1033,14 +1033,14 @@ public final class A4Solution {
 
         	
         	/*
-        	System.out.println("Start Listing Solutions");
-        	System.out.println("Solution 1: \n\n" + itSolutions.next() + " \n\n");
-        	System.out.println("Solution 2: \n\n" + itSolutions.next() + " \n\n");
-        	System.out.println("Solution 3: \n\n" + itSolutions.next() + " \n\n");
+            rep.debug("Start Listing Solutions");
+            rep.debug("Solution 1: \n\n" + itSolutions.next() + " \n\n");
+            rep.debug("Solution 2: \n\n" + itSolutions.next() + " \n\n");
+            rep.debug("Solution 3: \n\n" + itSolutions.next() + " \n\n");
+
+            rep.debug("End Listing Solutions");
         	
-        	System.out.println("End Listing Solutions");
-        	
-        	System.exit(0);
+            System.exit(0);
         	*/
 
         }
@@ -1083,13 +1083,13 @@ public final class A4Solution {
         if (inst!=null) rep.resultSAT(cmd, time, this); else rep.resultUNSAT(cmd, time, this);
         
         
-        //System.out.println("WILL RETURN \n\n\n\n");
+        //rep.debug("WILL RETURN \n\n\n\n");
         
-        //System.out.println("Second Solution" + this.kEnumerator.next());
+        //rep.debug("Second Solution" + this.kEnumerator.next());
         
-        //System.out.println("Third Solution" + this.kEnumerator.next());
+        //rep.debug("Third Solution" + this.kEnumerator.next());
         
-       // System.out.println("Third Solution" + this.kEnumerator.next());
+       // rep.debug("Third Solution" + this.kEnumerator.next());
         
 
         
@@ -1195,13 +1195,13 @@ public final class A4Solution {
        if (hCore!=null) for(Node f: hCore) {
           Object x = k2pos(f);
           if (x instanceof Pos) {
-             // System.out.println("F: "+f+" at "+x+"\n"); System.out.flush();
+             // rep.debug("F: "+f+" at "+x+"\n"); System.out.flush();
              ans1.add((Pos)x);
           } else if (x instanceof Expr) {
              Expr expr = (Expr)x;
              Pos p = ((Expr)x).span();
              ans1.add(p);
-             // System.out.println("F: "+f+" by "+p.x+","+p.y+"->"+p.x2+","+p.y2+" for "+x+"\n\n"); System.out.flush();
+             // rep.debug("F: "+f+" by "+p.x+","+p.y+"->"+p.x2+","+p.y2+" for "+x+"\n\n"); System.out.flush();
              for(Func func: expr.findAllFunctions()) ans2.add(func.getBody().span());
           }
        }
@@ -1225,7 +1225,7 @@ public final class A4Solution {
         PrintWriter out=null;
         try {
             out=new PrintWriter(filename,"UTF-8");
-            //System.out.println(out.)
+            //rep.debug(out.)
             writeXML(out, macros, sourceFiles);
             if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");
         } catch(IOException ex) {

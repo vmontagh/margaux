@@ -22,6 +22,10 @@ import java.util.LinkedList;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
@@ -45,7 +49,6 @@ import kodkod.multiobjective.statistics.Stats;
 
 public final class RanMultiobjectiveModel {
 
-
 	/*
      * Execute every command in every file.
      *
@@ -59,7 +62,7 @@ public final class RanMultiobjectiveModel {
     public static void main(String[] args) throws Err, IOException {
     	copyFromJAR();
         final String binary = alloyHome() + fs + "binary";
-        System.out.println(binary);
+
         // Add the new JNI location to the java.library.path
         try {
             System.setProperty("java.library.path", binary);
@@ -70,12 +73,19 @@ public final class RanMultiobjectiveModel {
             old.setAccessible(true);
             old.set(null,newarray);
         } catch (Throwable ex) { }
-    	
-    	System.out.println( loadLibrary("minisat"));
+        if( !loadLibrary("minisat") ) {
+            throw new RuntimeException("Failed to load minisat solver library");
+        }
 
-    	MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
-    	/* Finished Extracting Arguments */
-    	
+        MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
+        /* Finished Extracting Arguments */
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+
+        Logger logger = Logger.getLogger("");
+        logger.addHandler(handler);
+        logger.setLevel(Level.ALL);
+
         A4Reporter rep = new A4Reporter() {
             private long lastTime=0;
 
@@ -147,9 +157,8 @@ public final class RanMultiobjectiveModel {
 	            		ans_next = ans_next.next();            		
 	            	}
             	}
-            } else {
-            	System.out.println("Finished Listing Extra Solutions");            	
             }
+
             long end_time = System.currentTimeMillis();
             
             long time_taken = end_time - start_time  ;
