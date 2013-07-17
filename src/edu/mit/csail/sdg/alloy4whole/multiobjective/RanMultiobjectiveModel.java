@@ -275,7 +275,8 @@ public final class RanMultiobjectiveModel {
            arch+"/berkmin", arch+"/spear");
         Util.copy(false, false, platformBinary,
            arch+"/minisat.dll", arch+"/minisatprover.dll", arch+"/zchaff.dll",
-           arch+"/berkmin.exe", arch+"/spear.exe");
+           arch+"/berkmin.exe", arch+"/spear.exe",
+           arch+"/libz3.so", arch+"/libz3java.so");
         // Copy the model files
         Util.copy(false, true, alloyHome(),
            "models/book/appendixA/addressBook1.als", "models/book/appendixA/addressBook2.als", "models/book/appendixA/barbers.als",
