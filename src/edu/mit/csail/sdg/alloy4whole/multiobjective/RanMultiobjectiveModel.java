@@ -18,6 +18,9 @@ package edu.mit.csail.sdg.alloy4whole.multiobjective;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.NoSuchElementException;
@@ -62,6 +65,7 @@ public final class RanMultiobjectiveModel {
     public static void main(String[] args) throws Err, IOException {
     	copyFromJAR();
         final String binary = alloyHome() + fs + "binary";
+        final String jars = alloyHome() + fs + "jars";
 
         // Add the new JNI location to the java.library.path
         try {
@@ -77,6 +81,19 @@ public final class RanMultiobjectiveModel {
             throw new RuntimeException("Failed to load minisat solver library");
         }
 
+        // Add the jars to the System Class Loader.
+        // This is somewhat of a hack.
+        try {
+          URLClassLoader systemClassLoader =
+              (URLClassLoader)ClassLoader.getSystemClassLoader();
+          Class classLoaderClass = URLClassLoader.class;
+          Method addUrlMethod = classLoaderClass.getDeclaredMethod("addURL", new Class[] {URL.class});
+          addUrlMethod.setAccessible(true);
+          addUrlMethod.invoke(systemClassLoader, new Object[] {
+            (new File(jars + fs + "com.microsoft.z3.jar")).toURL()
+          });
+        } catch (Throwable ex) { }
+        
         MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
         /* Finished Extracting Arguments */
         Handler handler = new ConsoleHandler();
@@ -260,13 +277,19 @@ public final class RanMultiobjectiveModel {
         if (os.equals("mac")) arch="x86-mac"; // our pre-compiled binaries are all universal binaries
         // Find out the appropriate Alloy directory
         final String platformBinary = alloyHome() + fs + "binary";
+        final String jars = alloyHome() + fs + "jars";
+
         // Write a few test files
         try {
             (new File(platformBinary)).mkdirs();
             Util.writeAll(platformBinary + fs + "tmp.cnf", "p cnf 3 1\n1 0\n");
+            (new File(jars)).mkdirs();
+            Util.writeAll(jars + fs + "tmp.cnf", "p cnf 3 1\n1 0\n");
         } catch(Err er) {
             // The error will be caught later by the "berkmin" or "spear" test
         }
+        // Copy the jars
+        Util.copy(true, false, jars, "com.microsoft.z3.jar");
         // Copy the platform-dependent binaries
         Util.copy(true, false, platformBinary,
            arch+"/libminisat.so", arch+"/libminisatx1.so", arch+"/libminisat.jnilib",
