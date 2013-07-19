@@ -64,199 +64,217 @@ public final class RanMultiobjectiveModel {
      * and they may contain filename/line/column information.
      */
     public static void main(String[] args) throws Err, IOException {
-    	copyFromJAR();
-        final String binary = alloyHome() + fs + "binary";
-        final String jars = alloyHome() + fs + "jars";
+      try {
+        copyFromJAR();
+          final String binary = alloyHome() + fs + "binary";
+          final String jars = alloyHome() + fs + "jars";
 
-        // Add the new JNI location to the java.library.path
-        try {
-            System.setProperty("java.library.path", binary);
-            // The above line is actually useless on Sun JDK/JRE (see Sun's bug ID 4280189)
-            // The following 4 lines should work for Sun's JDK/JRE (though they probably won't work for others)
-            String[] newarray = new String[]{binary};
-            java.lang.reflect.Field old = ClassLoader.class.getDeclaredField("usr_paths");
-            old.setAccessible(true);
-            old.set(null,newarray);
-        } catch (Throwable ex) { }
-        if( !loadLibrary("minisat") ) {
-            throw new RuntimeException("Failed to load minisat solver library");
+          // Add the new JNI location to the java.library.path
+          try {
+              System.setProperty("java.library.path", binary);
+              // The above line is actually useless on Sun JDK/JRE (see Sun's bug ID 4280189)
+              // The following 4 lines should work for Sun's JDK/JRE (though they probably won't work for others)
+              String[] newarray = new String[]{binary};
+              java.lang.reflect.Field old = ClassLoader.class.getDeclaredField("usr_paths");
+              old.setAccessible(true);
+              old.set(null,newarray);
+          } catch (Throwable ex) { }
+          if( !loadLibrary("minisat") ) {
+              throw new RuntimeException("Failed to load minisat solver library");
+          }
+
+          // Add the jars to the System Class Loader.
+          // This is somewhat of a hack.
+          try {
+            URLClassLoader systemClassLoader =
+                (URLClassLoader)ClassLoader.getSystemClassLoader();
+            Class classLoaderClass = URLClassLoader.class;
+            Method addUrlMethod = classLoaderClass.getDeclaredMethod("addURL", new Class[] {URL.class});
+            addUrlMethod.setAccessible(true);
+            addUrlMethod.invoke(systemClassLoader, new Object[] {
+              (new File(jars + fs + "com.microsoft.z3.jar")).toURL()
+            });
+          } catch (Throwable ex) { }
+          
+          MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
+          /* Finished Extracting Arguments */
+          Handler handler = new ConsoleHandler();
+          handler.setLevel(Level.ALL);
+
+          Logger logger = Logger.getLogger("");
+          logger.addHandler(handler);
+          logger.setLevel(Level.ALL);
+
+          A4Reporter rep = new A4Reporter() {
+              private long lastTime=0;
+
+              // For example, here we choose to display each "warning" by printing it to System.out
+              @Override public void warning(ErrorWarning msg) {
+                  //System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
+                  //System.out.flush();
+              }
+              @Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
+                  //System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
+                  //lastTime = System.currentTimeMillis();
+                  //System.out.flush();
+
+              }
+              @Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
+                  //lastTime = System.currentTimeMillis();
+                  //System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
+                  //+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
+                  //+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
+                  //System.out.flush();
+
+              }
+              
+          };
+          
+
+        Module world = CompUtil.parseEverything_fromFile(rep, null, parsedParameters.getFilename());
+
+          // Choose some default options for how you want to execute the commands
+          A4Options options = new A4Options();
+          options.solver = A4Options.SatSolver.MiniSatJNI;
+          options.MoolloyListAllSolutionsForParetoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
+          options.symmetry = parsedParameters.getSymmetryBreaking();
+          
+          
+          FileWriter fp_logFile = null; 
+          FileWriter fp_logFileIndividualCallStats = null;
+          if ( parsedParameters.getLogRunningTimes() ){        	
+            fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);        	
+            System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
+            fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);        	
+          }
+
+          
+          for (Command command: world.getAllCommands()) {
+              // Execute the command
+              //System.out.println("============ Command "+command+": ============");
+              
+              long start_time = System.currentTimeMillis();
+              A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+              
+              
+
+              int solution_number = 1;
+              
+              
+              ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
+              
+              if (ans.hasNext()) {
+                if (!parsedParameters.getListOnlyOneSolution()){
+                  System.out.println("To List all Solutions");
+                    A4Solution ans_next = ans.next();
+                    while(ans_next.satisfiable()){            		
+                    solution_number++;            		
+                    ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
+                    if (!ans_next.hasNext()) {
+                      break;
+                    }
+                    ans_next = ans_next.next();            		
+                  }
+                }
+              }
+
+              long end_time = System.currentTimeMillis();
+              
+              long time_taken = end_time - start_time  ;
+              
+              String LogLine = parsedParameters.getFilename() + ",";
+              LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
+              LogLine += "," + Integer.toString(parsedParameters.getSymmetryBreaking());
+              LogLine += "," + time_taken;
+              LogLine += "," + "SummaryStatsNext";
+
+              Stats SummaryStatistics  = TranslateAlloyToKodkod.getStats();
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_CALL);
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_CALL) ;
+
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME);
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME);
+              
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_SOLVING);
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_SOLVING); 
+                  
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_TRANSLATION);
+              LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_TRANSLATION); 
+
+              
+              LogLine += "," + "GiaCountCallsOnEachMovementToParetoFront";            
+              LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() + "\n";;
+
+              
+              String LogHeaderLine = "";
+
+              LogHeaderLine += "Filename";
+              LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
+              LogHeaderLine += "," + "SymmetryBreaking";
+              LogHeaderLine += "," + "Total Time(ms)";
+              LogHeaderLine += "," + "SummaryStatsNext";
+
+              LogHeaderLine += "," + "# of Regular Sat Calls";
+              LogHeaderLine += "," + "# f Regular Unsat Calls";
+
+              
+              LogHeaderLine += "," + "Total Time of Regular Sat Calls";
+              LogHeaderLine += "," + "Total Time of Regular Unsat Calls";
+
+              LogHeaderLine += "," + "Total Time Solving Regular Sat Calls";
+              LogHeaderLine += "," + "Total Time Solving Regular Unsat Calls"; 
+              
+              LogHeaderLine += "," + "Total Time Translating Regular Sat Calls";
+              LogHeaderLine += "," + "Total Time Translating Regular Unsat Calls"; 
+
+              LogHeaderLine += "," + "GiaCountCallsOnEachMovementToParetoFront" + "\n" ;
+              
+              String LogIndividualCallsHeaderLine = parsedParameters.getFilename() +  "\n";
+              LogIndividualCallsHeaderLine +=  IndividualStats.getHeaderLine()  + "\n";
+                  
+              
+              
+              if ( parsedParameters.getLogRunningTimes()  == true){    
+                System.out.println("Writing LogLine General");            	
+                if (parsedParameters.getWriteHeaderLogfile()){            		
+                      fp_logFile.write(LogHeaderLine);            		
+                }
+                  fp_logFile.write(LogLine);            
+                  fp_logFile.close();
+
+                System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
+
+                fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
+                for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
+                  fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
+                }
+                
+                fp_logFileIndividualCallStats.close();
+              }
+              
+              
+              
+              
+              
+           }
+      } finally {
+        File alloyDirectory = new File(alloyHome());
+        if (alloyDirectory.exists()) {
+          deleteDirectory(alloyDirectory);
         }
+      }
+    }
 
-        // Add the jars to the System Class Loader.
-        // This is somewhat of a hack.
-        try {
-          URLClassLoader systemClassLoader =
-              (URLClassLoader)ClassLoader.getSystemClassLoader();
-          Class classLoaderClass = URLClassLoader.class;
-          Method addUrlMethod = classLoaderClass.getDeclaredMethod("addURL", new Class[] {URL.class});
-          addUrlMethod.setAccessible(true);
-          addUrlMethod.invoke(systemClassLoader, new Object[] {
-            (new File(jars + fs + "com.microsoft.z3.jar")).toURL()
-          });
-        } catch (Throwable ex) { }
-        
-        MultiObjectiveArguments parsedParameters  = MultiObjectiveArguments.parseCommandLineArguments(args);
-        /* Finished Extracting Arguments */
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
-
-        Logger logger = Logger.getLogger("");
-        logger.addHandler(handler);
-        logger.setLevel(Level.ALL);
-
-        A4Reporter rep = new A4Reporter() {
-            private long lastTime=0;
-
-            // For example, here we choose to display each "warning" by printing it to System.out
-            @Override public void warning(ErrorWarning msg) {
-                //System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
-                //System.out.flush();
-            }
-            @Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
-                //System.out.println("solve->"+totalVars+" vars. "+primaryVars+" primary vars. "+clauses+" clauses. "+(System.currentTimeMillis()-lastTime)+"ms.\n");
-                //lastTime = System.currentTimeMillis();
-                //System.out.flush();
-
-            }
-            @Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
-                //lastTime = System.currentTimeMillis();
-                //System.out.println("translate->Solver="+solver+" Bitwidth="+bitwidth+" MaxSeq="+maxseq
-                //+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
-                //+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
-                //System.out.flush();
-
-            }
-            
-        };
-        
-
-    	Module world = CompUtil.parseEverything_fromFile(rep, null, parsedParameters.getFilename());
-
-        // Choose some default options for how you want to execute the commands
-        A4Options options = new A4Options();
-        options.solver = A4Options.SatSolver.MiniSatJNI;
-        options.MoolloyListAllSolutionsForParetoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
-        options.symmetry = parsedParameters.getSymmetryBreaking();
-        
-        
-        FileWriter fp_logFile = null; 
-        FileWriter fp_logFileIndividualCallStats = null;
-        if ( parsedParameters.getLogRunningTimes() ){        	
-        	fp_logFile  = new FileWriter(parsedParameters.getLogFilename(), true);        	
-        	System.out.println("Trying initialize with " + parsedParameters.getLogFilenameIndividualStats());
-        	fp_logFileIndividualCallStats = new FileWriter(parsedParameters.getLogFilenameIndividualStats(), true);        	
+    private static void deleteDirectory(File directory) {
+        File[] files = directory.listFiles();
+        for (File file : files) {
+          if (file.isDirectory()) {
+            deleteDirectory(file);
+          } else {
+            file.delete();
+          }
         }
-
-        
-        for (Command command: world.getAllCommands()) {
-            // Execute the command
-            //System.out.println("============ Command "+command+": ============");
-            
-            long start_time = System.currentTimeMillis();
-            A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-            
-            
-
-            int solution_number = 1;
-            
-            
-            ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
-            
-            if (ans.hasNext()) {
-            	if (!parsedParameters.getListOnlyOneSolution()){
-            		System.out.println("To List all Solutions");
-	                A4Solution ans_next = ans.next();
-	                while(ans_next.satisfiable()){            		
-	            		solution_number++;            		
-	            		ans_next.writeXML("alloy_solutions_" + solution_number  + ".xml");
-	            		if (!ans_next.hasNext()) {
-	            			break;
-	            		}
-	            		ans_next = ans_next.next();            		
-	            	}
-            	}
-            }
-
-            long end_time = System.currentTimeMillis();
-            
-            long time_taken = end_time - start_time  ;
-            
-            String LogLine = parsedParameters.getFilename() + ",";
-            LogLine += parsedParameters.getListAllSolutionsForAParetoPoint() == true ? "ListAllSolutionsForAParetoPoint": "ListOneSolutionForAParetoPoint" ;
-            LogLine += "," + Integer.toString(parsedParameters.getSymmetryBreaking());
-            LogLine += "," + time_taken;
-            LogLine += "," + "SummaryStatsNext";
-
-            Stats SummaryStatistics  = TranslateAlloyToKodkod.getStats();
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_CALL);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_CALL) ;
-
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME);
-            
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_SOLVING);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_SOLVING); 
-            		
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_SAT_TIME_TRANSLATION);
-            LogLine += "," + SummaryStatistics.get(StatKey.REGULAR_UNSAT_TIME_TRANSLATION); 
-
-            
-            LogLine += "," + "GiaCountCallsOnEachMovementToParetoFront";            
-            LogLine +=  "," + TranslateAlloyToKodkod.getGIACountCallsOnEachMovementToParetoFront().toString() + "\n";;
-
-            
-            String LogHeaderLine = "";
-
-            LogHeaderLine += "Filename";
-            LogHeaderLine += "," + "NumberSolutionsToListPerParetoPoint";
-            LogHeaderLine += "," + "SymmetryBreaking";
-            LogHeaderLine += "," + "Total Time(ms)";
-            LogHeaderLine += "," + "SummaryStatsNext";
-
-            LogHeaderLine += "," + "# of Regular Sat Calls";
-            LogHeaderLine += "," + "# f Regular Unsat Calls";
-
-            
-            LogHeaderLine += "," + "Total Time of Regular Sat Calls";
-            LogHeaderLine += "," + "Total Time of Regular Unsat Calls";
-
-            LogHeaderLine += "," + "Total Time Solving Regular Sat Calls";
-            LogHeaderLine += "," + "Total Time Solving Regular Unsat Calls"; 
-            
-            LogHeaderLine += "," + "Total Time Translating Regular Sat Calls";
-            LogHeaderLine += "," + "Total Time Translating Regular Unsat Calls"; 
-
-            LogHeaderLine += "," + "GiaCountCallsOnEachMovementToParetoFront" + "\n" ;
-            
-            String LogIndividualCallsHeaderLine = parsedParameters.getFilename() +  "\n";
-            LogIndividualCallsHeaderLine +=  IndividualStats.getHeaderLine()  + "\n";
-            		
-            
-            
-            if ( parsedParameters.getLogRunningTimes()  == true){    
-            	System.out.println("Writing LogLine General");            	
-            	if (parsedParameters.getWriteHeaderLogfile()){            		
-                    fp_logFile.write(LogHeaderLine);            		
-            	}
-                fp_logFile.write(LogLine);            
-                fp_logFile.close();
-
-            	System.out.println("Writing Individual Loglines, header is " + LogIndividualCallsHeaderLine);        
-
-            	fp_logFileIndividualCallStats.write(LogIndividualCallsHeaderLine);
-            	for (IndividualStats  IndividualCallsStats : SummaryStatistics.getIndividualStats() ){
-            		fp_logFileIndividualCallStats.write(IndividualCallsStats + "\n");
-            	}
-            	
-            	fp_logFileIndividualCallStats.close();
-            }
-            
-            
-            
-            
-            
-         }
-        				    
+        directory.delete();
     }
 
     private static boolean loadLibrary(String library) {
