@@ -1,28 +1,96 @@
 <project name="Alloy" basedir=".">
-    <description>
-        ANT build file for Alloy; Currently only for building OSX .app file.
-    </description>
+  <description>
+    ANT build file for Alloy.
+  </description>
 
-    <taskdef name="jarbundler" 
-             classname="net.sourceforge.jarbundler.JarBundler" />
+  <property name="KODKOD_HOME" value="../kodkod" />
+  <property name="VERSION" value="4.2.i" />
+  <property name="version_file" value="src/edu/mit/csail/sdg/alloy4/Version.java" />
 
-    <jarbundler dir="dist"
-		name="Alloy4.2-rc"
-		mainclass="edu.mit.csail.sdg.alloy4whole.SimpleGUI"
-		jar="dist/alloy-dev.jar" 
-		build="4.2"
-		bundleid="edu.mit.csail.sdg.alloy4whole.SimpleGUI"
-		stubfile="OSX-JavaStub/JavaApplicationStub"
-		icon="OSX-icons/AlloyLogo.icns"
-		infostring="Alloy Analyzer"
-		shortname="Alloy">
+  <path id="classpath">
+    <pathelement path="${KODKOD_HOME}/build/src/kodkod" />
+    <fileset dir="lib">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
 
-      <documenttype name="Alloy model file"
-                    extensions="als" 
-                    iconFile="OSX-icons/AlloyFile.icns"
-                    role="Editor"/>
+  <tstamp>
+    <format property="BUILD_DATE"
+      pattern="YYYY-MM-DD HH:MM:SS" />
+  </tstamp>
 
-    </jarbundler>
+  <target name="all" depends="compile,dist"/>
 
+  <target name="compile">
+    <copy file="${version_file}" tofile="${version_file}.bak" />
+    <exec executable="sed">
+      <arg value="-i"/>
+      <arg value="-e"/>
+      <arg value="s/public static String builddate.*/public static String builddate() { return &quot;${BUILD_DATE}&quot;; }/" />
+      <arg value="${version_file}" />
+    </exec>
+    <exec executable="sed">
+      <arg value="-i"/>
+      <arg value="-e"/>
+      <arg value="s/public static String version.*/public static String version() { return &quot;${VERSION}&quot;; }/" />
+      <arg value="${version_file}" />
+    </exec>
+
+    <delete dir="bin" />
+
+    <mkdir dir="bin"/>
+
+    <javac srcdir="src" 
+      destdir="bin"
+      target="1.7"
+      classpathref="classpath" />
+
+    <move file="${version_file}.bak" tofile="${version_file}" />
+  </target>
+
+  <target name="dist">
+    <delete dir="dist" />
+    
+    <mkdir dir="dist" />
+    <mkdir dir="dist/alloy" />
+
+    <unzip src="lib/apple-osx-ui.jar" dest="dist/alloy" />
+    <unzip src="lib/extra.jar" dest="dist/alloy" />
+    <unzip src="lib/kodkod+sat4j.jar" dest="dist/alloy" />
+
+      
+    <copy todir="dist/alloy/amd64-linux" failonerror="false">
+      <fileset dir="${KODKOD_HOME}/linux_x86_64"/>
+    </copy>
+
+    <copy todir="dist/alloy/amd64-mac" failonerror="false">
+      <fileset dir="${KODKOD_HOME}/darwin_x86_64"/>
+    </copy>
+
+    <copy todir="dist/alloy/amd64-windows" failonerror="false">
+      <fileset dir="${KODKOD_HOME}/win_x86_64"/>
+    </copy>
+
+    <delete dir="bin/tmp" />
+
+    <copy todir="dist/alloy" >
+      <fileset dir="bin" includes="**/*" />
+      <fileset dir="src" includes="**/*" />
+    </copy>
+
+    <delete dir="dist/alloy/kodkod" />
+    <copy todir="dist/alloy/kodkod" >
+      <fileset dir="${KODKOD_HOME}/build/src/kodkod/kodkod" includes="**/*" />
+      <fileset dir="${KODKOD_HOME}/src/kodkod" includes="**/*" />
+    </copy>
+
+    <delete dir="dist/alloy/META-INF" />
+
+    <mkdir dir="dist/alloy/META-INF" />
+
+    <copy todir="dist/alloy/META-INF" file="MANIFEST.MF" /> 
+
+    <zip destfile="dist/alloy-dev.jar" basedir="dist/alloy" includes="**" />
+  </target>
 
 </project>
