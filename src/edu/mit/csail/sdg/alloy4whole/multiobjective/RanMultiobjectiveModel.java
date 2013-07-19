@@ -29,6 +29,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.UUID;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
@@ -366,7 +367,7 @@ public final class RanMultiobjectiveModel {
         if (temp==null || temp.length()==0)
             OurDialog.fatal("Error. JVM need to specify a temporary directory using java.io.tmpdir property.");
         String username=System.getProperty("user.name");
-        File tempfile=new File(temp+File.separatorChar+"alloy4tmp40-"+(username==null?"":username));
+        File tempfile=new File(temp+File.separatorChar+"alloy4tmp40-"+(username==null?"":username)+(UUID.randomUUID()));
         tempfile.mkdirs();
         String ans=Util.canon(tempfile.getPath());
         if (!tempfile.isDirectory()) {
