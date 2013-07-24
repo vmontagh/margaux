@@ -63,7 +63,7 @@
       <fileset dir="${KODKOD_HOME}/linux_x86_64"/>
     </copy>
 
-    <copy todir="dist/alloy/amd64-mac" failonerror="false">
+    <copy todir="dist/alloy/x86-mac" failonerror="false">
       <fileset dir="${KODKOD_HOME}/darwin_x86_64"/>
     </copy>
 

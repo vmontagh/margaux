@@ -315,10 +315,13 @@ public final class RanMultiobjectiveModel {
            arch+"/libminisatprover.so", arch+"/libminisatproverx1.so", arch+"/libminisatprover.jnilib",
            arch+"/libzchaff.so", arch+"/libzchaffx1.so", arch+"/libzchaff.jnilib",
            arch+"/berkmin", arch+"/spear");
-        Util.copy(false, false, platformBinary,
+        Util.copy(true, false, platformBinary,
            arch+"/minisat.dll", arch+"/minisatprover.dll", arch+"/zchaff.dll",
            arch+"/berkmin.exe", arch+"/spear.exe",
            arch+"/libz3.so", arch+"/libz3java.so");
+        Util.copy(true, false, platformBinary,
+           arch+"/libcryptominisat.dylib", arch+"/libglucose.dylib", arch+"/liblingeling.dylib",
+           arch+"/libminisat.dylib", arch+"/libminisatprover.dylib", arch+"/plingeling");
         // Copy the model files
         Util.copy(false, true, alloyHome(),
            "models/book/appendixA/addressBook1.als", "models/book/appendixA/addressBook2.als", "models/book/appendixA/barbers.als",
