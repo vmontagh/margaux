@@ -4,7 +4,7 @@
     </description>
 
     <taskdef name="jarbundler" 
-             classname="net.sourceforge.jarbundler.JarBundler" />
+             classname="net.sourceforge.jarbundler.JarBundler" classpath="../alloy_/lib/jarbundler-2.2.0.jar"/>
 
     <jarbundler dir="dist"
 		name="Alloy4.2-rc"
