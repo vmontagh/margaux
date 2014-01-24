@@ -73,13 +73,14 @@ import edu.mit.csail.sdg.gen.alloy.UniqSigMessage;
 
 public final class ExampleUsingTheCompiler {
 
-	
-	 public static int PACE = 1;
+
+	public static int PACE = 1;
 	final public static boolean oneFound = true;
 	final public static boolean usingKodkod = true;
 	final public static boolean usingKKItr = false;
+	final public static boolean usingSymmetry = true;
 	public static String reportFileName = "";
-	
+
 
 
 	public static class QuickReporter extends A4Reporter{
@@ -106,10 +107,10 @@ public final class ExampleUsingTheCompiler {
 		}
 
 	}
-	
-	
+
+
 	public static String run(String[] args,A4Reporter rep) throws Err{
-		
+
 		String retString = "";
 		copyFromJAR();
 		final String binary = alloyHome() + fs + "binary";
@@ -146,8 +147,8 @@ public final class ExampleUsingTheCompiler {
 
 
 			for (Command command: world.getAllCommands()) {
-				
-				
+
+
 				// Execute the command
 				System.out.println("============ Command "+command+": ============");
 				System.out.println("Starting to evlauate the code....");
@@ -159,10 +160,10 @@ public final class ExampleUsingTheCompiler {
 					out=new PrintWriter("../tmp/out.xml","UTF-8");
 
 					command = uniqSigGenerator(command, world, options,rep);
-					
+
 					LoggerUtil.debug(ExampleUsingTheCompiler.class,"command->%s%n",command);
 
-					
+
 					rep.evalute(System.currentTimeMillis()- time, -1);
 					System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(ExampleUsingTheCompiler.reportFileName,
@@ -172,40 +173,41 @@ public final class ExampleUsingTheCompiler {
 					System.out.println("Starting to execute the commmand....");
 					System.out.println(command);
 					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-					
+
 
 					List<A4Solution> anss = new ArrayList<A4Solution>();
-					
-					while(ans.satisfiable()){	
-						anss.add(ans);
-						ans = ans.next();
-					};
-					
-					//Counter example is found
-					if(!anss.isEmpty()){
-						LoggerUtil.debug(ExampleUsingTheCompiler.class, "Started................................");
-						Command tmpCommand = Transferer.computeNewCommandByNegation(command, anss);
-						LoggerUtil.debug(ExampleUsingTheCompiler.class, "Finished................................");
-						
 
-						edu.mit.csail.sdg.gen.LoggerUtil.debug(ExampleUsingTheCompiler.class,"Old Command is->%s%nNew Command is->%s%n", command,tmpCommand);
-						LoggerUtil.debug(ExampleUsingTheCompiler.class, "The new Command formula is->%s",tmpCommand.formula);
-						ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), 
-								tmpCommand, options);
-						
-						//System.out.println(ans);						
+					if(usingSymmetry){
+						while(ans.satisfiable()){	
+							anss.add(ans);
+							ans = ans.next();
+						};
+
+						//Counter example is found
+						if(!anss.isEmpty()){
+							LoggerUtil.debug(ExampleUsingTheCompiler.class, "Started................................");
+							Command tmpCommand = Transferer.computeNewCommandByNegation(command, anss);
+							LoggerUtil.debug(ExampleUsingTheCompiler.class, "Finished................................");
+
+
+							edu.mit.csail.sdg.gen.LoggerUtil.debug(ExampleUsingTheCompiler.class,"Old Command is->%s%nNew Command is->%s%n", command,tmpCommand);
+							LoggerUtil.debug(ExampleUsingTheCompiler.class, "The new Command formula is->%s",tmpCommand.formula);
+							ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), 
+									tmpCommand, options);
+
+							//System.out.println(ans);						
+						}
 					}
-					
-					
-					
+
+
 					//System.exit(-10);
 					System.out.println("The execution has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 
 					// Print the outcome
 					System.out.println(ans.satisfiable());
-					
+
 					String output = filename.replace(".als", ".out.xml");
-					
+
 					ans.writeXML(output);
 					retString = ans.toString();
 					/*					System.exit(-10);
@@ -217,7 +219,7 @@ public final class ExampleUsingTheCompiler {
 					//A4SolutionWriter.writeInstance(  );
 					if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");*/
 					if (ans.satisfiable()) {
-						
+
 						// You can query "ans" to find out the values of each set or type.
 						// This can be useful for debugging.
 						//
@@ -231,7 +233,7 @@ public final class ExampleUsingTheCompiler {
 							viz.loadXML(output, true);
 						}
 					}
-					
+
 				} catch(IOException ex) {
 					Util.close(out);
 					throw new ErrorFatal("Error writing the solution XML file.", ex);
@@ -258,12 +260,12 @@ public final class ExampleUsingTheCompiler {
 				}*/
 			}
 		}
-		
+
 		return retString;
 
 	}
-	
-	
+
+
 	/*
 	 * Execute every command in every file.
 	 *
@@ -278,16 +280,16 @@ public final class ExampleUsingTheCompiler {
 		System.out.println("The evaluation time is:"+run(args)	);
 	}
 
-	
+
 	public static String run(String[] args) throws Err{
 		return run(args, new QuickReporter());
 	}
 
 	private static Command uniqSigGenerator(final Command command, final CompModule world,
 			final  A4Options options, final A4Reporter rep) throws Err{
-		
+
 		Command result = command;
-		
+
 		UniqSigMessage usm = new UniqSigMessage(
 				new HashMap<String,ExprVar>(),
 				null, command.bound, null,
@@ -342,13 +344,13 @@ public final class ExampleUsingTheCompiler {
 		}//end of sig:Sig loop
 		return result;
 	}
-	
+
 	private static UniqSigMessage makeWorld(final Command command, final CompModule world, final Sig s,
 			final  A4Options options, final A4Reporter rep,
 			final UniqSigMessage usm) throws Err{
 
-		
-		
+
+
 		Bounds oBound = new Bounds(usm.oBound);
 		List<CommandScope> nList = new ArrayList<CommandScope>(usm.nList);
 
@@ -357,11 +359,11 @@ public final class ExampleUsingTheCompiler {
 
 		Map<String,ExprVar> sigAtoms =  usm.sigAtoms==null? new HashMap<String,ExprVar>():  new HashMap<String,ExprVar>(usm.sigAtoms);
 
-		
+
 		Expr expr = world.getUniqueFieldFact(s.label.replace("this/", ""));
 
 		LoggerUtil.debug(ExampleUsingTheCompiler.class,"expr->%s",expr);
-		
+
 		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
 				rep, world.getAllReachableSigs(), command, options,s,expr);
 
@@ -374,7 +376,7 @@ public final class ExampleUsingTheCompiler {
 
 			List<List<Expr>> pFields = new ArrayList<List<Expr>>();
 
-			
+
 			//Make a list of tuples for the field and a set of atoms for the left-most sig
 			List<Expr> field;
 			for(A4Tuple tuple: (A4TupleSet)legal){
@@ -426,29 +428,29 @@ public final class ExampleUsingTheCompiler {
 			//Now change the scope in the bound object
 
 			nList.add( scope);
-			
-			
+
+
 			Bounds nBound = new Bounds( oBound.pos,  oBound.label,  nList);
 			oBound = world.replaceBound( oBound, nBound);
-			
+
 
 		}//End of For
 
-		
-		
+
+
 		//Add the an empty instance to the solution if it is valid.
 		Object hasEmpty = legalPair.a.getEmpty(legalPair.b, fldNames, s);
 
-		
 
-		
+
+
 		if(hasEmpty!=null ){
 			sigAtoms.put(hasEmpty.toString(), ExprVar.make(command.bound.pos, hasEmpty.toString()));
 		}
 
 		LoggerUtil.debug(ExampleUsingTheCompiler.class,"sigScope in makeworld->%s%n scope->%s%n oBound->%s%n nList->%s%n sigAtoms->%s%n",sigScope,scope,oBound,nList,sigAtoms);
-		
-		
+
+
 		return new UniqSigMessage(sigAtoms, sigScope, oBound, scope, nList);
 
 	}

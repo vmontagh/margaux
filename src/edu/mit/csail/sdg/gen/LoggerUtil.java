@@ -10,7 +10,7 @@ public class LoggerUtil {
 
 	
 
-	public static int DEBUG_LEVEL = 3;
+	public static int DEBUG_LEVEL = 0;
 
 	public static synchronized void fileLogger(String reportFile, String... params){
 		String out = "";

@@ -75,8 +75,6 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
-import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
-import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 
@@ -234,12 +232,9 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     private void recursiveAddFormula(Expr x) throws Err {
         if (x instanceof ExprList && ((ExprList)x).op==ExprList.Op.AND) {
             for(Expr e: ((ExprList)x).args){
-            	LoggerUtil.debug(this, "The failed expression-> %s", e);
             	recursiveAddFormula(e);
-            	LoggerUtil.debug(this, "After The failed expression-> %s", e);
             }
         } else {
-        	LoggerUtil.debug(this, "The failed expression befor addFormula-> %s", x);
             frame.addFormula(cform(x), x);
         }
     }
@@ -574,7 +569,6 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
      * @throws ErrorFatal - if x does not evaluate to a Formula
      */
     private Formula cform(Expr x) throws Err {
-    	LoggerUtil.debug(this, "In cCofrm and errors are-> %s", x.errors);
         if (!x.errors.isEmpty()) throw x.errors.pick();
         Object y=visitThis(x);
         if (y instanceof Formula) return (Formula)y;
@@ -745,7 +739,6 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     /** {@inheritDoc} */
     @Override public Object visit(ExprVar x) throws Err {
     	
-    	LoggerUtil.debug(this, "The env is: %s %n%s", x, env);
         Object ans=env.get(x);
         if (ans==null) ans=a2k(x);
         if (ans==null) throw new ErrorFatal(x.pos, "Variable \""+x+"\" is not bound to a legal value during translation.\n");
@@ -1128,7 +1121,6 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         final Expr dexexpr = addOne(dep.expr);
         final Expression dv = cset(dexexpr);
         for(ExprHasName dex: dep.names) {
-        	LoggerUtil.debug(this, "before error is: %s %s", dex, dex.type());
            final Variable v = Variable.nary(skolem(dex.label), dex.type().arity());
            final kodkod.ast.Decl newd;
            env.put((ExprVar)dex, v);

@@ -288,7 +288,6 @@ public final class A4Solution {
 					ints.add(Integer.valueOf(a));
 				}catch(NumberFormatException e){}
 			}
-			edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"Inside A4Solution ints->%s%n max->%s%n min->%s%n", ints, max(), min());
 			if(!ints.isEmpty() && (ints.last() > max() || ints.first() < min)){
 				exceededInt = true;
 				if(ints.first() < min ) exceededInts.addAll(ints.subSet(ints.first(), min));
@@ -2425,7 +2424,7 @@ public final class A4Solution {
 				Command newCommand = command.change(expr!=null?expr:ExprList.make(Pos.UNKNOWN, Pos.UNKNOWN, ExprList.Op.AND, new ArrayList<Expr>()));
 				A4Options options = new A4Options();
 				options.solver = A4Options.SatSolver.MiniSatJNI;
-				options.symmetry = 20;
+				options.symmetry = 0;
 				List<CommandScope> scopes = new ArrayList<CommandScope>(newCommand.scope)  ;
 				if(clsrDtctr.getClosureField()!=null){
 					//The the new sig list contians all the sigs before, but the altered unique sig. The closured field in the
@@ -2702,7 +2701,7 @@ public final class A4Solution {
 								uSigFlds));
 			}//end of instance iterator
 		}
-		LoggerUtil.debug(this, "Total number is: %d");
+		LoggerUtil.debug(this, "Total number is: %d",insts.size());
 		LoggerUtil.debug(this,"%s",insts);
 		return insts;
 
