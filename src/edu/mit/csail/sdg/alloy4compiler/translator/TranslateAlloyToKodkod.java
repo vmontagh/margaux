@@ -124,17 +124,27 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
      * @param cmd - the command to solve (must not be null)
      */
     private TranslateAlloyToKodkod (A4Reporter rep, A4Options opt, Iterable<Sig> sigs, Command cmd) throws Err {
-        this.unrolls = opt.unrolls;
+    	System.out.println("TranslateAlloyToKodkod(1).frame.formulas\n\t"+ 
+    					(this.frame==null? 
+    							null:  
+    								this.frame.formulas));
+    	this.unrolls = opt.unrolls;
         this.rep = (rep != null) ? rep : A4Reporter.NOP;
         this.cmd = cmd;
         Pair<A4Solution, ScopeComputer> pair = ScopeComputer.compute(this.rep, opt, sigs, cmd);
+    	System.out.println("TranslateAlloyToKodkod(2).frame.formulas\n\t"+ (this.frame==null? null:  this.frame.formulas));
+
         this.frame = pair.a;
         this.bitwidth = pair.a.getBitwidth();
         this.min = pair.a.min();
         this.max = pair.a.max();
         this.a2k = null;
         this.s2k = null;
+    	System.out.println("TranslateAlloyToKodkod(3).frame.formulas\n\t"+ (this.frame==null? null:  this.frame.formulas));
+
         BoundsComputer.compute(rep, frame, pair.b, sigs);
+    	System.out.println("TranslateAlloyToKodkod(4).frame.formulas\n\t"+( this.frame==null? null:  this.frame.formulas));
+
 
     }
 
@@ -398,6 +408,7 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
             if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
 
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
+            System.out.println("tr.frame.formulas\n\t"+tr.frame.formulas);
             tr.makeFacts(cmd.formula);
 
             return tr.frame.solve(rep, cmd, new Simplifier(), false);
@@ -420,9 +431,10 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
             if (cmd.parent!=null || !cmd.getGrowableSigs().isEmpty()) return execute_greedyCommand(rep, sigs, cmd, opt);
 
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
-            tr.makeFacts(cmd.formula);
             if(inst != null)
             	tr.frame.includeIntoLowerbound(inst, uniqSig);
+            System.out.println("cmd.formula->"+cmd.formula);
+            tr.makeFacts(cmd.formula);
             return tr.frame.solve(rep, cmd, new Simplifier(), false);
         } catch(UnsatisfiedLinkError ex) {
             throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);

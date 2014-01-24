@@ -22,6 +22,7 @@ import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.STRING;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.UNIV;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -97,7 +98,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 	private int maxstring = (-1);
 
 	/** The scope for each sig. */
-	private final IdentityHashMap<PrimSig,Integer> sig2scope = new IdentityHashMap<PrimSig,Integer>();
+	public final IdentityHashMap<PrimSig,Integer> sig2scope = new IdentityHashMap<PrimSig,Integer>();
 
 	//[VM]
 	/** The partial lower bound scope for each sig. */
@@ -109,11 +110,11 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 
 	//[VM]
 	/** The partial lower-bound scope for each field. */
-	private final IdentityHashMap<String,List<List<String>>> field2PscopeL = new IdentityHashMap<String,List<List<String>>>();
+	public final IdentityHashMap<String,List<List<String>>> field2PscopeL = new IdentityHashMap<String,List<List<String>>>();
 
 	//[VM]
 	/** The partial upper-bound scope for each field. */
-	private final IdentityHashMap<String,List<List<String>>> field2PscopeU = new IdentityHashMap<String,List<List<String>>>();
+	public final IdentityHashMap<String,List<List<String>>> field2PscopeU = new IdentityHashMap<String,List<List<String>>>();
 
 
 	/** The sig's scope is exact iff it is in exact.keySet() (the value is irrelevant). */
@@ -457,6 +458,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 			if(sig2scope(c) > 0)
 				sum = sum + sig2scope(c);
 		}
+		
 		sig2PscopeL(sig, listL);
 		sig2PscopeU(sig, listU);
 		sig2scope(sig, sum);
@@ -561,8 +563,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 				sig2PscopeL(sig, listL);
 				sig2PscopeU(sig, listU);
 				sig2scope(sig, 1);
-				continue;
-			}
+				
+			}else 
 			if(!sig.builtin && sig.isAbstract == null ){
 				int rest = 0;
 				if(sig2PScopeL(sig) > 0 && hasLower(sig) && !hasUpper(sig)){
@@ -719,6 +721,16 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 		}
 		return lower;
 	}
+	
+	private Sig findSig(Iterable<Sig> sigs, Sig sig){
+		Sig ret = null;
+		for(Sig s:sigs)
+			if(s.label.equals(sig.label)){
+				ret = s;
+				break;
+			}
+		return ret;
+	}
 
 	//===========================================================================================================================//
 
@@ -729,7 +741,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 		boolean shouldUseInts = areIntsUsed(sigs);
 		// Process each sig listed in the command
 		for(CommandScope entry:cmd.scope) {
-			Sig s = entry.sig;
+			Sig s =  entry.sig;
 			int scope = entry.startingScope;
 			boolean exact = entry.isExact;
 			boolean lower = entry.hasLower;
@@ -781,7 +793,8 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 					int i = 0;
 					for(List<Expr> pair: entry.pFields ){
 						List<String> tmp = new ArrayList<String>();
-						for(Expr ev: pair)
+						for(Expr ev: pair){
+
 							if(ev instanceof ExprVar)
 								//Here the Sig in relation can be extended.
 								tmp.add(((ExprVar)ev).label.contains("%") || ((ExprVar)ev).label.contains("$") ? ((ExprVar)ev).label : ((ExprVar)ev).label+"%");
@@ -790,6 +803,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 								//[VM] putting the mentioned integer inside the set, later out of the range values are added in the universe
 								exInt.add(((ExprConstant)ev).num);		
 							}
+						}
 						if(i<entry.pAtomsLowerLastIndex)
 							listL.add(tmp);
 						else
@@ -800,7 +814,11 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 					field2PscopeL(s,listL);
 					field2PscopeU(s,listU);
 				}else{
+					s = findSig(sigs, s);
+					assert s!=null : "The signatature in the command has not been found in the signatures list:"+s;
 
+
+					
 					List<String> listL = new ArrayList<String>();
 					List<String> listU = new ArrayList<String>();
 					int i = 0;
@@ -860,6 +878,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 			if(upper) makeUpper(cmd.pos, s);
 			
 		}
+		
 		//[VM] if in "value = a + b + c", the value should not be "one" or ...
 		// Force "one" sigs to be exactly one, and "lone" to be at most one
 		for(Sig s:sigs) 
@@ -879,7 +898,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 		// Complaint about the concrete super-sig. super-sig should be abstract sig.
 		check_abstract_hierchy(sigs);
 		derive_abstract_scope_rule1(sigs);
-
+		
 		// Derive the implicit scopes
 		/*while(true) {
             if (derive_abstract_scope(sigs))    { do {} while(derive_abstract_scope(sigs));     continue; }
@@ -985,10 +1004,21 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 	 * <p> Please see ScopeComputer.java for the exact rules for deriving the missing scopes.
 	 */
 	static Pair<A4Solution,ScopeComputer> compute (A4Reporter rep, A4Options opt, Iterable<Sig> sigs, Command cmd) throws Err {
+
+		System.out.println("cmd----->"+cmd);
 		ScopeComputer sc = new ScopeComputer(rep, sigs, cmd);
+		
+		for(Sig sig:sigs){
+			System.out.println("..........\t"+sig+"....."+sc.sig2scope(sig));
+		}
+		
+		
+		
 		Set<String> set = cmd.getAllStringConstants(sigs);
-		if (sc.maxstring>=0 && set.size()>sc.maxstring) rep.scope("Sig String expanded to contain all "+set.size()+" String constant(s) referenced by this command.\n");
-		for(int i=0; set.size()<sc.maxstring; i++) set.add("\"String" + i + "\"");
+		if (sc.maxstring>=0 && set.size()>sc.maxstring) 
+			rep.scope("Sig String expanded to contain all "+set.size()+" String constant(s) referenced by this command.\n");
+		for(int i=0; set.size()<sc.maxstring; i++) 
+			set.add("\"String" + i + "\"");
 		sc.atoms.addAll(set);
 		A4Solution sol = new A4Solution(cmd.toString(), sc.bitwidth, sc.maxseq, set, sc.atoms, rep, opt, cmd.expects);
 		return new Pair<A4Solution,ScopeComputer>(sol, sc);

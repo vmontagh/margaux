@@ -78,10 +78,14 @@ final class BoundsComputer {
 
 		TupleSet lower = factory.noneOf(1);
 		List<String> list = sc.sig2PscopeL(sig);
+		System.out.println(sig+".."+list);
 		for(String atom:list){
 			lower.add(factory.tuple(atom));
 		}
 
+		for(PrimSig c:sig.children())
+			System.out.println("childeren of "+sig+" is:"+c);
+		
 		for(PrimSig c:sig.children())
 			computeLowerBound_BU(c);
 
@@ -298,7 +302,9 @@ final class BoundsComputer {
 
 	/** Computes the bounds for sigs/fields, then construct a BoundsComputer object that you can query. */
 	private BoundsComputer(A4Reporter rep, A4Solution sol, ScopeComputer sc, Iterable<Sig> sigs) throws Err {
-				
+		
+		System.out.println("sol.formula->\n\t"+sol.formulas);
+		System.out.println("..........sigs->\n\t"+sigs);
 		this.sc = sc;
 		this.factory = sol.getFactory();
 		this.rep = rep;
@@ -397,6 +403,7 @@ final class BoundsComputer {
 					List<List<String>> pListU = sc.field2PscopeU(f.label);
 					if( pListU != null ){
 						//upper.add()
+						//System.out.println("pListU->"+pListU);
 						for(List<String> pl : pListU)
 							ub.add( universe.factory().tuple( pl));
 						for(List<String> pl : pListL)
@@ -452,35 +459,55 @@ final class BoundsComputer {
 				}
 
 			}
+		System.out.println("sol.formula end 3->\n\t"+sol.formulas);
+
 		// Add any additional SIZE constraints
 		for(Sig s:sigs) if (!s.builtin) {
 			Expression exp = sol.a2k(s);
 			TupleSet upper = sol.query(true,exp,false), lower=sol.query(false,exp,false);
 			final int n = sc.sig2scope(s);
+			System.out.println("s\t"+s+"\tupper\t"+upper+"\tlower\t"+lower+"\texp\t"+exp+"\tn\t"+n);
 			if (s.isOne!=null && (lower.size()!=1 || upper.size()!=1)) {
 				rep.bound("Sig "+s+" in "+upper+" with size==1\n");
+				System.out.println("sol.formula end 4->\n\t"+sol.formulas);
 				sol.addFormula(exp.one(), s.isOne);
+				System.out.println("sol.formula end 5->\n\t"+sol.formulas);
+
 				continue;
 			}
-			if (s.isSome!=null && lower.size()<1) sol.addFormula(exp.some(), s.isSome);
-			if (s.isLone!=null && upper.size()>1) sol.addFormula(exp.lone(), s.isLone);
+			if (s.isSome!=null && lower.size()<1){
+				System.out.println("sol.formula end 6->\n\t"+sol.formulas);
+				sol.addFormula(exp.some(), s.isSome);
+				System.out.println("sol.formula end 7->\n\t"+sol.formulas);
+			}
+			if (s.isLone!=null && upper.size()>1){
+				System.out.println("sol.formula end 8->\n\t"+sol.formulas);
+				sol.addFormula(exp.lone(), s.isLone);
+				System.out.println("sol.formula end 9->\n\t"+sol.formulas);
+			}
 			if (n<0) continue; // This means no scope was specified
 			if (lower.size()==n && upper.size()==n && sc.isExact(s)) {
 				rep.bound("Sig "+s+" == "+upper+"\n");
 			}
 			else if (sc.isExact(s)) {
 				rep.bound("Sig "+s+" in "+upper+" with size=="+n+"\n");
+				System.out.println("sol.formula end 10->\n\t"+sol.formulas);
 				sol.addFormula(size(s,n,true), Pos.UNKNOWN);
+				System.out.println("sol.formula end 11->\n\t"+sol.formulas);
+
 			}
 			else if (upper.size()<=n){
 				rep.bound("Sig "+s+" in "+upper+"\n");
 			}
 			else {
 				rep.bound("Sig "+s+" in "+upper+" with size<="+n+"\n");
+				System.out.println("sol.formula end 12->\n\t"+sol.formulas);
+				System.out.println("s->\n\t"+s);
 				sol.addFormula(size(s,n,false), Pos.UNKNOWN);
+				System.out.println("sol.formula end 13->\n\t"+sol.formulas);
 			}
 		}
-		
+		System.out.println("sol.formula end 2->\n\t"+sol.formulas);
 		for(Sig s:sigs) 
 			if (!s.builtin ) {
 				TupleSet  ts = ub.get(s).clone();
@@ -499,13 +526,15 @@ final class BoundsComputer {
 		System.out.println("\tsol.bounds\n"+sol.bounds);		
 		System.out.println("|-----------------------------------------|");
 		*/
-		
+		System.out.println("sol.formula end->\n\t"+sol.formulas);
+
 	}
 
 	//==============================================================================================================//
 
 	/** Assign each sig and field to some Kodkod relation or expression, then set the bounds. */
 	static void compute (A4Reporter rep, A4Solution sol, ScopeComputer sc, Iterable<Sig> sigs) throws Err {
+		System.out.println("sc.field2PscopeL->"+sc.field2PscopeL);
 		new BoundsComputer(rep, sol, sc, sigs);
 	}
 }

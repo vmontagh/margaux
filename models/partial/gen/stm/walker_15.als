@@ -145,7 +145,10 @@ fun EF[phi:Book]:Book { (*(TS.sigma)).phi }
 */
 inst i{0,exactly 2 Addr, exactly 2 Alias,exactly 0 Group}
 
-pred p[]{}
+pred p[]{
+all disj b,b':Book | b.p!=b'.p or b.names!=b'.names or b.addr!=b'.addr
+
+}
 
 run 
 //CTL_MC 
