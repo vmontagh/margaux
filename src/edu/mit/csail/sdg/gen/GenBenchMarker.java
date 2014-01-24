@@ -151,7 +151,7 @@ public class GenBenchMarker {
 				try{Thread.sleep(500L);}catch(Exception e){}
 			}
 			if(WorkerEngine.isBusy()){
-				task.updateResult(System.currentTimeMillis(), fileName, -1, -1, -1, -1, -1, false);
+				task.updateResult(System.currentTimeMillis(), fileName, -1, -1, -1, -1, -1, false,-1,-1);
 				//Wait until write everything, eh?
 				try{Thread.sleep(1000L);}catch(Exception e){}
 				WorkerEngine.stop();
@@ -225,6 +225,39 @@ public class GenBenchMarker {
 	}
 	
 
+	private static String generateInstancesforLL(int max){
+		int bitwidth = (int)Math.ceil((Math.log(max) / Math.log(2)));
+		StringBuilder result = new StringBuilder();
+		result.append("inst i {\n").append("\t0,\n").append('\t').append(bitwidth).append(",\n");
+		
+		int maxInt = (1<<bitwidth-1) - 1;
+		int minInt = maxInt - (1<<(bitwidth)) + 1;
+		
+		LoggerUtil.debug(GenBenchMarker.class, "bitwidth = %d \t maxInt = %d \t minInt = %d ",bitwidth,maxInt, minInt);
+		
+		StringBuilder nodes = new StringBuilder();
+		StringBuilder values = new StringBuilder();
+		
+		
+		//generating the nodes and vals tuples
+		for(int i = 0; i < max; i++){
+			nodes.append(" n").append(i).append(" +");
+			values.append(" n").append(i).append("->").append(minInt+i).append(" +");
+		}
+		
+		nodes.setCharAt(nodes.length()-1, ',');
+		values.setCharAt(values.length()-1, ' ');
+
+		//making the nodes
+		result.append('\t').append("Node=").append(nodes).append("\n");
+		//making the realations
+		result.append('\t').append("val=").append(values).append("\n");
+
+		result.append('}');
+		return result.toString();
+	}
+	
+	
 	/**
 	 * @param args
 	 * @throws Exception 
@@ -235,6 +268,9 @@ public class GenBenchMarker {
 		final List<String> fileGroups = new ArrayList<String>();
 		int numbers = 5;
 
+		LoggerUtil.debug(GenBenchMarker.class,"%s",generateInstancesforLL(5));
+		
+		System.exit(-10);
 		
 		doTest("Walker",experiments, timeOutMin, TestInputs.generatorBenchmarkWalker());
 		

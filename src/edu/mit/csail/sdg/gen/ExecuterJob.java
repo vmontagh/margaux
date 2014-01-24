@@ -134,7 +134,7 @@ public abstract class ExecuterJob implements WorkerTask {
 	}
 
 	public synchronized void updateResult(long time, String name, long evaluationTime, 
-			long executionTime, long traslationTime, long variables, long clauses, boolean sat){
+			long executionTime, long traslationTime, long variables, long clauses, boolean sat, long evalInsts, int method_num){
 /*		String out = "";
 		try {
 			
@@ -148,7 +148,8 @@ public abstract class ExecuterJob implements WorkerTask {
 			e.printStackTrace();
 		}*/
 		edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(reportFile, String.valueOf(time),  name, String.valueOf( evaluationTime), 
-				String.valueOf( executionTime), String.valueOf( traslationTime), String.valueOf( variables), String.valueOf( clauses), String.valueOf( sat));
+				String.valueOf( executionTime), String.valueOf( traslationTime), String.valueOf( variables), String.valueOf( clauses), String.valueOf( sat),
+				String.valueOf(evalInsts), String.valueOf(method_num));
 	}
 
 	

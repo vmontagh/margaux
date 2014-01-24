@@ -132,7 +132,6 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.rep = (rep != null) ? rep : A4Reporter.NOP;
         this.cmd = cmd;
         Pair<A4Solution, ScopeComputer> pair = ScopeComputer.compute(this.rep, opt, sigs, cmd);
-    	System.out.println("TranslateAlloyToKodkod(2).frame.formulas\n\t"+ (this.frame==null? null:  this.frame.formulas));
 
         this.frame = pair.a;
         this.bitwidth = pair.a.getBitwidth();
@@ -140,10 +139,8 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
         this.max = pair.a.max();
         this.a2k = null;
         this.s2k = null;
-    	System.out.println("TranslateAlloyToKodkod(3).frame.formulas\n\t"+ (this.frame==null? null:  this.frame.formulas));
 
         BoundsComputer.compute(rep, frame, pair.b, sigs);
-    	System.out.println("TranslateAlloyToKodkod(4).frame.formulas\n\t"+( this.frame==null? null:  this.frame.formulas));
 
 
     }

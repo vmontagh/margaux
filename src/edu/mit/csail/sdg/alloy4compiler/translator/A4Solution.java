@@ -193,7 +193,7 @@ public final class A4Solution {
 	public Bounds bounds;
 
 	/** The list of Kodkod formulas; can be empty if unknown; once a solution is solved we must not modify this anymore */
-	private ArrayList<Formula> formulas = new ArrayList<Formula>();
+	ArrayList<Formula> formulas = new ArrayList<Formula>();
 
 	/** The list of known Alloy4 sigs. */
 	private SafeList<Sig> sigs;

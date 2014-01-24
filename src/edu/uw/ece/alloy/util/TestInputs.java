@@ -44,6 +44,10 @@ public class TestInputs {
 		return oneD2twoD(Utils.filesR("models/partial/gen/stm", "^walker_\\d{1,3}.als"));
 	}
 
+	public static Collection<Object[]> generatorBenchmarkLL_template() {
+		return oneD2twoD(Utils.filesR("models/partial/gen/stm", "^walker_\\d{1,3}.als"));
+	}
+	
 	
 	public static Collection<Object[]> oneD2twoD(final Object[] in) {
 		final Collection<Object[]> out = new ArrayList<Object[]>(in.length);

@@ -55,7 +55,7 @@ public class OldSyntaxExecuterJob extends ExecuterJob  {
 				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 
 				updateResult(System.currentTimeMillis(), fileName, -1,
-						rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,ans.satisfiable());
+						rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,ans.satisfiable(),-1,-1);
 
 				
 

@@ -17,6 +17,9 @@ public class MyReporter extends A4Reporter implements Serializable{
 	public long evalTime = 0;
 	public long evalInsts = 0;
 	public int sat = 0;
+
+	public long started2Solve = 0;
+	
 	// For example, here we choose to display each "warning" by printing it to System.out
 	@Override public void warning(ErrorWarning msg) {
 		System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
@@ -27,6 +30,7 @@ public class MyReporter extends A4Reporter implements Serializable{
 		this.lastTime = System.currentTimeMillis();
 		this.clauses = clauses;
 		this.totalVaraibles = totalVars;
+		this.started2Solve = System.currentTimeMillis();
 
 	}
 	@Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {

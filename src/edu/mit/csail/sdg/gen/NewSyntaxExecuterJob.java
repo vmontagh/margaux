@@ -217,7 +217,7 @@ public class NewSyntaxExecuterJob extends ExecuterJob  {
 		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
 		
 		updateResult(System.currentTimeMillis(), fileName, rep.evalTime,
-				rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1);
+				rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1,-1,-1);
 
 
 	}

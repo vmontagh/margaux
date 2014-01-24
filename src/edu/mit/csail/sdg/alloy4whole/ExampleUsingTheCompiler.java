@@ -76,8 +76,8 @@ public final class ExampleUsingTheCompiler {
 
 	public static int PACE = 1;
 	final public static boolean oneFound = true;
-	final public static boolean usingKodkod = true;
-	final public static boolean usingKKItr = false;
+	public static boolean usingKodkod = true;
+	public static boolean usingKKItr = false;
 	final public static boolean usingSymmetry = true;
 	public static String reportFileName = "";
 
