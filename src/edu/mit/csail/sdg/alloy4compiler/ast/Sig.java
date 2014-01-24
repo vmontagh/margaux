@@ -35,6 +35,7 @@ import edu.mit.csail.sdg.alloy4.Util;
 
 public abstract class Sig extends Expr {
 
+	
    /** The built-in "univ" signature. */
    public static final PrimSig UNIV = new PrimSig("univ", null, false);
 
@@ -49,6 +50,10 @@ public abstract class Sig extends Expr {
 
    /** The built-in "none" signature. */
    public static final PrimSig NONE = new PrimSig("none", null, false);
+   
+	/**[VM] to add a set of integers as atoms */
+   public static final PrimSig SPARSE_INT = new PrimSig("int", SIGINT, false);
+
    
    /** The built-in "none" signature. */
    public static final PrimSig GHOST = mkGhostSig();

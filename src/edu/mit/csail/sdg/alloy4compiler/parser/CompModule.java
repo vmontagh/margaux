@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Env;
@@ -89,6 +88,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.SubsetSig;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Mutable; this class represents an Alloy module; equals() uses object identity. */
 
@@ -2609,11 +2609,14 @@ public final class CompModule extends Browsable implements Module {
 		TempList<CommandScope> sc=new TempList<CommandScope>(cmd.scope.size());
 		for(CommandScope et: cmd.scope) {
 
+			LoggerUtil.debug(this,"In CompModule the scope is->%s%n", et);
+			
 			Sig s = getRawSIG(et.sig.pos, et.sig.label);
 			//[VM]
 			if ((s==null) && !(isField(et.sig.label) && et.isPartial) ) 
 				throw new ErrorSyntax(et.sig.pos, "The sig \""+et.sig.label+"\" cannot be found.");
 			//.println("et->"+et.sig + ","+et.pFields);
+			
 			if(et.isPartial)
 				if(isField(et.sig.label)){
 					//sc.add(new CommandScope(null, new PrimSig(et.sig.label), et.isExact, et.startingScope, et.endingScope, et.increment,et.pFields,et.hasLower,et.hasUpper,true));

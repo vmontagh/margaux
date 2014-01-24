@@ -21,6 +21,7 @@ import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.SEQIDX;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.STRING;
 import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.NONE;
 import static kodkod.engine.Solution.Outcome.UNSATISFIABLE;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,7 +44,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
-
 
 import kodkod.ast.BinaryExpression;
 import kodkod.ast.BinaryFormula;
@@ -111,6 +111,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.mit.csail.sdg.gen.flw.AdjMatrixEdgeWeightedDigraph;
 import edu.mit.csail.sdg.gen.flw.DirectedEdge;
@@ -287,10 +288,11 @@ public final class A4Solution {
 					ints.add(Integer.valueOf(a));
 				}catch(NumberFormatException e){}
 			}
-			if(ints.last() > max() || ints.first() < min){
+			edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"Inside A4Solution ints->%s%n max->%s%n min->%s%n", ints, max(), min());
+			if(!ints.isEmpty() && (ints.last() > max() || ints.first() < min)){
 				exceededInt = true;
-				exceededInts.addAll(ints.subSet(ints.first(), min));
-				exceededInts.addAll(ints.subSet(max+1, ints.last()+1 ));
+				if(ints.first() < min ) exceededInts.addAll(ints.subSet(ints.first(), min));
+				if(ints.last() > max) exceededInts.addAll(ints.subSet(max+1, ints.last()+1 ));
 			}
 
 			for(Integer i: ints) { // Safe since we know 1 <= bitwidth <= 30
@@ -2272,8 +2274,8 @@ public final class A4Solution {
 		return x;
 	}
 
-	
-	
+
+
 	/**The urrent command is needed if the a part of model is required to be solved.*/
 	private List<Instance> getEvalInstaces(final Expr expr, Sig uniqSig,Command command) throws Exception{
 
@@ -2352,12 +2354,12 @@ public final class A4Solution {
 		fldsLevelI0I1MinusRefDep.addAll(fldsLevel1);
 		fldsLevelI0I1MinusRefDep.removeAll(fldsRefPlusDep);
 
-		System.out.println("fldsRefPlusDep\n\t"+fldsRefPlusDep);
-		System.out.println("fldsLevelI0\n\t"+fldsLevelI0);
-		System.out.println("fldsLevelI1\n\t"+fldsLevelI1);
-		System.out.println("fldsLevelE0\n\t"+fldsLevelE0);
-		System.out.println("fldsLevelE1\n\t"+fldsLevelE1);		
-		System.out.println("fldsLevelI0I1MinusRefDep\n\t"+fldsLevelI0I1MinusRefDep);
+		LoggerUtil.debug(this,"fldsRefPlusDep%n%s\t",fldsRefPlusDep);
+		LoggerUtil.debug(this,"fldsLevelI0%n%s\t", fldsLevelI0);
+		LoggerUtil.debug(this,"fldsLevelI1%n%s\t", fldsLevelI1);
+		LoggerUtil.debug(this,"fldsLevelE0%n%s\t", fldsLevelE0);
+		LoggerUtil.debug(this,"fldsLevelE1%n%s\t", fldsLevelE1);		
+		LoggerUtil.debug(this,"fldsLevelI0I1MinusRefDep%n%s\t", fldsLevelI0I1MinusRefDep);
 
 		List<AlloyTuplesTable> newTables3 = new ArrayList<A4Solution.AlloyTuplesTable>();
 
@@ -2423,6 +2425,7 @@ public final class A4Solution {
 				Command newCommand = command.change(expr!=null?expr:ExprList.make(Pos.UNKNOWN, Pos.UNKNOWN, ExprList.Op.AND, new ArrayList<Expr>()));
 				A4Options options = new A4Options();
 				options.solver = A4Options.SatSolver.MiniSatJNI;
+				options.symmetry = 20;
 				List<CommandScope> scopes = new ArrayList<CommandScope>(newCommand.scope)  ;
 				if(clsrDtctr.getClosureField()!=null){
 					//The the new sig list contians all the sigs before, but the altered unique sig. The closured field in the
@@ -2441,7 +2444,7 @@ public final class A4Solution {
 					throw new ErrorType("Unstatisfiable appended fact of "+uniqSig.label+" at "+expr.pos);			
 				do{
 					Instance sol = ans.eval.instance();
-					System.out.println("the founded sol is:"+sol);
+					LoggerUtil.debug(this,"the founded sol is:%s", sol);
 					newTables3.add(convertInstancetoAlloyTuple(sol,uniqSig,uSigFlds));
 					ans=ans.next();
 				}while(ans.eval!=null);
@@ -2505,24 +2508,24 @@ public final class A4Solution {
 				scopes.add(new CommandScope(Pos.UNKNOWN,uniqSig, true, ExactUpper, ExactUpper, 1));
 				newCommand = newCommand.change(ConstList.make(scopes));
 				int maxUnSAT = Integer.MAX_VALUE;
-				
+
 				SafeList<Sig> refdSig = new SafeList<Sig>(); 
 				refdSig.addAll((new CompModule.FieldDecomposer()).extractSigsFromFields(fldsLevelI0I1MinusRefDep));
 				refdSig.add(uniqSig);
-				
+
 				for(Sig sig:refdSig){
 					if(sig instanceof PrimSig && !((PrimSig)sig).children().isEmpty())
 						refdSig.addAll(((PrimSig)sig).children().makeCopy());
-						
+
 				}
 				//System.exit(-10);
-				
+
 				do{
 					MyReporter rep = new MyReporter();
 					long beforeTime = System.currentTimeMillis();
 					A4Solution ans = TranslateAlloyToKodkod.execute_command_includeInstance(rep, refdSig, newCommand, options,sol,uniqSig);
 					long afterTime = System.currentTimeMillis();
-					edu.mit.csail.sdg.gen.Util.Logger(ExampleUsingTheCompiler.reportFileName,
+					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(ExampleUsingTheCompiler.reportFileName,
 							String.valueOf(ExactUpper),
 							String.valueOf(PACE),
 							String.valueOf(afterTime -beforeTime),
@@ -2532,7 +2535,7 @@ public final class A4Solution {
 							String.valueOf(rep.totalVaraibles),
 							String.valueOf(rep.sat)
 							);
-					
+
 					System.out.println(scopes+"......."+ans.satisfiable());
 					if(ans.satisfiable()){
 						sol = ans.eval.instance();
@@ -2699,16 +2702,16 @@ public final class A4Solution {
 								uSigFlds));
 			}//end of instance iterator
 		}
-		System.out.println("Total number is:"+num);
-		System.out.println(insts);
+		LoggerUtil.debug(this, "Total number is: %d");
+		LoggerUtil.debug(this,"%s",insts);
 		return insts;
 
 	}
-	
+
 	private List<Instance> solutionDecompser(Instance sol, Sig uniqSig){
-		
+
 		//System.out.println("The solution is:"+sol);
-		
+
 		Map<Object,List<Object>> uniqSigTupleSets = new HashMap<Object,List<Object>>();  
 		Set<Object> uniqSigUni = new HashSet<Object>(); 
 		for(Relation r: sol.relations()){
@@ -2721,7 +2724,7 @@ public final class A4Solution {
 				break;
 			}
 		}
-		
+
 
 		Set<Object> oldUni = new HashSet<Object>();
 		for(Iterator iterator=sol.universe().iterator();iterator.hasNext();){
@@ -2736,7 +2739,7 @@ public final class A4Solution {
 			uniqSigTupleSets.get(atom).addAll(newUnivers);
 		}
 
-		
+
 		Map<Object, Instance> retInsts = new IdentityHashMap<Object, Instance>();
 		for(Object atom: uniqSigTupleSets.keySet()){
 			Universe instUni = new Universe(uniqSigTupleSets.get(atom));
@@ -2766,7 +2769,7 @@ public final class A4Solution {
 						for(int i= 0; i<tuple.arity();i++){
 							atomsList.add(tuple.atom(i));
 						}
-						
+
 						assert atomsList.size()==0:"Is there any tuple with zero arity?";
 						tuplesList.add(instUni.factory().tuple(atomsList));
 					}
@@ -2780,9 +2783,9 @@ public final class A4Solution {
 
 		List<Instance> retIntances = new ArrayList<Instance>(retInsts.values());
 		return retIntances;
-		
+
 	}
-	
+
 	private List<Object> tupleSet2Atoms(TupleSet tupleSet){
 		assert (tupleSet.arity() == 1) : "Tupleset with arity more than 1 cannot be converted to a List";
 		List<Object> atoms = new ArrayList<Object>();
@@ -2793,7 +2796,7 @@ public final class A4Solution {
 	}
 
 	public void includeIntoLowerbound(Instance inst ,Sig uniqSig){
-/*
+		/*
 		long bgnInx = 0L;
 		String delim = "_";
 		Universe oldUni = bounds.universe();
@@ -2881,7 +2884,7 @@ public final class A4Solution {
 		}
 		//find the relation with is equal to the uniqSig
 
-		*/
+		 */
 		Map<String,TupleSet> instRelationNames = new HashMap<String,TupleSet>();
 		Set<Object> oldUniqSigAtoms = new HashSet<Object>();
 		for(Relation r: inst.relations()){
@@ -2892,11 +2895,11 @@ public final class A4Solution {
 				instRelationNames.put(r.name(),inst.tuples(r));
 		}
 
-		
+
 		//System.out.println("uniqSigRelation->"+uniqSigRelation);
 
 		//System.out.println("newExactBound->"+newExactBound);
-		
+
 		//Bounds newBounds = new Bounds(newUni);
 		for(Relation r:bounds.relations()){
 			if(Util.tail(r.name()).equals(Util.tail( uniqSig.label)))
@@ -2925,13 +2928,13 @@ public final class A4Solution {
 			System.out.println("\tlower:"+bounds.lowerBound(r)+", \n\tnupper:"+bounds.upperBound(r));
 		}
 		System.out.println("--------------------------------------------------------------");
-		*/
+		 */
 		//System.out.println("The bounds is+"+bounds);
 		//System.out.println("The bounds is+"+newBounds);
 		//System.exit(-10);
 	}
 
-	
+
 	private TupleSet changeUniverseOfTupleSet(TupleSet tupleSet, Universe newUniverse){
 		TupleSet newTupleSet = newUniverse.factory().noneOf(tupleSet.arity());
 		for(Tuple tuple:tupleSet){
@@ -2959,7 +2962,7 @@ public final class A4Solution {
 		}
 		return retTupleSet;
 	}
-	
+
 	/**
 	 * Convert the Alloy instance to the AlloyTuplesTable. This is helperclass for making all the evlaution progess integrated and unified.
 	 * @param instance
@@ -3034,30 +3037,33 @@ public final class A4Solution {
 	public  Object getEmpty(List<Instance> insts, Set<String> fldName, Sig sig){
 		String sigName = sig.label;
 		Object ret = null;
+
 		if(sig.isOne==null)
+			insts:
 			for(Instance inst:insts){
-				boolean isAllNone = true;
-				Object emptySig = null;
+				relations:
 				for(Relation r: inst.relations()){
-					if(fldName.contains(r.name()) && !inst.tuples(r).isEmpty()){
-						isAllNone = false;
-						if(emptySig != null)
-							break;
-					}
-					if(sigName.equals(r.name())
-							&& !inst.tuples(r).isEmpty()
-							&& inst.tuples(r).iterator().hasNext()
-							&& inst.tuples(r).iterator().next().arity()==1){
-						emptySig = inst.tuples(r).iterator().next().atom(0);
-						if(isAllNone)
-							break;
-					}
-				}
-				if(isAllNone){
-					ret = emptySig;
-					break;
-				}
-			}
+					if(sigName.equals(r.name())){
+						boolean isEmpty = true;
+						for(Relation rf: inst.relations()){
+							isEmpty = true;
+							if(fldName.contains(rf.name())){
+								//This field belongs to the signature
+								isEmpty = inst.tuples(rf).isEmpty();
+								if(!isEmpty)
+									break;
+							}
+						}
+						if(isEmpty){
+							ret = inst.tuples(r).iterator().next().atom(0);
+							break insts;
+						}
+						break relations;
+					}//End of for to check if all fields have empty tuples in the currecnt instance.
+				}//End of for to find the sig's raltion coaunterpart.
+
+			}//End of for to iterating the instances		
+
 		return ret;
 	}
 
@@ -3163,9 +3169,12 @@ public final class A4Solution {
 
 	/** Add the given formula to the list of Kodkod formulas, and associate it with the given Expr object (expr can be null if unknown) */
 	void addFormula(Formula newFormula, Expr expr) throws Err {
-		if (solved) throw new ErrorFatal("Cannot add an additional formula since solve() has completed.");
-		if (formulas.size()>0 && formulas.get(0)==Formula.FALSE) return; // If one formula is false, we don't need the others
-		if (newFormula==Formula.FALSE) formulas.clear(); // If one formula is false, we don't need the others
+		if (solved) 
+			throw new ErrorFatal("Cannot add an additional formula since solve() has completed.");
+		if (formulas.size()>0 && formulas.get(0)==Formula.FALSE) 
+			return; // If one formula is false, we don't need the others
+		if (newFormula==Formula.FALSE) 
+			formulas.clear(); // If one formula is false, we don't need the others
 		formulas.add(newFormula);
 		if (expr!=null) k2pos(newFormula, expr);
 	}
@@ -3403,6 +3412,7 @@ public final class A4Solution {
 		for(Relation r: bounds.relations()) { 
 			formulas.add(r.eq(r)); } // Without this, kodkod refuses to grow unmentioned relations
 		fgoal = Formula.and(formulas);
+
 		//System.out.println(debugExtractKInput());
 		// Now pick the solver and solve it!
 		if (opt.solver.equals(SatSolver.KK)) {
@@ -3436,6 +3446,7 @@ public final class A4Solution {
 		solver.options().setReporter(oldReporter);
 		// If unsatisfiable, then retreive the unsat core if desired
 		if (inst==null && solver.options().solver()==SATFactory.MiniSatProver) {
+
 			try {
 				lCore = new LinkedHashSet<Node>();
 				Proof p = sol.proof();

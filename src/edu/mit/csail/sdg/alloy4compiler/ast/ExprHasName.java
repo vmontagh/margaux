@@ -16,6 +16,7 @@
 package edu.mit.csail.sdg.alloy4compiler.ast;
 
 import edu.mit.csail.sdg.alloy4.Pos;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; represents a named entity (such as a Field, or a LET or QUANTIFICATION variable, or a function/predicate parameter). */
 

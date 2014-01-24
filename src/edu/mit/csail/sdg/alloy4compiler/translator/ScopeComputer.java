@@ -758,7 +758,22 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 			if (s.isSome!=null && scope<1) throw new ErrorSyntax(cmd.pos,
 					"Sig \""+s+"\" has the multiplicity of \"some\", so its scope must 1 or above, and cannot be "+scope);
 
+			if(s == Sig.SPARSE_INT && entry.isPartial){
+				for(Expr atom: entry.pAtoms){
+					if(atom instanceof ExprConstant){
+						edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"Scope computer called for adding %d min is %d and max %d",((ExprConstant)atom).num ,min(), max());
+						int n = ((ExprConstant)atom).num;
+						if(n < min() || n > max())
+							atoms.add(String.valueOf(n));
+					}
+				}
+				edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"Atoms are: %s",atoms);
+				continue;
+			}
+			
 			if(entry.isPartial){
+				//if the signature type is SPARSE_INT and the command scope type is partial, then all atoms will be added to the universe
+				
 				if(entry.pFields.size() > 0){
 					List<List<String>> listL = new ArrayList<List<String>>();
 					List<List<String>> listU = new ArrayList<List<String>>();

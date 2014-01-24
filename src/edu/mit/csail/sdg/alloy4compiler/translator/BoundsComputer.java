@@ -310,9 +310,11 @@ final class BoundsComputer {
 		for(int i=atomN-1; i>=0; i--) 
 			atoms.add(factory.tuple(universe.atom(i)));
 		for(Sig s:sigs) 
-			if (!s.builtin && s.isTopLevel()) 
+			if (!s.builtin && s.isTopLevel()){ 
+				edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"sig->%s , s.builtin->%s, s.isTopLevel()->%s%n", s, s.builtin, s.isTopLevel());
 				//computeLowerBound(atoms, (PrimSig)s);
 				computeLowerBound_BU((PrimSig)s);
+			}
 		for(Sig s:sigs) 
 			if (!s.builtin && s.isTopLevel()) 
 				//computeUpperBound((PrimSig)s);

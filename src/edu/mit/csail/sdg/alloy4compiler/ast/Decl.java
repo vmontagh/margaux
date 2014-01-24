@@ -85,4 +85,16 @@ public final class Decl {
        for(int i=0; i<names.size(); i++) if (names.get(i).label.equals(name)) return true;
        return false;
     }
+    
+    public String toString(){
+    	StringBuilder result = new StringBuilder();
+    	result.append("[names: {");
+    	for(ExprHasName name: names){
+    		result.append(name.toString()).append(',');
+    	}
+    	result.setCharAt(result.length()-1, '}');
+    	result.append("  expr: {").append(expr).append("}]");
+    	return result.toString();
+    
+    }
 }

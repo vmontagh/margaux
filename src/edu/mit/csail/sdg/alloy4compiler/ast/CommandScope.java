@@ -24,6 +24,7 @@ import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; reresents a scope in a "run" or "check" command.
  *
@@ -85,9 +86,13 @@ public class CommandScope {
 	 * @return
 	 */
 	public Object clone(){
+		ArrayList<List<Expr>> pFields = new ArrayList<List<Expr>>();
+		for(List<Expr> tuple: this.pFields){
+			pFields.add(new ArrayList<Expr>(tuple));
+		}
 		return new CommandScope(this.pos, this.sig,this.isExact,this.startingScope,
 				this.endingScope,this.increment,new ArrayList<ExprVar>(this.pAtoms),
-				this.pAtomsLowerLastIndex, new ArrayList<List<Expr>>(this.pFields),
+				this.pAtomsLowerLastIndex, pFields,
 				this.isPartial,this.hasLower,this.hasUpper,
 				this.isSparse);
 	}
@@ -244,6 +249,8 @@ public class CommandScope {
 			this.startingScope = startingScope;
 			this.endingScope = endingScope;
 		}
+		
+		LoggerUtil.debug(this,"This command scope is created->%s%n", this);
 	}
 
 

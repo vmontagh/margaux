@@ -147,7 +147,7 @@ public abstract class ExecuterJob implements WorkerTask {
 		} catch (Err e) {
 			e.printStackTrace();
 		}*/
-		edu.mit.csail.sdg.gen.Util.Logger(reportFile, String.valueOf(time),  name, String.valueOf( evaluationTime), 
+		edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(reportFile, String.valueOf(time),  name, String.valueOf( evaluationTime), 
 				String.valueOf( executionTime), String.valueOf( traslationTime), String.valueOf( variables), String.valueOf( clauses), String.valueOf( sat));
 	}
 

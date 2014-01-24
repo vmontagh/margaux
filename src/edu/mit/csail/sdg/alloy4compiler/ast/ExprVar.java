@@ -18,9 +18,11 @@ package edu.mit.csail.sdg.alloy4compiler.ast;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; represents a LET or QUANTIFICATION variable in the AST.
  *
