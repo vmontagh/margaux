@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import kodkod.ast.Decls;
 import kodkod.ast.Expression;
 import kodkod.ast.Formula;
@@ -42,6 +43,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.SubsetSig;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; this class assigns each sig and field to some Kodkod relation or expression, then set the bounds. */
 
@@ -76,8 +78,10 @@ final class BoundsComputer {
 		if(sc == null )
 			return null;
 
+		LoggerUtil.debug(this, "The sig in computerLowerBound_BU is: %s %s", sig, sc);
 		TupleSet lower = factory.noneOf(1);
 		List<String> list = sc.sig2PscopeL(sig);
+		
 		for(String atom:list){
 			lower.add(factory.tuple(atom));
 		}

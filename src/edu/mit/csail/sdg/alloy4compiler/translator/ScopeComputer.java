@@ -51,6 +51,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
+import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; this class computes the scopes for each sig and computes the bitwidth and maximum sequence length.
  *
@@ -162,6 +163,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 	/** Returns the scope for a sig (or null if we don't know). */
 	
 	public List<String> sig2PscopeL(Sig sig) {
+		LoggerUtil.debug(this, "%s", sig2PscopeL);
 		return sig2PscopeL.get(sig.label);
 	}    
 

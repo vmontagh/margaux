@@ -113,6 +113,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
 import edu.mit.csail.sdg.gen.LoggerUtil;
 import edu.mit.csail.sdg.gen.MyReporter;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.mit.csail.sdg.gen.flw.AdjMatrixEdgeWeightedDigraph;
 import edu.mit.csail.sdg.gen.flw.DirectedEdge;
 import edu.mit.csail.sdg.gen.flw.FloydWarshall;
@@ -2278,10 +2279,11 @@ public final class A4Solution {
 	/**The urrent command is needed if the a part of model is required to be solved.*/
 	private List<Instance> getEvalInstaces(final Expr expr, Sig uniqSig,Command command) throws Exception{
 
-		boolean oneFound = ExampleUsingTheCompiler.oneFound;
-		boolean usingKodkod = ExampleUsingTheCompiler.usingKodkod;
-		boolean usingKKItr = ExampleUsingTheCompiler.usingKKItr;
-		int PACE = ExampleUsingTheCompiler.PACE;
+		boolean oneFound = Boolean.valueOf(Configuration.getProp(Configuration.ONE_FOUND)) ;
+		boolean usingKodkod = Boolean.valueOf(Configuration.getProp(Configuration.USING_KODKOD)) ;
+		boolean usingKKItr = Boolean.valueOf(Configuration.getProp(Configuration.USING_KK_ITR)) ;
+		boolean symmetryOff = Boolean.valueOf(Configuration.getProp(Configuration.USING_SYMMETRY)) ;
+		int PACE = Integer.valueOf(Configuration.getProp(Configuration.PACE)) ;
 
 		//First detect any closure declration in the appended fact
 		CompModule.ClosureDetector clsrDtctr = new CompModule.ClosureDetector(expr);
@@ -2424,7 +2426,7 @@ public final class A4Solution {
 				Command newCommand = command.change(expr!=null?expr:ExprList.make(Pos.UNKNOWN, Pos.UNKNOWN, ExprList.Op.AND, new ArrayList<Expr>()));
 				A4Options options = new A4Options();
 				options.solver = A4Options.SatSolver.MiniSatJNI;
-				options.symmetry = 0;
+				options.symmetry = symmetryOff ? 0 :20;
 				List<CommandScope> scopes = new ArrayList<CommandScope>(newCommand.scope)  ;
 				if(clsrDtctr.getClosureField()!=null){
 					//The the new sig list contians all the sigs before, but the altered unique sig. The closured field in the
@@ -2524,7 +2526,7 @@ public final class A4Solution {
 					long beforeTime = System.currentTimeMillis();
 					A4Solution ans = TranslateAlloyToKodkod.execute_command_includeInstance(rep, refdSig, newCommand, options,sol,uniqSig);
 					long afterTime = System.currentTimeMillis();
-					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(ExampleUsingTheCompiler.reportFileName,
+					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(Configuration.getProp(Configuration.REPORT_FILE_NAME),
 							String.valueOf(ExactUpper),
 							String.valueOf(PACE),
 							String.valueOf(afterTime -beforeTime),

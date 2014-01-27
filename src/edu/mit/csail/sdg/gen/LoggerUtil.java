@@ -10,7 +10,7 @@ public class LoggerUtil {
 
 	
 
-	public static int DEBUG_LEVEL = 0;
+	public static int DEBUG_LEVEL = 1;
 
 	public static synchronized void fileLogger(String reportFile, String... params){
 		String out = "";
@@ -45,12 +45,20 @@ public class LoggerUtil {
 		cosoleLogger(2,clazz.getClass(),format,args);
 	}
 	
+	public static <T> void Detaileddebug( String format, Object...args){
+		cosoleLogger(2,LoggerUtil.class.getClass(),format,args);
+	}
+	
 	public static void debug( Object object,String format, Object...args){
 		cosoleLogger(1,object.getClass(),format,args);
 	}
 	
 	public static <T> void debug( Class<T> clazz,String format, Object...args){
 		cosoleLogger(1,clazz.getClass(),format,args);
+	}
+	
+	public static <T> void debug( String format, Object...args){
+		cosoleLogger(1,LoggerUtil.class.getClass(),format,args);
 	}
 	
 	public static <T> void cosoleLogger(int level, Class<T> clazz,String format, Object...args){

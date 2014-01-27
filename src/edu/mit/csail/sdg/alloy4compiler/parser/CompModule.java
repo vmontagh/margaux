@@ -89,6 +89,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.SubsetSig;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
 import edu.mit.csail.sdg.gen.LoggerUtil;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 /** Mutable; this class represents an Alloy module; equals() uses object identity. */
 
@@ -1852,6 +1853,8 @@ public final class CompModule extends Browsable implements Module {
 		bnd2atoms.put(obj, atoms);
 		bounds.put(nBound.label, obj);
 
+		LoggerUtil.debug(this, " After replacing bound, %n bouds is: %s%n bnd2atoms is:%s%n obj is %s", bounds, bnd2atoms, obj);
+		
 		return obj;
 	}
 
@@ -2079,7 +2082,7 @@ public final class CompModule extends Browsable implements Module {
 		 */
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
-		if(ExampleUsingTheCompiler.usingKKItr || obj.isUnique == null)
+		if(Boolean.valueOf(Configuration.getProp(Configuration.USING_KK_ITR)) || obj.isUnique == null)
 			old2appendedfacts.put(obj, fact);
 		else
 			uniqFact.put(obj.label.replace("this/", ""), fact);

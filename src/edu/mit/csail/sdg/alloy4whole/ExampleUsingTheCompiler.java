@@ -32,6 +32,7 @@ import java.util.Set;
 
 import kodkod.ast.Relation;
 import kodkod.instance.Instance;
+import kodkod.instance.Tuple;
 import kodkod.instance.TupleSet;
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
@@ -55,6 +56,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprQt;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
@@ -66,6 +68,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4TupleSet;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.gen.LoggerUtil;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.mit.csail.sdg.gen.alloy.Transferer;
 import edu.mit.csail.sdg.gen.alloy.UniqSigMessage;
 
@@ -74,12 +77,13 @@ import edu.mit.csail.sdg.gen.alloy.UniqSigMessage;
 public final class ExampleUsingTheCompiler {
 
 
-	public static int PACE = 1;
-	final public static boolean oneFound = true;
+	/*public static int PACE = 1;
+	final public static boolean oneFound = false;
 	final public static boolean usingKodkod = true;
 	final public static boolean usingKKItr = false;
+	final public static boolean symmetryOff = false;
 	final public static boolean usingSymmetry = true;
-	public static String reportFileName = "";
+	public static String reportFileName = "";*/
 
 
 
@@ -103,9 +107,7 @@ public final class ExampleUsingTheCompiler {
 					+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
 					+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
 			System.out.flush();
-
 		}
-
 	}
 
 
@@ -133,7 +135,7 @@ public final class ExampleUsingTheCompiler {
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
 
 		for(String filename:args) {
-			reportFileName = Util.tail(filename).replace(".", "_")+".log";
+			Configuration.setProp(Configuration.REPORT_FILE_NAME, Util.tail(filename).replace(".", "_")+".log");
 			// Parse+typecheck the model
 			System.out.println("=========== Parsing+Typechecking "+filename+" =============");
 			CompModule world = CompUtil.parseEverything_fromFile(rep, null, filename);
@@ -143,8 +145,6 @@ public final class ExampleUsingTheCompiler {
 
 			options.solver = A4Options.SatSolver.MiniSatJNI;
 			options.symmetry = 0;
-			boolean touched = false;
-
 
 			for (Command command: world.getAllCommands()) {
 
@@ -166,18 +166,20 @@ public final class ExampleUsingTheCompiler {
 
 					rep.evalute(System.currentTimeMillis()- time, -1);
 					System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
-					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(ExampleUsingTheCompiler.reportFileName,
+					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(Configuration.getProp(Configuration.REPORT_FILE_NAME),
 							String.valueOf((System.currentTimeMillis()- time))
 							);
 					time = System.currentTimeMillis();
 					System.out.println("Starting to execute the commmand....");
 					System.out.println(command);
+
+					//System.exit(-10);
 					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 
 
 					List<A4Solution> anss = new ArrayList<A4Solution>();
 
-					if(usingSymmetry){
+					if(Boolean.valueOf(Configuration.getProp(Configuration.USING_SYMMETRY))){
 						while(ans.satisfiable()){	
 							anss.add(ans);
 							ans = ans.next();
@@ -299,11 +301,18 @@ public final class ExampleUsingTheCompiler {
 			//System.out.println(s.label+"/"+s.isUnique);
 			if(s.isUnique != null )
 			{	
+				result = makeWorld2(result,world,s,options,rep);
+				LoggerUtil.Detaileddebug("The command before making the world is-> %s",result);
+				
+				/*
+				System.exit(-10);
 
+				LoggerUtil.Detaileddebug("%s", s);
 				//if (i==0)
 				//System.exit(-10);
-				usm = makeWorld(command,world,s,options,rep,usm);
-
+				LoggerUtil.Detaileddebug("The command before making the world is-> %s",result);
+				usm = makeWorld(result,world,s,options,rep,usm);
+				LoggerUtil.Detaileddebug("The usm usm making the world is-> %s",usm);
 				if(usm.sigAtoms.size() > 0){
 					Set<ExprVar> pAtoms = new HashSet<ExprVar>(usm.sigAtoms.values());
 					//Replace the signature bound
@@ -327,7 +336,7 @@ public final class ExampleUsingTheCompiler {
 								usm.sigScope.isPartial, usm.sigScope.hasLower, usm.sigScope.hasUpper,
 								usm.sigScope.isSparse);
 					}
-
+					LoggerUtil.Detaileddebug("the result of making a new sigscope is->%s ", usm.sigScope);
 					//Now change the scope in the bound object
 					usm.nList.add(usm.sigScope);      
 					Bounds nBound = new Bounds(usm.oBound.pos, usm.oBound.label, usm.nList);
@@ -339,11 +348,101 @@ public final class ExampleUsingTheCompiler {
 					result = result.change(usm.oBound); 
 
 				}//End of if
+				*/
+				LoggerUtil.Detaileddebug("The command AFTER making the world is-> %s",result);
+
 
 			}//end of if(sig is unique)
 		}//end of sig:Sig loop
 		return result;
 	}
+
+
+	private static Command makeWorld2(final Command command, final CompModule world, final Sig sig,final  A4Options options, final A4Reporter rep) throws Err{
+
+		Expr expr = world.getUniqueFieldFact(sig.label.replace("this/", ""));
+
+		LoggerUtil.debug("The apended fact of %s is %s", sig, expr);
+
+		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
+				rep, world.getAllReachableSigs(), command, options,sig,expr);
+
+		LoggerUtil.debug("The result of apended fact of %s is %s", sig, legalPair.b);
+		
+		if( 0 == legalPair.b.size()){
+			rep.warning(new ErrorWarning(String.format("The append fact of %s is unsaitsfiable.",sig)));
+			return command;
+		}
+
+		List<CommandScope> newCS = new ArrayList<CommandScope>();
+
+		List<ExprVar> atoms = new ArrayList<ExprVar>();
+		//Converting the instances to commandScope
+		for(Instance inst: legalPair.b){
+			for(Relation rel: inst.relations()){
+				if(rel.name().equals(sig.label)){
+					//Since the returned atom name is unique in the instance, then there is no need to iterator over allt he tuples
+					atoms.add(ExprVar.make(command.pos, 
+								inst.tuples(rel).iterator().next().atom(0).toString(),
+									sig.type()));
+					;
+				}
+			}
+		}
+		
+		LoggerUtil.debug("The found atoms of the appended fact of %s is %n\t %s", sig, atoms);
+
+		newCS.add(new CommandScope(command.pos,sig, true, 
+				atoms.size(), atoms.size(), 1, 
+				atoms, atoms.size()));
+		
+		//The key of each map is the field name, and the value is a list of tuples 
+		Map<String, List<List<Expr>> > fieldsNameMap = new HashMap<String, List<List<Expr>> >();
+		//Putting the field names in the set for reducing one complexity degree from the following loops
+		for(Field field: sig.getFields())
+			fieldsNameMap.put(field.label, new ArrayList<List<Expr>>());
+		
+		
+		for(Instance inst: legalPair.b){
+			for(Relation rel: inst.relations()){
+				String relName = Util.tail(rel.name()).substring(Util.tail(rel.name()).indexOf('.')+1 );
+				if(fieldsNameMap.containsKey( relName )){
+					for(Tuple tuple: inst.tuples(rel)){
+						List<Expr> tupleList = new ArrayList<Expr>();
+						for(int i=0; i<tuple.arity();i++)
+							tupleList.add( ExprVar.make(command.pos, tuple.atom(i).toString()) );
+						fieldsNameMap.get( relName ).add(tupleList);
+					}
+				}
+			}
+		}
+
+		LoggerUtil.debug("The found tuples of the appended fact of %s is %n\t %s", sig, fieldsNameMap);
+		
+		//Making a ScopeCommand per each field
+		for(String fieldName: fieldsNameMap.keySet())
+			newCS.add(
+					new CommandScope( command.pos, new Sig.PrimSig(fieldName, AttrType.WHERE.make(sig.pos)) ,
+							true,fieldsNameMap.get(fieldName).size(), fieldsNameMap.get(fieldName).size(),
+							1,new ArrayList(), fieldsNameMap.get(fieldName).size(), fieldsNameMap.get(fieldName),
+							true, true, true, false)
+					);
+		
+		
+		newCS.addAll(command.scope);
+		
+		world.removeUniquFacts(sig);
+		
+		Bounds bound = command.bound;
+		LoggerUtil.debug("boud before updating-> %s", bound);
+		//bound = world.replaceBound( bound, new Bounds( bound.pos,  bound.label,  newCS));
+		LoggerUtil.debug("boud after updating-> %s", bound);
+
+		
+		Command result = command.change(bound);
+		return result.change(ConstList.make(newCS));
+	}
+
 
 	private static UniqSigMessage makeWorld(final Command command, final CompModule world, final Sig s,
 			final  A4Options options, final A4Reporter rep,
@@ -357,7 +456,11 @@ public final class ExampleUsingTheCompiler {
 		CommandScope sigScope = usm.sigScope==null? null : (CommandScope)usm.sigScope.clone();
 		CommandScope scope =  usm.scope == null? null :(CommandScope)usm.scope.clone();		
 
-		Map<String,ExprVar> sigAtoms =  usm.sigAtoms==null? new HashMap<String,ExprVar>():  new HashMap<String,ExprVar>(usm.sigAtoms);
+		Map<String,ExprVar> sigAtoms = 
+				//usm.sigAtoms==null? 
+				new HashMap<String,ExprVar>()
+				//:  new HashMap<String,ExprVar>(usm.sigAtoms)
+				;
 
 
 		Expr expr = world.getUniqueFieldFact(s.label.replace("this/", ""));
@@ -367,7 +470,16 @@ public final class ExampleUsingTheCompiler {
 		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
 				rep, world.getAllReachableSigs(), command, options,s,expr);
 
+
+		for(Instance i: legalPair.b){
+			LoggerUtil.Detaileddebug("The instance is: %s", i);
+		}
+
+		System.exit(-10);
+
+
 		//legalPair.a.getfieldSolutions(legalPair.b, s.label);
+
 
 		Set<String> fldNames = new HashSet<String>();
 		for(Decl fDecl:s.getFieldDecls()){											
@@ -445,7 +557,7 @@ public final class ExampleUsingTheCompiler {
 
 
 		if(hasEmpty!=null ){
-			sigAtoms.put(hasEmpty.toString(), ExprVar.make(command.bound.pos, hasEmpty.toString()));
+			sigAtoms.put(hasEmpty.toString(), ExprVar.make(command.bound.pos, hasEmpty.toString(),s.type()));
 		}
 
 		LoggerUtil.debug(ExampleUsingTheCompiler.class,"sigScope in makeworld->%s%n scope->%s%n oBound->%s%n nList->%s%n sigAtoms->%s%n",sigScope,scope,oBound,nList,sigAtoms);
