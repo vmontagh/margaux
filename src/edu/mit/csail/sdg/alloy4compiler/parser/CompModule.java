@@ -1059,6 +1059,23 @@ public final class CompModule extends Browsable implements Module {
 			visitThis( expr);
 			return this.fields;
 		}
+		
+		public Set<Sig> extractSigsInExpr(Expr expr) throws Err{
+			sigs = new ArrayList();
+			if(expr == null)
+				return new HashSet();
+			fields = null;
+			mults=null;
+			visitThis( expr);
+			Map<String, Sig> resultMap = new HashMap<String, Sig>();
+
+			for(Expr sig : sigs){
+				if(sig instanceof Sig){
+					resultMap.put(((Sig)sig).label,(Sig)sig);
+				}
+			}
+			return new HashSet(resultMap.values());
+		}
 
 		public List<Expr> extractFieldsItems(Sig.Field field) throws Err{
 			fields =null;
@@ -1071,6 +1088,8 @@ public final class CompModule extends Browsable implements Module {
 		public Set<Sig> extractSigsFromFields(Collection<Field> fields) throws Err{
 			Set<Sig> sigs = new HashSet<Sig>();
 			for(Sig.Field field:fields){
+				//LoggerUtil.Detaileddebug(this, "The field is %s %n The sigs are: %s", field, extractFieldsItems(field));
+				
 				for(Expr sig:extractFieldsItems(field)){
 					if(sig instanceof Sig)
 						sigs.add((Sig)sig);
@@ -1218,6 +1237,7 @@ public final class CompModule extends Browsable implements Module {
 		@Override
 		public Expr visit(ExprQt x) throws Err {
 			for(Decl decl:x.decls){
+				//LoggerUtil.Detaileddebug(this, "The decl expr is: %s and the class is %s", decl.expr, decl.expr.getClass());
 				visitThis(decl.expr);
 			}
 			visitThis(x.sub);
@@ -1231,6 +1251,7 @@ public final class CompModule extends Browsable implements Module {
 					|| x.op.equals(ExprUnary.Op.ONEOF)
 					|| x.op.equals(ExprUnary.Op.SOMEOF))
 				if(mults!=null) mults.add( x.op);
+			//LoggerUtil.Detaileddebug(this, "The unary of %s is: %s and the class is %s",x ,x.sub, x.sub.getClass());
 			visitThis(x.sub);
 			return x;
 		}
@@ -1246,6 +1267,7 @@ public final class CompModule extends Browsable implements Module {
 
 		@Override
 		public Expr visit(Sig x) throws Err {
+			//LoggerUtil.Detaileddebug(this, "The passed Sig is %s %nThe sigs is already contains %s", x,sigs);
 			if(sigs!=null) sigs.add(x);
 			return x;
 		}
@@ -1853,7 +1875,7 @@ public final class CompModule extends Browsable implements Module {
 		bnd2atoms.put(obj, atoms);
 		bounds.put(nBound.label, obj);
 
-		LoggerUtil.debug(this, " After replacing bound, %n bouds is: %s%n bnd2atoms is:%s%n obj is %s", bounds, bnd2atoms, obj);
+		//LoggerUtil.debug(this, " After replacing bound, %n bouds is: %s%n bnd2atoms is:%s%n obj is %s", bounds, bnd2atoms, obj);
 		
 		return obj;
 	}
@@ -1968,6 +1990,7 @@ public final class CompModule extends Browsable implements Module {
 	}
 	
 	public Expr getUniqueFieldFact(String field){
+		//LoggerUtil.Detaileddebug(this, "uniqFldSetDcl is %s", uniqFldSetDcl);
 		return uniqFldSetDcl.get(field);
 	}
 
@@ -2082,7 +2105,7 @@ public final class CompModule extends Browsable implements Module {
 		 */
 		sigs.put(name, obj);
 		old2fields.put(obj, fields);
-		if(Boolean.valueOf(Configuration.getProp(Configuration.USING_KK_ITR)) || obj.isUnique == null)
+		if(/*Boolean.valueOf(Configuration.getProp(Configuration.USING_KK_ITR)) ||*/ obj.isUnique == null)
 			old2appendedfacts.put(obj, fact);
 		else
 			uniqFact.put(obj.label.replace("this/", ""), fact);
@@ -2612,7 +2635,7 @@ public final class CompModule extends Browsable implements Module {
 		TempList<CommandScope> sc=new TempList<CommandScope>(cmd.scope.size());
 		for(CommandScope et: cmd.scope) {
 
-			LoggerUtil.debug(this,"In CompModule the scope is->%s%n", et);
+			//LoggerUtil.debug(this,"In CompModule the scope is->%s%n", et);
 			
 			Sig s = getRawSIG(et.sig.pos, et.sig.label);
 			//[VM]

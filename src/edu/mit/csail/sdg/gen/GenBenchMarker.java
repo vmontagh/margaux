@@ -1,10 +1,13 @@
 package edu.mit.csail.sdg.gen;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -151,7 +154,7 @@ public class GenBenchMarker {
 				try{Thread.sleep(500L);}catch(Exception e){}
 			}
 			if(WorkerEngine.isBusy()){
-				task.updateResult(System.currentTimeMillis(), fileName, -1, -1, -1, -1, -1, false);
+				task.updateResult(System.currentTimeMillis(), fileName, -1, -1, -1, -1, -1, false, 0, -1);
 				//Wait until write everything, eh?
 				try{Thread.sleep(1000L);}catch(Exception e){}
 				WorkerEngine.stop();
@@ -202,7 +205,7 @@ public class GenBenchMarker {
 
 	private static void doTest(String name,int experiments,long timeOutMin, Collection<Object[]> tests) throws InterruptedException, Err{
 
-		String report = "report_"+name+"_"+System.currentTimeMillis()+".txt";
+		String report = "expr_output/report_"+name+"_"+(new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss-a")).format(new Date( System.currentTimeMillis()))  +".txt";
 		for(Object[] obj : tests){
 			
 			if(name.toLowerCase().contains("new")){
@@ -217,6 +220,10 @@ public class GenBenchMarker {
 				getInstance().executeTask(experiments, 
 						new WalkerExecuterJob(report), 
 						 obj[0].toString(), timeOutMin*60L*1000L);
+			}else if(name.toLowerCase().contains("ee")){
+				getInstance().executeTask(experiments, 
+						new EEExecuterJob(report), 
+						 obj[0].toString(), timeOutMin*60L*1000L);
 			}
 			
 		}
@@ -225,37 +232,134 @@ public class GenBenchMarker {
 	}
 	
 	
-	private static String generateInstancesforLL(int max){
-		int bitwidth = (int)Math.ceil((Math.log(max) / Math.log(2)));
-		StringBuilder result = new StringBuilder();
-		result.append("inst i {\n").append("\t0,\n").append('\t').append(bitwidth).append(",\n");
+	
+	
+
+	
+	private static String makeNewDSfile(final String templatePath, final String dest, final int number, DSPartialInstanceGen instBlock) throws FileNotFoundException, IOException, Err{
+		int lastInx = dest.lastIndexOf(File.separator);
+		String fileName = lastInx > 0 ? templatePath.substring(lastInx) : templatePath;
+		fileName = dest+File.separator+fileName.replace(".","_"+number+".");
+		Util.writeAll(fileName, Util.readAll(templatePath).replace("$INST_I",instBlock.generate(number)));
+		return fileName;
+	}
+	
+	
+	private static void runDSTest(int min, int max, int experiments, long timeOutMin, String method, String template, String dest, DSPartialInstanceGen instBlock) throws FileNotFoundException, IOException, Err, InterruptedException{
 		
-		int maxInt = (1<<bitwidth-1) - 1;
-		int minInt = maxInt - (1<<(bitwidth)) + 1;
+		Collection<Object[]> tcs = new ArrayList();
 		
-		LoggerUtil.debug(GenBenchMarker.class, "bitwidth = %d \t maxInt = %d \t minInt = %d ",bitwidth,maxInt, minInt);
-		
-		StringBuilder nodes = new StringBuilder();
-		StringBuilder values = new StringBuilder();
-		
-		
-		//generating the nodes and vals tuples
-		for(int i = 0; i < max; i++){
-			nodes.append(" n").append(i).append(" +");
-			values.append(" n").append(i).append("->").append(minInt+i).append(" +");
+		for(int i = min; i <= max; i++){
+			Object[] f = new Object[1];
+			f[0] =  makeNewDSfile(template,dest,i, instBlock);
+			tcs.add( f);
 		}
 		
-		nodes.setCharAt(nodes.length()-1, ',');
-		values.setCharAt(values.length()-1, ' ');
-
-		//making the nodes
-		result.append('\t').append("Node=").append(nodes).append("\n");
-		//making the realations
-		result.append('\t').append("val=").append(values).append("\n");
-
-		result.append('}');
-		return result.toString();
+		doTest(method,experiments, timeOutMin, tcs);
 	}
+	
+	
+	
+	private static void runLLSTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/LLS_EE_gpce2013_template.als",  "models/partial/gen/stm/tmp");
+	}
+
+	private static void runBSTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/BST_EE_gpce2013_template.als",  "models/partial/gen/stm/tmp");
+	}
+
+	
+	private static void runOneLinkTest(int min, int max, int experiments, long timeOutMin, String method, String template, String dest) throws FileNotFoundException, IOException, Err, InterruptedException{
+		
+		runDSTest(min, max, experiments,timeOutMin,method,template,dest,
+				(new DSPartialInstanceGen() {
+					
+					@Override
+					public String generate(int max) {
+						int bitwidth = (int)Math.ceil((Math.log(max) / Math.log(2)));
+						StringBuilder result = new StringBuilder();
+						result.append("inst i {\n").append("\t0,\n").append('\t').append(bitwidth+1).append(" Int,\n");
+						
+						int maxInt = (1<<bitwidth-1) - 1;
+						int minInt = maxInt - (1<<(bitwidth)) + 1;
+						
+						LoggerUtil.debug(GenBenchMarker.class, "bitwidth = %d \t maxInt = %d \t minInt = %d ",bitwidth,maxInt, minInt);
+						
+						StringBuilder nodes = new StringBuilder();
+						StringBuilder values = new StringBuilder();
+						
+						
+						//generating the nodes and vals tuples
+						for(int i = 0; i < max; i++){
+							nodes.append(" n").append(i).append(" +");
+							values.append(" n").append(i).append("->").append(minInt+i).append(" +");
+						}
+						
+						nodes.setCharAt(nodes.length()-1, ',');
+						values.setCharAt(values.length()-1, ' ');
+
+						//making the nodes
+						result.append('\t').append("Node=").append(nodes).append("\n");
+						//making the realations
+						result.append('\t').append("val=").append(values).append("\n");
+
+						result.append('}');
+						return result.toString();
+					}
+				})
+				);
+	
+	}
+	
+	private static void runRBTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
+		
+		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/stm/RBT_EE_gpce2013_template.als","models/partial/gen/stm/tmp",
+				(new DSPartialInstanceGen() {
+					
+					@Override
+					public String generate(int max) {
+						int bitwidth = (int)Math.ceil((Math.log(max) / Math.log(2)));
+						StringBuilder result = new StringBuilder();
+						result.append("inst i {\n").append("\t0,\n").append('\t').append(bitwidth+1).append(" Int,\n");
+						
+						int maxInt = (1<<bitwidth-1) - 1;
+						int minInt = maxInt - (1<<(bitwidth)) + 1;
+						
+						LoggerUtil.debug(GenBenchMarker.class, "bitwidth = %d \t maxInt = %d \t minInt = %d ",bitwidth,maxInt, minInt);
+						
+						StringBuilder nodes = new StringBuilder();
+						StringBuilder values = new StringBuilder();
+						StringBuilder colors = new StringBuilder();
+						
+						char[] RB = {'R','B'};
+						
+						//generating the nodes and vals tuples
+						for(int i = 0; i < max*2; i++){
+							nodes.append(" n").append(i).append(" +");
+							values.append(" n").append(i).append("->").append(minInt+i/2).append(" +");
+							colors.append(" n").append(i).append("->").append(RB[i%2]).append(" +");
+						}
+						
+						nodes.setCharAt(nodes.length()-1, ',');
+						values.setCharAt(values.length()-1, ',');
+						colors.setCharAt(colors.length()-1, ' ');
+
+						//making the nodes
+						result.append('\t').append("Red=").append('R').append(",\n");
+						result.append('\t').append("Black=").append('B').append(",\n");
+						result.append('\t').append("Node=").append(nodes).append("\n");
+						//making the realations
+						result.append('\t').append("val=").append(values).append("\n");
+						result.append('\t').append("col=").append(colors).append("\n");
+
+						result.append('}');
+						return result.toString();
+					}
+				})
+				);
+	
+	}
+	
 
 	/**
 	 * @param args
@@ -266,9 +370,13 @@ public class GenBenchMarker {
 		int experiments = 1;
 		final List<String> fileGroups = new ArrayList<String>();
 		int numbers = 5;
-
 		
-		doTest("Walker",experiments, timeOutMin, TestInputs.generatorBenchmarkWalker());
+		
+		runBSTTest(2,2,experiments, timeOutMin,"walker");
+		
+		System.exit(-10);
+		
+		
 		
 		
 /*		doTest("NewWithConstraint1",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithConstraint1());

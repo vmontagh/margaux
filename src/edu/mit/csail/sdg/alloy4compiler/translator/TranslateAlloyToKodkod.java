@@ -421,8 +421,8 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
 
             tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
             tr.makeFacts(cmd.formula);
-            if(inst != null)
-            	tr.frame.includeIntoLowerbound(inst, uniqSig);
+            /*if(inst != null)
+            	tr.frame.includeIntoLowerbound(inst, uniqSig);*/
             return tr.frame.solve(rep, cmd, new Simplifier(), false);
         } catch(UnsatisfiedLinkError ex) {
             throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);

@@ -78,7 +78,7 @@ final class BoundsComputer {
 		if(sc == null )
 			return null;
 
-		LoggerUtil.debug(this, "The sig in computerLowerBound_BU is: %s %s", sig, sc);
+		//LoggerUtil.Detaileddebug(this, "The sig in computerLowerBound_BU is: %s %s", sig, sc);
 		TupleSet lower = factory.noneOf(1);
 		List<String> list = sc.sig2PscopeL(sig);
 		
@@ -315,7 +315,7 @@ final class BoundsComputer {
 			atoms.add(factory.tuple(universe.atom(i)));
 		for(Sig s:sigs) 
 			if (!s.builtin && s.isTopLevel()){ 
-				edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"sig->%s , s.builtin->%s, s.isTopLevel()->%s%n", s, s.builtin, s.isTopLevel());
+				//edu.mit.csail.sdg.gen.//LoggerUtil.debug(this,"sig->%s , s.builtin->%s, s.isTopLevel()->%s%n", s, s.builtin, s.isTopLevel());
 				//computeLowerBound(atoms, (PrimSig)s);
 				computeLowerBound_BU((PrimSig)s);
 			}
@@ -440,7 +440,9 @@ final class BoundsComputer {
 						for(List<PrimSig> p:t.fold()) {
 							TupleSet upper=null;
 							for(PrimSig b:p) {
-
+								//LoggerUtil.Detaileddebug(this, " b is %s", b);
+								//LoggerUtil.Detaileddebug(this, " sol is %s", sol);
+								//LoggerUtil.Detaileddebug(this, " sol.a2k(b) is %s", sol.a2k(b));
 								TupleSet tmp = sol.query(true, sol.a2k(b), false);
 								if (upper==null) 
 									upper=tmp; 
@@ -459,6 +461,12 @@ final class BoundsComputer {
 		// Add any additional SIZE constraints
 		for(Sig s:sigs) if (!s.builtin) {
 			Expression exp = sol.a2k(s);
+			//LoggerUtil.Detaileddebug(this, "The s is: %s",s);
+			//LoggerUtil.Detaileddebug(this, "The sol is: %s",sol);
+			//LoggerUtil.Detaileddebug(this, "The exp is: %s",exp);
+			//LoggerUtil.Detaileddebug(this, "The sol.query(true,exp,false) is: %s",sol.query(true,exp,false));
+			//LoggerUtil.Detaileddebug(this, "The sol.query(false,exp,false) is: %s",sol.query(false,exp,false));
+
 			TupleSet upper = sol.query(true,exp,false), lower=sol.query(false,exp,false);
 			final int n = sc.sig2scope(s);
 			if (s.isOne!=null && (lower.size()!=1 || upper.size()!=1)) {

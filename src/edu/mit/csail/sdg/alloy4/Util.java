@@ -588,6 +588,20 @@ public final class Util {
 
    /** Returns the substring after the last "/" */
    public static String tail(String string)  { int i=string.lastIndexOf('/'); return (i<0) ? string : string.substring(i+1); }
+   
+   /**
+    * Return the substring before the the delimit
+    * @param input
+    * @param delimit
+    * @return
+    */
+   public static String head(String input, String delimit){
+		int index = input.indexOf(delimit);
+		if(index > -1){
+			return input.substring(0,index);
+		}
+		return input;
+	}
 
    /** Returns the largest allowed integer, or -1 if no integers are allowed (bitwidth < 1). */
    public static int max(int bitwidth) { return bitwidth < 1 ? -1 : (1<<(bitwidth-1))-1; }

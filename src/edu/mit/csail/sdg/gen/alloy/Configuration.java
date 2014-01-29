@@ -39,8 +39,8 @@ public class Configuration {
 		props.setProperty(ONE_FOUND, String.valueOf(false));
 		props.setProperty(USING_KODKOD, String.valueOf(true));
 		props.setProperty(USING_KK_ITR, String.valueOf(false));
-		props.setProperty(SYMMETRY_OFF, String.valueOf(false));
-		props.setProperty(USING_SYMMETRY, String.valueOf(true));
+		props.setProperty(SYMMETRY_OFF, String.valueOf(true));
+		props.setProperty(USING_SYMMETRY, String.valueOf(false));
 		props.setProperty(REPORT_FILE_NAME, "");		
 	}
 	

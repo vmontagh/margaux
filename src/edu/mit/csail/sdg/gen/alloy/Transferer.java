@@ -111,15 +111,15 @@ public class Transferer {
 		Map<String, Sig> sigs = new HashMap<String, Sig>();
 
 		for(Sig sig: ans.getAllReachableSigs()){
-			sigs.put(nameSanitizer(sig.label),sig);
+			sigs.put(PIUtil.nameSanitizer(sig.label),sig);
 
 		}
 
 		Expr fact = null;
 
-		String skolemName = nameSanitizer(ans.eval(v).toString());
+		String skolemName = PIUtil.nameSanitizer(ans.eval(v).toString());
 		Type skolemType =  v.type();
-		String skolemTypeName = nameSanitizer(skolemType.toString());
+		String skolemTypeName = PIUtil.nameSanitizer(skolemType.toString());
 		//Type name ->(Type name -> created ExprVar )
 		Map<String,Map<String, ExprHasName>> vars = new HashMap<String,Map<String, ExprHasName>>();
 		Map<String, ExprHasName> map = new HashMap<String, ExprHasName>();
@@ -137,16 +137,16 @@ public class Transferer {
 			body.put(f.label, new ArrayList<Expr>());
 
 			for(A4Tuple tuple: ans.eval(f)){
-				if(nameSanitizer(tuple.atom(0)).equals(skolemName)){
+				if(PIUtil.nameSanitizer(tuple.atom(0)).equals(skolemName)){
 
-					LoggerUtil.debug(this,nameSanitizer(tuple.atom(0)));
+					LoggerUtil.debug(this,PIUtil.nameSanitizer(tuple.atom(0)));
 
 					Expr tupleExpr = null;
 					//for every tuple, if the first atom is in the skolem var, then the tuple is not added 
 					for(int i=0; i < tuple.arity(); i++){
 
-						String sigI = nameSanitizer(tuple.sig(i).label);
-						String varName = nameSanitizer(tuple.atom(i)); 
+						String sigI = PIUtil.nameSanitizer(tuple.sig(i).label);
+						String varName = PIUtil.nameSanitizer(tuple.atom(i)); 
 
 						if(!vars.containsKey( sigI ))
 							vars.put(sigI, new TreeMap<String, ExprHasName>());
@@ -271,10 +271,10 @@ public class Transferer {
 		Map<String,Field> fields = getFields(sig);
 
 		//If the scope is defined for fields
-		if(fields.containsKey(nameSanitizer(cs.sig.label))){
+		if(fields.containsKey(PIUtil.nameSanitizer(cs.sig.label))){
 			List<List<Expr>> pFields = new ArrayList<List<Expr>>();
 			for(List<Expr> tuple: cs.pFields){
-				if(!toBeRemovedAtoms.contains(nameSanitizer(tuple.get(0).toString())))
+				if(!toBeRemovedAtoms.contains(PIUtil.nameSanitizer(tuple.get(0).toString())))
 					pFields.add(new ArrayList<Expr>(tuple));
 			}
 			return new CommandScope(cs.pos, cs.sig, false, pFields.size(), pFields.size(), 
@@ -287,7 +287,7 @@ public class Transferer {
 		if(sig.label.equals(cs.sig.label)){
 			List<ExprVar> pAtoms = new ArrayList<ExprVar>();
 			for(ExprVar atom: cs.pAtoms){
-				if(!toBeRemovedAtoms.contains(nameSanitizer(atom.label)))
+				if(!toBeRemovedAtoms.contains(PIUtil.nameSanitizer(atom.label)))
 					pAtoms.add(atom);
 			}
 			return new CommandScope(cs.pos, cs.sig, false, pAtoms.size(), pAtoms.size(), 
@@ -323,10 +323,10 @@ public class Transferer {
 		Map<String,Field> fields = getFields(sig);
 		Set<Integer> numbers =  new TreeSet();
 		for(CommandScope cs: cmd.scope){
-			if(fields.containsKey(nameSanitizer(cs.sig.label))){
+			if(fields.containsKey(PIUtil.nameSanitizer(cs.sig.label))){
 
 
-				Expr cardExpr = ExprUnary.Op.NOOP.make(Pos.UNKNOWN, fields.get(nameSanitizer(cs.sig.label))).cardinality().equal(ExprConstant.makeNUMBER(cs.endingScope));
+				Expr cardExpr = ExprUnary.Op.NOOP.make(Pos.UNKNOWN, fields.get(PIUtil.nameSanitizer(cs.sig.label))).cardinality().equal(ExprConstant.makeNUMBER(cs.endingScope));
 
 				numbers.add(cs.endingScope );
 				if(null == result){
@@ -369,13 +369,11 @@ public class Transferer {
 	private  Pair<String,Sig> getFirstSkolem(A4Solution ans) throws Err{
 		for(ExprVar v:ans.getAllSkolems()) 
 			for(Sig sig: ans.getAllReachableSigs())
-				if(nameSanitizer(sig.label).equals(nameSanitizer(v.type().toString())))
-					return new Pair<String, Sig>(nameSanitizer(ans.eval(v).toString()), sig);
+				if(PIUtil.nameSanitizer(sig.label).equals(PIUtil.nameSanitizer(v.type().toString())))
+					return new Pair<String, Sig>(PIUtil.nameSanitizer(ans.eval(v).toString()), sig);
 		return new Pair<String, Sig>(null,null);
 	}
 
-	private  String nameSanitizer(String name){
-		return name.replace("{","").replace("}", "").replace("$", "").replace("this/","");
-	}
+	
 
 }

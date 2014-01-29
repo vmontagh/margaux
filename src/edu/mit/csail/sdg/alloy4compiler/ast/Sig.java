@@ -15,9 +15,12 @@
 
 package edu.mit.csail.sdg.alloy4compiler.ast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import edu.mit.csail.sdg.alloy4.ErrorAPI;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorFatal;
@@ -270,6 +273,22 @@ public abstract class Sig extends Expr {
       for(Expr f: facts) ans.add(make(f.span(), f.span(), "<b>fact</b>", f));
       return ans.makeConst();
    }
+   
+	/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint). 
+	 * PrimSig will override it.*/
+	public  SafeList<Field> getFieldsWithParents() {
+		return this.getFields();
+	}
+	
+	/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint) */
+	public  SafeList<Decl> getFieldsDeclWithParents() {
+		return this.getFieldDecls();
+	}
+	
+	public List<PrimSig> allPrimSigParent() throws ErrorAPI {
+		throw new ErrorAPI("A sig does not have parent");
+  	  //return new ArrayList<Sig.PrimSig>();
+     }
 
    //==============================================================================================================//
 
@@ -392,11 +411,44 @@ public abstract class Sig extends Expr {
             if (me==null) return UNIV;
          }
       }
+      
+      
+      public List<PrimSig> allPrimSigParent() {
+    	  List<PrimSig> result = new ArrayList<Sig.PrimSig>();
+    	  for(PrimSig parent = this.parent; parent!= null && !parent.builtin && parent.parent instanceof PrimSig ; parent = parent.parent){
+    		  result.add(parent);
+    	  }
+    	  return result;
+       }
 
 	/*@Override
 	public Sig change(SafeList<Decl> fields) throws Err {
 		return new PrimSig(this.label,this.parent,fields.dup(),this.attributes.toArray(new Attr[0]));
 	}*/
+      
+  	/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint) */
+		public final SafeList<Field> getFieldsWithParents() {
+			SafeList<Field> ans = new SafeList<Field>();
+			ans.addAll(this.getFields().makeCopy());
+			PrimSig crntSig = this;
+			while(crntSig.parent != null){
+				ans.addAll(crntSig.parent.getFields().makeCopy());
+				crntSig = crntSig.parent;
+			}
+			return ans.dup();
+		}
+		
+		/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint) */
+		public final SafeList<Decl> getFieldsDeclWithParents() {
+			SafeList<Decl> ans = new SafeList<Decl>();
+			ans.addAll(this.getFieldDecls().makeCopy());
+			PrimSig crntSig = this;
+			while(crntSig.parent != null){
+				ans.addAll(crntSig.getFieldDecls().makeCopy());
+				crntSig = crntSig.parent;
+			}
+			return ans.dup();
+		}
    }
 
    //==============================================================================================================//

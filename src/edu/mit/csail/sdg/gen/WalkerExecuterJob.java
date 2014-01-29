@@ -5,6 +5,7 @@ import java.io.File;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 public class WalkerExecuterJob extends ExecuterJob {
 
@@ -21,25 +22,19 @@ public class WalkerExecuterJob extends ExecuterJob {
 	@Override
 	protected void callExecuter(String fileName) throws Err {
 
-		int[] paces = new int[]{2,2,2,4,4,8,8,16,16,32,32,64,64};
 		
 		
-		String logName = Util.tail(fileName).replace(".", "_")+".log";
-		File oldfile =new File(logName);
-		File newfile =new File(logName.replace(".", System.currentTimeMillis()+ "."));
-		
-		oldfile.renameTo(newfile);
-		
-		for(int pace:paces){
-			ExampleUsingTheCompiler.PACE = pace;
-			ExampleUsingTheCompiler.run(new String[]{fileName},rep);
-			updateResult(System.currentTimeMillis(), fileName, rep.evalTime,
-					rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1);
+		Configuration.setProp(Configuration.USING_KODKOD, String.valueOf(true));
+		Configuration.setProp(Configuration.USING_KK_ITR, String.valueOf(true));
+		Configuration.setProp(Configuration.PACE, String.valueOf(4));
 
-		}
+		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
+		updateResult(System.currentTimeMillis(), fileName, rep.evalTime,
+				rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1, rep.evalInsts, 
+				Integer.valueOf(Configuration.getProp(Configuration.PACE)) );
 
 	}
-	
+
 	/**
 	 * @param args
 	 * @throws Err 
@@ -47,7 +42,8 @@ public class WalkerExecuterJob extends ExecuterJob {
 	public static void main(String[] args) throws Err {
 		// TODO Auto-generated method stub
 		WalkerExecuterJob nsej = new WalkerExecuterJob("report.txt");
-		nsej.callExecuter(args[0]);
+		nsej.callExecuter("models/partial/gen/stm/tmp/BST_EE_gpce2013_template_3.als");
+		//nsej.callExecuter("models/partial/gen/phone.als");
 	}
 
 }
