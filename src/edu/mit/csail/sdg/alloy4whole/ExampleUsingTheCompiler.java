@@ -71,7 +71,7 @@ import edu.mit.csail.sdg.gen.LoggerUtil;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.mit.csail.sdg.gen.alloy.PIUtil;
 import edu.mit.csail.sdg.gen.alloy.Transferer;
-import edu.mit.csail.sdg.gen.alloy.UniqSigMessage;
+
 
 /** This class demonstrates how to access Alloy4 via the compiler methods. */
 
