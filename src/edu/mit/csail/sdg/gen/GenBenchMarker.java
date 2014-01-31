@@ -261,11 +261,11 @@ public class GenBenchMarker {
 	
 	
 	private static void runLLSTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
-		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/LLS_template.als",  "models/partial/gen/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template.als",  "models/partial/gen/tmp");
 	}
 
 	private static void runBSTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
-		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/BST_template.als",  "models/partial/gen/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template.als",  "models/partial/gen/tmp");
 	}
 
 	
@@ -313,7 +313,7 @@ public class GenBenchMarker {
 	
 	private static void runRBTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
 		
-		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/RBT_template.als","models/partial/gen/tmp",
+		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/abz14/RBT_template.als","models/partial/gen/tmp",
 				(new DSPartialInstanceGen() {
 					
 					@Override
