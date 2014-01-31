@@ -29,16 +29,18 @@ public class EEExecuterJob extends ExecuterJob {
 
 		
 		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
-		updateResult(System.currentTimeMillis(), fileName, rep.evalTime,
-				rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1,rep.evalInsts,-1);
+		updateResult( fileName,3,"--", rep.evalInsts, rep.evalTime, rep.solveTime, 
+				rep.trasnalationTime, rep.totalVaraibles, rep.clauses, rep.evalTime+ rep.solveTime +rep.trasnalationTime +rep.evalTime,rep.sat);
 
+
+		
 	}
 	
 	
 	public static void main(String[] args) throws Err {
 		// TODO Auto-generated method stub
 		EEExecuterJob nsej = new EEExecuterJob("expr_output/report.txt");
-		nsej.callExecuter("models/partial/gen/stm/tmp/BST_EE_gpce2013_template_4.als");
+		nsej.callExecuter("models/examples/puzzles/hanoi.als");
 //		nsej = new EEExecuterJob("report.txt");
 //		nsej.callExecuter("models/partial/gen/stm/tmp/LLS_EE_gpce2013_template_3.als");
 	}

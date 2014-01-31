@@ -22,17 +22,15 @@ public class WalkerExecuterJob extends ExecuterJob {
 	@Override
 	protected void callExecuter(String fileName) throws Err {
 
-		
-		
 		Configuration.setProp(Configuration.USING_KODKOD, String.valueOf(true));
 		Configuration.setProp(Configuration.USING_KK_ITR, String.valueOf(true));
-		Configuration.setProp(Configuration.PACE, String.valueOf(4));
+		Configuration.setProp(Configuration.PACE, String.valueOf(1));
 
 		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
-		updateResult(System.currentTimeMillis(), fileName, rep.evalTime,
-				rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,/*ans.satisfiable()*/rep.sat==1, rep.evalInsts, 
-				Integer.valueOf(Configuration.getProp(Configuration.PACE)) );
+		updateResult( fileName,2,"--", rep.evalInsts, rep.evalTime, rep.solveTime, 
+				rep.trasnalationTime, rep.totalVaraibles, rep.clauses, rep.evalTime+ rep.solveTime +rep.trasnalationTime +rep.evalTime,rep.sat);
 
+		
 	}
 
 	/**
@@ -42,7 +40,7 @@ public class WalkerExecuterJob extends ExecuterJob {
 	public static void main(String[] args) throws Err {
 		// TODO Auto-generated method stub
 		WalkerExecuterJob nsej = new WalkerExecuterJob("report.txt");
-		nsej.callExecuter("models/partial/gen/stm/tmp/BST_EE_gpce2013_template_3.als");
+		nsej.callExecuter("models/partial/gen/phone.als");
 		//nsej.callExecuter("models/partial/gen/phone.als");
 	}
 

@@ -44,6 +44,13 @@ public class TestInputs {
 		return oneD2twoD(Utils.filesR("models/partial/gen/stm", "^walker_\\d{1,3}.als"));
 	}
 
+	public static Collection<Object[]> generatorPhoneBookABZ14() {
+		return oneD2twoD(Utils.filesR("models/partial/gen/abz14", "^Phonebook_\\d{1,3}.als"));
+	}
+	
+	public static Collection<Object[]> generatorFORMLABZ14() {
+		return oneD2twoD(Utils.filesR("models/partial/gen/abz14", "^FORML_model_\\d{1,1}.als"));
+	}
 	
 	public static Collection<Object[]> oneD2twoD(final Object[] in) {
 		final Collection<Object[]> out = new ArrayList<Object[]>(in.length);

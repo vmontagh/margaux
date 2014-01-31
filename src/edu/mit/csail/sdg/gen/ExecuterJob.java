@@ -133,8 +133,10 @@ public abstract class ExecuterJob implements WorkerTask {
 		this.reportFile = reportFile;
 	}
 
-	public synchronized void updateResult(long time, String name, long evaluationTime, 
-			long executionTime, long traslationTime, long variables, long clauses, boolean sat, long evalInsts, int pace){
+	public synchronized void updateResult( Object...objs){
+			
+			//long time, String name, long evaluationTime, 
+			//long executionTime, long traslationTime, long variables, long clauses, boolean sat, long evalInsts, int pace){
 /*		String out = "";
 		try {
 			
@@ -147,9 +149,14 @@ public abstract class ExecuterJob implements WorkerTask {
 		} catch (Err e) {
 			e.printStackTrace();
 		}*/
-		edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(reportFile, String.valueOf(time),  name, String.valueOf( evaluationTime), 
-				String.valueOf( executionTime), String.valueOf( traslationTime), String.valueOf( variables), 
-				String.valueOf( clauses), String.valueOf( sat), String.valueOf(evalInsts), String.valueOf(pace));
+		
+		String[] sb = new String[objs.length];
+		int i = 0;
+		for(Object obj:objs){
+			sb[i] = obj.toString();
+			i++;
+		}
+		edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(reportFile, sb);
 	}
 
 	

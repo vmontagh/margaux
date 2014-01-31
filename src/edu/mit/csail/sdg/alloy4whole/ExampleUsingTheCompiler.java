@@ -111,6 +111,15 @@ public final class ExampleUsingTheCompiler {
 		}
 	}
 
+	public static class EvalReporter extends A4Reporter{
+		public long evalTime;
+		public long insts;
+		public void evalute(long elauationTime, long instances) {
+			evalTime = elauationTime;
+			insts = instances;
+		}
+	};
+	
 
 	public static String run(String[] args,A4Reporter rep) throws Err{
 
@@ -161,18 +170,17 @@ public final class ExampleUsingTheCompiler {
 					out=new PrintWriter("../tmp/out.xml","UTF-8");
 					
 					//LoggerUtil.Detaileddebug("The world before uniqSigGenerator is: %s", world.getUniqueFieldFact(field)niqueFact(sigLabel));
-
-					command = uniqSigGenerator(command, world, options,rep);
-
-					System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
-					edu.mit.csail.sdg.gen.LoggerUtil.fileLogger(Configuration.getProp(Configuration.REPORT_FILE_NAME),
-							String.valueOf((System.currentTimeMillis()- time))
-							);
 					time = System.currentTimeMillis();
-					System.out.println("Starting to execute the commmand....");
-					System.out.println(command);
+					EvalReporter evalRep = new EvalReporter();
+					command = uniqSigGenerator(command, world, options,evalRep );
+
+					rep.evalute(System.currentTimeMillis()- time, evalRep.insts );
+					System.out.println("The evaluation has been done in: "+(System.currentTimeMillis()- time)+" mSec");
+
+					time = System.currentTimeMillis();
 
 					//System.exit(-10);
+					QuickReporter qRep = new QuickReporter(); 
 					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 
 
@@ -513,7 +521,7 @@ public final class ExampleUsingTheCompiler {
 		return result.change(ConstList.make(newCS));
 	}
 
-
+/*
 	private static UniqSigMessage makeWorld(final Command command, final CompModule world, final Sig s,
 			final  A4Options options, final A4Reporter rep,
 			final UniqSigMessage usm) throws Err{
@@ -637,7 +645,7 @@ public final class ExampleUsingTheCompiler {
 
 	}
 
-
+*/
 	private static Command makeCommand(Sig s, Map<String,ExprVar> sigAtoms,CommandScope sigScope,
 			CommandScope scope,Bounds oBound,List<CommandScope> nList, Command command, CompModule world) throws Err{
 		if(sigAtoms.size() > 0){

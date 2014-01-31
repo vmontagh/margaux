@@ -2204,7 +2204,6 @@ public final class A4Solution {
 				tuples.add(kkUniv.factory().tuple(name+"$"+uIndex));
 				inst2Run.add(r, kkUniv.factory().setOf(tuples));
 			}else if(fldsTpls != null && fldsTpls.containsKey(name)  ){
-				System.out.printf("The fldsTpls name is %s and fldsTpls.get(name) is %s%n", name ,fldsTpls.get(name));
 				if(fldsTpls.get(name).size() > 0)
 					inst2Run.add(r,kkUniv.factory().setOf(fldsTpls.get(name)) );
 				else
@@ -2509,11 +2508,6 @@ public final class A4Solution {
 		else if(usingKodkod){
 			if(!usingKKItr){
 
-				System.out.printf("The uniqSig is: %s%n", uniqSig);
-				System.out.printf("The expr is: %s%n", expr);
-
-				//System.exit(-10);
-
 				//I am trying to make each signature one, then iterativly run the solver.
 
 				uniqSig.isOne = Pos.UNKNOWN;
@@ -2551,7 +2545,6 @@ public final class A4Solution {
 					ans=ans.next();
 				}while(ans.eval!=null);
 				uniqSig.isOne = null;	
-				return result;
 			}else{
 /*
 				//I am trying to make each signature one, then iterativly run the solver.

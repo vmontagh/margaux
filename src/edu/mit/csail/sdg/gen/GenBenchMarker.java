@@ -261,11 +261,11 @@ public class GenBenchMarker {
 	
 	
 	private static void runLLSTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
-		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/LLS_EE_gpce2013_template.als",  "models/partial/gen/stm/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/LLS_template.als",  "models/partial/gen/tmp");
 	}
 
 	private static void runBSTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
-		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/BST_EE_gpce2013_template.als",  "models/partial/gen/stm/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/stm/BST_template.als",  "models/partial/gen/tmp");
 	}
 
 	
@@ -313,7 +313,7 @@ public class GenBenchMarker {
 	
 	private static void runRBTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
 		
-		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/stm/RBT_EE_gpce2013_template.als","models/partial/gen/stm/tmp",
+		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/RBT_template.als","models/partial/gen/tmp",
 				(new DSPartialInstanceGen() {
 					
 					@Override
@@ -366,17 +366,41 @@ public class GenBenchMarker {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		long timeOutMin = 30; 
-		int experiments = 1;
+		long timeOutMin = 5; 
+		int experiments = 3;
 		final List<String> fileGroups = new ArrayList<String>();
 		int numbers = 5;
 		
 		
-		runBSTTest(2,2,experiments, timeOutMin,"walker");
+		runLLSTest(2,7,experiments, timeOutMin,"walker");
+		runBSTTest(2,7,experiments, timeOutMin,"walker");
+		runRBTTest(2,7,experiments, timeOutMin,"walker");
+		
+		/*Object[] m = {"models/partial/gen/david_expr/model1_new_gpce2013.als"};
+		List<Object[]> list = new ArrayList<Object[]>();
+		list.add(m);
+		doTest("walker",experiments, timeOutMin,list);*/
+		
+		doTest("walker",experiments, timeOutMin, TestInputs.generatorFORMLABZ14());
+		
+		doTest("walker",experiments, timeOutMin, TestInputs.generatorPhoneBookABZ14());
+
+		
+		runLLSTest(2,7,experiments, timeOutMin,"ee");
+		runBSTTest(2,7,experiments, timeOutMin,"ee");
+		runRBTTest(2,7,experiments, timeOutMin,"ee");
+		
+		/*Object[] m = {"models/partial/gen/david_expr/model1_new_gpce2013.als"};
+		List<Object[]> list = new ArrayList<Object[]>();
+		list.add(m);
+		doTest("walker",experiments, timeOutMin,list);*/
+		
+		doTest("ee",experiments, timeOutMin, TestInputs.generatorFORML());
+		
+		doTest("ee",experiments, timeOutMin, TestInputs.generatorPhoneBookWalker());
 		
 		System.exit(-10);
-		
-		
+
 		
 		
 /*		doTest("NewWithConstraint1",experiments, timeOutMin, TestInputs.generatorBenchmarkNewWithConstraint1());

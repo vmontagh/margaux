@@ -22,28 +22,39 @@ public class MyReporter extends A4Reporter implements Serializable{
 		System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
 		System.out.flush();
 	}
+	public void typecheck (String msg) {
+	}
+	
 	@Override public void solve(final int primaryVars, final int totalVars, final int clauses) {
 		this.trasnalationTime = (System.currentTimeMillis()-lastTime);
 		this.lastTime = System.currentTimeMillis();
 		this.clauses = clauses;
 		this.totalVaraibles = totalVars;
+		System.out.println("solve");
+
 
 	}
 	@Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
+		System.out.println("translate");
+
 		this.lastTime = System.currentTimeMillis();
 	}
 
 	@Override public void resultSAT (Object command, long solvingTime, Object solution) {
-		this.solveTime = solvingTime;
+		System.out.printf("resultSAT ");
+		this.solveTime = System.currentTimeMillis()-lastTime;
 		this.sat=1;
 	}
 	
 	public void resultUNSAT (Object command, long solvingTime, Object solution) {
-		this.solveTime = solvingTime;
+		System.out.printf("resultUNSAT is called and the solvingTime is %d and the diffenrence is: %d%n",solvingTime,System.currentTimeMillis()-lastTime);
+		this.solveTime = System.currentTimeMillis()-lastTime;
 		this.sat=-1;
 	}
 	
 	public void evalute(long elauationTime, long instances) {
+		System.out.println("evalute");
+
 		this.evalTime = elauationTime;
 		this.evalInsts = instances;
 	}

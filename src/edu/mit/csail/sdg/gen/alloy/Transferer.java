@@ -131,15 +131,13 @@ public class Transferer {
 		Map<String, Field> fields = new HashMap<String, Sig.Field>();
 
 
-		for(Field f:sigs.get(skolemTypeName).getFields()){
+		for(Field f:sigs.get(skolemTypeName).getFieldsWithParents()){
 
 			fields.put(f.label, f);
 			body.put(f.label, new ArrayList<Expr>());
 
 			for(A4Tuple tuple: ans.eval(f)){
 				if(PIUtil.nameSanitizer(tuple.atom(0)).equals(skolemName)){
-
-					LoggerUtil.debug(this,PIUtil.nameSanitizer(tuple.atom(0)));
 
 					Expr tupleExpr = null;
 					//for every tuple, if the first atom is in the skolem var, then the tuple is not added 
@@ -165,9 +163,6 @@ public class Transferer {
 							tupleExpr = tupleExpr.resolve_as_set(new ArrayList());
 						}
 					}
-
-					LoggerUtil.debug(this, "tupleExpr is: %s",tupleExpr);
-
 					assert body.containsKey( f.label ) && tupleExpr!=null;
 					body.get(f.label).add(tupleExpr);
 				}
@@ -178,13 +173,6 @@ public class Transferer {
 
 		for(String fld: body.keySet()){
 			if (body.get(fld).size() == 0){
-
-				
-				
-				
-				LoggerUtil.debug(this, "%s %s %n%s",skolemName,vars.get(skolemTypeName), vars.get(skolemTypeName).get(skolemName), vars);
-				
-				
 				
 				bodyExprsList.add(
 						vars.get(skolemTypeName).get(skolemName)
@@ -211,7 +199,7 @@ public class Transferer {
 			if(vars.get(type).size() == 1){
 				fact = fact.forOne(new Decl(null,null,null,
 						new ArrayList<ExprHasName>( vars.get(type).values()),
-						ExprUnary.Op.NOOP.make(Pos.UNKNOWN, sigs.get(type)).oneOf()))
+						ExprUnary.  Op.NOOP.make(Pos.UNKNOWN, sigs.get(type)).oneOf()))
 						.resolve_as_formula(new ArrayList<ErrorWarning>());
 			}else{
 				fact = fact.forSome(new Decl(null,null,null,
@@ -256,7 +244,7 @@ public class Transferer {
 	private  Map<String,Field> getFields(Sig sig){
 		Map<String,Field> fields = new HashMap<String, Sig.Field>();
 
-		for(Sig.Field field: sig.getFields()){
+		for(Sig.Field field: sig.getFieldsWithParents()){
 			fields.put(field.label, field);
 		}
 

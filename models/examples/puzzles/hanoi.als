@@ -1,4 +1,4 @@
-module examples/puzzles/hanoi
+--module examples/puzzles/hanoi
 
 /*
  * Towers of Hanoi model
@@ -126,5 +126,9 @@ pred Game2  {
              }
       }
 
-run Game1 for 1 but 3 Stake, 5 Disc, 32 State expect 1
-run Game2 for 1 but 3 Stake, 3 Disc, 8 State expect 1
+inst i{
+	1,
+	3 Stake, 5 Disc, 32 State
+}
+run Game1 for i--1 but 3 Stake, 5 Disc, 32 State expect 1
+//run Game2 for 1 but 3 Stake, 3 Disc, 8 State expect 1
