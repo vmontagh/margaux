@@ -395,9 +395,9 @@ public class GenBenchMarker {
 		list.add(m);
 		doTest("walker",experiments, timeOutMin,list);*/
 		
-		doTest("ee",experiments, timeOutMin, TestInputs.generatorFORML());
+		doTest("ee",experiments, timeOutMin, TestInputs.generatorFORMLABZ14());
 		
-		doTest("ee",experiments, timeOutMin, TestInputs.generatorPhoneBookWalker());
+		doTest("ee",experiments, timeOutMin, TestInputs.generatorPhoneBookABZ14());
 		
 		System.exit(-10);
 
