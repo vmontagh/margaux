@@ -58,7 +58,10 @@
     <unzip src="lib/extra.jar" dest="dist/alloy" />
     <unzip src="lib/kodkod+sat4j.jar" dest="dist/alloy" />
 
-      
+    <copy todir="dist/alloy/x86-linux" failonerror="false">
+      <fileset dir="${KODKOD_HOME}/linux_x86" />
+    </copy>
+
     <copy todir="dist/alloy/amd64-linux" failonerror="false">
       <fileset dir="${KODKOD_HOME}/linux_x86_64"/>
     </copy>
