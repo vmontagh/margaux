@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view nodetheme="Martha">
+
+<projection> <type name="Device"/> <type name="LUN"/> </projection>
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Allocated"/>
+   <type name="Block"/>
+   <type name="Free"/>
+   <type name="Int"/>
+   <type name="Invalid"/>
+   <type name="NeverErased"/>
+   <type name="OftenErased"/>
+   <type name="SeldomErased"/>
+   <type name="String"/>
+   <type name="univ"/>
+   <type name="Valid"/>
+   <type name="seq/Int"/>
+   <set name="$l" type="Block"/>
+   <set name="luns" type="LSeq/SeqIdx"/>
+   <set name="reserveBlock" type="BSeq/SeqIdx"/>
+</node>
+
+<node shape="Box" color="Green">
+   <type name="Data"/>
+</node>
+
+<node shape="Hexagon" color="Gray">
+   <type name="RowAddr"/>
+</node>
+
+<node shape="Octagon" color="White" label="BSeqIdx">
+   <type name="BSeq/SeqIdx"/>
+</node>
+
+<node shape="Parallelogram" color="Red">
+   <type name="LUN"/>
+</node>
+
+<node shape="Trapezoid" color="Blue">
+   <type name="Device"/>
+</node>
+
+<node style="Bold">
+   <set name="this/ErasedData" type="Data"/>
+   <set name="$d&apos;" type="Device"/>
+   <set name="$d&apos;&apos;" type="Device"/>
+   <set name="$data" type="Data"/>
+</node>
+
+<node style="Bold" color="Blue">
+   <set name="$rowAddr" type="RowAddr"/>
+</node>
+
+<node style="Bold" label="SIZE">
+   <set name="$BLOCK_SIZE" type="Int"/>
+   <set name="$DEVICE_SIZE" type="Int"/>
+   <set name="$LUN_SIZE" type="Int"/>
+   <set name="$PAGE_SIZE" type="Int"/>
+</node>
+
+<node visible="no">
+   <type name="EraseFrequency"/>
+   <type name="Page"/>
+   <type name="PageStatus"/>
+   <type name="EFO/Ord"/>
+   <type name="BSeq/ord/Ord"/>
+   <type name="LSeq/ord/Ord"/>
+   <type name="PSeq/ord/Ord"/>
+</node>
+
+<node visible="no" shape="Inv House" color="Green" label="PSeqIdx">
+   <type name="PSeq/SeqIdx"/>
+</node>
+
+<node visible="no" shape="Inv Triangle" color="Black" label="LSeqIdx">
+   <type name="LSeq/SeqIdx"/>
+</node>
+
+<edge color="Gray" constraint="no">
+   <relation name="data"> <type name="Page"/> <type name="seq/Int"/> <type name="Data"/> </relation>
+   <relation name="eraseFreqMap"> <type name="Device"/> <type name="BSeq/SeqIdx"/> <type name="EraseFrequency"/> </relation>
+   <relation name="luns"> <type name="Device"/> <type name="LSeq/SeqIdx"/> <type name="LUN"/> </relation>
+   <relation name="Next"> <type name="EFO/Ord"/> <type name="EraseFrequency"/> <type name="EraseFrequency"/> </relation>
+   <relation name="Next"> <type name="BSeq/ord/Ord"/> <type name="BSeq/SeqIdx"/> <type name="BSeq/SeqIdx"/> </relation>
+   <relation name="Next"> <type name="LSeq/ord/Ord"/> <type name="LSeq/SeqIdx"/> <type name="LSeq/SeqIdx"/> </relation>
+   <relation name="Next"> <type name="PSeq/ord/Ord"/> <type name="PSeq/SeqIdx"/> <type name="PSeq/SeqIdx"/> </relation>
+</edge>
+
+<edge color="Gray" visible="no" attribute="yes" constraint="no">
+   <relation name="First"> <type name="EFO/Ord"/> <type name="EraseFrequency"/> </relation>
+</edge>
+
+<edge color="Green" constraint="no">
+   <relation name="pageStatusMap"> <type name="Device"/> <type name="RowAddr"/> <type name="PageStatus"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes">
+   <relation name="b"> <type name="RowAddr"/> <type name="BSeq/SeqIdx"/> </relation>
+   <relation name="l"> <type name="RowAddr"/> <type name="LSeq/SeqIdx"/> </relation>
+   <relation name="p"> <type name="RowAddr"/> <type name="PSeq/SeqIdx"/> </relation>
+   <relation name="pageStatusMap"> <type name="RowAddr"/> <type name="PageStatus"/> </relation>
+</edge>
+
+</view>
+
+</alloy>
