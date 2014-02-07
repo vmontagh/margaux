@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Set;
 
 import kodkod.ast.Relation;
+import kodkod.engine.CapacityExceededException;
+import kodkod.engine.fol2sat.HigherOrderDeclException;
 import kodkod.instance.Instance;
 import kodkod.instance.Tuple;
 import kodkod.instance.TupleSet;
@@ -38,6 +40,7 @@ import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorFatal;
+import edu.mit.csail.sdg.alloy4.ErrorType;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.alloy4.OurDialog;
 import edu.mit.csail.sdg.alloy4.Pair;
@@ -213,8 +216,10 @@ public final class ExampleUsingTheCompiler {
 					System.out.println("The execution has been done in: "+(System.currentTimeMillis()- time)+" mSec");
 
 					// Print the outcome
-					System.out.println(ans.satisfiable());
+					System.out.println("The result is:\t"+ans.satisfiable());
 
+					System.exit(-10);
+					
 					String output = filename.replace(".als", ".out.xml");
 
 					retString = ans.toString();
@@ -325,8 +330,6 @@ public final class ExampleUsingTheCompiler {
 							excludedSigs)
 							//result
 							,world,uniqSigs.get(i),options,rep);
-			LoggerUtil.Detaileddebug("The command AFTER making the world is-> %s",result);
-			//System.exit(-10);
 
 		}
 
@@ -405,12 +408,12 @@ public final class ExampleUsingTheCompiler {
 
 		LoggerUtil.Detaileddebug("The apended fact of %s is %s", sig, expr);
 
-		Pair<A4Solution,List<Instance>> legalPair = (Pair<A4Solution,List<Instance>>)TranslateAlloyToKodkod.evaluate_command_Itreational(
-				rep, world.getAllReachableSigs(), command, options,sig,expr);
+		List<Instance> legalInats = TranslateAlloyToKodkod.evaluate_command_Itreational(
+				rep, world.getAllReachableSigs(), command, options,sig,expr,world);
 
-		LoggerUtil.debug("The result of apended fact of %s is %s", sig, legalPair.b);
+		LoggerUtil.debug("The result of apended fact of %s is %s", sig, legalInats);
 
-		if( 0 == legalPair.b.size()){
+		if( 0 == legalInats.size()){
 			rep.warning(new ErrorWarning(String.format("The append fact of %s is unsaitsfiable.",sig)));
 			return command;
 		}
@@ -419,7 +422,7 @@ public final class ExampleUsingTheCompiler {
 
 		List<ExprVar> atoms = new ArrayList<ExprVar>();
 		//Converting the instances to commandScope
-		for(Instance inst: legalPair.b){
+		for(Instance inst: legalInats){
 			for(Relation rel: inst.relations()){
 				if(rel.name().equals(sig.label)){
 					//Since the returned atom name is unique in the instance, then there is no need to iterator over allt he tuples
@@ -446,9 +449,9 @@ public final class ExampleUsingTheCompiler {
 		LoggerUtil.Detaileddebug("The filed map of %s is %s", sig, fieldsNameMap);
 		LoggerUtil.Detaileddebug("The parent of %s is %b", sig, sig.isSubsig);
 
-		LoggerUtil.Detaileddebug("The returned instances is %n%s", legalPair.b);
+		LoggerUtil.Detaileddebug("The returned instances is %n%s", legalInats);
 
-		for(Instance inst: legalPair.b){
+		for(Instance inst: legalInats){
 			for(Relation rel: inst.relations()){
 				String relName = PIUtil.nameSanitizer(rel.name()).substring(PIUtil.nameSanitizer(rel.name()).indexOf('.')+1 );
 				if(fieldsNameMap.containsKey( relName )){
@@ -463,8 +466,6 @@ public final class ExampleUsingTheCompiler {
 		}
 
 		LoggerUtil.Detaileddebug("The found tuples of the appended fact of %s is %n\t %s", sig, fieldsNameMap);
-
-
 
 		//Making a ScopeCommand per each field
 		for(String fieldName: fieldsNameMap.keySet()){
@@ -503,18 +504,12 @@ public final class ExampleUsingTheCompiler {
 				oldScopes.add(ocs);
 		}
 
-		LoggerUtil.Detaileddebug("The old scope  is %n%s", oldScopes);
 
 		newCS.addAll(oldScopes);
 
 		world.removeUniquFacts(sig);
 
 		Bounds bound = command.bound;
-		//LoggerUtil.debug("newCS before updating-> %s", newCS);
-		//bound = world.replaceBound( bound, new Bounds( bound.pos,  bound.label,  newCS));
-		LoggerUtil.Detaileddebug("newCS before updating-> %s", newCS);
-
-		//System.exit(-10);
 
 		Command result = command.change(bound);
 

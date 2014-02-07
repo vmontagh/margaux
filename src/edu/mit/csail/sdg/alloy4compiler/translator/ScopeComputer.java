@@ -52,6 +52,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 import edu.mit.csail.sdg.gen.LoggerUtil;
+import edu.mit.csail.sdg.gen.alloy.PIUtil;
 
 /** Immutable; this class computes the scopes for each sig and computes the bitwidth and maximum sequence length.
  *
@@ -163,7 +164,6 @@ import edu.mit.csail.sdg.gen.LoggerUtil;
 	/** Returns the scope for a sig (or null if we don't know). */
 	
 	public List<String> sig2PscopeL(Sig sig) {
-		LoggerUtil.debug(this, "%s", sig2PscopeL);
 		return sig2PscopeL.get(sig.label);
 	}    
 
@@ -763,13 +763,11 @@ import edu.mit.csail.sdg.gen.LoggerUtil;
 			if(s == Sig.SPARSE_INT && entry.isPartial){
 				for(Expr atom: entry.pAtoms){
 					if(atom instanceof ExprConstant){
-						edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"Scope computer called for adding %d min is %d and max %d",((ExprConstant)atom).num ,min(), max());
 						int n = ((ExprConstant)atom).num;
 						if(n < min() || n > max())
 							atoms.add(String.valueOf(n));
 					}
 				}
-				edu.mit.csail.sdg.gen.LoggerUtil.debug(this,"Atoms are: %s",atoms);
 				continue;
 			}
 			
@@ -783,15 +781,17 @@ import edu.mit.csail.sdg.gen.LoggerUtil;
 					int i = 0;
 					for(List<Expr> pair: entry.pFields ){
 						List<String> tmp = new ArrayList<String>();
-						for(Expr ev: pair)
-							if(ev instanceof ExprVar)
+						for(Expr ev: pair){
+							
+							if(PIUtil.isInteger(ev) ){
+								tmp.add(ev.toString()   );
+								//[VM] putting the mentioned integer inside the set, later out of the range values are added in the universe
+								exInt.add(Integer.parseInt(ev.toString()));
+							}else if(ev instanceof ExprVar)
 								//Here the Sig in relation can be extended.
 								tmp.add(((ExprVar)ev).label.contains("%") || ((ExprVar)ev).label.contains("$") ? ((ExprVar)ev).label : ((ExprVar)ev).label+"%");
-							else if(ev instanceof ExprConstant ){
-								tmp.add(String.valueOf(((ExprConstant)ev).num));
-								//[VM] putting the mentioned integer inside the set, later out of the range values are added in the universe
-								exInt.add(((ExprConstant)ev).num);		
-							}
+							
+						}
 						if(i<entry.pAtomsLowerLastIndex)
 							listL.add(tmp);
 						else

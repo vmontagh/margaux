@@ -30,7 +30,7 @@ public class EEExecuterJob extends ExecuterJob {
 		
 		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
 		updateResult( fileName,3,"--", rep.evalInsts, rep.evalTime, rep.solveTime, 
-				rep.trasnalationTime, rep.totalVaraibles, rep.clauses, rep.evalTime+ rep.solveTime +rep.trasnalationTime +rep.evalTime,rep.sat);
+				rep.trasnalationTime, rep.totalVaraibles, rep.clauses, rep.solveTime +rep.trasnalationTime +rep.evalTime,rep.sat);
 
 
 		
@@ -40,8 +40,9 @@ public class EEExecuterJob extends ExecuterJob {
 	public static void main(String[] args) throws Err {
 		// TODO Auto-generated method stub
 		EEExecuterJob nsej = new EEExecuterJob("expr_output/report.txt");
-		nsej.callExecuter("models/examples/puzzles/hanoi.als");
+		//nsej.callExecuter("models/examples/puzzles/hanoi.als");
 //		nsej = new EEExecuterJob("report.txt");
-//		nsej.callExecuter("models/partial/gen/stm/tmp/LLS_EE_gpce2013_template_3.als");
+//		nsej.callExecuter("models/partial/gen/LL_symmetry_testing.als");
+		nsej.callExecuter("models/partial/gen/symmetry_breaking_short_example.als");
 	}
 }

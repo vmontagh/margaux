@@ -50,4 +50,13 @@ public class PIUtil {
 		return x;
 	}
 	
+	static public boolean isInteger(final Object obj){
+		try{
+			Integer.parseInt(obj.toString());
+			return true;
+		}catch(NumberFormatException ne){
+			return false;
+		}
+	}
+	
 }

@@ -28,7 +28,7 @@ public class WalkerExecuterJob extends ExecuterJob {
 
 		ExampleUsingTheCompiler.run(new String[]{fileName},rep);
 		updateResult( fileName,2,"--", rep.evalInsts, rep.evalTime, rep.solveTime, 
-				rep.trasnalationTime, rep.totalVaraibles, rep.clauses, rep.evalTime+ rep.solveTime +rep.trasnalationTime +rep.evalTime,rep.sat);
+				rep.trasnalationTime, rep.totalVaraibles, rep.clauses, rep.solveTime +rep.trasnalationTime +rep.evalTime,rep.sat);
 
 		
 	}

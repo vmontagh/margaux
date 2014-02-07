@@ -15,7 +15,6 @@
 
 package edu.mit.csail.sdg.alloy4compiler.ast;
 
-import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +22,6 @@ import edu.mit.csail.sdg.alloy4.ErrorSyntax;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
-import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; reresents a scope in a "run" or "check" command.
  *
@@ -250,7 +247,6 @@ public class CommandScope {
 			this.endingScope = endingScope;
 		}
 		
-		LoggerUtil.debug(this,"This command scope is created->%s%n", this);
 	}
 
 

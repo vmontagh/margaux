@@ -30,7 +30,7 @@ public class MyReporter extends A4Reporter implements Serializable{
 		this.lastTime = System.currentTimeMillis();
 		this.clauses = clauses;
 		this.totalVaraibles = totalVars;
-		System.out.println("solve");
+		System.out.printf("The translation is apparently done in %d %n", this.trasnalationTime);
 
 
 	}
@@ -41,14 +41,15 @@ public class MyReporter extends A4Reporter implements Serializable{
 	}
 
 	@Override public void resultSAT (Object command, long solvingTime, Object solution) {
-		System.out.printf("resultSAT ");
+		
 		this.solveTime = System.currentTimeMillis()-lastTime;
+		System.out.printf("resultSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime);
 		this.sat=1;
 	}
 	
 	public void resultUNSAT (Object command, long solvingTime, Object solution) {
-		System.out.printf("resultUNSAT is called and the solvingTime is %d and the diffenrence is: %d%n",solvingTime,System.currentTimeMillis()-lastTime);
 		this.solveTime = System.currentTimeMillis()-lastTime;
+		System.out.printf("resultUnSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime);		
 		this.sat=-1;
 	}
 	

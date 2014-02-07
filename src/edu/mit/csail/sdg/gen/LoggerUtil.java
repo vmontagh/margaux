@@ -10,7 +10,8 @@ public class LoggerUtil {
 
 	
 
-	public static int DEBUG_LEVEL = 4;
+	public static int DEBUG_LEVEL = 1;
+	
 
 	public static synchronized void fileLogger(String reportFile, String... params){
 		String out = "";
@@ -37,6 +38,15 @@ public class LoggerUtil {
 
 	}
 
+	public static String hLine(final int n){
+		StringBuilder result = new StringBuilder();
+		for(int i = 0; i < n; i++){
+			result.append('-');
+		}
+		result.append('\n');
+		return result.toString();
+	}
+	
 	public static void Detaileddebug( Object object,String format, Object...args){
 		cosoleLogger(2,object.getClass(),format,args);
 	}

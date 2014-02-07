@@ -75,6 +75,11 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Type;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.mit.csail.sdg.gen.alloy.UniqObjectGenerator;
+import edu.mit.csail.sdg.gen.alloy.UniqObjectGeneratorUsingKK;
+import edu.mit.csail.sdg.gen.alloy.UniqObjectGeneratorUsingSAT;
 
 /** Translate an Alloy AST into Kodkod AST then attempt to solve it using Kodkod. */
 
@@ -437,57 +442,23 @@ public final class TranslateAlloyToKodkod extends VisitReturn<Object> {
     }
     
 
-    /** Based on the specified "options", execute one command and return the resulting A4Solution object.
-    *
-    * @param rep - if nonnull, we'll send compilation diagnostic messages to it
-    * @param sigs - the list of sigs; this list must be complete
-    * @param cmd - the Command to execute
-    * @param opt - the set of options guiding the execution of the command
-    *
-    * @return null if the user chose "save to FILE" as the SAT solver,
-    * and nonnull if the solver finishes the entire solving and is either satisfiable or unsatisfiable.
-    * <p> If the return value X is satisfiable, you can call X.next() to get the next satisfying solution X2;
-    * and you can call X2.next() to get the next satisfying solution X3... until you get an unsatisfying solution.
-    */
-   public static Object evaluate_command (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt, Expr expr) throws Err {
-   	if (rep==null) rep = A4Reporter.NOP;
-       TranslateAlloyToKodkod tr = null;
-       try {
-           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
-           /*System.out.println("Max tuples="+tr.frame.getMaxPossibleTuples());
-           Map<Sig,Integer> newCmdBnds = tr.frame.getMaxPossibleTuples();
-           for(Sig sig : newCmdBnds.keySet()){
-               cmd = cmd.change(sig, true, newCmdBnds.get(sig));
-           }
-           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
-           */
-           return tr.frame.eval_woSolve(expr);
-       } catch(UnsatisfiedLinkError ex) {
-           throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
-       } catch(CapacityExceededException ex) {
-           throw rethrow(ex);
-       } catch(HigherOrderDeclException ex) {
-           Pos p = tr!=null ? tr.frame.kv2typepos(ex.decl().variable()).b : Pos.UNKNOWN;
-           throw new ErrorType(p, "Analysis cannot be performed since it requires higher-order quantification that could not be skolemized.");
-       } catch(Throwable ex) {
-           if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
-       }
-   }
 
    
-   public static Object evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command cmd, A4Options opt,Sig uSig,final Expr expr) throws Err {
+   public static List<Instance> evaluate_command_Itreational (A4Reporter rep, Iterable<Sig> sigs, Command command, A4Options opt,Sig uniqSig,final Expr expr, CompModule world) throws Err {
 	   	if (rep==null) rep = A4Reporter.NOP;
 	       TranslateAlloyToKodkod tr = null;
 	       try {
-	           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
-	           /*System.out.println("Max tuples="+tr.frame.getMaxPossibleTuples());
-	           Map<Sig,Integer> newCmdBnds = tr.frame.getMaxPossibleTuples();
-	           for(Sig sig : newCmdBnds.keySet()){
-	               cmd = cmd.change(sig, true, newCmdBnds.get(sig));
-	           }
-	           tr = new TranslateAlloyToKodkod(rep, opt, sigs, cmd);
-	           */
-	           return tr.frame.eval_woSolveFormula(uSig,expr,cmd);
+	           tr = new TranslateAlloyToKodkod(rep, opt, sigs, command);	           
+	           
+	           
+	           UniqObjectGenerator generator;
+	           if(Boolean.valueOf(Configuration.getProp(Configuration.USING_KK_ITR)))
+	        	   generator = new UniqObjectGeneratorUsingKK( Integer.valueOf(Configuration.getProp(Configuration.PACE)) );  
+	           else
+	        	   generator = new UniqObjectGeneratorUsingSAT( Boolean.valueOf(Configuration.getProp(Configuration.SYMMETRY_OFF)) ,world);
+	           
+	           return generator.generate(expr, uniqSig, command);
+	           
 	       } catch(UnsatisfiedLinkError ex) {
 	           throw new ErrorFatal("The required JNI library cannot be found: "+ex.toString().trim(), ex);
 	       } catch(CapacityExceededException ex) {
