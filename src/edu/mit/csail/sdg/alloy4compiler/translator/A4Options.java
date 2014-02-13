@@ -20,6 +20,7 @@ import java.util.prefs.Preferences;
 import edu.mit.csail.sdg.alloy4.ErrorAPI;
 import edu.mit.csail.sdg.alloy4.SafeList;
 import edu.mit.csail.sdg.alloy4.Util;
+import kodkod.multiobjective.algorithms.*;
 
 /** Mutable; this class encapsulates the customizable options of the Alloy-to-Kodkod translator. */
 
@@ -153,7 +154,13 @@ public final class A4Options implements Serializable {
      */
     public SatSolver solver = SatSolver.SAT4J;
 
-    /** When this.solver is external, and the solver filename is a relative filename, then this option specifies
+    /** 
+     * This option specifies the multi objective solving algorithm to use for solving multiobjective optimization problem
+     */
+    public MultiObjectiveAlgorithm mooalgorithm;
+    
+    
+	/** When this.solver is external, and the solver filename is a relative filename, then this option specifies
      * the directory that the solver filename is relative to.
      */
     public String solverDirectory = "";
@@ -198,6 +205,7 @@ public final class A4Options implements Serializable {
         x.noOverflow = noOverflow;
         x.coreGranularity = coreGranularity;
         x.MoolloyListAllSolutionsForParetoPoint = MoolloyListAllSolutionsForParetoPoint;
+        x.mooalgorithm = mooalgorithm;
         return x;
     }
 }

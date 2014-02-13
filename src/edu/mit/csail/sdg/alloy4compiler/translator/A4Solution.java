@@ -960,6 +960,8 @@ public final class A4Solution {
         long time = System.currentTimeMillis();
 
         solver.multiObjectiveOptions().setAllSolutionsPerPoint(opt.MoolloyListAllSolutionsForParetoPoint);// Pass to solver parameter MoolloyListAllSolutionsForParetoPoint received through opts.
+       if(opt.mooalgorithm == null){throw new RuntimeException("NUll value in A4Options.mooalgorithm");}
+        solver.setAlgorithm(opt.mooalgorithm);
         
         rep.debug("Solver has allSolutionsPerPoint of " + solver.multiObjectiveOptions().allSolutionsPerPoint());
         

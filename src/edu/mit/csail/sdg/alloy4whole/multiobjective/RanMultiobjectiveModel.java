@@ -125,7 +125,6 @@ public final class RanMultiobjectiveModel {
                   //+ (skolemDepth==0?"":" SkolemDepth="+skolemDepth)
                   //+ " Symmetry="+(symmetry>0 ? (""+symmetry) : "OFF")+'\n');
                   //System.out.flush();
-
               }
               
           };
@@ -138,7 +137,7 @@ public final class RanMultiobjectiveModel {
           options.solver = A4Options.SatSolver.MiniSatJNI;
           options.MoolloyListAllSolutionsForParetoPoint = parsedParameters.getListAllSolutionsForAParetoPoint();
           options.symmetry = parsedParameters.getSymmetryBreaking();
-          
+          options.mooalgorithm = parsedParameters.getAlgorithm();
           
           FileWriter fp_logFile = null; 
           FileWriter fp_logFileIndividualCallStats = null;
@@ -155,11 +154,8 @@ public final class RanMultiobjectiveModel {
               
               long start_time = System.currentTimeMillis();
               A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-              
-              
-
+             
               int solution_number = 1;
-              
               
               ans.writeXML("alloy_solutions_" + solution_number  + ".xml");
               
