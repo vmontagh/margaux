@@ -1,0 +1,29 @@
+Synopsis
+java -jar alloy-dev.jar [OPTIONS] [ALLOYMODEL.als]
+
+Options
+	--SingleSolutionPerPoint
+		Turns off magnifying glass	
+
+	-s
+		Concise argument for turning off magnifying glass
+
+	--ListOnlyOneSolution
+		Only one solution is listed rather than all solutions		
+	--LogRunningTimeArg[=value]
+		TODO
+		
+	--MinMaxBoundsForGoals[=value]
+		TODO
+
+	--LogPrintHeaders
+		TODO
+
+	--SymmetryBreaking[=value]
+		TODO
+
+	--MooAlgorithm[=value]
+		Chooses the multiobjective optimization algorithm to use for solving problem. By default, the problem is solved using IGIA.
+		Possible values include:
+		IGIA : Solves the problem using the Incremental Guided Improvement Algorithm
+		PGIA : Solves the problem using the Partitioned Guided Improvement Algorithm
