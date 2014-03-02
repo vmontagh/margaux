@@ -32,7 +32,7 @@ public class MultiObjectiveArguments {
 	private String MinMaxBoundsContent = "";
 	
 	private int SymmetryBreaking = 1000;
-	private MultiObjectiveAlgorithm algorithm = new IncrementalGuidedImprovementAlgorithm("IGIA", new MultiObjectiveOptions());
+	private MultiObjectiveAlgorithm algorithm = new CheckpointedGuidedImprovementAlgorithm("CGIA", new MultiObjectiveOptions());
 	
 	public static MultiObjectiveArguments parseCommandLineArguments(final String args[]){
 		MultiObjectiveArguments  parsedParams =  new MultiObjectiveArguments();
