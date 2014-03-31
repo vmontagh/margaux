@@ -37,63 +37,29 @@ fact path{
 
 }
 -------------------------------------------------------------------
-//This function returns a set of two A's
+//Sigma Function for each Signature
 fun mapA[a:A]: one A{
 	{ a': A| a = As/last => a'=As/first else a' = As/next[a] }
+}
+
+fun mapC[c: C ]: one C{
+	{ c': C| c = Cs/last => c'=Cs/first else c' = Cs/next[c] }
 }
 
 fun mapAn[a:A, n: Int]: one A{
 	    {a': A | p[a,a'] = n}
 }
 
+fun mapCn[c: C, n: Int ]: one C{
+	    {c': C | q[c, c' ] = n}
+}
 
+-------------------------------------------------------------------
+//Sigma function for permutating tuples
 fun mapA'C[t:A->C]: A->C{
 	{a:A,c:C | 	
 		 (some a': t.C | one c': A.t| 
 					a'->c' in t and  a in mapA[a'] and c = c' ) }
-}
-
-fun mapA'Cn[t:A->C, n: Int]: A->C{
-	{a:A,c:C | 	
-		 (some a': t.C | one c': A.t| 
-					a'->c' in t and  a in mapAn[a', n] and c = c' ) }
-}
-
-fun mapA'Ci[t:A->C, m:A->A]: A->C{
-	{a:A,c:C | 	
-		 (one a': t.C | one c': A.t| 
-					a'->c' in t and  a in a'.m and c = c' ) }
-}
-
-pred sigmaA[b, b': B ]{
-	 b'.r = mapA'C[b.r]
-}
-
-pred sigmaAn[b, b': B, n:Int ]{
-	 b'.r = mapA'Cn[b.r, n]
-}
-
-pred sigmaAi[b, b': B, n:Int]{
-	 (n != 0 ) =>  b'.r = mapA'Cn[b.r, n] else b = b'
-		    #b'.r = #b.r
-}
-
-fun sigmaAf[]: B-> B{
-	     {b, b': B| sigmaA[b, b' ] }
-}
-
-fun sigmaAf[n: Int]: B-> B{
-	     {b, b': B| sigmaAn[b, b',n ] }
-}
-
--------------------------------------------------------------------
-//This function returns a set of two C's
-fun mapC[c: C ]: one C{
-	{ c': C| c = Cs/last => c'=Cs/first else c' = Cs/next[c] }
-}
-
-fun mapCn[c: C, n: Int ]: one C{
-	    {c': C | q[c, c' ] = n}
 }
 
 fun mapAC'[t:A->C]: A->C{
@@ -102,39 +68,53 @@ fun mapAC'[t:A->C]: A->C{
 					a'->c' in t and  a=a' and c in mapC[c'] ) }
 }
 
+fun mapA'Cn[t:A->C, n: Int]: A->C{
+	{a:A,c:C | 	
+		 (some a': t.C | one c': A.t| 
+					a'->c' in t and  a in mapAn[a', n] and c = c' ) }
+}
+
 fun mapAC'n[t:A->C, n:Int]: A->C{
 	{a:A,c:C | 	
 		 (some a': t.C | one c': A.t| 
 					a'->c' in t and  a=a' and c in mapCn[c', n ] ) }
 }
 
-fun mapAC'i[t:A->C, m:C->C]: A->C{
-	{a:A,c:C | 	
-		 (one a': t.C | one c': A.t| 
-					a'->c' in t and  a=a' and c in c'.m ) }
+-------------------------------------------------------------------
+//Sigma function for permutating only one atom of a tuple of a signature atom
+pred sigmaA[b, b': B ]{
+	 b'.r = mapA'C[b.r]
 }
 
 pred sigmaC[b, b': B ]{
 	 b'.r = mapAC'[b.r]
 }
 
+pred sigmaAn[b, b': B, n:Int ]{
+	 b'.r = mapA'Cn[b.r, n]
+}
+
 pred sigmaCn[b, b': B, n: Int ]{
 	 b'.r = mapAC'n[b.r, n]
 }
 
-pred sigmaCi[b, b': B, n:Int ]{
-	    (n != 0) =>  b'.r = mapAC'n[ b.r, n ] else b = b'
-    #b'.r = #b.r
+fun sigmaAf[]: B-> B{
+	     {b, b': B| sigmaA[b, b' ] }
 }
 
 fun sigmaCf[]:B-> B{
 	     {b, b': B| sigmaC[b, b' ] }
 }
 
+fun sigmaAf[n: Int]: B-> B{
+	     {b, b': B| sigmaAn[b, b',n ] }
+}
+
 fun sigmaCfn[n: Int]:B-> B{
 	     {b, b': B| sigmaCn[b, b', n] }
 }
-
+-------------------------------------------------------------------
+//Sigma function for permutating any atom of any tuple in a signatures atom
 pred sigmaAC[b, b': B ]{
 	 sigmaA[b, b' ] or sigmaC[b, b'] 
 }
@@ -143,54 +123,39 @@ pred sigmaACnm[b, b': B, n,m: Int ]{
 	(sigmaAn[b, b', n ] or sigmaCn[b, b', m]) //and (some b.r => b!=b' )
 }
 
-pred sigmaACnmE1[b, b': B, n,m: Int,i,j:Int ]{	
+pred sigmaACnmE1[b, b': B, n,m: Int ]{	
 	sigmaAn[b, b', n ]  
 	not sigmaCn[b, b', m] 
-	i=n  
-	j=0
+	m = 0
 }
 
-pred sigmaACnmE2[b, b': B, n,m: Int,i,j:Int ]{	
+pred sigmaACnmE2[b, b': B, n,m: Int ]{	
 	not sigmaAn[b, b', n ]  
 	sigmaCn[b, b', m] 
-	i=0
-	j=m
+	n = 0
 }
 
-pred sigmaACnmE3[b, b': B, n,m: Int,i,j:Int ]{	
+pred sigmaACnmE3[b, b': B, n,m: Int ]{	
 	sigmaAn[b, b', n ]  
 	sigmaCn[b, b', m] 
-	i=n  
-	j=m
 }
 
-pred sigmaACnmE[b, b': B, n,m: Int,i,j:Int ]{
+pred sigmaACnmE[b, b': B, n,m: Int]{
 	{
-		sigmaACnmE1[b, b' ,n ,m ,i , j ]
-		not sigmaACnmE2[b, b' ,n ,m ,i , j ]
-		not sigmaACnmE3[b, b' ,n ,m ,i , j ]
+		sigmaACnmE1[b, b' ,n ,m ]
+		not sigmaACnmE2[b, b' ,n ,m ]
+		not sigmaACnmE3[b, b' ,n ,m ]
 	}or
 	{
-		not sigmaACnmE1[b, b' ,n ,m ,i , j ]
-		sigmaACnmE2[b, b' ,n ,m ,i , j ]
-		not sigmaACnmE3[b, b' ,n ,m ,i , j ]
+		not sigmaACnmE1[b, b' ,n ,m ]
+		sigmaACnmE2[b, b' ,n ,m ]
+		not sigmaACnmE3[b, b' ,n ,m ]
 	}or
 	{
-		not sigmaACnmE1[b, b' ,n ,m ,i , j ]
-		not sigmaACnmE2[b, b' ,n ,m ,i , j ]
-		sigmaACnmE3[b, b' ,n ,m ,i , j ]
+		not sigmaACnmE1[b, b' ,n ,m ]
+		not sigmaACnmE2[b, b' ,n ,m ]
+		sigmaACnmE3[b, b' ,n ,m ]
 	}
-}
-//pred sigmaACnmE[b, b': B, n,m: Int,i,j:Int ]{
-//	((sigmaAn[b, b', n ] and not sigmaCn[b, b', m]) and	 (i=n and j=0))
-//or
-//	((not sigmaAn[b, b', n ] and  sigmaCn[b, b', m])	and (i=0 and j=m))
-//or
-//	((sigmaAn[b, b', n ] and sigmaCn[b, b', m])	 and (i=n and j=m))
-//}
-
-pred sigmaACi[b, b': B, i,j:Int ]{
-	 (sigmaAi[b, b', i] or sigmaCi[b, b', j]) //and (some b.r => b!=b' )
 }
 
 fun sigmaACf[]: B->B{
@@ -201,9 +166,13 @@ fun sigmaACfnm[n,m: Int]: B->B{
 	     {b, b': B| sigmaACnm[b, b', n, m ] }
 }
 
+
+-------------------------------------------------------------------
+//checking add, remove,  rename, and faulty add predicates.
+
 pred pAddPermutateA_OneOne{
 //	 some c,c':C, a,a',a'',a''': A, b1, b2, b3, b4: B, i, j: Int | i in 0+1 and j in 0+1 and sigmaACi[b1,b3,a->a', c->c']
- some c,c':C, a,a': A, b1, b2, b3, b4: B, n,m,i,j: (0+1) |
+ some c,c':C, a,a': A, b1, b2, b3, b4: B, n,m: (0+1) |
 /*							and //sigmaACi[b1,b3,i,j]
 							( ( sigmaAn[b1,b3,i] and (  (some b1.r and b3!=b1) => a' = mapAn[a,i] else a'=a ) )
 								=>
@@ -216,13 +185,13 @@ and c'=c'' and a'=a''
 //		                        and
 //                          a''' = mapAn[a',i]
                         and*/
-						sigmaACnmE[b1,b3,n, m, i, j]
+						sigmaACnmE[b1,b3,n, m]
 							and
-						sigmaACnmE[b2,b4,n, m, i, j]
+						sigmaACnmE[b2,b4,n, m]
 							and
-						a' = mapAn[a, i]
+						a' = mapAn[a, n]
 							and
-						c' = mapCn[c, j]
+						c' = mapCn[c, m]
 							and
                      	 !( add[b1,a,c,b2] <=> add[b3 ,a' ,c' ,b4 ] )
 // !( remove[b1,a,c,b2] <=> remove[b3 ,a' ,c' ,b4 ] )
@@ -234,25 +203,25 @@ and c'=c'' and a'=a''
 run pAddPermutateA_OneOne //for 0 but 3 Int,  exactly 2 A, exactly 2 C, exactly 16 B
 
 pred pRemovePermutateA_OneOne{
-	some c,c':C, a,a': A, b1, b2, b3, b4: B, n,m,i,j: (0+1) |
-				sigmaACnmE[b1,b3,n, m, i, j] and sigmaACnmE[b2,b4,n, m, i, j] and
-				a' = mapAn[a, i] and c' = mapCn[c, j] and
+	some c,c':C, a,a': A, b1, b2, b3, b4: B, n,m: (0+1) |
+				sigmaACnmE[b1,b3,n, m] and sigmaACnmE[b2,b4,n, m] and
+				a' = mapAn[a, n] and c' = mapCn[c, m] and
 				!( remove[b1,a,c,b2] <=> remove[b3 ,a' ,c' ,b4 ] )
 }
 run pRemovePermutateA_OneOne //for 0 but 3 Int,  exactly 2 A, exactly 2 C, exactly 16 B
 
 pred pRenamePermutateA_OneOne{
-	some c,c':C, a1,a2,a3,a4: A, b1, b2, b3, b4: B, n, m, i, j: (0+1) |
-				sigmaACnmE[b1,b3,n, m, i, j] and sigmaACnmE[b2,b4,n, m, i, j] and
-				a3 = mapAn[a1, i] and a4 = mapAn[a2,i] and c' = mapCn[c, j] and
+	some c,c':C, a1,a2,a3,a4: A, b1, b2, b3, b4: B, n, m: (0+1) |
+				sigmaACnmE[b1,b3,n, m] and sigmaACnmE[b2,b4,n, m] and
+				a3 = mapAn[a1, n] and a4 = mapAn[a2, n] and c' = mapCn[c, m] and
 				!( renameA[b1,a1,a2,c,b2] <=> renameA[b3 ,a3 ,a4 ,c' ,b4 ] )
 }
 run pRenamePermutateA_OneOne //for 0 but 3 Int,  exactly 2 A, exactly 2 C, exactly 16 B
 
 pred pFaultyAddPermutateA_OneOne{
-	some c,c':C, a,a': A, b1, b2, b3, b4: B, n,m,i,j: (0+1) |
-				sigmaACnmE[b1,b3,n, m, i, j] and sigmaACnmE[b2,b4,n, m, i, j] and
-				a' = mapAn[a, i] and c' = mapCn[c, j] and
+	some c,c':C, a,a': A, b1, b2, b3, b4: B, n,m: (0+1) |
+				sigmaACnmE[b1,b3,n, m ] and sigmaACnmE[b2,b4,n, m ] and
+				a' = mapAn[a, n] and c' = mapCn[c, m] and
 				!( add_not_fun[b1,a,c,b2] <=> add_not_fun[b3 ,a' ,c' ,b4 ] )
 }
 run pFaultyAddPermutateA_OneOne for 2 but 3 Int, 3 B, 3 A //for 0 but 3 Int,  exactly 2 A, exactly 2 C, exactly 16 B
