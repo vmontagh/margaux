@@ -40,7 +40,7 @@ public class WalkerExecuterJob extends ExecuterJob {
 	public static void main(String[] args) throws Err {
 		// TODO Auto-generated method stub
 		WalkerExecuterJob nsej = new WalkerExecuterJob("report.txt");
-		nsej.callExecuter("models/partial/gen/phone.als");
+		nsej.callExecuter("models/partial/gen/abz14/tmp/BST_template_3.als");
 		//nsej.callExecuter("models/partial/gen/phone.als");
 	}
 

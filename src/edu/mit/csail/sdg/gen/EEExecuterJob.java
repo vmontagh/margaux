@@ -43,6 +43,6 @@ public class EEExecuterJob extends ExecuterJob {
 		//nsej.callExecuter("models/examples/puzzles/hanoi.als");
 //		nsej = new EEExecuterJob("report.txt");
 //		nsej.callExecuter("models/partial/gen/LL_symmetry_testing.als");
-		nsej.callExecuter("models/partial/gen/symmetry_breaking_short_example.als");
+		nsej.callExecuter("models/partial/gen/abz14/tmp/BST_template_3.als");
 	}
 }
