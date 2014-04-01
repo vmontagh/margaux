@@ -13,8 +13,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.sun.media.jfxmedia.logging.Logger;
-
 import kodkod.ast.Relation;
 import kodkod.instance.Instance;
 import kodkod.instance.Tuple;
@@ -116,12 +114,11 @@ public class UniqObjectGeneratorUsingSAT extends UniqObjectGenerator {
 	 * @param oldTS
 	 * @param oldAtom
 	 * @param newAtom
+	 * @param add 
 	 * @param uni
 	 * @return
 	 */
-	private final TupleSet updateTupleSet(final TupleSet oldTS, final String newAtom, final Universe universe){
-
-		
+	private final TupleSet updateTupleSet(final TupleSet oldTS, final String newAtom, final Universe universe, boolean add){
 		
 		List<Tuple> tuples = new ArrayList<Tuple>();
 
@@ -129,33 +126,48 @@ public class UniqObjectGeneratorUsingSAT extends UniqObjectGenerator {
 		
 		for(Tuple tuple: oldTS){
 			List<String> newTuple = new ArrayList<String>();
-			newTuple.add(newAtom);
+	
+			if(add)	newTuple.add(newAtom);
+			
 			for(int i = 0; i < tuple.arity(); i++){
 				String atom = tuple.atom(i).toString();
 				int iA = atom.indexOf(ATOM_SEP);
 				int iN = newAtom.indexOf(ATOM_SEP);
 				if(  atom.substring(0, iA < 0 ? atom.length() : iA ).equals(newAtom.substring(0, iN < 0 ? newAtom.length() : iN )) ){
-					arity--;
-					break;
+					newTuple.add(newAtom);
 				}else
 					newTuple.add( tuple.atom(i).toString());
 			}
 
 			tuples.add(universe.factory().tuple(newTuple));
 		}
-
+		
 		return tuples.size() == 0 ? universe.factory().noneOf(arity) : universe.factory().setOf(tuples) ;
 	}
 
 
+	private final boolean hasTheSameName(final Sig uniqSig, final String  relationName){
+		if(relationName.contains(uniqSig.label)){
+			return true;
+		}else if(uniqSig instanceof PrimSig){
+			PrimSig pus = (PrimSig)uniqSig;
+			for(PrimSig parent: pus.allPrimSigParent())
+				if(relationName.contains(parent.label))
+					return true;
+		}
+		return false;
+	}
+	
 	private final List<Instance> mergeInstance(final List<Instance> insts, final Sig uniqSig){
 
-		LoggerUtil.Detaileddebug(this, "The tupleset before being updated is: %n %s %s %n %s", LoggerUtil.hLine(70), insts,LoggerUtil.hLine(20));
-
-		
 		final String uniqSigAtom = PIUtil.nameSanitizer(uniqSig.label);
 		final String uniqSigInitialAtom = uniqSigAtom+ATOM_SEP+"0";
-
+		final HashMap<String, Field> fields = new HashMap<>();
+		
+		for(Field field: uniqSig.getFieldsWithParents()){
+			fields.put(field.toString().replace("field (", "").replace(")", "").replace(" <: ", "."), field);
+		}
+		
 		//change the atoms of uniqSig and make a new tuple
 		int unigSigNum = 0;
 
@@ -171,15 +183,22 @@ public class UniqObjectGeneratorUsingSAT extends UniqObjectGenerator {
 
 			atoms.add(uniqSigAtom+ATOM_SEP+unigSigNum);
 
+			//LoggerUtil.debug("atoms: %s %nthe instance is:%s", atoms, inst);
+			
 			final Universe kkUniv = new Universe(atoms);
 			Instance newInstance = new Instance(kkUniv);
 			Set<String> inserted = new HashSet<String>();
 
 			for(Relation relation: inst.relations()){
+				
 				if(inserted.contains(relation.name())) continue;
-				if(relation.name().contains(uniqSig.label)){//This is field of uniqSig
-
-					TupleSet tupleSet = updateTupleSet(inst.tuples(relation),uniqSigAtom+ATOM_SEP+unigSigNum, kkUniv);
+				
+				if(hasTheSameName(uniqSig, relation.name())
+						/*relation.name().contains(uniqSig.label)*/){//This is field of uniqSig
+										
+					TupleSet tupleSet = updateTupleSet(inst.tuples(relation),uniqSigAtom+ATOM_SEP+unigSigNum, kkUniv,
+							fields.containsKey(relation.name()) ? fields.get(relation.name()).type().arity() > inst.tuples(relation).arity():true);
+					
 					newInstance.add(Relation.nary(relation.name(), tupleSet.arity()), tupleSet);
 
 				}else if(! (relation.name().contains(PARTIAL_SEP) | relation.name().contains(ATOM_SEP) )){//Anything else except the atoms
@@ -195,9 +214,6 @@ public class UniqObjectGeneratorUsingSAT extends UniqObjectGenerator {
 			unigSigNum++;
 		}
 
-		LoggerUtil.Detaileddebug(this, "The tupleset AFTER updatw is: %n %s %s %n %s", LoggerUtil.hLine(70), result, LoggerUtil.hLine(20));
-
-		
 		return result;
 	}
 
