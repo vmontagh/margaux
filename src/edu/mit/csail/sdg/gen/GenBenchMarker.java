@@ -204,7 +204,7 @@ public class GenBenchMarker {
 	private static final String fs = System.getProperty("file.separator");
 
 	private static void doTest(String name,int experiments,long timeOutMin, Collection<Object[]> tests) throws InterruptedException, Err{
-
+		
 		String report = "expr_output/report_"+name+"_"+(new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss-a")).format(new Date( System.currentTimeMillis()))  +".txt";
 		for(Object[] obj : tests){
 			
@@ -212,7 +212,7 @@ public class GenBenchMarker {
 				getInstance().executeTask(experiments, 
 						  new NewSyntaxExecuterJob(report), 
 						 obj[0].toString(), timeOutMin*60L*1000L);
-			}else if(name.toLowerCase().contains("new")){
+			}else if(name.toLowerCase().contains("old")){
 				getInstance().executeTask(experiments, 
 						new OldSyntaxExecuterJob(report), 
 						 obj[0].toString(), timeOutMin*60L*1000L);
@@ -227,7 +227,6 @@ public class GenBenchMarker {
 			}
 			
 		}
-
 		
 	}
 	
@@ -254,7 +253,7 @@ public class GenBenchMarker {
 			f[0] =  makeNewDSfile(template,dest,i, instBlock);
 			tcs.add( f);
 		}
-		
+		//Just generate the output files
 		doTest(method,experiments, timeOutMin, tcs);
 	}
 	
@@ -263,11 +262,44 @@ public class GenBenchMarker {
 	private static void runLLSTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
 		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template.als",  "models/partial/gen/abz14/tmp");
 	}
+	
+	private static void runLLSTestToCompareAlloyStar(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_validinsert_validremove_assert.als",  "models/partial/gen/abz14/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_validinsert_validremove_no.als",  "models/partial/gen/abz14/tmp");
 
-	private static void runBSTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
-		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template.als",  "models/partial/gen/azb14/tmp");
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_invalidinsert_validremove_assert.als",  "models/partial/gen/abz14/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_invalidinsert_validremove_no.als",  "models/partial/gen/abz14/tmp");
+		
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_validinsert_invalidremove_assert.als",  "models/partial/gen/abz14/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_validinsert_invalidremove_no.als",  "models/partial/gen/abz14/tmp");
+		
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_invalidinsert_invalidremove_assert.als",  "models/partial/gen/abz14/tmp");
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/LLS_template_invalidinsert_invalidremove_no.als",  "models/partial/gen/abz14/tmp");
+
+
 	}
 
+	private static void runBSTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template.als",  "models/partial/gen/abz14/tmp");
+	}
+
+	private static void runBSTTestToCompareAlloyStar(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_validinsert_validremove_assert.als",  "models/partial/gen/abz14/tmp");
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_validinsert_validremove_no.als",  "models/partial/gen/abz14/tmp");
+
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_invalidinsert_validremove_assert.als",  "models/partial/gen/abz14/tmp");
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_invalidinsert_validremove_no.als",  "models/partial/gen/abz14/tmp");
+		
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_validinsert_invalidremove_assert.als",  "models/partial/gen/abz14/tmp");
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_validinsert_invalidremove_no.als",  "models/partial/gen/abz14/tmp");
+		
+		runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_invalidinsert_invalidremove_assert.als",  "models/partial/gen/abz14/tmp");
+		//runOneLinkTest( min,  max,  experiments,  timeOutMin,  method, "models/partial/gen/abz14/BST_template_invalidinsert_invalidremove_no.als",  "models/partial/gen/abz14/tmp");
+
+
+	}
+
+	
 	
 	private static void runOneLinkTest(int min, int max, int experiments, long timeOutMin, String method, String template, String dest) throws FileNotFoundException, IOException, Err, InterruptedException{
 		
@@ -313,7 +345,7 @@ public class GenBenchMarker {
 	
 	private static void runRBTTest(int min, int max, int experiments, long timeOutMin, String method) throws FileNotFoundException, IOException, Err, InterruptedException{
 		
-		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/abz14/RBT_template.als","models/partial/gen/abz4/tmp",
+		runDSTest(min, max, experiments,timeOutMin,method,"models/partial/gen/abz14/RBT_template.als","models/partial/gen/abz14/tmp",
 				(new DSPartialInstanceGen() {
 					
 					@Override
@@ -366,16 +398,19 @@ public class GenBenchMarker {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		long timeOutMin = 5; 
-		int experiments = 3;
+		long timeOutMin = 1000; 
+		int experiments = 1;
 		final List<String> fileGroups = new ArrayList<String>();
 		int numbers = 5;
 		
+		//runBSTTestToCompareAlloyStar(8,8,experiments, timeOutMin,"ee");
+		runLLSTestToCompareAlloyStar(8,8,experiments, timeOutMin,"ee");
+
+		//runLLSTestToCompareAlloyStar(2,8,experiments, timeOutMin,"ee");
+		//runBSTTest(2,7,experiments, timeOutMin,"walker");
+		//runRBTTest(2,7,experiments, timeOutMin,"walker");
 		
-		runLLSTest(2,7,experiments, timeOutMin,"walker");
-		runBSTTest(2,7,experiments, timeOutMin,"walker");
-		runRBTTest(2,7,experiments, timeOutMin,"walker");
-		
+		System.exit(-10);
 		/*Object[] m = {"models/partial/gen/david_expr/model1_new_gpce2013.als"};
 		List<Object[]> list = new ArrayList<Object[]>();
 		list.add(m);
