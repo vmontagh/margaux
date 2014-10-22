@@ -2,22 +2,30 @@ abstract sig Color{}
 
 one sig Red,Black extends Color{}
 
-uniq sig Node{val:Int,col:Color}{val in }
+--uniq
+sig Node{val:Int,col:Color}--{val in 0+1+2+3}//+4+5+6+7+8+9}
 
 abstract
-uniq sig Edge{
+//uniq 
+sig Edge{
 	src:  Node,
 	dest:   Node
+}{	
+--	src!=dest
+--	not(src.col = Red and dest.col = Red)
 }
 
-uniq sig leftEdge extends Edge{}{
+
+uniq
+sig leftEdge extends Edge{}{
 	src!=dest
 	not(src.col = Red and dest.col = Red)
 --	src.val > dest.val
 	src.val != Int.max => src.val in 	dest.val.^next
 }
 
-uniq sig rightEdge extends Edge{}{
+uniq
+sig rightEdge extends Edge{}{
 	src!=dest
 	not(src.col = Red and dest.col = Red)
 --	src.val < dest.val
@@ -109,9 +117,17 @@ pred lookup[l:List, i:Int]{
 
 pred InsertORRemove{
 	--Any state can be left either by inserting or removing a value
-	not(		all  r: RBT |some i:Int,r':RBT| ( insert[r,r',i] or remove[r,r',i])	)
+	not(	
+		all  r: RBT |some i:Int,r':RBT| ( insert[r,r',i] or remove[r,r',i])
+//		all l: List | some i:Int,l':List-l| insert[l,l',i] or remove[l,l',i]
+	)
+//	some l:List | no l.head and no l.links
 }
 
 $INST_I
+//check InsertORRemove for 3 but exactly 50 List
+
+
 
 run InsertORRemove for i
+

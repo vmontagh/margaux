@@ -115,10 +115,7 @@ public final class WorkerEngine {
    public static void runLocally(final WorkerTask task, final WorkerCallback callback) throws Exception {
       synchronized(WorkerEngine.class) {
          if (latest_manager!=null && latest_manager.isAlive()) throw new IOException("Subprocess still performing the last task.");
-         try { 
-        	 task.run(callback); callback.done(); } 
-         catch(Throwable ex) { 
-        	 callback.callback(ex); callback.fail(); }
+         try { task.run(callback); callback.done(); } catch(Throwable ex) { callback.callback(ex); callback.fail(); }
       }
    }
 
