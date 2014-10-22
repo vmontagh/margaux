@@ -218,7 +218,7 @@ public final class ExampleUsingTheCompiler {
 					// Print the outcome
 					System.out.println("The result is:\t"+ans.satisfiable());
 
-					System.exit(-10);
+					//System.exit(-10);
 					
 					String output = filename.replace(".als", ".out.xml");
 
@@ -232,7 +232,7 @@ public final class ExampleUsingTheCompiler {
 					//A4SolutionWriter.writeInstance(  );
 					if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");*/
 					if (ans.satisfiable()) {
-						ans.writeXML(output);
+						//ans.writeXML(output);
 
 						// You can query "ans" to find out the values of each set or type.
 						// This can be useful for debugging.
@@ -244,7 +244,7 @@ public final class ExampleUsingTheCompiler {
 						if (viz==null) {
 							//viz = new VizGUI(false, output, null);
 						} else {
-							viz.loadXML(output, true);
+							//viz.loadXML(output, true);
 						}
 					}
 

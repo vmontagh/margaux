@@ -1,44 +1,34 @@
---uniq
 sig Node{val:Int}
 
-uniq
-sig Link{ src: Node, dest: Node}{
+uniq sig Link{ src: Node, dest: Node}{
 	--noself loop
 	src!=dest
 	dest.val != Int.max => dest.val in 	src.val.^next
 }
 
-fun nodes[l: set Link]:set Node{
-	{n:Node| some l':l| n=l'.src or n=l'.dest }
+fun nodes[links: set Link]:set Node{
+	{links.src + links.dest}
 }
 
 fun bin[l:Link]:Node->Node{
 	{n',n'':Node|some l':l | n'=l'.src and n''=l'.dest}
 }
 
-uniq
-sig List{head:lone Node, links: set Link}{
+uniq sig List{head:lone Node, links: set Link}{
 	 links!=none =>(--All the nides are reachable from the head
-		({n:Node| some l':links| n=l'.src or n=l'.dest } = 
+		({ links.src + links.dest } = 
 			head.*({n',n'':Node|some l':links | n'=l'.src and n''=l'.dest}))
 	and
 	--nodes[links] = head.*((bin[links]))
 	--last node has no outgoing link
-		(one n:{n:Node| some l':links| n=l'.src or n=l'.dest } | n !in links.src )
+		(one n:{ links.src + links.dest } | n !in links.src )
 	and
 	--The links are linear
-		(all l:links | lone l':links-l | l.src = l'.dest)
-	--Node = nodes[linkes]
+		//(all l:links | lone l':links-l | l.src = l'.dest)
+		(all n: {links.src+links.dest} | lone l: links | n = l.src)
+		//Node = nodes[linkes]
 	) 
-	//no links => ( head!=none)
 }
-
-/*fact unique{
-	all disj n,n':Node | n.val!=n'.val
-	all disj l,l':Link | l.src!=l'.src or l.dest!=l'.dest
-	some List
-}*/
-
 
 fun nodes2[r:List]:Node{
 	{n:Node | n in r.head.*(binaryEdges[r.links])}
@@ -51,16 +41,13 @@ fun binaryEdges[e:Link]:Node->Node{
 pred insert[r,r':List, i:Int]{
 	nodes2[r'].val = i + nodes2[r].val
 	i ! in nodes2[r].val
---i=	nodes2[r'].val - nodes2[r].val
+
 }
 
 pred remove[r,r':List, i:Int]{
---	i = nodes2[r].val - nodes2[r'].val 
-
 	nodes2[r].val = i + nodes2[r'].val
 	i ! in nodes2[r'].val
 }
-
 
 /*
 pred insert[l,l':List, i:Int]{
@@ -77,16 +64,9 @@ pred lookup[l:List, i:Int]{
 
 pred InsertORRemove{
 	--Any state can be left either by inserting or removing a value
-	not(	
-		all  r: List |some i:Int,r':List| ( insert[r,r',i] or remove[r,r',i])
-//		all l: List | some i:Int,l':List-l| insert[l,l',i] or remove[l,l',i]
-	)
-//	some l:List | no l.head and no l.links
+	not(	all  r: List |some i:Int,r':List| ( insert[r,r',i] or remove[r,r',i]) )
 }
 
 $INST_I
-//check InsertORRemove for 3 but exactly 50 List
-
-
 
 run InsertORRemove for i

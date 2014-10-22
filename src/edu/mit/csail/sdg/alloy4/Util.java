@@ -286,6 +286,7 @@ public final class Util {
       try {
          fos=new FileOutputStream(filename);
       } catch(IOException ex) {
+    	  ex.printStackTrace();
          throw new ErrorFatal("Cannot write to the file "+filename);
       }
       // Convert the line break into the UNIX line break, and remove ^L, ^F... and other characters that confuse JTextArea
