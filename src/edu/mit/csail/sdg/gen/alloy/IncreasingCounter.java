@@ -21,6 +21,9 @@ public class IncreasingCounter extends Counter{
 		return maxCap>0;
 	}
 
+	/**
+	 * The max is the maximum possible to enumerate the last index.
+	 */
 	public void addMax(int max){
 		if(maxCap==0) maxCap=1;
 		maxCap = maxCap* max;

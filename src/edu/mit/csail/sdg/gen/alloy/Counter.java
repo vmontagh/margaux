@@ -30,6 +30,13 @@ public abstract class Counter implements Iterator<List<Integer>>{
 		this.maxCap = 0;
 
 	}
+	
+	public Integer getCurrentIndex(int i){
+	  if( i < 0 || i >= current.size() ){
+		  throw new RuntimeException("out of bound index is requested.");		  
+	  }
+	  return current.get(i);
+	}
 
 	public abstract void addMax(int max);
 
