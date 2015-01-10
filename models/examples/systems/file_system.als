@@ -49,6 +49,10 @@ pred NoDirAliases {
     all o: Dir | lone o.~contents
 }
 
+run {OneParent_buggyVersion} for 5 expect 1
+
 check { OneParent_buggyVersion => NoDirAliases } for 5 expect 1
+
+run {OneParent_correctVersion} for 5 expect 1
 
 check { OneParent_correctVersion => NoDirAliases } for 5 expect 0
