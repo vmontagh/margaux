@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import kodkod.ast.ConstantExpression;
 
-import com.sun.org.apache.bcel.internal.generic.SIPUSH;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;

@@ -1941,7 +1941,7 @@ public final class CompModule extends Browsable implements Module {
 				globalFacts.and(e),
 				parent,
 				cmd.isSparse,
-				bounds.get(cmd.bound.label) );
+				cmd.bound == null ? cmd.bound : bounds.get(cmd.bound.label) );
 	}
 
 	/** Each command now points to a typechecked Expr. */
