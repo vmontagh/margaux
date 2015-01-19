@@ -66,6 +66,13 @@ public final class FieldDecomposer extends VisitReturn<Expr> {
 		return new HashSet(resultMap.values());
 	}
 
+	/**
+	 * The owner of the field will not returned. 
+	 * 
+	 * @param field t: A->B->A->C
+	 * @return [B,A,C]
+	 * @throws Err
+	 */
 	public List<Expr> extractFieldsItems(Sig.Field field) throws Err{
 		fields =null;
 		sigs = new ArrayList<Expr>();

@@ -1587,7 +1587,8 @@ public final class CompModule extends Browsable implements Module {
 		status=3;
 		if (name==null || name.length()==0) name="assert$"+(1+asserts.size());
 		dup(pos, name, false);
-		Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value.span().merge(pos), value));
+		//[VM] The position of valiue was going to explcitly set to the formula's pos.
+		Expr old = asserts.put(name, ExprUnary.Op.NOOP.make(value/*.pos*/.span().merge(pos), value));
 		if (old!=null) {
 			asserts.put(name, old);
 			throw new ErrorSyntax(pos, "\""+name+"\" is already the name of an assertion in this module.");

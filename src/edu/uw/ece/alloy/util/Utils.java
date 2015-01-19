@@ -12,11 +12,20 @@ import java.util.List;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
+import edu.mit.csail.sdg.alloy4.Pos;
+
 public class Utils {
 	private Utils() {
 		throw new UnsupportedOperationException();
 	}
 
+	
+	public static String appendFileName(final String folderName, final String fileName){
+		return folderName + 
+				(( folderName != null && folderName.substring(folderName.length() - 1).equals(File.separator) ) ? "" : File.separator ) 
+				+ fileName;
+	}
+	
 	/**
 	 * Read input file to String.
 	 * @param inputFileName
@@ -40,6 +49,45 @@ public class Utils {
 		}
 	}
 	
+	/**
+	 * Read the input file, and return the code snippet from (x,y)->(x1,y1)
+	 * @param inputFileName
+	 * @param pos
+	 * @return
+	 */
+	public static String readSnippet(final Pos pos){
+		
+		final StringBuilder snippet = new StringBuilder(); 
+				
+		try {
+			
+			final BufferedReader bufferedReader = new BufferedReader(new FileReader(pos.filename));
+			
+			String line = bufferedReader.readLine();
+			for(int i = 1; line != null && i <= pos.y2 ;++i){
+				
+				if( i == pos.y && i == pos.y2 ){
+					snippet.append( line.substring( pos.x-1 , pos.x2));
+				}else if( i == pos.y && i < pos.y2  ){
+					snippet.append( line.substring( pos.x-1 )).append("\n");
+				}else if(i > pos.y && i < pos.y2 ){
+					snippet.append( line).append("\n");
+				}else if(i > pos.y && i == pos.y2){
+					snippet.append( line.substring( 0, pos.x2));
+				}
+				
+				line = bufferedReader.readLine();
+			}
+			
+			bufferedReader.close();
+			
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return snippet.toString();
+		
+	}
 
 	/**
 	 * Read non-blank lines from file into a list of strings.
@@ -61,7 +109,7 @@ public class Utils {
 			}
 			bufferedReader.close();
 			
-			return lines;
+			return Collections.unmodifiableList(lines);
 			
 		} catch (final Exception e) {
 			throw new RuntimeException(e);

@@ -27,6 +27,12 @@ import edu.mit.csail.sdg.alloy4viz.VizGUI;
 
 public class PropertiesDecomposer {
 
+
+	
+	
+	
+	
+	
     public static void main(String[] args) throws Err, IOException {
 
     	copyFromJAR();

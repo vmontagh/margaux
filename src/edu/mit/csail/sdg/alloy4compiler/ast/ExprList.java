@@ -71,7 +71,10 @@ public final class ExprList extends Expr {
     @Override public void toString(StringBuilder out, int indent) {
         if (indent<0) {
             out.append(op).append("[");
-            for(int i=0; i<args.size(); i++) { if (i>0) out.append(", "); args.get(i).toString(out,-1); }
+            for(int i=0; i<args.size(); i++) { 
+            	if (i>0) out.append(", "); 
+            	args.get(i).toString(out,-1); 
+            }
             out.append(']');
         } else {
             for(int i=0; i<indent; i++) { out.append(' '); }

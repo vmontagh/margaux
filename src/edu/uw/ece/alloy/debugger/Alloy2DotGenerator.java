@@ -61,7 +61,7 @@ public class Alloy2DotGenerator {
 	final public static boolean usingSymmetry = true;
 	public static String reportFileName = "";*/
 
-
+	
 	public static class QuickReporter extends A4Reporter{
 		private long lastTime=0;
 
