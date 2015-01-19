@@ -3,6 +3,8 @@ package edu.uw.ece.alloy.debugger;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -61,7 +65,7 @@ public class RelationalPropertiesChecker {
 		try{
 			world_ = CompUtil.parseEverything_fromFile(null, null, alloySepcFileName_);
 		}catch(Err e){
-			LoggerUtil.debug(this, "The input file is not parsed because of: %s%n", e.getMessage());
+			LoggerUtil.debug(this, "The '%s' file is not parsed because of: %s%n", alloySepcFileName_, e.getMessage());
 		}finally{
 			world = world_;
 		}
@@ -207,8 +211,11 @@ public class RelationalPropertiesChecker {
 		}
 
 		final String openModule = "open "+propertiesModuleFile.replace(".als", "");
+		final Pattern pattern = Pattern.compile(String.format("%s[^%s]*$", File.separator, File.separator));
+		final Matcher matcher = pattern.matcher(alloySepcFileName);
+		final String newFileName = (matcher.find()  ? matcher.group(0).replace(File.separator, "") : alloySepcFileName).replace(".als", "_tc.als");
 
-		final String newFileName = alloySepcFileName.replace(".als", "_tc.als");
+		//final String newFileName = alloySepcFileName.replace(".als", "_tc.als");
 		final String assertionNameFormat = "%s_if_%s_%s"; 
 		final String propertyCheckingFormat = "assert %s{ %s implies %s}\n check %s \n";
 
@@ -246,17 +253,6 @@ public class RelationalPropertiesChecker {
 				formula = PrettyPrintExpression.makeString(cmd.formula);
 			}
 			commandHeader = commandHeader.replace("$", "");
-			//the run command is unnamed
-			/*if( commandHeader.contains("$") ){					
-					formula = Utils.readSnippet(cmd.formula.pos());
-					formula = formula.replaceFirst("[^\\{]*\\{", "");
-					formula = formula.replaceFirst("\\}[^\\}]*", "");
-					commandHeader = commandHeader.replace("$", "");
-				}else{
-
-					formula = cmd.label;
-				}*/
-
 
 			commandScope = Utils.readSnippet(cmd.pos);
 			commandScope = commandScope.contains("for") ? commandScope.replaceFirst("[^(for)]*(for )", "for ") : "";
@@ -303,10 +299,9 @@ public class RelationalPropertiesChecker {
 
 						retFiles.add(retFileName);
 					}
-
 				}
-
 			}
+			
 		}
 
 		//world.getAllCommands().stream().forEach((t)->{System.out.printf("%s \n %s \n %s \n %s \n %b \n %s \n\n\n",t.label, Utils.readSnippet(t.pos()),Utils.readSnippet(t.formula.pos), t.getHTML(), t.check, t);});

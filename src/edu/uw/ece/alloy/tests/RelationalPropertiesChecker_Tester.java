@@ -41,9 +41,9 @@ public class RelationalPropertiesChecker_Tester {
 
 		//A file is created to test the property files reader.
 		LoggerUtil.debug(RelationalPropertiesChecker_Tester.class, "Creates a new file containing properties.");
-		/*final String properties = "total,b,d,0\nfunctional,b,d,0\nantisymmetric,b,0,0\nweaklyConnected,b,0,r\n"+
-				"irreversible,t,0,0\nstronglyConnected,b,0,r\nbijection,b,d,r\ntransitive3,t,0,0";*/
-		final String properties = "total,b,d,0\ntransitive3,t,0,0";
+		final String properties = "total,b,d,0\nfunctional,b,d,0\nantisymmetric,b,0,0\nweaklyConnected,b,0,r\n"+
+				"irreversible,t,0,0\nstronglyConnected,b,0,r\nbijection,b,d,r\ntransitive3,t,0,0,\nempty,b,0,0";
+		//final String properties = "total,b,d,0\ntransitive3,t,0,0";
 		Util.writeAll(testingRelationalPropertiesFile, properties);
 
 		//A file is created to test the command and their expression reader.
@@ -94,24 +94,27 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_getAllBinaryWithDomainWithRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "");
-		assertArrayEquals(rpc.getAllBinaryWithDomainWithRangeRelationalProperties().toArray(),Arrays.asList("bijective").toArray());
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		assertArrayEquals(rpc.getAllBinaryWithDomainWithRangeRelationalProperties().stream().sorted().toArray(),
+				Arrays.asList("bijection").stream().sorted().toArray());
 
 	}
 
 	@Test
 	public void test_getAllBinaryWithDomainWithoutRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "");
-		assertArrayEquals(rpc.getAllBinaryWithDomainWithoutRangeRelationalProperties().toArray(),Arrays.asList("total", "functional").toArray());
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		assertArrayEquals(rpc.getAllBinaryWithDomainWithoutRangeRelationalProperties().stream().sorted().toArray(),
+				Arrays.asList("total", "functional").stream().sorted().toArray());
 
 	}
 
 	@Test
 	public void test_getAllBinaryWithoutDomainWithRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "");
-		assertArrayEquals(rpc.getAllBinaryWithoutDomainWithRangeRelationalProperties().toArray(),Arrays.asList("weaklyConnected", "stronglyConnected").toArray());
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		assertArrayEquals(rpc.getAllBinaryWithoutDomainWithRangeRelationalProperties().stream().sorted().toArray(),
+				Arrays.asList("weaklyConnected", "stronglyConnected").stream().sorted().toArray());
 
 
 	}
@@ -119,29 +122,31 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_getAllBinaryWithoutDomainWithoutRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "");
-		assertArrayEquals(rpc.getAllBinaryWithoutDomainWithoutRangeRelationalProperties().toArray(),Arrays.asList("antisymmetric").toArray());		
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		assertArrayEquals(rpc.getAllBinaryWithoutDomainWithoutRangeRelationalProperties().stream().sorted().toArray(),
+				Arrays.asList("antisymmetric","empty").stream().sorted().toArray());		
 
 	}
 
 	@Test
 	public void test_getAllTernaryWithoutDomainWithoutRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "");
-		assertArrayEquals(rpc.getAllTernaryWithoutDomainWithoutRangeRelationalProperties().toArray(),Arrays.asList("irreversible").toArray());		
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		assertArrayEquals(rpc.getAllTernaryWithoutDomainWithoutRangeRelationalProperties().stream().sorted().toArray(),
+				Arrays.asList("transitive3", "irreversible").stream().sorted().toArray());		
 
 	}
 
 	@Test
 	public void test_allRelationalPropertiesCovered() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
 
 		assertEquals(rpc.getAllTernaryWithoutDomainWithoutRangeRelationalProperties().size()+
 				rpc.getAllBinaryWithoutDomainWithoutRangeRelationalProperties().size()+
 				rpc.getAllBinaryWithoutDomainWithRangeRelationalProperties().size()+
 				rpc.getAllBinaryWithDomainWithoutRangeRelationalProperties().size()+
-				rpc.getAllBinaryWithDomainWithRangeRelationalProperties().size(), 7 );
+				rpc.getAllBinaryWithDomainWithRangeRelationalProperties().size(), 9 );
 
 	}
 	
@@ -151,13 +156,25 @@ public class RelationalPropertiesChecker_Tester {
 		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, testingRelationalPropertiesAlloyCommands);
 		
 		try {
-			rpc.transformForChecking("./tmp-prop-analysis");
+			assertEquals(rpc.transformForChecking("./tmp-prop-analysis").size(), 480);
 		} catch (Err e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+	}
+	
+	@Test
+	public void test_transformForCheckingRealExample() throws FileNotFoundException, IOException {
+
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "models/examples/toys/CeilingsAndFloors.als");
 		
+		try {
+			assertEquals(rpc.transformForChecking("./tmp-prop-analysis").size(), 140);/*.stream().forEach(System.out::println)*/;
+		} catch (Err e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
