@@ -22,6 +22,7 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.LoggerUtil;
 import edu.uw.ece.alloy.debugger.RelationalPropertiesChecker;
+import edu.uw.ece.alloy.util.Utils;
 
 /**
  * @author vajih
@@ -29,8 +30,13 @@ import edu.uw.ece.alloy.debugger.RelationalPropertiesChecker;
  */
 public class RelationalPropertiesChecker_Tester {
 
+	final static String propertiesModuleFile = "relational_properties.als";
+	final static String resourcesDirectory = "models/debugger/models2015";
+	
+	//These files is temporarily created and deleted after the test
 	final static String testingRelationalPropertiesFile = "relational_props_test.ini";
 	final static String testingRelationalPropertiesAlloyCommands = "alloy_testing_commands.als";
+	final static String testingRelationalPropertiesTMPDirectory = "tmp-prop-analysis";
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -66,6 +72,21 @@ public class RelationalPropertiesChecker_Tester {
 				"check s for 0 but 3 A\n"+
 				"check {q[] implies p} for 5\n";
 		Util.writeAll(testingRelationalPropertiesAlloyCommands, alloySpec);
+		
+		//Now setup a tmp directory
+		File tmpDir = new File(testingRelationalPropertiesTMPDirectory);
+		if(tmpDir.exists()){
+			Utils.deleteRecursivly(tmpDir);
+		}
+
+		//Now create a temp folder
+		tmpDir.mkdir();
+		LoggerUtil.debug(RelationalPropertiesChecker_Tester.class, "A temporary directory is created.");
+		
+		Files.copy(new File( resourcesDirectory, propertiesModuleFile ).toPath(), 
+						new File( testingRelationalPropertiesTMPDirectory, propertiesModuleFile ).toPath());
+		
+		LoggerUtil.debug(RelationalPropertiesChecker_Tester.class, String.format( "A %s module file is copied.", propertiesModuleFile));
 
 	}
 
@@ -89,12 +110,18 @@ public class RelationalPropertiesChecker_Tester {
 			}
 		}
 
+		File tmpDir = new File(testingRelationalPropertiesTMPDirectory);
+		if(tmpDir.exists()){
+			//Utils.deleteRecursivly(tmpDir);
+		}
+		LoggerUtil.debug(RelationalPropertiesChecker_Tester.class, "Temporary Directory '"+testingRelationalPropertiesTMPDirectory+"' is successfully deleted.");
+
 	}
 
 	@Test
 	public void test_getAllBinaryWithDomainWithRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE", propertiesModuleFile);
 		assertArrayEquals(rpc.getAllBinaryWithDomainWithRangeRelationalProperties().stream().sorted().toArray(),
 				Arrays.asList("bijection").stream().sorted().toArray());
 
@@ -103,7 +130,7 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_getAllBinaryWithDomainWithoutRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE", propertiesModuleFile);
 		assertArrayEquals(rpc.getAllBinaryWithDomainWithoutRangeRelationalProperties().stream().sorted().toArray(),
 				Arrays.asList("total", "functional").stream().sorted().toArray());
 
@@ -112,7 +139,7 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_getAllBinaryWithoutDomainWithRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE", propertiesModuleFile);
 		assertArrayEquals(rpc.getAllBinaryWithoutDomainWithRangeRelationalProperties().stream().sorted().toArray(),
 				Arrays.asList("weaklyConnected", "stronglyConnected").stream().sorted().toArray());
 
@@ -122,7 +149,7 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_getAllBinaryWithoutDomainWithoutRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE", propertiesModuleFile);
 		assertArrayEquals(rpc.getAllBinaryWithoutDomainWithoutRangeRelationalProperties().stream().sorted().toArray(),
 				Arrays.asList("antisymmetric","empty").stream().sorted().toArray());		
 
@@ -131,7 +158,7 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_getAllTernaryWithoutDomainWithoutRangeRelationalProperties() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE", propertiesModuleFile);
 		assertArrayEquals(rpc.getAllTernaryWithoutDomainWithoutRangeRelationalProperties().stream().sorted().toArray(),
 				Arrays.asList("transitive3", "irreversible").stream().sorted().toArray());		
 
@@ -140,7 +167,7 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_allRelationalPropertiesCovered() throws FileNotFoundException, IOException, Err {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "NONEXSTINGFILE", propertiesModuleFile);
 
 		assertEquals(rpc.getAllTernaryWithoutDomainWithoutRangeRelationalProperties().size()+
 				rpc.getAllBinaryWithoutDomainWithoutRangeRelationalProperties().size()+
@@ -153,10 +180,10 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_transformForChecking() throws FileNotFoundException, IOException {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, testingRelationalPropertiesAlloyCommands);
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, testingRelationalPropertiesAlloyCommands, propertiesModuleFile);
 		
 		try {
-			assertEquals(rpc.transformForChecking("./tmp-prop-analysis").size(), 480);
+			assertEquals(rpc.transformForChecking(testingRelationalPropertiesTMPDirectory).size(), 480);
 		} catch (Err e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -167,10 +194,10 @@ public class RelationalPropertiesChecker_Tester {
 	@Test
 	public void test_transformForCheckingRealExample() throws FileNotFoundException, IOException {
 
-		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "models/examples/toys/CeilingsAndFloors.als");
+		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, "models/examples/toys/CeilingsAndFloors.als", propertiesModuleFile);
 		
 		try {
-			assertEquals(rpc.transformForChecking("./tmp-prop-analysis").size(), 140);/*.stream().forEach(System.out::println)*/;
+			assertEquals(rpc.transformForChecking(testingRelationalPropertiesTMPDirectory).size(), 140);/*.stream().forEach(System.out::println)*/;
 		} catch (Err e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

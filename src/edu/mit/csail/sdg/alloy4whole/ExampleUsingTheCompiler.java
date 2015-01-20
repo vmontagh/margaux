@@ -218,36 +218,6 @@ public final class ExampleUsingTheCompiler {
 					// Print the outcome
 					System.out.println("The result is:\t"+ans.satisfiable());
 
-					System.exit(-10);
-					
-					String output = filename.replace(".als", ".out.xml");
-
-					retString = ans.toString();
-					/*					System.exit(-10);
-					Object legal = TranslateAlloyToKodkod.evaluate_command(
-							rep, world.getAllReachableSigs(), command, options,world.getEvalQuery() );
-					//Instance inst = new Instance(half_sol. .universe());
-					System.out.println(legal);
-					System.out.println();
-					//A4SolutionWriter.writeInstance(  );
-					if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");*/
-					if (ans.satisfiable()) {
-						ans.writeXML(output);
-
-						// You can query "ans" to find out the values of each set or type.
-						// This can be useful for debugging.
-						//
-						// You can also write the outcome to an XML file
-						//ans.writeXML("alloy_example_output.xml");
-						//
-						// You can then visualize the XML file by calling this:
-						if (viz==null) {
-							//viz = new VizGUI(false, output, null);
-						} else {
-							viz.loadXML(output, true);
-						}
-					}
-
 				} catch(IOException ex) {
 					Util.close(out);
 					throw new ErrorFatal("Error writing the solution XML file.", ex);

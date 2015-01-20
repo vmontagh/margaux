@@ -14,7 +14,7 @@ import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerTask;
 public abstract class ExecuterJob implements WorkerTask {
 	
 	
-	protected final  String reportFile;
+	protected final String reportFile;
 	protected MyReporter rep = new MyReporter();
 	protected static String alloyHome = null;
 	protected static final String fs = System.getProperty("file.separator");
@@ -173,6 +173,4 @@ public abstract class ExecuterJob implements WorkerTask {
 
 	protected abstract void callExecuter(String fileName) throws Err;
 
-	
-	
 }

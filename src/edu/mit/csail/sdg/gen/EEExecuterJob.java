@@ -35,14 +35,4 @@ public class EEExecuterJob extends ExecuterJob {
 
 		
 	}
-	
-	
-	public static void main(String[] args) throws Err {
-		// TODO Auto-generated method stub
-		EEExecuterJob nsej = new EEExecuterJob("expr_output/report.txt");
-		//nsej.callExecuter("models/examples/puzzles/hanoi.als");
-//		nsej = new EEExecuterJob("report.txt");
-//		nsej.callExecuter("models/partial/gen/LL_symmetry_testing.als");
-		nsej.callExecuter("models/partial/gen/abz14/tmp/BST_template_3.als");
-	}
 }

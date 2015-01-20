@@ -74,7 +74,7 @@ public class LoggerUtil {
 	public static <T> void cosoleLogger(int level, Class<T> clazz,String format, Object...args){
 		if(level < DEBUG_LEVEL)
 			return;
-		System.out.printf("%n[%s]: ", clazz.getSimpleName());
+		System.out.printf("%n[%s]: ", clazz.getName());
 		System.out.printf(format, args);
 		System.out.printf("%n");
 	}

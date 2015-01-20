@@ -46,7 +46,8 @@ import edu.uw.ece.alloy.util.Utils;
  */
 public class RelationalPropertiesChecker {
 
-	final private String propertiesModuleFile = "relational_properties.als";
+	//Better to be encoded in a resource class.
+	final private String propertiesModuleFile ;
 
 	final private Module world;
 	final private String relationalPropertyNameFile;
@@ -58,9 +59,10 @@ public class RelationalPropertiesChecker {
 		return r.length > 0 ? r[0] : s;
 	};
 
-	public RelationalPropertiesChecker(String relationalPropertyNameFile_, String alloySepcFileName_) {
+	public RelationalPropertiesChecker(final String relationalPropertyNameFile_,final  String alloySepcFileName_, final String propertiesModuleFile_) {
 		this.relationalPropertyNameFile  = relationalPropertyNameFile_;
 		this.alloySepcFileName = alloySepcFileName_;
+		this.propertiesModuleFile = propertiesModuleFile_;
 		Module world_ = null;
 		try{
 			world_ = CompUtil.parseEverything_fromFile(null, null, alloySepcFileName_);
@@ -211,12 +213,17 @@ public class RelationalPropertiesChecker {
 		}
 
 		final String openModule = "open "+propertiesModuleFile.replace(".als", "");
-		final Pattern pattern = Pattern.compile(String.format("%s[^%s]*$", File.separator, File.separator));
+		
+		//Extracting the file name from a path
+		final Pattern pattern = Pattern.compile(String.format("%1$s[^%1$s]*$", File.separator));
 		final Matcher matcher = pattern.matcher(alloySepcFileName);
 		final String newFileName = (matcher.find()  ? matcher.group(0).replace(File.separator, "") : alloySepcFileName).replace(".als", "_tc.als");
 
 		//final String newFileName = alloySepcFileName.replace(".als", "_tc.als");
-		final String assertionNameFormat = "%s_if_%s_%s"; 
+		final String SEPARATOR = "_SeP_a_RaT_o_R_";
+		//The format is like: COMMAND_NAME,if,PROPERTY_NAME,FIELD_NAME
+		final String assertionIfNameFormat = new String("%s"+SEPARATOR+"_I__f_"+SEPARATOR+"%s"+SEPARATOR+"%s");
+		final String assertionFiNameFormat = new String("%s"+SEPARATOR+"_F__i_"+SEPARATOR+"%s"+SEPARATOR+"%s");
 		final String propertyCheckingFormat = "assert %s{ %s implies %s}\n check %s \n";
 
 		List<String> retFiles = new ArrayList<>();
@@ -273,13 +280,11 @@ public class RelationalPropertiesChecker {
 				for(String property: properties){
 
 					//Make a file name from the property. e.g. total[s.B,B]-> total___s-B, total[s,A]-> total_s
+					String propertyName = property.replaceAll("(,.*|\\])", "").replaceAll("\\[","_F_i_e_L_d_").replaceAll("\\.", "_D_o_T_");
 					
-					String propertyName = property.replaceAll(",.*", "").replaceAll("\\[","_").replaceAll("\\.", "___");
-
-					//System.out.printf("%s\n\t%s\n",propertyName,property);
+					final List<String> assertionNames = Arrays.asList(	String.format(assertionIfNameFormat, commandHeader, propertyName , fieldName),
+							String.format(assertionFiNameFormat, commandHeader, propertyName, fieldName));
 					
-					final List<String> assertionNames = Arrays.asList(	String.format(assertionNameFormat, commandHeader, propertyName , fieldName),
-							String.format(assertionNameFormat, propertyName, fieldName, commandHeader));
 					final List<String> assertionBody = Arrays.asList(String.format(propertyCheckingFormat, assertionNames.get(0), 
 							formula, property, assertionNames.get(0), commandScope ),
 							String.format(propertyCheckingFormat, assertionNames.get(1), 
@@ -292,10 +297,12 @@ public class RelationalPropertiesChecker {
 						newAlloySpec.insert(0, sigs);
 						newAlloySpec.insert(0, openModule);
 
-						final String retFileName = Utils.appendFileName(destFolder, assertionNames.get(i) + "_" + newFileName); 
+						final String retFileName = Utils.appendFileName(destFolder, assertionNames.get(i) + SEPARATOR + newFileName); 
 
 						Util.writeAll(  retFileName,
 								newAlloySpec.toString());
+
+						LoggerUtil.debug(this ,"Created: %s" ,retFileName);
 
 						retFiles.add(retFileName);
 					}

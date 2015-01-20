@@ -54,12 +54,10 @@ public class OldSyntaxExecuterJob extends ExecuterJob  {
 				System.out.println("============ Command "+command+": ============");
 				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 
-				updateResult(System.currentTimeMillis(), fileName, -1,
-						rep.solveTime, rep.trasnalationTime, rep.totalVaraibles, rep.clauses,ans.satisfiable(), rep.evalInsts,-1);
-
+				updateResult( fileName, ans.satisfiable(), System.currentTimeMillis() );
 				
 
-				if (ans.satisfiable()) {ans.writeXML(fileName+".xml");}
+				//if (ans.satisfiable()) {ans.writeXML(fileName+".xml");}
 
 			}
 
@@ -78,8 +76,8 @@ public class OldSyntaxExecuterJob extends ExecuterJob  {
 		// TODO Auto-generated method stub
 		OldSyntaxExecuterJob nsej = new OldSyntaxExecuterJob("report.txt");
 		nsej.callExecuter(args[0]);
-		nsej = new OldSyntaxExecuterJob("report.txt");
-		nsej.callExecuter(args[1]);
+		//nsej = new OldSyntaxExecuterJob("report.txt");
+		//nsej.callExecuter(args[1]);
 	}
 
 }
