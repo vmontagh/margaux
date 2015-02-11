@@ -18,7 +18,7 @@ public class BenchmarkRunner {
 	public  static  int SubMemory = 1024;
 	/** The amount of stack (in K) to allocate for Kodkod and the SAT solvers. */
 	public static  int SubStack = 8192;
-	final private String reportNameformat = "%s/report_%s_%3$tY-%3$tm-%3$td-%3$tk-%3$tM-%3$tS.txt";
+	final private String reportNameformat = "report_%s_%2$tY-%2$tm-%2$td-%2$tk-%2$tM-%2$tS.txt";
 	private static final String fs = System.getProperty("file.separator");
 	/** This variable caches the result of alloyHome() function call. */
 	private  String alloyHome = null;
@@ -50,7 +50,7 @@ public class BenchmarkRunner {
 				try{Thread.sleep(500L);}catch(Exception e){}
 			}
 			if(WorkerEngine.isBusy()){
-				task.updateResult(System.currentTimeMillis(), fileName, -1, -1, -1, -1, -1, false, 0, -1);
+				task.updateResult(task.failureRecord);
 				//Wait until write everything, eh?
 				try{Thread.sleep(1000L);}catch(Exception e){}
 				WorkerEngine.stop();
@@ -120,19 +120,22 @@ public class BenchmarkRunner {
 	 * @param experiments
 	 * @param timeOutMin
 	 * @param tests
+	 * @param outputDir set the output directory for logs.
 	 * @throws InterruptedException
 	 * @throws Err
 	 */
-	public final void doTest(final ExecuterJob e,int experiments,double timeOutMin, final Collection<String> tests) throws InterruptedException, Err{
+	public final void doTest(final ExecuterJob e,int experiments,double timeOutMin, final Collection<File> tests, final File outputDir) throws InterruptedException, Err{
 
 		
-
-		for(String obj : tests){
+		assert outputDir.isDirectory();
+		
+		for(File obj : tests){
 			try {
-
+				//Using reflrection because the report file name is set per each test input.
 				Constructor constructor = e.getClass().getConstructor(String.class);
-				getInstance().executeTask(experiments, (ExecuterJob)constructor.newInstance(String.format(reportNameformat,"expr_output",e.getClass().getName(),new Date())),
-						obj, (long)(timeOutMin*60.0*1000.0));
+				getInstance().executeTask(experiments, (ExecuterJob)constructor.newInstance(
+						(new File(outputDir, String.format(reportNameformat,e.getClass().getName(),new Date()))).getAbsolutePath() ),
+						obj.getAbsolutePath(), (long)(timeOutMin*60.0*1000.0));
 
 
 			} catch (InstantiationException | IllegalAccessException e1) {

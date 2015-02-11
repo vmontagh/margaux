@@ -31,6 +31,7 @@ sig DirEntry {
   one this.~entries
 }
 
+
 pred OneParent_buggyVersion {
     // all directories besides root have one parent
     all d: Dir - Root | one d.parent

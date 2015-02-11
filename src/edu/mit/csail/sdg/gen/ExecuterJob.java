@@ -15,6 +15,7 @@ public abstract class ExecuterJob implements WorkerTask {
 	
 	
 	protected final String reportFile;
+	protected String failureRecord;
 	protected MyReporter rep = new MyReporter();
 	protected static String alloyHome = null;
 	protected static final String fs = System.getProperty("file.separator");
@@ -127,10 +128,15 @@ public abstract class ExecuterJob implements WorkerTask {
 		return alloyHome=ans;
 	}
 
-
-	public ExecuterJob(String reportFile) {
+	public ExecuterJob(String reportFile,  final String failureRecord) {
 		super();
 		this.reportFile = reportFile;
+		this.failureRecord = failureRecord;
+	}
+	
+
+	public ExecuterJob(String reportFile) {
+		this(reportFile, "NOTIMPLMENTED");
 	}
 
 	public synchronized void updateResult( Object...objs){

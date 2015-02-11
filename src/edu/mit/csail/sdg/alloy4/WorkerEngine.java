@@ -144,7 +144,7 @@ public final class WorkerEngine {
             if (latest_sub!=null) latest_sub.exitValue(); latest_manager=null; latest_sub=null;
          } catch(IllegalThreadStateException ex) { }
          if (latest_sub==null) {
-            String java = "java", javahome = System.getProperty("java.home");
+            String java = "nice java", javahome = System.getProperty("java.home");
             if (javahome!=null && javahome.length()>0) {
                // First try "[JAVAHOME]/bin/java"
                File f = new File(javahome + File.separatorChar + "bin" + File.separatorChar + "java");

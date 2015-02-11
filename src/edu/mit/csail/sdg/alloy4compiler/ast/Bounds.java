@@ -82,6 +82,7 @@ public class Bounds extends Expr {
 	}
 
 	@Override
+	public//TODO This public modifer has to be removed. It is added on 21/Jan/2015 for pushing the sources to compile. 
 	<T> T accept(VisitReturn<T> visitor) throws Err {
 		return visitor.visit(this);
 	}
