@@ -1,4 +1,4 @@
-package edu.uw.ece.alloy.debugger;
+package edu.uw.ece.alloy.debugger.exec;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,12 +42,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
-import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler.EvalReporter;
-import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler.QuickReporter;
 import edu.mit.csail.sdg.gen.LoggerUtil;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.mit.csail.sdg.gen.alloy.PIUtil;
-import edu.mit.csail.sdg.gen.alloy.Transferer;
 import edu.mit.csail.sdg.gen.visitor.MakeDOTCallGraph;
 
 public class Alloy2DotGenerator {
@@ -119,7 +114,6 @@ public class Alloy2DotGenerator {
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
 
 		for(String filename:args) {
-			Configuration.setProp(Configuration.REPORT_FILE_NAME, Util.tail(filename).replace(".", "_")+".log");
 			// Parse+typecheck the model
 			System.out.println("=========== Parsing+Typechecking "+filename+" =============");
 			CompModule world = CompUtil.parseEverything_fromFile(rep, null, filename);
@@ -145,85 +139,6 @@ public class Alloy2DotGenerator {
 				
 				System.out.println(dotContent);
 				
-				/*
-				
-				//System.exit(-10);
-				
-				// Execute the command
-				System.out.println("============ Command "+command+": ============");
-				System.out.println("Starting to evlauate the code....");
-				long time = System.currentTimeMillis();
-				//System.out.println(command.scope.get(0).sig);
-				PrintWriter out=null;
-				int i=0;
-				try {
-					out=new PrintWriter("../tmp/out.xml","UTF-8");
-					
-					//LoggerUtil.Detaileddebug("The world before uniqSigGenerator is: %s", world.getUniqueFieldFact(field)niqueFact(sigLabel));
-					time = System.currentTimeMillis();
-
-					A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-
-
-					System.out.println("The execution has been done in: "+(System.currentTimeMillis()- time)+" mSec");
-
-					// Print the outcome
-					System.out.println("The result is:\t"+ans.satisfiable());
-
-					
-					String output = filename.replace(".als", ".out.xml");
-
-					
-					retString = ans.toString();
-					/*					System.exit(-10);
-					Object legal = TranslateAlloyToKodkod.evaluate_command(
-							rep, world.getAllReachableSigs(), command, options,world.getEvalQuery() );
-					//Instance inst = new Instance(half_sol. .universe());
-					System.out.println(legal);
-					System.out.println();
-					//A4SolutionWriter.writeInstance(  );
-					if (!Util.close(out)) throw new ErrorFatal("Error writing the solution XML file.");*/
-					/*if (ans.satisfiable()) {
-						ans.writeXML(output);
-
-						// You can query "ans" to find out the values of each set or type.
-						// This can be useful for debugging.
-						//
-						// You can also write the outcome to an XML file
-						//ans.writeXML("alloy_example_output.xml");
-						//
-						// You can then visualize the XML file by calling this:
-						if (viz==null) {
-							//viz = new VizGUI(false, output, null);
-						} else {
-							viz.loadXML(output, true);
-						}
-					}
-
-				} catch(IOException ex) {
-					Util.close(out);
-					throw new ErrorFatal("Error writing the solution XML file.", ex);
-				}*/
-				//				System.exit(1);
-
-				/*				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-				// Print the outcome
-				System.out.println("------------------ans->---------\n"+ans);
-				// If satisfiable...
-				if (ans.satisfiable()) {
-					// You can query "ans" to find out the values of each set or type.
-					// This can be useful for debugging.
-					//
-					// You can also write the outcome to an XML file
-					ans.writeXML("alloy_example_output.xml");
-					//
-					// You can then visualize the XML file by calling this:
-					if (viz==null) {
-						viz = new VizGUI(false, "alloy_example_output.xml", null);
-					} else {
-						viz.loadXML("alloy_example_output.xml", true);
-					}
-				}*/
 			}
 		}
 
@@ -251,52 +166,6 @@ public class Alloy2DotGenerator {
 		return run(args, new QuickReporter());
 	}
 
-	private static Command uniqSigGenerator(final Command command, final CompModule world,
-			final  A4Options options, final A4Reporter rep) throws Err{
-
-		
-		//LoggerUtil.Detaileddebug("the world ", args);
-		
-		Command result = command;
-		long time = System.currentTimeMillis();
-		List<Sig> uniqSigs = new ArrayList<Sig>();
-		Set<String> excludedSigs = new HashSet<String>();
-		for(Sig s:world.getAllSigs()){
-			if(s.isUnique != null ){
-				uniqSigs.add(s);
-				excludedSigs.add(s.label);
-			}
-		}
-
-		for(int i=0; i < uniqSigs.size(); i++){
-			excludedSigs.remove(uniqSigs.get(i).label);
-			LoggerUtil.Detaileddebug("The command before making the world of uniq sig %s  is->%n\t %s",uniqSigs.get(i),
-					excludeCommandScope(
-							excludeasLowerbound(result,uniqSigs.get(i)),
-							excludedSigs)
-							//result
-					);
-			result = makeWorld2(
-					excludeCommandScope(
-							excludeasLowerbound(result,uniqSigs.get(i)),
-							excludedSigs)
-							//result
-							,world,uniqSigs.get(i),options,rep);
-
-		}
-
-
-		int lastEvalInsts = -1;
-		if(!uniqSigs.isEmpty()){
-			for(CommandScope cs: result.scope){
-				if(cs.sig.label.equals(uniqSigs.get(uniqSigs.size()-1).label)){
-					lastEvalInsts = cs.endingScope;
-				}
-			}
-		}
-		rep.evalute(System.currentTimeMillis()- time, lastEvalInsts);
-		return result;
-	}
 
 
 	private static Command excludeCommandScope(final Command command, final Set<String> excludedSigs){
@@ -307,165 +176,6 @@ public class Alloy2DotGenerator {
 				newScope.add(cs);
 		}
 		return command.change(ConstList.make(newScope));
-	}
-
-	/**
-	 * If any fields of sig has already an exact scope, they changed to lower bound. 
-	 * This helps for subtyping and generating tuples for the super-type's fields 
-	 * @param command
-	 * @param sig
-	 * @return
-	 */
-	private static Command excludeasLowerbound(final Command command, Sig sig){
-
-		LoggerUtil.Detaileddebug("The changed scope is before excludeasLowerbound: %s", command);
-
-
-		List<CommandScope> newScope = new ArrayList<CommandScope>();
-
-		for(CommandScope cs: command.scope){
-
-			boolean exist = false;
-			for(Field field: PIUtil.getAllFields(sig)){
-
-				String fldName = PIUtil.tailDot(PIUtil.nameSanitizer(field.label));
-
-				if(PIUtil.tailDot(PIUtil.nameSanitizer(cs.sig.label)).equals(fldName)){
-
-					newScope.add(new CommandScope( cs.pos, cs.sig ,false,cs.pFields.size(),
-							cs.pFields.size(),1,new ArrayList(), 
-							cs.pFields.size(), cs.pFields,
-							true, true, false, false)); 
-
-					exist = true;
-					break;
-				}
-			}
-			if(!exist){
-				newScope.add(cs);
-			}
-		}
-
-		LoggerUtil.Detaileddebug("The changed scope is after excludeasLowerbound: %s", newScope);
-
-		return command.change(ConstList.make(newScope));
-	}
-
-	private static Command makeWorld2(final Command command, final CompModule world, final Sig sig,final  A4Options options, final A4Reporter rep) throws Err{
-
-		
-		LoggerUtil.Detaileddebug("The sig is %s is %s", sig, sig.label);
-		
-		Expr expr = world.getUniqueFieldFact(sig.label.replace("this/", ""));
-
-		LoggerUtil.Detaileddebug("The apended fact of %s is %s", sig, expr);
-
-		List<Instance> legalInats = TranslateAlloyToKodkod.evaluate_command_Itreational(
-				rep, world.getAllReachableSigs(), command, options,sig,expr,world);
-
-		LoggerUtil.debug("The result of apended fact of %s is %s", sig, legalInats);
-
-		if( 0 == legalInats.size()){
-			rep.warning(new ErrorWarning(String.format("The append fact of %s is unsaitsfiable.",sig)));
-			return command;
-		}
-
-		List<CommandScope> newCS = new ArrayList<CommandScope>();
-
-		List<ExprVar> atoms = new ArrayList<ExprVar>();
-		//Converting the instances to commandScope
-		for(Instance inst: legalInats){
-			for(Relation rel: inst.relations()){
-				if(rel.name().equals(sig.label)){
-					//Since the returned atom name is unique in the instance, then there is no need to iterator over allt he tuples
-					atoms.add(ExprVar.make(command.pos, 
-							inst.tuples(rel).iterator().next().atom(0).toString(),
-							sig.type()));
-					;
-				}
-			}
-		}
-
-		LoggerUtil.debug("The found atoms of the appended fact of %s is %n\t %s", sig, atoms);
-
-		newCS.add(new CommandScope(command.pos,sig, true, 
-				atoms.size(), atoms.size(), 1, 
-				atoms, atoms.size()));
-
-		//The key of each map is the field name, and the value is a list of tuples 
-		Map<String, List<List<Expr>> > fieldsNameMap = new HashMap<String, List<List<Expr>> >();
-		//Putting the field names in the set for reducing one complexity degree from the following loops
-		for(Field field: PIUtil.getAllFields(sig))
-			fieldsNameMap.put( PIUtil.nameSanitizer(PIUtil.tailDot( field.label)) , new ArrayList<List<Expr>>());
-
-		LoggerUtil.Detaileddebug("The filed map of %s is %s", sig, fieldsNameMap);
-		LoggerUtil.Detaileddebug("The parent of %s is %b", sig, sig.isSubsig);
-
-		LoggerUtil.Detaileddebug("The returned instances is %n%s", legalInats);
-
-		for(Instance inst: legalInats){
-			for(Relation rel: inst.relations()){
-				String relName = PIUtil.nameSanitizer(rel.name()).substring(PIUtil.nameSanitizer(rel.name()).indexOf('.')+1 );
-				if(fieldsNameMap.containsKey( relName )){
-					for(Tuple tuple: inst.tuples(rel)){
-						List<Expr> tupleList = new ArrayList<Expr>();
-						for(int i=0; i<tuple.arity();i++)
-							tupleList.add( ExprVar.make(command.pos, tuple.atom(i).toString()) );
-						fieldsNameMap.get( relName ).add(tupleList);
-					}
-				}
-			}
-		}
-
-		LoggerUtil.Detaileddebug("The found tuples of the appended fact of %s is %n\t %s", sig, fieldsNameMap);
-
-		//Making a ScopeCommand per each field
-		for(String fieldName: fieldsNameMap.keySet()){
-			//Check whether the scopename is already added before. If so, the found tuples have to be
-			//merged. It happens when two signatures extending the same sig signature and both are
-			//labeled with 'uniq'
-			List<List<Expr>> tuples = new ArrayList<List<Expr>>();
-			tuples.addAll(fieldsNameMap.get(fieldName));
-
-			for(CommandScope cs: command.scope){
-				if(cs.sig.label.equals(fieldName)){
-					tuples.addAll( cs.pFields);
-					break;
-				}
-
-			}
-			newCS.add(new CommandScope( command.pos, new Sig.PrimSig(fieldName, AttrType.WHERE.make(sig.pos)) ,
-					true,tuples.size(), tuples.size(),1,new ArrayList(), tuples.size(), tuples,
-					true, true, true, false));
-
-		}
-
-		LoggerUtil.Detaileddebug("The scope list afer adding the field is %n%s", newCS);
-
-		//The old commandscopes have to be removed. It is possible to add a new commandscope with the same name.
-		//In case of setting scope for fields, redundancy may happen.
-		List<CommandScope> oldScopes = new ArrayList<CommandScope>();
-		for(CommandScope ocs: command.scope){
-			boolean redundant = false;
-			for(CommandScope ncs: newCS)
-				if(ocs.sig.label.equals(ncs.sig.label)){
-					redundant = true;
-					break;
-				}
-			if(!redundant)
-				oldScopes.add(ocs);
-		}
-
-
-		newCS.addAll(oldScopes);
-
-		world.removeUniquFacts(sig);
-
-		Bounds bound = command.bound;
-
-		Command result = command.change(bound);
-
-		return result.change(ConstList.make(newCS));
 	}
 
 /*
@@ -593,47 +303,6 @@ public class Alloy2DotGenerator {
 	}
 
 */
-	private static Command makeCommand(Sig s, Map<String,ExprVar> sigAtoms,CommandScope sigScope,
-			CommandScope scope,Bounds oBound,List<CommandScope> nList, Command command, CompModule world) throws Err{
-		if(sigAtoms.size() > 0){
-			List<ExprVar> pAtoms = new ArrayList<ExprVar>(sigAtoms.values());
-			//Replace the signature bound
-			if(sigScope==null){
-				//Make a new commandscope for each relation declration
-				sigScope = new CommandScope(oBound.pos, 
-						new PrimSig(s.label, AttrType.WHERE.make(oBound.pos)),
-						true, pAtoms.size(), pAtoms.size(), 1, pAtoms,
-						pAtoms.size(), new ArrayList<List<Expr>>(),
-						true, false, false,false);
-			}else{
-				//Alter the current commandscope
-				pAtoms.addAll(sigScope.pAtoms);
-				sigScope = new CommandScope(sigScope.pos, 
-						sigScope.sig,
-						sigScope.isExact, pAtoms.size(), pAtoms.size(), sigScope.increment, 
-						pAtoms,
-						pAtoms.size()+
-						scope.pAtomsLowerLastIndex, 
-						sigScope.pFields,
-						sigScope.isPartial, sigScope.hasLower, sigScope.hasUpper,
-						sigScope.isSparse);
-			}
-
-			//Now change the scope in the bound object
-			nList.add(sigScope);         
-			Bounds nBound = new Bounds(oBound.pos, oBound.label, nList);
-			oBound = world.replaceBound(oBound, nBound);
-			//Detachbound causes the appended fact of the inst block does not considered.
-			//world.detachBound(command.bound.label);
-			world.removeUniquFacts(s);
-			return new Command(command.pos, command.label, command.check, command.overall, 
-					command.bitwidth, command.maxseq, command.expects, oBound.scope, 
-					command.additionalExactScopes, command.formula, command.parent, command.isSparse, oBound);
-
-		}else
-			//no changes happened
-			return command;
-	}
 
 
 	private static Expr  getEmptyCheckingExpr(Sig sig){

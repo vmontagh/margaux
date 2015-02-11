@@ -6,6 +6,7 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,10 +16,16 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Stack;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pos;
 
 public class Utils {
@@ -211,5 +218,56 @@ public class Utils {
 		});
 		
 	}
+	
+	public static DirectoryStream<Path> filesStream(final File dir, final String regex) {
+		assert dir.isDirectory() : "not a directory: " + dir;
+		final Pattern p = Pattern.compile(regex);
+		final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
+	         public boolean accept(Path file) throws IOException {
+	             return (p.matcher(file.getFileName().toString()).matches());
+	         }
+	     };
+	     
+	    DirectoryStream<Path> stream = null;
+		try {
+			stream = Files.newDirectoryStream(dir.toPath(), filter);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	         
+		assert stream != null;
+		return stream;
+
+	}
+	
+	
+	
+	public static void replaceTextFiles(final File dir, final String regexFileName, final String resultFile, final Map<String, String> replaceMapping) throws Err{
+		
+		assert dir.isDirectory() : "not a directory: " + dir;
+
+		Function<String,String> mapper = replaceMapping.entrySet().stream()
+				.reduce(Function.identity(),
+						(func, entry) -> {
+							String key = entry.getKey();
+							String value = entry.getValue();
+							return func.compose(s -> s.replaceAll(key, value));
+						},
+						Function::compose);
+		
+		String resultString = Arrays.stream(files(dir.getAbsolutePath(),regexFileName)).
+					//parallelStream().
+					//stream().
+					map( p ->  Utils.readFile(p.getAbsolutePath()).trim().concat("\n")  ).
+					map( mapper ).
+					collect(Collectors.joining());
+		
+		//System.out.println(resultString);
+		//System.out.println(files(dir,regex)[0].getAbsoluteFile().getParent() );
+		edu.mit.csail.sdg.alloy4.Util.writeAll( (new File(dir, resultFile)).getAbsolutePath(), resultString);
+		
+	}
+	
 	
 }
