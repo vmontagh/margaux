@@ -10,16 +10,14 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Stack;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -145,6 +143,21 @@ public class Utils {
 		Arrays.sort(result);
 		return result;
 
+	}
+	
+	public static void moveFiles(final File[] files, final File dest){
+		assert dest.isDirectory();
+		System.out.println(files.length);
+		for(final File file: files){
+			
+			try {
+				Files.move(file.toPath(), 
+						dest.toPath().resolve(file.toPath().getParent().relativize(file.toPath())), StandardCopyOption.ATOMIC_MOVE);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public static File[] filesR(final String dirName, final String regex) {

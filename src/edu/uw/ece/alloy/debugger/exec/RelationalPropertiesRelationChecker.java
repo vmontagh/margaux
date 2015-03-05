@@ -27,6 +27,7 @@ public class RelationalPropertiesRelationChecker {
 		final File resourcesDir = new File( "models/debugger/models2015");
 
 		final File logOutput = new File("expr_output");
+		final File archivedLogOutput = new File(logOutput,"aggregated");
 
 		final File workingDir = new File( "relational_props");
 		final File tmpDirectory = new File(workingDir, "tmp");
@@ -118,11 +119,15 @@ public class RelationalPropertiesRelationChecker {
 		System.out.printf("%d files are aggregated in %d ms",propCheckingFiles.size(),(System.currentTimeMillis() - timeStart));
 
 
-		(Runtime.getRuntime().exec("bash " + (new File(logOutput, "move.sh")).getAbsolutePath())).waitFor();
-	}
+		try{
+
+			Utils.moveFiles(Utils.files(logOutput.getAbsolutePath(), "^repo.*"), archivedLogOutput);
+		}catch(Exception e){
+			System.out.println("moving failed "+e.getMessage());
+		}	}
 
 	public static void main(String[] args) throws IOException, Err, InterruptedException {
-		
+
 		run("imply","");
 		run("imply","SAMETYPE");
 		run("and","");

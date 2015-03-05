@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+
 public class PropertyCheckingBuilder {
 
 	final List<PropertyCheckingSource> checkers = Collections.synchronizedList( new ArrayList());
@@ -201,7 +203,7 @@ public class PropertyCheckingBuilder {
 					this.openStatements, this.functions, this.commandHeader,
 					this.formula, this.commandScope
 					) );
-			assert ( checkers.get(checkers.size() - 1).repOk() ) : String.format("Object is failed: %s", checkers.get(checkers.size() - 1).toString());
+			assert ( checkers.get(checkers.size() - 1).repOk() ) : String.format("Object is failed: %n%s", checkers.get(checkers.size() - 1).toString());
 		} catch ( NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 				| IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -225,6 +227,12 @@ public class PropertyCheckingBuilder {
 
 	public List<PropertyCheckingSource> getCheckers(){
 		return Collections.unmodifiableList(this.checkers);
+	}
+
+
+	public void setOrderedSigs(List<Sig> findOrderedSignatures) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

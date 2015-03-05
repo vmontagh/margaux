@@ -8,10 +8,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary;
+import edu.uw.ece.alloy.debugger.PropertySet.Property;
 
 /**
  * PropertyChekingSource is and abstract class including all materials needs for
@@ -56,19 +59,71 @@ public abstract class PropertyCheckingSource {
 	 * @param field
 	 * @return
 	 */
-	final protected static String fieldExtractorFromProperty(final String property){
-		return property.replaceAll("([^\\[]+\\[)([^\\],]*)(.*\\])", "$2");
+	final public static String fieldExtractorFromProperty(final String property){
+		final Pattern bracketPAttern = Pattern.compile("\\[(.*)\\]");
+		final Matcher matched = bracketPAttern.matcher(property);
+		if(matched.find())
+			return property.replaceAll("([^\\[]+\\[)([^\\],]*)(.*\\])", "$2");
+		else
+			return "";
 	}
-	
+
 	/**
 	 * The input property is in the form of prop_name[field,....]. The return is prop_name.
 	 * @param property
 	 * @return
 	 */
-	final protected static String propertyNameExtractorFromProperty(final String property){
+	public final static String propertyNameExtractorFromProperty(final String property){
 		return property.replaceAll("([^/]*/|^)([^\\[]+)(\\[.*)", "$2");
 	}
-	
+
+	/**
+	 * This function takes a property and returns a standard copy of it that could be compared with
+	 * consistency map.
+	 * @param props
+	 * @return
+	 */
+	public final static String cleanProperty(final String property){
+
+		final String propName = propertyNameExtractorFromProperty(property);
+		String propField = fieldExtractorFromProperty(property);
+		final boolean hasNot = property.trim().contains("not ");
+
+		//(State<:holds).Mutex -> (State<:holds).C
+		propField = propField.replaceAll("\\.[^\\(].*", ".C");
+		//State.(State<:holds) -> A.(State<:holds)
+		propField = propField.replaceAll("[^\\.]+\\.\\(", "A.(");
+		//State.(State<:holds) -> State.r
+		propField = propField.replaceAll("\\([^\\)]+\\)", "r");
+		//Remove extra characters.
+		propField = propField.replaceAll("\\)", "");
+
+		return String.format("%s%s[%s]",hasNot? "not " : "",propName,propField).trim();
+
+	}
+
+	public final static String cleanProperty(final Property property){
+		final String propName = property.value;
+		String propField = property.fld.value;
+		final boolean hasNot = propName.trim().contains("not ");
+
+		if ( propField.contains("(")) {
+			return cleanProperty(property.toString());
+		}else{
+
+			//State<:holds.Mutex -> r.C
+			propField = propField.replaceAll("([^(<:|\\.)]+)(<:)(([^(<:|\\.)])+)\\.([^(<:|\\.)]+)", "r.C");
+			//State.State<:holds -> A.r
+			propField = propField.replaceAll("([^(<:|\\.)]+)\\.([^(<:|\\.)]+)(<:)(([^(<:|\\.)])+)", "A.r");
+			//State<:holds -> r
+			propField = propField.replaceAll("([^(<:|\\.)]+)(<:)(([^(<:|\\.)])+)", "r");
+
+
+			return String.format("%s%s[%s]",hasNot? "not " : "",propName,propField).trim();
+		}
+	}
+
+
 	protected PropertyCheckingSource(final File sourceFile_, final String property_, final String fieldName_, final Set<String> binaryProperties_, 
 			final Set<String> ternaryProperties_, /*final String assertionName_, final String assertionBody_,*/ final  String sigs_,
 			final String openModule_, final String openStatements_, final String functions_, 
@@ -140,7 +195,7 @@ public abstract class PropertyCheckingSource {
 			e.printStackTrace();
 			throw new RuntimeException( String.format( "Output file could be created: %s\n", e.getMessage() ));
 		}
-		
+
 		return  Collections.unmodifiableList(Arrays.asList(retFileName.getAbsoluteFile()) );
 	}
 
@@ -164,7 +219,9 @@ public abstract class PropertyCheckingSource {
 
 	public boolean repOk(){
 
-		return 	sourceFile != null && property != null && !property.trim().isEmpty() &&
+		return 	sourceFile != null 
+				&& property != null 
+				&& !property.trim().isEmpty() &&
 				fieldName != null && !fieldName.trim().isEmpty() && sanitizedPropertyName != null && 
 				!sanitizedPropertyName.trim().isEmpty() && sanitizedFieldName != null && 
 				!sanitizedFieldName.trim().isEmpty() && propertyFieldName != null && 
@@ -174,7 +231,8 @@ public abstract class PropertyCheckingSource {
 				!ternaryProperties.isEmpty() && emptyProperty != null && 
 				!emptyProperty.trim().isEmpty() && functions != null && 
 				sigs != null &&  !sigs.trim().isEmpty() && openModule != null && 
-				openStatements != null &&  !openStatements.trim().isEmpty() && 
+				openStatements != null &&  
+				//!openStatements.trim().isEmpty() && 
 				commandHeader != null && !commandHeader.trim().isEmpty() && 
 				formula != null && !formula.trim().isEmpty() && commandScope != null;
 

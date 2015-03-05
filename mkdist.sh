@@ -21,7 +21,7 @@ function compile {
 
     CP=$KODKOD_HOME/bin:$(ls -1 lib/*.jar | xargs | sed 's/\ /:/g')
     echo "[compiling...]"
-    find src -name "*.java" | xargs javac -cp $CP -d bin -target 1.5
+    find src -name "*.java" | xargs javac -cp $CP -d bin -target 1.8
 
     mv $version_file.bak $version_file
 }

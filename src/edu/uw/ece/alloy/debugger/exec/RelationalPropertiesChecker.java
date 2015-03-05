@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -171,6 +172,10 @@ public class RelationalPropertiesChecker {
 		return Collections.unmodifiableSet( new HashSet<>(getAllProperties((s)->{return s.contains(",b,");},extracerFunction)) );		
 	}
 
+	final public Set<String> getAllOrderedTernaryDomainRange() throws FileNotFoundException, IOException{
+		return Collections.unmodifiableSet( new HashSet<>(getAllProperties((s)->{return s.contains(",ot,d,0,r");},extracerFunction)) );		
+	}
+
 	/**
 	 * 
 	 * @param fieldName
@@ -237,6 +242,35 @@ public class RelationalPropertiesChecker {
 		return Collections.unmodifiableList(properties);
 	}
 
+	/**
+	 * 
+	 * @param fieldName
+	 * @param domainName
+	 * @param rangeName
+	 * @return
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 */
+	final private List<String> generateOrderedTernyDomainRangeProperties(final String fieldName_, final String domainName_, final String midName_, final String rangeName_) throws FileNotFoundException, IOException{
+
+		final List<String> properties = new ArrayList<>();
+		final String domainName = domainName_.replace("this/", "");
+		//The string name is attached to the domain name using domain restrictor operator in order to prevent ambiguity for the same fields name in other sigs 
+		final String fieldName =  /*domainName + ExprBinary.Op.DOMAIN +*/fieldName_.replace("this/", "");
+		final String midName = midName_.replace("this/", "");
+		final String rangeName = rangeName_.replace("this/", "");
+		final String moduleName = propertiesModuleFile.getName().replace(".als", "");
+		
+		final Map<Sig, String> orderedSigs = findOrderedSignatures();
+		final Map<String, String> orderedSigsAlises = orderedSigs.keySet().stream().collect(Collectors.toMap(key->key.toString().replace("this/",""), key->orderedSigs.get(key)));
+		
+		
+		for(String ternary: getAllOrderedTernaryDomainRange() )
+			properties.add( String.format("%1$s/%2$s[%3$s,%4$s,%5$s,%6$s,%7$s/first,%7$s/next,%8$s/first,%8$s/next]", /*1*/moduleName, /*2*/ternary, /*3*/fieldName, /*4*/domainName, /*5*/midName, /*6*/rangeName, /*7*/orderedSigsAlises.get(domainName), /*8*/orderedSigsAlises.get(rangeName)   ) );
+
+
+		return Collections.unmodifiableList(properties);
+	}
 
 	private final String findFunctions() throws Err{
 		//All functions and pred with parameters are to be included in the new alloySpec.
@@ -274,6 +308,36 @@ public class RelationalPropertiesChecker {
 			}
 		}
 		return sigs.toString();
+	}
+
+	/**
+	 * The return map is a map from the ordered sig to the alias name. Example:
+	 * Input: 'open util/ordering [A]'  
+	 * Output: 'this/A->ordered_A'
+	 * Input: 'open util/ordering [A] as ao'  
+	 * Output: 'this/A->so'
+	 * 
+	 */
+	private final Map<Sig, String> findOrderedSignatures(){
+		Map<Sig,String> result = new HashMap<>();
+
+		for(CompModule.Open key: ((CompModule) world).getOpens() ){
+			//The internal modules are skipped
+			if(!( key.filename.equals("util/integer") || key.filename.equals("") ) && key.filename.equals("util/ordering") ){
+				for(String arg: key.args){
+					for(Sig sig : ((CompModule) world).getAllSigs()){
+						if(sig.toString().equals("this/"+arg)){
+							if(key.alias != null && !key.alias.equals("") && !key.alias.equals("ordering"))
+								result.put(sig, key.alias);
+							else
+								result.put(sig, "oredered_"+arg);
+						}
+					}
+				}
+			}
+		}
+
+		return Collections.unmodifiableMap(result);
 	}
 
 	private final String findOpenStatements(){
@@ -338,11 +402,24 @@ public class RelationalPropertiesChecker {
 
 	}
 
+	private final boolean isOrderedDomainRange(final Sig.Field field) throws Err{
+		final FieldDecomposer  fldDeocmposer = new FieldDecomposer();
+		final List<Expr> sigsInField =  fldDeocmposer.extractFieldsItems(field);
+		assert sigsInField.size() == 2;
+		final Set<Sig> orderedSigs =	findOrderedSignatures().keySet();
+		
+		return  orderedSigs.contains(field.sig) && orderedSigs.contains(sigsInField.get(1));
+		
+	}
+
 	private final List<String> generateProperties(final Sig.Field field) throws Err, FileNotFoundException, IOException{
 		final List<String> properties = new ArrayList<>();
 		final FieldDecomposer  fldDeocmposer = new FieldDecomposer();
 		final String fieldName = findFieldName(field);
 		final List<Expr> sigsInField =  fldDeocmposer.extractFieldsItems(field);
+
+		getAllOrderedTernaryDomainRange();
+
 		//In case we have sig A{r:B}, sig C{s:r}
 		if(sigsInField.get(0) instanceof Sig.Field){
 			//decompose the field, mean `s; again.
@@ -356,8 +433,20 @@ public class RelationalPropertiesChecker {
 				properties.addAll( generateBinaryProperties(fieldName, field.sig.label, sigsInField.get(0).toString() ) );
 			}else if( sigsInField.size() == 2 && sigsInField.get(0) instanceof Sig && sigsInField.get(1) instanceof Sig ){
 				properties.addAll( generateTernyProperties(fieldName, field.sig.label, ((Sig)sigsInField.get(0)).label, ((Sig)sigsInField.get(1)).label ) );
-			}
+			}			
 		}
+
+		//ordered sigs
+		if( !(sigsInField.get(0) instanceof Sig.Field) &&
+				sigsInField.size() == 2 && sigsInField.get(0) instanceof Sig &&
+				sigsInField.get(1) instanceof Sig &&
+				isOrderedDomainRange(field)
+				){
+			properties.addAll(
+					generateOrderedTernyDomainRangeProperties(fieldName, field.sig.label, ((Sig)sigsInField.get(0)).label, ((Sig)sigsInField.get(1)).label ) 
+					);
+		}
+
 		return Collections.unmodifiableList(properties);
 	}
 
@@ -391,7 +480,7 @@ public class RelationalPropertiesChecker {
 
 		List<File> retFiles = transformForChecking(propBuilder).stream().map(a->a.toAlloyFile(destFolder)).flatMap(l->l.stream()).collect(Collectors.toList());
 
-		
+
 		//retFiles.addAll(transformForChecking(propBuilder).stream().map(a->a.toAlloyFile(destFolder).get(0)).collect(Collectors.toList()));
 
 		return Collections.unmodifiableList(retFiles);
@@ -404,7 +493,9 @@ public class RelationalPropertiesChecker {
 		propBuilder.setOpenModule( getOpenModule() );
 		propBuilder.setSourceFile(alloySepcFileName);
 		propBuilder.setBinaryProperties( getAllBinaryPropertiesName() );
-		propBuilder.setTernaryProperties( getAllTernaryPropertiesName() );
+		Set<String> ternaries = new HashSet( getAllTernaryPropertiesName());
+		ternaries.addAll(getAllOrderedTernaryDomainRange());
+		propBuilder.setTernaryProperties( Collections.unmodifiableSet(ternaries) );
 		propBuilder.setFunctions( findFunctions() );
 		propBuilder.setSigs( findSigs() );
 		propBuilder.setOpenStatements( findOpenStatements() );
@@ -428,8 +519,8 @@ public class RelationalPropertiesChecker {
 
 		return Collections.unmodifiableList(retProps);
 	}
-	
-	
+
+
 	final public void makeApproximation(final File destFolder) throws Err, FileNotFoundException, IOException{
 
 		assert destFolder.isDirectory() : "not a directory: " + destFolder;
@@ -439,47 +530,163 @@ public class RelationalPropertiesChecker {
 		propBuilder.registerPropertyChecking(SpecToApproxGenerator.class);
 
 		List<PropertyCheckingSource> result = transformForChecking(propBuilder);//.stream().map(a->a.toAlloyFile(destFolder)).collect(Collectors.toList()));
-		
+
 		result.get(0).toAlloyFile(destFolder);
-		
+
 		//Map<Pair<String,String>, Set<String>> groups = ((SpecToApproxGenerator)result.get(0)).findAllInconsistencies();
 		//System.out.println(groups);
-		
+
 		//((SpecToApproxGenerator)result.get(0)).findAllPropertiesDifferenceConsistency();
 		//((SpecToApproxGenerator)result.get(0)).findAllPropertiesDifferenceImply();
 		//((SpecToApproxGenerator)result.get(0)).findInconsistencybyImply();
 
 		//((SpecToApproxGenerator)result.get(0)).findAllInconsistencies();
-		((SpecToApproxGenerator)result.get(0)).find_I_a();
+		System.out.println( "I_a:\n\n" );
+		//SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_a());
+
+
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>> resI_a = ((SpecToApproxGenerator)result.get(0)).findI_a();
+		resI_a = ((SpecToApproxGenerator)result.get(0)).filterMap(resI_a);
+		SpecToApproxGenerator.printMap( resI_a );
+
+		System.out.println( "\nfiltered Backward I_a:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>> resBI_a =  ((SpecToApproxGenerator)result.get(0)).filterbyImplicationRightside ( resI_a );
+		SpecToApproxGenerator.printMap( resBI_a );
+
+		System.out.println( "\nfiltered Forward I_a:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>>  resFI_a =  ((SpecToApproxGenerator)result.get(0)).filterbyImplicationLeftside ( resI_a );
+		SpecToApproxGenerator.printMap( resFI_a );
+
+		System.out.println( "\nfiltered ForwardBackward I_a:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>>  resFBI_a =  ((SpecToApproxGenerator)result.get(0)).filterbyImplicationLeftside ( resBI_a);
+		SpecToApproxGenerator.printMap( resFBI_a );
+
+		System.out.println( "II_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIII_e());
+
+		System.out.println( "IV_e:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_e());
+
+		SpecToApproxGenerator.printSet( ((SpecToApproxGenerator)result.get(0)).findAllImplications());
+
+		System.exit(-1);
+
+		System.out.println( "I_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_b());
+		System.out.println( "I_c:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_c());
+		System.out.println( "I_d:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_d());
+		System.out.println( "I_e:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_e());
+
+		System.out.println( "II_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findII_a());
+		System.out.println( "II_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findII_b());
+		System.out.println( "II_c:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findII_c());
+		System.out.println( "II_d:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findII_d());
+		System.out.println( "II_e:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findII_e());
+
+		System.out.println( "III_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIII_a());
+		System.out.println( "III_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIII_b());
+		System.out.println( "III_c:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIII_c());
+		System.out.println( "III_d:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIII_d());
+		System.out.println( "\nIII_e:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>> res = ((SpecToApproxGenerator)result.get(0)).findIII_e();
+		SpecToApproxGenerator.printMap( res );
+
+		System.out.println( "\nfiltered Backward III_e:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>> res2 =  ((SpecToApproxGenerator)result.get(0)).filterbyImplicationRightside ( res);
+		SpecToApproxGenerator.printMap( res2 );
+
+		System.out.println( "\nfiltered Forward III_e:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>>  res3 =  ((SpecToApproxGenerator)result.get(0)).filterbyImplicationLeftside ( res);
+		SpecToApproxGenerator.printMap( res3 );
+
+		System.out.println( "\nfiltered ForwardBackward III_e:\n\n" );
+		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>>  res4 =  ((SpecToApproxGenerator)result.get(0)).filterbyImplicationLeftside ( res2);
+		SpecToApproxGenerator.printMap( res4 );
+
+		System.out.println( "IV_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_a());
+		System.out.println( "IV_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_b());
+		System.out.println( "IV_c:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_c());
+		System.out.println( "IV_d:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_d());
+		System.out.println( "IV_e:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_e());
+
+		System.out.println( "V_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findV_a());
+		System.out.println( "V_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findV_b());
+		System.out.println( "V_c:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findV_c());
+		System.out.println( "V_d:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findV_d());
+		System.out.println( "V_e:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findV_e());
+
+		System.out.println( "VI_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findVI_a());
+		System.out.println( "VI_b:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findVI_b());
+		System.out.println( "VI_c:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findVI_c());
+		System.out.println( "VI_d:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findVI_d());
+		System.out.println( "VI_e:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findVI_e());
+
+		System.out.println( "Implied Properties:\n\n" );
+		SpecToApproxGenerator.printSet( ((SpecToApproxGenerator)result.get(0)).findAllImplications());
+
+		System.out.println( "Consistent Consistents:\n\n" );
+		SpecToApproxGenerator.printSet( ((SpecToApproxGenerator)result.get(0)).findAllConsistents());
+
+		System.out.println( "Consistent Inconsistents:\n\n" );
+		SpecToApproxGenerator.printSet( ((SpecToApproxGenerator)result.get(0)).findAllInconsistents());
+
+
 	}
 
-	
+
 	final public List<File> findInconsistentProperties(final File destFolder) throws Err, FileNotFoundException, IOException{
 		assert destFolder.isDirectory() : "not a directory: " + destFolder;
 
 		final PropertyCheckingBuilder propBuilder = new PropertyCheckingBuilder();
 		propBuilder.registerPropertyChecking(PropertiesConsistencyChecking.class);
-		
+
 		List<PropertyCheckingSource> checkers = transformForChecking(propBuilder);
-		
+
 		List<File> retFiles = checkers.stream().map( a->a.toAlloyFile(destFolder)) .flatMap(l -> l.stream()).collect(Collectors.toList());
-		
+
 		return Collections.unmodifiableList(retFiles);
-		
+
 	}
-	
+
 	final public List<File> findImplicationsProperties(final File destFolder) throws Err, FileNotFoundException, IOException{
 		assert destFolder.isDirectory() : "not a directory: " + destFolder;
 
 		final PropertyCheckingBuilder propBuilder = new PropertyCheckingBuilder();
 		propBuilder.registerPropertyChecking(PropertiesImplicationChecking.class);
-		
+
 		List<PropertyCheckingSource> checkers = transformForChecking(propBuilder);
-		
+
 		List<File> retFiles = checkers.stream().map( a->a.toAlloyFile(destFolder)) .flatMap(l -> l.stream()).collect(Collectors.toList());
-		
+
 		return Collections.unmodifiableList(retFiles);
-		
+
 	}
-	
+
 }

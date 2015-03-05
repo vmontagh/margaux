@@ -28,47 +28,6 @@ public class PropertiesConsistencyChecking extends PropertyCheckingSource {
 	static Map<String, String> props = new HashMap<String, String>();
 	final String name;
 	final String notName;
-	
-	final public static Map<String, Set<String>> consistentProps;
-	final public static Map<String, Set<String>> inconsistentProps;
-	
-	static{
-		File mapFile = new File("/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/dataset1/consistency.csv"); 
-		
-		final Map<String, Set<String>> tmpConsistentProps = new HashMap<String, Set<String>>();
-		final Map<String, Set<String>> tmpInconsistentProps = new HashMap<String, Set<String>>();
-		
-		final Consumer<List<String>> toMaps = new Consumer<List<String>>() {
-			
-			@Override
-			public void accept(List<String> t) {
-				
-				assert t.size() == 5;
-				final Map<String, Set<String>> map = t.get(4).equals("1") ? tmpConsistentProps : tmpInconsistentProps;
-				final String prop = String.format("%s[%s]", t.get(0), t.get(1) );
-				Set<String> set = map.containsKey(prop) ? map.get(prop) : new HashSet<String>();
-				set.add(String.format("%s[%s]", t.get(2), t.get(3) ));
-				map.put(prop, set);
-			}
-		};
-		try (BufferedReader reader = new BufferedReader(new FileReader(mapFile))) {
-			reader.lines()
-                    .substream(1)
-                    .map(line -> Arrays.asList(line.split(",")))
-                    .filter(list -> list.size() == 5)
-                    .forEach( toMaps);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-		consistentProps = Collections.unmodifiableMap(tmpConsistentProps);
-		inconsistentProps = Collections.unmodifiableMap(tmpInconsistentProps);
-	}
-	
-	
-	public static void main(String ...str){
-		System.out.println(consistentProps);
-		System.out.println(inconsistentProps);
-	}
 
 	public PropertiesConsistencyChecking(File sourceFile_, String property_,
 			String fieldName_, Set<String> binaryProperties_,

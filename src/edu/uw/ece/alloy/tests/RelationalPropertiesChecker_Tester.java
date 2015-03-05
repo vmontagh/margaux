@@ -52,7 +52,7 @@ public class RelationalPropertiesChecker_Tester {
 		LoggerUtil.debug(RelationalPropertiesChecker_Tester.class, "Creates a new file containing properties.");
 		final String properties = "total,b,d,0,0\nfunctional,b,d,0,0\nantisymmetric,b,0,0,0\nweaklyConnected,b,d,r,0\n"+
 				"irreversible,t,0,0,0\nstronglyConnected,b,d,r,0\nbijection,b,d,r,0\ntransitive3,t,0,0,0\nempty,b,0,0,0\n"+
-				"empty3,t,0,0,0\ntripleRootedOne,t,d,m,r\n";
+				"empty3,t,0,0,0\ntripleRootedOne,t,d,m,r\nisIncrease_s_t_local_m,ot,d,0,r\nisIncreaseStrictly_s_t_local_m,ot,d,0,r\n";
 		//final String properties = "total,b,d,0\ntransitive3,t,0,0";
 		Util.writeAll(testingRelationalPropertiesFile.getAbsolutePath(), properties);
 
@@ -61,9 +61,10 @@ public class RelationalPropertiesChecker_Tester {
 		final String alloySpec = 
 				"open util/ordering [A] as so\n"+
 				"open util/ordering [B]\n"+
+				"open util/relation as rel"+
 				"one sig A{r: B}\n\n"+
 				"sig G,F,E extends A{}\n"+
-				"sig B{s: A->B}\n"+
+				"sig B{s: F->A}\n"+
 				"sig Z{t: B, p:t->A}\n"+
 				"sig C extends A{c: B}{#B = 1}\n"+
 				"sig T{w:A->B}\n"+
@@ -207,8 +208,8 @@ public class RelationalPropertiesChecker_Tester {
 	public void test_makeApproximation() throws FileNotFoundException, IOException, Err {
 
 		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(
-								new File("/Users/vajih/Documents/workspace-git/alloy/models/debugger/models2015","props.ini"), 
-								new File("/Users/vajih/Documents/workspace-git/alloy/models/debugger/models2015/anlayzing_models", "dijkstra_buggy_splitted.als"), 
+								new File("models/debugger/models2015","props.ini"), 
+								new File("models/debugger/models2015/anlayzing_models", "dijkstra_buggy_splitted.als"), 
 								propertiesModuleFile);
 		rpc = rpc.replacingCheckAndAsserts();
 		try {
@@ -227,7 +228,7 @@ public class RelationalPropertiesChecker_Tester {
 		RelationalPropertiesChecker rpc = new RelationalPropertiesChecker(testingRelationalPropertiesFile, new File( "models/examples/toys/CeilingsAndFloors.als"), propertiesModuleFile);
 		
 		try {
-			assertEquals(rpc.transformForChecking(testingRelationalPropertiesTMPDirectory).size(), 140);/*.stream().forEach(System.out::println)*/;
+			assertEquals(rpc.transformForChecking(testingRelationalPropertiesTMPDirectory).size(), 336);/*.stream().forEach(System.out::println)*/;
 		} catch (Err e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

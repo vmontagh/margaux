@@ -71,7 +71,8 @@ public class SpecToPropertyChecking extends PropertyCheckingSource {
 
 	@Override
 	public boolean repOk(){
-		return super.repOk() && this.assertionName != null && !this.assertionName.trim().isEmpty() &&
+		return super.repOk() 
+				&& this.assertionName != null && !this.assertionName.trim().isEmpty() &&
 				this.assertionBody != null && !this.assertionBody.trim().isEmpty() ;
 	}
 
