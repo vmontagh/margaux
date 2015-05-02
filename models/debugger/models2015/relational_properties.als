@@ -388,10 +388,10 @@ pred tripleNotEmptySets[s,m,t: univ]{
 	some t
 }
 
-pred isFirstEmpty[r:univ->univ->univ, s, m, t: univ, 
+pred isFirstEmpty_s_t[r:univ->univ->univ, s, m, t: univ, 
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
-	tripleNotEmptySets[s,m,t]
+	tripleNotEmptySets[s,m,t] =>
 	no s_first.r
 }
 
@@ -400,7 +400,7 @@ pred isGrowthFromEmpty_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
 
-	isFirstEmpty[r, s, m, t, s_first, s_next, t_first, t_next]
+	isFirstEmpty_s_t[r, s, m, t, s_first, s_next, t_first, t_next]
 	isGrowth_s_t_local_m[r, s, m, t, s_first, s_next, t_first, t_next]
 }
 
@@ -408,7 +408,7 @@ pred isGrowthStrictlyFromEmpty_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
 
-	isFirstEmpty[r, s, m, t, s_first, s_next, t_first, t_next]
+	isFirstEmpty_s_t[r, s, m, t, s_first, s_next, t_first, t_next]
 	isGrowthStrictly_s_t_local_m[r, s, m, t, s_first, s_next, t_first, t_next]
 }
 
@@ -416,9 +416,18 @@ pred isGrowthStrictlyFromEmpty_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 pred isGrowth_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
-	//tripleNotEmptySets[s,m,t]
+	//tripleNotEmptySets[s,m,t] =>
 	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ |  
 		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) |
+			c in c'
+}
+
+pred isGrowth_s_t_global_m[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	//tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next]|/*Make the middle one local*/  
+		let a'= a.s_next | let c = m.(a.r) | let c' = m.(a'.r) |
 			c in c'
 }
 
@@ -426,7 +435,7 @@ pred isGrowth_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 pred isGrowthStrictly_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
-	tripleNotEmptySets[s,m,t]
+	tripleNotEmptySets[s,m,t] =>
 	all a: s - last[s, s_next] |all b: m| /*Make the middle one local*/ 
 		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) |
 			c in c' and (not c' in c ) 
@@ -434,11 +443,22 @@ pred isGrowthStrictly_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 
 
 
+//Strictly Growth
+pred isGrowthStrictly_s_t_global_m[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | /*Make the middle one local*/ 
+		let a'= a.s_next | let c = m.(a.r) | let c' = m.(a'.r) |
+			c in c' and (not c' in c ) 
+}
+
+
 //Increase
 pred isIncrease_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
-	//tripleNotEmptySets[s,m,t]
+	tripleNotEmptySets[s,m,t] =>
 	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ |  
 		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) | let inc = c' - c |
 			some inc => gte[min[inc, t_next], min[c, t_next], t_next]
@@ -448,7 +468,7 @@ pred isIncrease_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 pred isIncreaseStrictly_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
-	//tripleNotEmptySets[s,m,t]
+	tripleNotEmptySets[s,m,t] =>
 	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ |  
 		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) | let inc = c' - c |
 			 (some inc) => lt[max[c,t_next],min[inc,t_next],t_next]
@@ -466,49 +486,579 @@ pred isIncreaseStrictly_s_t_local_m[r:univ->univ->univ, s, m, t: univ,
 
 
 
-
-
-
-
-
-//To be Completed Later
-//Shrink
-pred isShrink_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
-					s_first: univ, s_next: univ->univ,
-						t_first: univ, t_next: univ->univ]{
-	tripleNotEmptySets[s,m,t]
-	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ |  
-		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) |
-			c' in c
+/**
+* growth: if s_{i} < s_{i+1} => s_i.r in s_{i+1}.r and  s_{i+1}.r !in s_i.r
+ **/
+pred isTripleGrowthSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ , b:m]{
+	tripleNotEmptySets[s,m,t] =>
+	s_i1 = s_next[s_i]
+	(b.(s_i.r) in b.(s_i1.r)) and (	b.(s_i1.r) !in b.(s_i.r))
 }
 
-//Strinctly Shrink
-pred isShrinkStrictly_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
-					s_first: univ, s_next: univ->univ,
-						t_first: univ, t_next: univ->univ]{
-	//tripleNotEmptySets[s,m,t]
-	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ |  
-		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) |
-			c' in c and c != c'
-}
-//Decrease
-pred isDecrease_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
-					s_first: univ, s_next: univ->univ,
-						t_first: univ, t_next: univ->univ]{
-	tripleNotEmptySets[s,m,t]
-	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ |  
-		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) | let dec = c - c' |
-			some dec => lte[max[dec, t_next], max[c, t_next], t_next] 
+/**
+* 
+ **/
+pred isTripleGrowthLocalMiddleSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleGrowthSingleton[r, s, m, t, s_first, s_next, s_i, s_i1, b ]
 }
 
-//Strictly Shrink
-pred isShrinkStrictly_s_t_local_m[r:univ->univ->univ, s, m, t: univ, 
+/**
+* 
+ **/
+pred isTripleGrowthGlobalMiddleSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleGrowthSingleton[r, s, m, t, s_first, s_next, s_i, s_i1, m ]
+}
+
+/**
+* shrunk: if s_{i} < s_{i+1} => s_{i+1}.r in s_i.r and  s_i.r !in s_{i+1}.r
+ **/
+pred isTripleShrunkSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ , b:m]{
+	tripleNotEmptySets[s,m,t] =>
+	s_i1 = s_next[s_i]
+	(b.(s_i1.r) in b.(s_i.r)) and (b.(s_i.r) !in b.(s_i1.r))
+}
+
+/**
+* 
+ **/
+pred isTripleShrunkLocalMiddleSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleShrunkSingleton[r, s, m, t, s_first, s_next, s_i, s_i1, b ]
+}
+
+/**
+* 
+ **/
+pred isTripleShrunkGlobalMiddleSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleShrunkSingleton[r, s, m, t, s_first, s_next, s_i, s_i1, m ]
+}
+
+
+/**
+* nochange: if s_{i} < s_{i+1} => s_i.r = s_{i+1}.r 
+ **/
+pred isTripleNochangeSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ , b:m]{
+	tripleNotEmptySets[s,m,t] =>
+	s_i1 = s_next[s_i]
+	(b.(s_i.r) = b.(s_i1.r)) //and (b.(s_i1.r) in b.(s_i.r))
+}
+
+/**
+* 
+ **/
+pred isTripleNochangeLocalMiddleSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleNochangeSingleton[r, s, m, t, s_first, s_next, s_i, s_i1, b ]
+}
+
+/**
+* 
+ **/
+pred isTripleNochangeGlobalMiddleSingleton[r:univ->univ->univ, s, m, t: univ, 
+								s_first: univ, s_next: univ->univ,
+										s_i, s_i1: univ ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleNochangeSingleton[r, s, m, t, s_first, s_next, s_i, s_i1, m ]
+}
+
+
+-----------------------Overal Growth
+--Global
+pred isTripleStrictlyGrowthOverallGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleGrowthGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+pred isTripleGrowthOverallGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | 
+							isTripleGrowthGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a'] || 
+								isTripleNochangeGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+--Local
+pred isTripleStrictlyGrowthOverallLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleGrowthLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+pred isTripleGrowthOverallLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | 
+							isTripleGrowthLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a'] || 
+								isTripleNochangeLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+--------------------Overal Shrunk
+--Global
+pred isTripleStrictlyShrunkOverallGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleShrunkGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+pred isTripleShrunkOverallGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | 
+							isTripleShrunkGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a'] || 
+								isTripleNochangeGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+--Local
+pred isTripleStrictlyShrunkOverallLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleShrunkLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+pred isTripleShrunkOverallLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | 
+							isTripleShrunkLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a'] || 
+								isTripleNochangeLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+---------------------No change
+--Global
+pred isTripleNochangeOverallGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | 
+								isTripleNochangeGlobalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+--Local
+pred isTripleNochangeOverallLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | 
+								isTripleNochangeLocalMiddleSingleton[r, s, m, t, s_first, s_next, a,  a']
+}
+
+-------------------Empty Section
+
+pred isTripleEmptyStart[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+
+	--tripleNotEmptySets[s,m,t] =>
+	no s_first.r
+}
+
+-------------------Start from empty
+--Global
+pred isTripleStrictlyGrowthOverallFromEmptyGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleStrictlyGrowthOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleGrowthOverallFromEmptyGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleGrowthOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+pred isTripleStrictlyShrunkOverallFromEmptyGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleStrictlyShrunkOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleShrunkOverallGlobalFromEmptyMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleShrunkOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleNochangeOverallFromEmptyGlobalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleNochangeOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+--Local
+pred isTripleStrictlyGrowthOverallFromEmptyLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleStrictlyGrowthOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleGrowthOverallFromEmptyLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleGrowthOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+pred isTripleStrictlyShrunkOverallFromEmptyLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleStrictlyShrunkOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleShrunkOverallLocalFromEmptyMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleShrunkOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleNochangeOverallFromEmptyLocalMiddleSinglton[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ]{
+	isTripleEmptyStart[r,s,m,t,s_first,s_next]
+	isTripleNochangeOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+
+//The following three pred are the wrappers to make the experiment easier.
+
+----------------------Global
+pred isTripleStrictlyGrowthOverallGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyGrowthOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleGrowthOverallGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleGrowthOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleStrictlyShrunkOverallGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyShrunkOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleShrunkOverallGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleShrunkOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+pred isTripleNochangeOverallGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleNochangeOverallGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleStrictlyGrowthOverallFromEmptyGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyGrowthOverallFromEmptyGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleGrowthOverallFromEMPTYGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleGrowthOverallFromEmptyGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+pred isTripleStrictlyShrunkOverallFromEmptyGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyShrunkOverallFromEmptyGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleShrunkOverallGlobalFromEMPTYMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleShrunkOverallGlobalFromEmptyMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleNochangeOverallFromEMPTYGlobalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleNochangeOverallFromEmptyGlobalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+---------------------Local
+
+----------------------Global
+pred isTripleStrictlyGrowthOverallLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyGrowthOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleGrowthOverallLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleGrowthOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleStrictlyShrunkOverallLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyShrunkOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleShrunkOverallLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleShrunkOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+pred isTripleNochangeOverallLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleNochangeOverallLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleStrictlyGrowthOverallFromEmptyLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyGrowthOverallFromEmptyLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleGrowthOverallFromEMPTYLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleGrowthOverallFromEmptyLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+
+pred isTripleStrictlyShrunkOverallFromEmptyLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleStrictlyShrunkOverallFromEmptyLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleShrunkOverallLocalFromEMPTYMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleShrunkOverallLocalFromEmptyMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+pred isTripleNochangeOverallFromEMPTYLocalMiddleSingltonTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleNochangeOverallFromEmptyLocalMiddleSinglton[r, s, m, t, s_first, s_next]
+}
+
+-------------------
+
+
+pred isTripleEmptyStartTMP[r:univ->univ->univ, s, m, t: univ, 
+														s_first: univ, s_next: univ->univ,
+															t_first: univ, t_next: univ->univ]{
+	isTripleEmptyStart[r, s, m, t, s_first, s_next]
+}
+
+
+
+
+
+
+----------------Relation between orders
+
+//Increase strictly between two states, if there is growth
+pred isTripleIncreaseIfGrowthStrict[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+						s_i,s_i1: univ, b: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	
+	let c = b.(s_i.r) | let c' = b.(s_i1.r) | let inc = c' - c |
+		some inc => lt[max[c,t_next],min[inc,t_next],t_next]
+}
+
+pred isTripleIncreaseIfGrowthStrictLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleIncreaseIfGrowthStrict[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, b]
+}
+
+pred isTripleIncreaseIfGrowthStrictGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleIncreaseIfGrowthStrict[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, m]
+}
+
+
+pred isTripleIncreaseIfGrowthStrictOverallLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
 					s_first: univ, s_next: univ->univ,
 						t_first: univ, t_next: univ->univ]{
-	tripleNotEmptySets[s,m,t]
-	all a: s - last[s, s_next]| all b: m /*Make the middle one local*/ | 
-		let a'= a.s_next | let c = b.(a.r) | let c' = b.(a'.r) | let dec = c - c' |
-			some dec => gt[min[c,t_next],max[dec,t_next],t_next]
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleIncreaseIfGrowthStrictLocalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+pred isTripleIncreaseIfGrowthStrictOverallGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleIncreaseIfGrowthStrictGlobalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+
+//IncreaseIfGrowth loosely between two states, if there is growth
+pred isTripleIncreaseIfGrowth[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+						s_i,s_i1: univ, b: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	let c = b.(s_i.r) | let c' = b.(s_i1.r) | let inc = c' - c |
+		some inc => lte[min[c, t_next], min[inc, t_next],  t_next]
+//		some inc => gte[min[inc, t_next], min[c, t_next], t_next]
+}
+
+pred isTripleIncreaseIfGrowthLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleIncreaseIfGrowth[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, b]
+}
+
+pred isTripleIncreaseIfGrowthGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleIncreaseIfGrowth[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, m]
+}
+
+
+pred isTripleIncreaseIfGrowthOverallLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleIncreaseIfGrowthLocalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+pred isTripleIncreaseIfGrowthOverallGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleIncreaseIfGrowthGlobalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+
+---------------------------------------------------------------
+//decrease if growth
+pred isTripleDecreaseIfGrowthStrict[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+						s_i,s_i1: univ, b: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	let c = b.(s_i.r) | let c' = b.(s_i1.r) | let inc = c' - c |
+		some inc => gt[min[c,t_next],max[inc,t_next],t_next]
+}
+
+pred isTripleDecreaseIfGrowthStrictLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleDecreaseIfGrowthStrict[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, b]
+}
+
+pred isTripleDecreaseIfGrowthStrictGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleDecreaseIfGrowthStrict[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, m]
+}
+
+pred isTripleDecreaseIfGrowthStrictOverallLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleDecreaseIfGrowthStrictLocalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+pred isTripleDecreaseIfGrowthStrictOverallGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleDecreaseIfGrowthStrictGlobalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+
+//DecreaseIfGrowth loosely between two states, if there is growth
+pred isTripleDecreaseIfGrowth[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+						s_i,s_i1: univ, b: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	let c = b.(s_i.r) | let c' = b.(s_i1.r) | let inc = c' - c |
+		some inc => lte[max[inc, t_next], max[c, t_next], t_next]
+}
+
+pred isTripleDecreaseIfGrowthLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all b: m | isTripleDecreaseIfGrowth[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, b]
+}
+
+pred isTripleDecreaseIfGrowthGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ,
+							s_i,s_i1: univ]{
+	tripleNotEmptySets[s,m,t] =>
+	isTripleDecreaseIfGrowth[r, s, m, t, s_first, s_next, t_first, t_next, s_i, s_i1, m]
+}
+
+
+pred isTripleDecreaseIfGrowthOverallLocalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleDecreaseIfGrowthLocalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+pred isTripleDecreaseIfGrowthOverallGlobalMiddle[r:univ->univ->univ, s, m, t: univ, 
+					s_first: univ, s_next: univ->univ,
+						t_first: univ, t_next: univ->univ]{
+	tripleNotEmptySets[s,m,t] =>
+	all a: s - last[s, s_next] | let a'= a.s_next | isTripleDecreaseIfGrowthGlobalMiddle[r, s, m, t, s_first, s_next, t_first, t_next, a, a']
+}
+
+
+------------------------------------------------
+//increase if shrink
+
+
+//decrease if shrink
+
+
+
+//TBD
+pred isTripleGrowthBinary[]{
 }
 
 
