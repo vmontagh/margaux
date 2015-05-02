@@ -98,7 +98,7 @@ public class RelationalPropertiesRelationChecker {
 
 		final Map<String, String> replaceMapping = new HashMap();
 
-		replaceMapping.put("/Users/vajih/Documents/workspace-git/alloy/relational_props/tmp/", "");
+		replaceMapping.put(tmpDirectory.getCanonicalPath()+File.separator, "");
 		//replaceMapping.put("relational_properties_S_c_P_", "");
 		replaceMapping.put("_S_p_R_", ",");
 		replaceMapping.put("_I__f_", "=>");
@@ -117,7 +117,6 @@ public class RelationalPropertiesRelationChecker {
 		Utils.replaceTextFiles(logOutput, "(repo).*", specName, replaceMapping) ;
 
 		System.out.printf("%d files are aggregated in %d ms",propCheckingFiles.size(),(System.currentTimeMillis() - timeStart));
-
 
 		try{
 

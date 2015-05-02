@@ -7,7 +7,7 @@ public class SpecHasPropertyChecking extends PropertyCheckingSource {
 
 	
 	final String predicateANDNameFormat = new String("%s"+SEPARATOR+"_A_n_D_"+SEPARATOR+"%s"+SEPARATOR+"%s");
-	final String propertyRunningFormat = "pred %1$s{ (%2$s and %3$s) and %5$s}\n run %1$s %4$s\n";
+	final String propertyRunningFormat = "pred %1$s{ (%2$s and %3$s)  %5$s}\n run %1$s %4$s\n";
 	
 	
 	final public String predicateName;
@@ -17,13 +17,16 @@ public class SpecHasPropertyChecking extends PropertyCheckingSource {
 			String fieldName_, Set<String> binaryProperties_,
 			Set<String> ternaryProperties_, String sigs_, String openModule_,
 			String openStatements_, String functions_, String commandHeader_,
-			String formula_, String commandScope_) {
+			String formula_, String commandScope_, String fact_) {
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
 				ternaryProperties_, sigs_, openModule_, openStatements_,
-				functions_, commandHeader_, formula_, commandScope_);
+				functions_, commandHeader_, formula_, commandScope_, fact_);
 
 		this.predicateName = String.format(predicateANDNameFormat, commandHeader, sanitizedPropertyName, sanitizedFieldName);
-		this.predicateBody = String.format(propertyRunningFormat, predicateName, property,  formula, commandScope, emptyProperty );
+		String empty = "";
+		if ( !property_.contains("EMPTY")  )
+			empty = " and " + emptyProperty ;
+		this.predicateBody = String.format(propertyRunningFormat, predicateName, property,  formula, commandScope, empty );
 	}
 
 	@Override

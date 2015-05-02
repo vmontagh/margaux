@@ -44,9 +44,12 @@ public final class RelationalPropertiesAnalyzer {
 		final File resourcesDir = new File( "models/debugger/models2015");
 
 		final File logOutput = new File("expr_output");
+		final File archivedLogOutput = new File(logOutput,"aggregated");
+
 		
 		final File workingDir = new File( "relational_props");
 		final File tmpDirectory = new File(workingDir, "tmp");
+		
 		
 		final File relationalPropIniOriginal = new File( resourcesDir, "props.ini");
 		final File relationalPropModuleOriginal = new File( resourcesDir, "relational_properties.als");
@@ -87,7 +90,7 @@ public final class RelationalPropertiesAnalyzer {
 			try {
 				List<File> propCheckingFiles = propertiesChecker.transformForChecking(tmpDirectory);
 				
-				System.out.printf("%d fiels are enerated to be checked.",propCheckingFiles.size());
+				System.out.printf("%d files are enerated to be checked.",propCheckingFiles.size());
 				
 				BenchmarkRunner.getInstance().doTest(new RelationalPropertiesExecuterJob(""), 1, 0.6, propCheckingFiles, logOutput);
 			} catch (Err | IOException | InterruptedException e) {
@@ -104,7 +107,7 @@ public final class RelationalPropertiesAnalyzer {
 			
 			final Map<String, String> replaceMapping = new HashMap();
 
-			replaceMapping.put("/Users/vajih/Documents/workspace-git/alloy/relational_props/tmp/", "");
+			replaceMapping.put(tmpDirectory.getCanonicalPath()+File.separator, "");
 			//replaceMapping.put("relational_properties_S_c_P_", "");
 			replaceMapping.put("_S_p_R_", ",");
 			replaceMapping.put("_I__f_", "=>");
@@ -116,6 +119,9 @@ public final class RelationalPropertiesAnalyzer {
 			replaceMapping.put("_tc.als", "");
 			replaceMapping.put("_F_l_d_", ",");
 			replaceMapping.put("_A_n_D_", "&&");
+			replaceMapping.put("_U_n_N_", "+");
+			replaceMapping.put("_D_i_F_", "-");
+			replaceMapping.put("_I_t_S_", "&");
 			replaceMapping.put("_"+specName, ","+specName.substring(0, specName.length()-1));
 			
 			final long timeStart  = System.currentTimeMillis();
@@ -126,7 +132,12 @@ public final class RelationalPropertiesAnalyzer {
 			
 			
 			(Runtime.getRuntime().exec("bash " + (new File(logOutput, "move.sh")).getAbsolutePath())).waitFor();
-		    
+			try{
+
+				//Utils.moveFiles(Utils.files(logOutput.getAbsolutePath(), "^repo.*"), archivedLogOutput);
+			}catch(Exception e){
+				System.out.println("moving failed "+e.getMessage());
+			}
 			
 			
 		}

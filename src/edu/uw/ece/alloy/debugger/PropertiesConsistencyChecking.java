@@ -33,10 +33,10 @@ public class PropertiesConsistencyChecking extends PropertyCheckingSource {
 			String fieldName_, Set<String> binaryProperties_,
 			Set<String> ternaryProperties_, String sigs_, String openModule_,
 			String openStatements_, String functions_, String commandHeader_,
-			String formula_, String commandScope_) {
+			String formula_, String commandScope_,String fact_) {
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
 				ternaryProperties_, sigs_, openModule_, openStatements_,
-				functions_, commandHeader_, formula_, commandScope_);
+				functions_, commandHeader_, formula_, commandScope_, fact_);
 
 		name = String.format("%s%s%s", sanitizedPropertyName, SEPARATOR , sanitizedFieldName);
 		notName = String.format("_N_o_T_%s", name);
@@ -70,7 +70,7 @@ public class PropertiesConsistencyChecking extends PropertyCheckingSource {
 				if( !key.equals(current)   ){	
 					
 					String empty = "";
-					if ( !(current.contains("empty") || key.contains("empty")) )
+					if ( !(current.toLowerCase().contains("empty") || key.toLowerCase().contains("empty")) )
 						empty = " and " + emptyProperty ;
 					
 					final String pred = String.format("pred %1$s{\n %2$s  and %3$s %4$s}\nrun %1$s %5$s", key, props.get(current), props.get(key), empty ,commandScope);

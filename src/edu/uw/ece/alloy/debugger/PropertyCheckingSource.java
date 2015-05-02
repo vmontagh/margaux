@@ -48,6 +48,7 @@ public abstract class PropertyCheckingSource {
 	final public String commandHeader;
 	final public String formula;
 	final public String commandScope;
+	final public String facts;
 
 	final public static String emptyCheckingBinrayFieldFormat = "!empty[ %s ]";
 	final public static String emptyCheckingTernaryFieldFormat = "!empty3[ %s ]";
@@ -127,7 +128,7 @@ public abstract class PropertyCheckingSource {
 	protected PropertyCheckingSource(final File sourceFile_, final String property_, final String fieldName_, final Set<String> binaryProperties_, 
 			final Set<String> ternaryProperties_, /*final String assertionName_, final String assertionBody_,*/ final  String sigs_,
 			final String openModule_, final String openStatements_, final String functions_, 
-			final String commandHeader_, final String formula_, final String commandScope_){
+			final String commandHeader_, final String formula_, final String commandScope_, final String facts_){
 
 		this.sourceFile = sourceFile_;
 
@@ -160,6 +161,7 @@ public abstract class PropertyCheckingSource {
 				this.commandHeader = commandHeader_;
 				this.formula = formula_;
 				this.commandScope = commandScope_;
+				this.facts = facts_;
 
 	}
 
@@ -170,7 +172,10 @@ public abstract class PropertyCheckingSource {
 				replaceAll("\\[","_F_l_d_").
 				replaceAll("\\.", "_D_o_T_").
 				replaceAll(ExprBinary.Op.DOMAIN.toString(), "_D_m_N_").
-				replaceAll("/","_S_c_P_");
+				replaceAll("/","_S_c_P_").
+				replaceAll("\\+","_U_n_N_").
+				replaceAll("-","_D_i_F_").
+				replaceAll("&","_I_t_S_");
 	}
 
 
@@ -180,6 +185,7 @@ public abstract class PropertyCheckingSource {
 		newAlloySpec.append("\n").append(openModule);
 		newAlloySpec.append("\n").append(sigs);
 		newAlloySpec.append("\n").append(functions);
+		newAlloySpec.append("\n").append(facts);
 		newAlloySpec.append("\n").append(getNewStatement());
 		return newAlloySpec.toString();
 	}
@@ -227,8 +233,10 @@ public abstract class PropertyCheckingSource {
 				!sanitizedFieldName.trim().isEmpty() && propertyFieldName != null && 
 				!propertyFieldName.trim().isEmpty() && propertyName != null && 
 				!propertyName.trim().isEmpty() && binaryProperties != null && 
-				!binaryProperties.isEmpty() && ternaryProperties != null && 
-				!ternaryProperties.isEmpty() && emptyProperty != null && 
+				//!binaryProperties.isEmpty() && 
+				ternaryProperties != null && 
+				//!ternaryProperties.isEmpty() && 
+				emptyProperty != null && 
 				!emptyProperty.trim().isEmpty() && functions != null && 
 				sigs != null &&  !sigs.trim().isEmpty() && openModule != null && 
 				openStatements != null &&  

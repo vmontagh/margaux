@@ -81,7 +81,7 @@ public class A4CommandExecuter {
 			// Choose some default options for how you want to execute the commands
 			A4Options options = new A4Options();
 
-			options.solver = A4Options.SatSolver.MiniSatJNI;
+			options.solver = A4Options.SatSolver.SAT4J;
 			options.symmetry = 0;
 
 			for (Command command: world.getAllCommands()) {

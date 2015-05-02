@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,10 +35,10 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 			String fieldName_, Set<String> binaryProperties_,
 			Set<String> ternaryProperties_, String sigs_, String openModule_,
 			String openStatements_, String functions_, String commandHeader_,
-			String formula_, String commandScope_) {
+			String formula_, String commandScope_, String fact_) {
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
 				ternaryProperties_, sigs_, openModule_, openStatements_,
-				functions_, commandHeader_, formula_, commandScope_);
+				functions_, commandHeader_, formula_, commandScope_,fact_);
 
 
 	}
@@ -68,10 +70,10 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 
 		return "";
 	}
-	
+
 	private static Set<PropertyRelation> findAllProperties(Operator op){
 		final Set<PropertyRelation> result = new HashSet<>();
-		
+
 		final Set<Statement> stmts = PropertySet.getAllStatements();
 		final Set<Field> flds = PropertySet.getAllFields();
 
@@ -82,10 +84,10 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 				}
 			}
 		}
-		
+
 		return Collections.unmodifiableSet(result);
 	}
-	
+
 	public static Set<PropertyRelation> findAllImplications(){
 		return findAllProperties(Operator.CompleteHas);
 	}
@@ -93,11 +95,11 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 	public static Set<PropertyRelation> findAllConsistents(){
 		return findAllProperties(Operator.Consistent);
 	}
-	
+
 	public static Set<PropertyRelation> findAllInconsistents(){
 		return findAllProperties(Operator.Inconsistent);
 	}
-	
+
 	/**
 	 * General Properties
 	 * @return
@@ -108,6 +110,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 
 		final Set<Statement> stmts = PropertySet.getAllStatements();
 		final Set<Field> flds = PropertySet.getAllFields();
+
 
 		//Lets order the stmts in order to have Ai,Aj instead of Ai,Aj and AjAi 
 
@@ -122,7 +125,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 
 					for(Property p: Ps){
 						for(Property q: Qs){
-							
+
 							if( checker.test(p, q)){
 								final PropertyRelation prP = new PropertyRelation(p, stmtp, fld);
 								final PropertyRelation prQ = new PropertyRelation(q, stmtq, fld);
@@ -270,21 +273,37 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 
 	final static Set<Statement> included = new HashSet<>();
 	static{
-		//included.add(new Statement("A"));
-		included.add(new Statement("B"));
+		/*included.add(new Statement("A"));
+		included.add(new Statement("B")); 
 		included.add(new Statement("C"));
+		included.add(new Statement("CF1"));
+		included.add(new Statement("CF2"));
+		included.add(new Statement("CF3"));*/
+		included.add(new Statement("CF4"));
+		included.add(new Statement("CF5"));
+		included.add(new Statement("U"));
+		included.add(new Statement("CF4NOTU"));
+		included.add(new Statement("EXCF4Y"));
+		included.add(new Statement("CF4U"));
+		included.add(new Statement("CF4ANT"));
+		included.add(new Statement("EXCF4N"));		
+		//included.add(new Statement("State<:holds"));
 	}
 
 	public static Set<Pair<PropertyRelation,PropertyRelation>> filterMap(final Set<Pair<PropertyRelation,PropertyRelation>> map){
 		return map.stream()
 
-				.filter(a-> (included.contains(a.a.stmt) && included.contains(a.b.stmt))).collect(Collectors.toSet());
-	}
-	
-	public static void printMap(final Set<Pair<PropertyRelation,PropertyRelation>> map){
-		map.stream()
+				.filter(a-> (
+						included.contains(a.a.stmt) && included.contains(a.b.stmt) 
+						//&& included.contains(a.a.fld.value)
 
-		.filter(a-> (included.contains(a.a.stmt) && included.contains(a.b.stmt)))
+						)).collect(Collectors.toSet());
+	}
+
+	public static void printMap(final Set<Pair<PropertyRelation,PropertyRelation>> map){
+		filterMap(map).stream()
+
+		//.filter(a-> (included.contains(a.a.stmt) && included.contains(a.b.stmt)))
 		//.forEach(a->System.out.printf("%s %s %s %s %n", a.a.value, included.contains(a.a) ,  map.get(a).a.value, included.contains(map.get(a).a)) );
 		//.filter(a-> included.contains(a.a.value) && included.contains(map.get(a).b.a.value))
 		//.forEach(System.out::println);
@@ -295,12 +314,27 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 		set.stream()
 
 		.filter(a-> (included.contains(a.stmt) && included.contains(a.stmt)))
-		//.forEach(a->System.out.printf("%s %s %s %s %n", a.a.value, included.contains(a.a) ,  map.get(a).a.value, included.contains(map.get(a).a)) );
-		//.filter(a-> included.contains(a.a.value) && included.contains(map.get(a).b.a.value))
-		//.forEach(System.out::println);
-		.forEach(k -> System.out.printf("%s %n",k));
+
+		.sorted(new Comparator<PropertyRelation>() {
+			@Override
+			public int compare(PropertyRelation o1, PropertyRelation o2) {
+				 
+						if (o1.stmt.compareTo(o2.stmt)!= 0)
+							return o1.stmt.compareTo(o2.stmt);
+						else if(o1.fld.compareTo(o2.fld)!= 0)
+							return o1.fld.compareTo(o2.fld);
+						else
+							return o1.prop.compareTo(o2.prop);
+			}
+		})
+		
+
+				//.forEach(a->System.out.printf("%s %s %s %s %n", a.a.value, included.contains(a.a) ,  map.get(a).a.value, included.contains(map.get(a).a)) );
+				//.filter(a-> included.contains(a.a.value) && included.contains(map.get(a).b.a.value))
+				//.forEach(System.out::println);
+				.forEach(k -> System.out.printf("%s %n",k));
 	}
-	
+
 	/**
 	 * In the given set we have ([a,b],[p,q]) in state statement S over the field r and we know that a=>p, then the output is ([a,b], [a,q])
 	 * @param set
@@ -335,7 +369,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 				for(Property parent: parentsPFrom){
 					//There is a pair containing the parent?
 					PropertyRelation tmpParent = new PropertyRelation(parent, pair.a.stmt, pair.a.fld);
-					
+
 					if(rightPropRelations.contains(tmpParent)){
 						//pair is [p,q], a(i.e. tmpParent) is the parent p(i.e. pair.a), i.e. a=>p OR pair.a => tmpParent
 						//remove the pair, i.e. [p,q]
@@ -344,7 +378,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 						result.add(new Pair<PropertyRelation, PropertyRelation>(tmpParent, pair.b) );
 						shrunk = true;
 						break;
-						
+
 					}
 				}
 				if(shrunk) break;
@@ -362,7 +396,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 	 * @return
 	 */
 	public static Set<Pair<PropertyRelation,PropertyRelation>> 
-				filterbyImplicationLeftside(final Set<Pair<PropertyRelation,PropertyRelation>> set){
+	filterbyImplicationLeftside(final Set<Pair<PropertyRelation,PropertyRelation>> set){
 
 		final Set<Pair<PropertyRelation,PropertyRelation>> result = 
 				set.stream().filter(a-> (included.contains(a.a.stmt) && included.contains(a.b.stmt))).collect(Collectors.toSet());
@@ -391,7 +425,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 				for(Property child: childrenPTo){
 					//There is a pair containing the child?
 					PropertyRelation tmpChild = new PropertyRelation(child, pair.b.stmt, pair.b.fld);
-					
+
 					if(leftPropRelations.contains(tmpChild)){
 						//pair is [a,b], q(i.e. tmpChild) is the child b(i.e. pair.b), i.e. b=>q OR pair.b => tmpChild
 						//remove the pair, i.e. [p,q]
@@ -400,7 +434,7 @@ public class SpecToApproxGenerator extends PropertyCheckingSource {
 						result.add(new Pair<PropertyRelation, PropertyRelation>(pair.a, tmpChild) );
 						shrunk = true;
 						break;
-						
+
 					}
 				}
 				if(shrunk) break;

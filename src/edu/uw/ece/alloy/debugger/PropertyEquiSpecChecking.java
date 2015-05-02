@@ -19,10 +19,10 @@ public class PropertyEquiSpecChecking extends PropertyCheckingSource {
 			String fieldName_, Set<String> binaryProperties_,
 			Set<String> ternaryProperties_, String sigs_, String openModule_,
 			String openStatements_, String functions_, String commandHeader_,
-			String formula_, String commandScope_) {
+			String formula_, String commandScope_, String fact_) {
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
 				ternaryProperties_, sigs_, openModule_, openStatements_,
-				functions_, commandHeader_, formula_, commandScope_);
+				functions_, commandHeader_, formula_, commandScope_, fact_);
 		
 		this.assertionName = String.format(assertionFFNameFormat, commandHeader, sanitizedPropertyName, sanitizedFieldName);
 		this.assertionBody = String.format(propertyCheckingFormatForward, assertionName, formula, ExprBinary.Op.IFF.toString(), property,  commandScope );

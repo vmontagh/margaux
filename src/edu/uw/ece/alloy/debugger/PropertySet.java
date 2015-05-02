@@ -76,7 +76,7 @@ public final class PropertySet {
 
 				reader.lines()
 				.substream(0)
-				.map(line -> Arrays.asList(line.split("(,|_)")))
+				.map(line -> Arrays.asList(line.split("(,)")))
 				//.flatMap(l -> l.stream())
 				//.map(line -> Arrays.asList(line.split("_")))
 				//.flatMap(l -> l.stream())
@@ -380,6 +380,18 @@ public final class PropertySet {
 
 	public static class PropertyRelation{
 		final Property prop;
+		public Property getProp() {
+			return prop;
+		}
+
+		public Statement getStmt() {
+			return stmt;
+		}
+
+		public Field getFld() {
+			return fld;
+		}
+
 		final Statement stmt;
 		final Field fld;
 		

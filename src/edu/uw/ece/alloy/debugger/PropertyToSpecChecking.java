@@ -14,7 +14,7 @@ public class PropertyToSpecChecking extends PropertyCheckingSource {
 
 	
 	public final String assertionFiNameFormat = new String("%s"+SEPARATOR+"_F__i_"+SEPARATOR+"%s"+SEPARATOR+"%s");
-	public final String propertyCheckingFormatBackward = "assert %1$s{ (%2$s => %3$s) and %5$s}\n check %1$s %4$s\n";
+	public final String propertyCheckingFormatBackward = "assert %1$s{ (%2$s => %3$s)  %5$s}\n check %1$s %4$s\n";
 	
 	final public String assertionName;
 	final public String assertionBody;
@@ -33,13 +33,17 @@ public class PropertyToSpecChecking extends PropertyCheckingSource {
 			final String fieldName_, final Set<String> binaryProperties_,
 			final Set<String> ternaryProperties_, final String sigs_, final String openModule_,
 			final String openStatements_, final String functions_, final String commandHeader_, 
-			final String formula_, final String commandScope_) {
+			final String formula_, final String commandScope_, final String fact_) {
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
 				ternaryProperties_, sigs_, openModule_, openStatements_,
-				functions_, commandHeader_, formula_, commandScope_);
+				functions_, commandHeader_, formula_, commandScope_, fact_);
 
 		this.assertionName = String.format(assertionFiNameFormat, commandHeader, sanitizedPropertyName, sanitizedFieldName);
-		this.assertionBody = String.format(propertyCheckingFormatBackward, assertionName, property,  formula, commandScope, emptyProperty );
+		String empty = "";
+		if ( !property_.contains("EMPTY")  )
+			empty = " and " + emptyProperty ;
+
+		this.assertionBody = String.format(propertyCheckingFormatBackward, assertionName, property,  formula, commandScope, empty );
 	}
 
 	@Override

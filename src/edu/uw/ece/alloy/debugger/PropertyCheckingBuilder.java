@@ -32,6 +32,7 @@ public class PropertyCheckingBuilder {
 	private String commandHeader;
 	private String formula;
 	private String commandScope;
+	private String facts;
 
 
 	public PropertyCheckingBuilder() {
@@ -43,7 +44,7 @@ public class PropertyCheckingBuilder {
 			Set<String> binaryProperties, Set<String> ternaryProperties,
 			String emptyProperty, String functions, String sigs,
 			String openModule, String openStatements, String commandHeader,
-			String formula, String commandScope) {
+			String formula, String commandScope, String facts_) {
 		super();
 		this.sourceFile = sourceFile;
 		this.property = property;
@@ -58,6 +59,7 @@ public class PropertyCheckingBuilder {
 		this.commandHeader = commandHeader;
 		this.formula = formula;
 		this.commandScope = commandScope;
+		this.facts = facts_;
 	}
 
 
@@ -189,19 +191,28 @@ public class PropertyCheckingBuilder {
 		this.commandScope = commandScope;
 	}
 
+	public String getFacts() {
+		return facts;
+	}
+
+
+	public void setFacts(String facts) {
+		this.facts = facts;
+	}
+	
 	public void addChecker(Class<? extends PropertyCheckingSource> clazz){
 
 		Constructor<? extends PropertyCheckingSource> constructor;
 		try {
 			constructor = clazz.getConstructor(File.class, String.class ,
 					String.class, Set.class, Set.class, String.class, String.class,
-					String.class, String.class, String.class, String.class, String.class);
+					String.class, String.class, String.class, String.class, String.class, String.class);
 
 			checkers.add( constructor.newInstance(
 					this.sourceFile, this.property, this.fieldName, this.binaryProperties,
 					this.ternaryProperties, this.sigs, this.openModule,
 					this.openStatements, this.functions, this.commandHeader,
-					this.formula, this.commandScope
+					this.formula, this.commandScope, this.facts
 					) );
 			assert ( checkers.get(checkers.size() - 1).repOk() ) : String.format("Object is failed: %n%s", checkers.get(checkers.size() - 1).toString());
 		} catch ( NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException

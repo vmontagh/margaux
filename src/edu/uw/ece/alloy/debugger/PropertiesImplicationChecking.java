@@ -32,11 +32,11 @@ public class PropertiesImplicationChecking extends PropertyCheckingSource {
 			String fieldName_, Set<String> binaryProperties_,
 			Set<String> ternaryProperties_, String sigs_, String openModule_,
 			String openStatements_, String functions_, String commandHeader_,
-			String formula_, String commandScope_) {
+			String formula_, String commandScope_, String fact_) {
 		
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
 				ternaryProperties_, sigs_, openModule_, openStatements_, functions_,
-				commandHeader_, formula_, commandScope_);
+				commandHeader_, formula_, commandScope_, fact_);
 		name = String.format("%s%s%s", sanitizedPropertyName, SEPARATOR , sanitizedFieldName);
 
 		props.put(name, property);
@@ -64,7 +64,7 @@ public class PropertiesImplicationChecking extends PropertyCheckingSource {
 				if( !key.equals(current)   ){
 					
 					String empty = "";
-					if ( !(current.contains("empty") || key.contains("empty")) )
+					if ( !(current.toLowerCase().contains("empty") || key.toLowerCase().contains("empty")) )
 						empty = emptyProperty + " implies ";
 					final String pred = String.format("assert %1$s{\n %4$s (%2$s implies %3$s)}\ncheck %1$s %5$s", key, props.get(current), props.get(key), empty ,commandScope);
 

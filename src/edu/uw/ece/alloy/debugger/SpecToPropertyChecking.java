@@ -38,13 +38,13 @@ public class SpecToPropertyChecking extends PropertyCheckingSource {
 			final Set<String> binaryProperties_, final Set<String> ternaryProperties_,
 			final String sigs_,
 			final String openModule_, final String openStatements_, final String functions_, 
-			final String commandHeader_, final String formula_, final String commandScope_) {
+			final String commandHeader_, final String formula_, final String commandScope_, String fact_) {
 		
 		
 		
 		super(sourceFile_, property_, fieldName_, binaryProperties_, ternaryProperties_,
 				sigs_, openModule_,openStatements_, functions_,
-				commandHeader_, formula_, commandScope_);
+				commandHeader_, formula_, commandScope_, fact_);
 		
 		this.assertionName = String.format(assertionIfNameFormat, commandHeader_, sanitizedPropertyName , sanitizedFieldName);
 		this.assertionBody = String.format(propertyCheckingFormatForward, this.assertionName, formula_, ExprBinary.Op.IMPLIES.toString(), property, commandScope_ );

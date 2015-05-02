@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.alloy4.SafeList;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
@@ -116,6 +117,11 @@ public class RelationalPropertiesChecker {
 		return Collections.unmodifiableList(fields);
 	}
 
+	final private List<String> getAllFieldsNames(){
+
+		return Collections.unmodifiableList( getAllFields().stream().map( a -> findFieldName(a) ).collect(Collectors.toList()) );
+	}
+	
 	final private List<Sig> getAllSigs(){
 
 		return Collections.unmodifiableList(world.getAllSigs().makeCopy());
@@ -271,6 +277,32 @@ public class RelationalPropertiesChecker {
 
 		return Collections.unmodifiableList(properties);
 	}
+	
+	
+	
+	final private List<String> generateOrderedCombinatorialTernaryDomainRangeProperties(final List<String> fieldsName_, final String domainName_, final String midName_, final String rangeName_) throws FileNotFoundException, IOException{
+		
+		final List<String> properties = new ArrayList<>();
+		
+		for(int i = 0; i < fieldsName_.size(); ++i){
+			for(int j = i + 1; j < fieldsName_.size(); ++j){
+				final String unionFlds = String.format("(%s+%s)",fieldsName_.get(i) ,fieldsName_.get(j)); 
+				properties.addAll(generateOrderedTernyDomainRangeProperties(unionFlds, domainName_, midName_, rangeName_) );
+				
+				final String differenceFlds = String.format("(%s-%s)",fieldsName_.get(i) ,fieldsName_.get(j)); 
+				properties.addAll(generateOrderedTernyDomainRangeProperties(differenceFlds, domainName_, midName_, rangeName_) );
+				
+				final String diferenctFldsRev = String.format("(%s-%s)",fieldsName_.get(j) ,fieldsName_.get(i)); 
+				properties.addAll(generateOrderedTernyDomainRangeProperties(diferenctFldsRev, domainName_, midName_, rangeName_) );
+				
+				final String intersectionFlds = String.format("(%s&%s)",fieldsName_.get(j) ,fieldsName_.get(i)); 
+				properties.addAll(generateOrderedTernyDomainRangeProperties(intersectionFlds, domainName_, midName_, rangeName_) );
+			}
+		}
+		
+		return Collections.unmodifiableList(properties);
+		
+	}
 
 	private final String findFunctions() throws Err{
 		//All functions and pred with parameters are to be included in the new alloySpec.
@@ -308,6 +340,18 @@ public class RelationalPropertiesChecker {
 			}
 		}
 		return sigs.toString();
+	}
+	
+	private final String findFacts(){
+		
+		StringBuilder result = new StringBuilder();
+		
+		for( Pair<String, Expr> fact:  world.getAllFacts() ){
+			
+			result = result.append(  Utils.readSnippet(fact.b.pos)  ).append("\n");
+		}
+		
+		return result.toString();
 	}
 
 	/**
@@ -436,17 +480,25 @@ public class RelationalPropertiesChecker {
 			}			
 		}
 
+		//generateOrderedCombinatorialTernaryDomainRangeProperties is called multiple times. The result is stored in a hash to prevent the duplications.
+		final Set<String> uniqProperties = new HashSet<>();
 		//ordered sigs
 		if( !(sigsInField.get(0) instanceof Sig.Field) &&
 				sigsInField.size() == 2 && sigsInField.get(0) instanceof Sig &&
 				sigsInField.get(1) instanceof Sig &&
 				isOrderedDomainRange(field)
 				){
-			properties.addAll(
+			uniqProperties.addAll(
 					generateOrderedTernyDomainRangeProperties(fieldName, field.sig.label, ((Sig)sigsInField.get(0)).label, ((Sig)sigsInField.get(1)).label ) 
+					);
+			
+			uniqProperties.addAll(
+					generateOrderedCombinatorialTernaryDomainRangeProperties(getAllFieldsNames(), field.sig.label, ((Sig)sigsInField.get(0)).label, ((Sig)sigsInField.get(1)).label ) 
 					);
 		}
 
+		properties.addAll(uniqProperties);
+		
 		return Collections.unmodifiableList(properties);
 	}
 
@@ -493,12 +545,13 @@ public class RelationalPropertiesChecker {
 		propBuilder.setOpenModule( getOpenModule() );
 		propBuilder.setSourceFile(alloySepcFileName);
 		propBuilder.setBinaryProperties( getAllBinaryPropertiesName() );
-		Set<String> ternaries = new HashSet( getAllTernaryPropertiesName());
+		Set<String> ternaries = new HashSet<>( getAllTernaryPropertiesName());
 		ternaries.addAll(getAllOrderedTernaryDomainRange());
 		propBuilder.setTernaryProperties( Collections.unmodifiableSet(ternaries) );
 		propBuilder.setFunctions( findFunctions() );
 		propBuilder.setSigs( findSigs() );
 		propBuilder.setOpenStatements( findOpenStatements() );
+		propBuilder.setFacts( findFacts() );
 
 		for(Command cmd: world.getAllCommands()){
 
@@ -541,9 +594,31 @@ public class RelationalPropertiesChecker {
 		//((SpecToApproxGenerator)result.get(0)).findInconsistencybyImply();
 
 		//((SpecToApproxGenerator)result.get(0)).findAllInconsistencies();
-		System.out.println( "I_a:\n\n" );
-		//SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_a());
+		
+		System.out.println("Inconsistent");
+		((SpecToApproxGenerator)result.get(0)).printSet(((SpecToApproxGenerator)result.get(0)).findAllInconsistents());
+		
+		System.out.println("\nImplied");
+		((SpecToApproxGenerator)result.get(0)).printSet(((SpecToApproxGenerator)result.get(0)).findAllImplications());
 
+		System.out.println("\nConsistent");
+		((SpecToApproxGenerator)result.get(0)).printSet(((SpecToApproxGenerator)result.get(0)).findAllConsistents());
+		
+		
+		System.out.println( "\nfindI_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findI_a());
+		
+		
+		System.out.println( "\nfindII_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findII_a());
+
+		
+		
+		
+		System.out.println( "\findIV_a:\n\n" );
+		SpecToApproxGenerator.printMap( ((SpecToApproxGenerator)result.get(0)).findIV_a());
+		
+		System.exit(-1);
 
 		Set<Pair<PropertySet.PropertyRelation,PropertySet.PropertyRelation>> resI_a = ((SpecToApproxGenerator)result.get(0)).findI_a();
 		resI_a = ((SpecToApproxGenerator)result.get(0)).filterMap(resI_a);
@@ -656,7 +731,6 @@ public class RelationalPropertiesChecker {
 
 		System.out.println( "Consistent Inconsistents:\n\n" );
 		SpecToApproxGenerator.printSet( ((SpecToApproxGenerator)result.get(0)).findAllInconsistents());
-
 
 	}
 
