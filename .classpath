@@ -10,5 +10,7 @@
 	<classpathentry kind="lib" path="/Users/vajih/Documents/workspace-git/debugger-experiment/lib/alloy4.2.jar"/>
 	<classpathentry kind="lib" path="/lib-sdg/jars-external/rt.jar"/>
 	<classpathentry kind="lib" path="/lib-sdg/jars-external/functionaljava-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
+	<classpathentry kind="lib" path="lib/reflections-0.10-SNAPSHOT-jar-with-dependencies.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
