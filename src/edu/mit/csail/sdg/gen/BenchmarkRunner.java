@@ -21,7 +21,7 @@ public class BenchmarkRunner {
 	final private String reportNameformat = "report_%s_%2$tY-%2$tm-%2$td-%2$tk-%2$tM-%2$tS.txt";
 	private static final String fs = System.getProperty("file.separator");
 	/** This variable caches the result of alloyHome() function call. */
-	private  String alloyHome = null;
+	private static String alloyHome = null;
 
 	protected final static BenchmarkRunner  myself = new BenchmarkRunner();
 
@@ -64,7 +64,7 @@ public class BenchmarkRunner {
 
 
 	/** Find a temporary directory to store Alloy files; it's guaranteed to be a canonical absolute path. */
-	private  synchronized String alloyHome() {
+	public static synchronized String alloyHome() {
 		if (alloyHome!=null) return alloyHome;
 		String temp=System.getProperty("java.io.tmpdir");
 		if (temp==null || temp.length()==0)
@@ -131,7 +131,7 @@ public class BenchmarkRunner {
 		
 		for(File obj : tests){
 			try {
-				//Using reflrection because the report file name is set per each test input.
+				//Using reflection because the report file name is set per each test input.
 				Constructor constructor = e.getClass().getConstructor(String.class);
 				getInstance().executeTask(experiments, (ExecuterJob)constructor.newInstance(
 						(new File(outputDir, String.format(reportNameformat,e.getClass().getName(),new Date()))).getAbsolutePath() ),

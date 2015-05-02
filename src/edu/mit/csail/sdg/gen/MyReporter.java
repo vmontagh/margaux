@@ -1,6 +1,7 @@
 package edu.mit.csail.sdg.gen;
 
 import java.io.Serializable;
+import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
@@ -9,6 +10,8 @@ public class MyReporter extends A4Reporter implements Serializable{
 	
 	private static final long serialVersionUID = 7526472295622776147L;
 	
+	private static Logger logger = Logger.getLogger(MyReporter.class.getName());
+		
 	private long lastTime=0;
 	public long trasnalationTime = 0;
 	public long totalVaraibles = 0;
@@ -19,8 +22,8 @@ public class MyReporter extends A4Reporter implements Serializable{
 	public int sat = 0;
 	// For example, here we choose to display each "warning" by printing it to System.out
 	@Override public void warning(ErrorWarning msg) {
-		System.out.println("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
-		System.out.flush();
+		logger.warning("Relevance Warning:\n"+(msg.toString().trim())+"\n\n");
+		//System.out.flush();
 	}
 	public void typecheck (String msg) {
 	}
@@ -30,12 +33,12 @@ public class MyReporter extends A4Reporter implements Serializable{
 		this.lastTime = System.currentTimeMillis();
 		this.clauses = clauses;
 		this.totalVaraibles = totalVars;
-		System.out.printf("The translation is apparently done in %d %n", this.trasnalationTime);
+		logger.info(String.format("The translation is apparently done in %d %n", this.trasnalationTime) );
 
 
 	}
 	@Override public void translate(String solver, int bitwidth, int maxseq, int skolemDepth, int symmetry) {
-		System.out.println("translate");
+		//System.out.println("translate");
 
 		this.lastTime = System.currentTimeMillis();
 	}
@@ -43,21 +46,29 @@ public class MyReporter extends A4Reporter implements Serializable{
 	@Override public void resultSAT (Object command, long solvingTime, Object solution) {
 		
 		this.solveTime = System.currentTimeMillis()-lastTime;
-		System.out.printf("resultSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime);
+		logger.info(String.format("resultSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime) );
 		this.sat=1;
 	}
 	
 	public void resultUNSAT (Object command, long solvingTime, Object solution) {
 		this.solveTime = System.currentTimeMillis()-lastTime;
-		System.out.printf("resultUnSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime);		
+		logger.info(String.format("resultUnSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime) );		
 		this.sat=-1;
 	}
 	
 	public void evalute(long elauationTime, long instances) {
-		System.out.println("evalute");
-
+		logger.info(String.format("evaluation is done in %d and the passed parameter is: %d%n",elauationTime,instances) );
+		
 		this.evalTime = elauationTime;
 		this.evalInsts = instances;
+	}
+	@Override
+	public String toString() {
+		return "MyReporter [trasnalationTime="
+				+ trasnalationTime + ", totalVaraibles=" + totalVaraibles
+				+ ", clauses=" + clauses + ", solveTime=" + solveTime
+				+ ", evalTime=" + evalTime + ", evalInsts=" + evalInsts
+				+ ", sat=" + sat + "]";
 	}
 	
 }
