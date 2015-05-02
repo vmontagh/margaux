@@ -68,6 +68,7 @@ public class RelationalPropertiesChecker_Tester {
 				"sig Z{t: B, p:t->A}\n"+
 				"sig C extends A{c: B}{#B = 1}\n"+
 				"sig T{w:A->B}\n"+
+				"fact FFFF{ no B\n #A=1}\n"+
 				"fact{ no B}\n"+
 				"pred p[]{ some G<:(A<:r)}\n"+
 				"fun f[a:A]:B->B{{b,b':B|a.r = b}}\n"+
