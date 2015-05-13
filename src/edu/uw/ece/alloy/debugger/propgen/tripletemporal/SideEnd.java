@@ -42,8 +42,8 @@ public class SideEnd extends Side {
 	
 	@Override
 	public String genLetforLocality(String letVar, String quantifiedVar, final String quanitifiedOrderedVar) {
-		final String letExpression = "let %1$s = (%3$s.%4$s)%2$s |";
-		return String.format(letExpression, letVar, "."+quantifiedVar, quanitifiedOrderedVar, RName );
+		final String letExpression = "let %1$s = %2$s(%3$s.%4$s) |";
+		return String.format(letExpression, letVar, quantifiedVar+".", quanitifiedOrderedVar, RName );
 	}
 
 	@Override

@@ -171,7 +171,6 @@ public class TripleBuilder {
 
 		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(this);
 
-		int i = 0,j = 0;
 
 		//A map from each call to the actual pred
 		Map<String, Pair<String, String>> preds = new TreeMap<>();
@@ -182,20 +181,14 @@ public class TripleBuilder {
 					for(SizeProperty size: iterators. new SizeIterator(this, local, empty)){
 						if(!size.isConsistent()) continue;
 						preds.put(size.genPredName(), new Pair(size.genPredCall(),  size.generateProp()));
-
 						for(Order order: iterators. new OrderIterator(this, size)){
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
 						}
-						if( ++i > 1 ) break;
+						
 					}
-					i= 0;
-					if( ++j > 1 ) break;
 				}
-				j = 0;
-				break;
 			}
-			break;
 		}
 
 		return Collections.unmodifiableMap(preds);

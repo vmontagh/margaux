@@ -6,6 +6,7 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -282,5 +284,17 @@ public class Utils {
 		
 	}
 	
+
+	public static void readFile( final File file, final Consumer<List<String>> toMaps){
+
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			reader.lines()
+			.substream(1)
+			.map(line -> Arrays.asList(line.split(",")))
+			.forEach( toMaps);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
 	
 }

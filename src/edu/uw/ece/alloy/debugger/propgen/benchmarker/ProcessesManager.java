@@ -3,19 +3,25 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.common.base.internal.Finalizer;
 
+import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.WorkerEngine;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RegisterCallback;
 
@@ -23,16 +29,26 @@ public class ProcessesManager {
 
 	protected final static Logger logger = Logger.getLogger(ProcessesManager.class.getName()+"--"+Thread.currentThread().getName());;
 
+	public final static int MaxPortNumber = Integer.valueOf(Configuration.getProp("max_port"));
+	public final static int MinPortNumber = Integer.valueOf(Configuration.getProp("min_port"));
+	public final static int MaxFeedThreashold = Integer.valueOf(Configuration.getProp("max_feed_treashold"));
+	public final static int MaxTryPort = 10000000;
+
+
 	final int ProcessNumbers, newmem, newstack;
 	final String jniPath, classPath;
 	final InetSocketAddress watchdogAddress;
 
 	//TODO change the key type to Process
 	final ConcurrentHashMap<Integer, AlloyProcess> processes = new ConcurrentHashMap<>();
+	//This map stores how many messages are sent to an Alloy processor to be processed. The value is used to stop sent many messages to an Alloy processor.
+	//If the value.a is 0, means that the processor is IDLE or INIATED
+	//value.b stores all the messages sent
+	final ConcurrentHashMap<Integer, Pair<AtomicInteger, AtomicInteger>> sentMessagesCounter = new ConcurrentHashMap<>();
 
 	final String processLoggerConfig;
 
-	static int  lastFoundPort = 49152;;
+	static int  lastFoundPort = MinPortNumber;
 
 	public ProcessesManager(int ProcessNumbers, String classPath, int newMem, int newStack, final String jniPath, final String processLogConfig) {
 		this(ProcessNumbers, classPath, newMem, newStack, jniPath, new InetSocketAddress(findEmptyLocalSocket()) , processLogConfig);
@@ -57,7 +73,11 @@ public class ProcessesManager {
 
 	public static final class AlloyProcess{
 		public enum Status{
-			INITIATED, IDLE, WORKING, KILLING, NOANSWER
+			INITIATED, //Initial state is when the process is created but not get an ack from the actual process. 
+			IDLE, //Once the process gets the ack or no more process are ready to be processed. 
+			WORKING, //Working 
+			KILLING, //Suicided to being killed. 
+			NOANSWER
 		}
 		public final InetSocketAddress address;
 		public final int doneTasks;
@@ -162,22 +182,40 @@ public class ProcessesManager {
 			return status.equals(Status.IDLE) || status.equals(Status.WORKING); 
 		}
 
+		private boolean isAccepting(final ConcurrentHashMap<Integer, Pair<AtomicInteger, AtomicInteger>> sentMessagesCounter){
+
+			if(!isActive()) return false;
+
+			if(status.equals(Status.WORKING) &&  
+					sentMessagesCounter.get(address.getPort()/*getPort is eaual to ID*/).b.intValue() > MaxFeedThreashold ){
+				return false;
+			}
+			return true;
+		}
 	}
 
 
+	/**
+	 * This function may returns already used ports. So the history in sentMessagesCounter should be cleaned.
+	 * @return
+	 */
 	public synchronized static int  findEmptyLocalSocket(){
-		int port = lastFoundPort + 1;
-		int tmpPort = port;
+		int port = lastFoundPort;
+		int tmpPort = lastFoundPort - MinPortNumber + 1;
 
-		while( tmpPort < 65535){
-			tmpPort = tmpPort + 10;
+		int findPortTriesMax = 1;
+
+		while( ++findPortTriesMax < MaxTryPort){
+			tmpPort = (tmpPort + 2) % (MaxPortNumber - MinPortNumber);/*The range is an odd number so the second round it iterates the other sent of numbers.*/
+			int actualport = tmpPort + MinPortNumber;
+
 			try {
-				ServerSocket socket= new ServerSocket(tmpPort);
+				ServerSocket socket= new ServerSocket( actualport );
 				port = socket.getLocalPort();
 				socket.close();
 				break;
 			} catch (IOException e) {
-				logger.info("The port is not available: "+tmpPort);
+				logger.info("The port is not available: "+actualport);
 			}
 		}
 
@@ -187,6 +225,46 @@ public class ProcessesManager {
 		lastFoundPort = port;
 		return lastFoundPort;
 
+	}
+
+	/**
+	 * The method is called by feeder to record how many message is sent so far an Alloy Process.
+	 * This method has to called whenever the message is sent to the processor. 
+	 * @param pId
+	 */
+	public void recordAMessageSentCounter(Integer pId){
+		if(!sentMessagesCounter.containsKey(pId)){
+			sentMessagesCounter.put(pId, new Pair<AtomicInteger, AtomicInteger>(new AtomicInteger(1), new AtomicInteger(1)));
+		}else{
+			sentMessagesCounter.get(pId).b.incrementAndGet();
+			sentMessagesCounter.get(pId).a.incrementAndGet();
+		}
+	}
+
+	/**
+	 * This function resets the number of the messages sent the given Alloy processor in his shot.
+	 * This method should be called whenever the process becomes IDLE or INITIATED
+	 * @param pId
+	 */
+	public void resetMessageCounter(Integer pId){
+		if(!sentMessagesCounter.containsKey(pId)){
+			sentMessagesCounter.put(pId, new Pair<AtomicInteger, AtomicInteger>(new AtomicInteger(0), new AtomicInteger(0)));
+		}else{
+			sentMessagesCounter.get(pId).b.set(0);
+		}
+	}
+
+	/**
+	 * This method decrements the number of sent messages showing they have already received.
+	 * 
+	 * @param pId
+	 */
+	public void decreaseMessageCounter(Integer pId){
+		if(!sentMessagesCounter.containsKey(pId)){
+			throw new RuntimeException("The message counter is not in the map.");
+		}else{
+			sentMessagesCounter.get(pId).b.decrementAndGet();
+		}
 	}
 
 
@@ -207,7 +285,7 @@ public class ProcessesManager {
 						"-cp", classPath, AlloyProcessRunner.class.getName(),
 						""+address.getPort(),
 						""+watchdogAddress.getPort()
-						
+
 				});
 
 			else
@@ -220,7 +298,7 @@ public class ProcessesManager {
 						"-cp", classPath, AlloyProcessRunner.class.getName(),
 						""+address.getPort(),
 						""+watchdogAddress.getPort()
-						
+
 				});
 		} catch (IOException e) {
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not able to create a new process on port: "+address, e);
@@ -231,7 +309,7 @@ public class ProcessesManager {
 		return result;
 	}
 
-/*	public void activateProess(final int pId) throws InterruptedException{
+	/*	public void activateProess(final int pId) throws InterruptedException{
 		if(! processes.containsKey(pId)){
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Pid does not exits to be activated: "+pId);
 			throw new RuntimeException("Pid does not exits to be activated: "+pId);
@@ -269,10 +347,15 @@ public class ProcessesManager {
 	public void addProcess() throws IOException{
 		int port = findEmptyLocalSocket();
 		processes.putIfAbsent( port , createProcess(port));
+		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is added to the process list "+processes);
 	}
 
 
+	/**
+	 * Not thread safe.
+	 */
 	public void addAllProcesses(){
+		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Starting to add processes");
 		//No other thread can add a process to the map.
 		synchronized (processes) {
 			int i = processes.size();
@@ -284,6 +367,7 @@ public class ProcessesManager {
 				try {
 					addProcess();
 					++i;
+					logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process is added to the processes list:"+processes);
 				} catch (IOException e) {
 					logger.info("["+Thread.currentThread().getName()+"]"+"Processes cannot be created in setUpAllProcesses");			
 				} finally{
@@ -296,18 +380,40 @@ public class ProcessesManager {
 
 	}
 
-	public void killProcess(final int port){
-		synchronized (processes) {
-			processes.get(port).process.destroyForcibly();
-			processes.remove(port);
+	/**
+	 * Precondition. The process has to be in the Killing state
+	 * @param port
+	 */
+	public boolean killProcess(final int port){
+		boolean result = false;
+		if(!processes.containsKey(port) ){
+			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process is not found: "+port);
+		}else if( processes.get(port).status != Status.KILLING ){
+			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process: "+port+" is not in the killing state and cannot be killed: "+processes.get(port).status);
+		}else{
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Killing a process:",+port);
+			synchronized (processes) {
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Entering a lock for killing a process:",+port);
+				processes.get(port).process.destroy();
+				processes.remove(port);
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is killed to the process list "+processes);
+			}
+			result = true;
 		}
+		return result;
 	}
 
+	/**
+	 * Not thread safe
+	 * Precondition. The process has to be in the Killing state
+	 * @param port
+	 */
 	public void killAndReplaceProcess(final int port){
-		synchronized (processes) {
-			killProcess(port);
+		//synchronized (processes) {
+		if(killProcess(port)){
 			addAllProcesses();
 		}
+		//}
 	}
 
 	public AlloyProcess getRandomProcess(){
@@ -333,7 +439,7 @@ public class ProcessesManager {
 
 		AlloyProcess result;
 		int i = 10;
-		int attempts = 1000; 
+		int attempts = 10000; 
 		do{
 			if( i > attempts  ){
 				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not abale to find a random working process after atempting: "+i);
@@ -346,8 +452,8 @@ public class ProcessesManager {
 			} catch (InterruptedException e) {
 				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Interrupted while waiting for an active process. ");
 			}
-			
-		}while(!result.isActive());
+
+		}while(!result.isAccepting(sentMessagesCounter));
 
 		return result;
 	}
@@ -355,9 +461,11 @@ public class ProcessesManager {
 
 
 	public void changeStatus(int pId, Status status){
+		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Changing the status of PID:"+pId+" to: "+ status);
 		synchronized(processes){
 			if(processes.containsKey(pId)){
 				processes.replace(pId, processes.get(pId).changeStatus(status));
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The status is chanaged PID:"+pId+" to: "+ status);
 			}else{
 				throw new RuntimeException("The process is not found: "+pId);
 			}
@@ -381,7 +489,7 @@ public class ProcessesManager {
 
 	public void IncreaseSentTasks(int pId, int sentTasks){
 		synchronized(processes){
-			changeNumber(pId,processes.get(pId).changeDoneTasks(processes.get(pId).sentTasks + sentTasks) );
+			changeNumber(pId,processes.get(pId).changeSentTasks(processes.get(pId).sentTasks + sentTasks) );
 		}
 	}
 
@@ -432,11 +540,11 @@ public class ProcessesManager {
 	 * @param threshold in milliseconds
 	 * @return
 	 */
-	public List<AlloyProcess> getTimedProcess(int threshold){
+	public List<AlloyProcess> getTimedoutProcess(int threshold){
 		List<AlloyProcess> result =  Collections.synchronizedList(new LinkedList<>());
 		//No need to synchronized. The time is loose.
 		for(AlloyProcess ap: processes.values()){
-			if(System.currentTimeMillis() - ap.lastLiveTimeRecieved > threshold)
+			if(System.currentTimeMillis() - Math.max(ap.lastLiveTimeReported, ap.lastLiveTimeRecieved) > threshold )
 				result.add(ap);
 		}
 		return Collections.unmodifiableList(result);
@@ -446,5 +554,49 @@ public class ProcessesManager {
 		for(Integer port: processes.keySet())
 			killProcess(port);
 	}
+
+
+	public Set<Integer> getLiveProcessIDs(){
+		return Collections.unmodifiableSet(processes.keySet());
+
+	}
+
+	public String getStatus(){
+		final StringBuilder result = new StringBuilder();
+		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+		int waiting = 0, done = 0, doneForPId = 0, waitingForPId = 0;
+		for(Integer pId: processes.keySet()){
+			doneForPId = processes.get(pId).doneTasks;
+			done += doneForPId;
+			result.append("Current reported Done Meessages for PID=<"+pId+"> is:"+done).append("\n");
+			waitingForPId = processes.get(pId).doingTasks;
+			waiting += waitingForPId;
+			result.append("Current reported Doing Meessages for PID=<"+pId+"> is:"+waitingForPId).append("\n");
+			result.append("Current last message was recieved from PID=<"+pId+"> was at:"+sdf.format(processes.get(pId).lastLiveTimeRecieved)).append("\n");
+			result.append("Current last message was reported from PID=<"+pId+"> was at:"+sdf.format(processes.get(pId).lastLiveTimeReported)).append("\n");
+			result.append("Current reported Sent Meessages for PID=<"+pId+"> is:"+processes.get(pId).sentTasks).append("\n");
+
+		}			
+
+
+		result.append("The current total waiting: ").append(waiting).append("\n").append("The current total Done: ").append(done).append("\n");
+		done = 0;
+		waiting = 0;
+		for(Integer pId: sentMessagesCounter.keySet()){
+			doneForPId = sentMessagesCounter.get(pId).a.intValue();
+			done += doneForPId;
+			result.append("Total sent Meessages for PID=<"+pId+"> is:").append(doneForPId).append("\n");
+			
+			waitingForPId = sentMessagesCounter.get(pId).b.intValue();
+			waiting += waitingForPId;
+			result.append("Send Meessages for PID=<"+pId+"> is:").append(waitingForPId).append("\n");
+
+		}			
+
+		result.append("Total messages are sent: ").append(done).append("\n").append("Message are waiting now: ").append(waiting).append("\n");
+		
+		return result.toString();
+	}
+
 
 }

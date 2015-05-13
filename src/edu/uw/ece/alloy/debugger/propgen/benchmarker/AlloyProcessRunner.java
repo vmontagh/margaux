@@ -3,10 +3,16 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
 
 public class AlloyProcessRunner {
 
+	final static int  SelfMonitorInterval = Integer.valueOf(Configuration.getProp("self_monitor_interval"));
+	final static int  SelfMonitorRetryAttempt = Integer.valueOf(Configuration.getProp("self_monitor_retry_attempt"));
+	final static int  SelfMonitorDoneRatio = Integer.valueOf(Configuration.getProp("self_monitor_done_ratio"));
+
+	
 	//The PID is as the port number that the processor is listening to.
 	public final int PID;
 	public final int remotePort;
@@ -77,7 +83,7 @@ public class AlloyProcessRunner {
 		fileThread.start();
 		socketThread.start();
 		
-		watchdog = new ProcessSelfMonitor(10000, 3, 1, this);
+		watchdog = new ProcessSelfMonitor(SelfMonitorInterval, 3, 1, this);
 		watchdogThread = new Thread(watchdog);
 		watchdogThread.start();
 		

@@ -59,8 +59,8 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 
 	@Override
 	public String toString() {
-		return "AlloyProcessingParam [srcPath=" + srcPath + ", destPath="
-				+ destPath + ", content=" + content + ", priority=" + priority
+		return "AlloyProcessingParam [srcPath=" + srcPath.getName() + ", destPath="
+				+ destPath.getName() + ", content=" + content + ", priority=" + priority
 				+ "]";
 	}
 

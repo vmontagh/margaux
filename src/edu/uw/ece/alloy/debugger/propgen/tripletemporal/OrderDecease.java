@@ -1,3 +1,5 @@
+
+
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public class OrderDecease extends Order {
@@ -16,9 +18,9 @@ public class OrderDecease extends Order {
 
 	@Override
 	protected String genOrder() {
-		return " lte[relational_properties/max["+sizeProp.getGrowthOrderedDelta()+","+sideOrdered.getNext()+
-				"], relational_properties/max["+sizeProp.growthLocality.getLetVariable1()+","+sideOrdered.getNext()+"],"+
-				sideOrdered.getNext()+"]";
+		return " lt[relational_properties/max["+sizeProp.getGrowthOrderedDelta() +","+ sideOrdered.getNext()+"],"+
+				"relational_properties/max["+sizeProp.orderedChange()+","+sideOrdered.getNext()+
+				"],"+sideOrdered.getNext()+"] )";
 		
 	}
 

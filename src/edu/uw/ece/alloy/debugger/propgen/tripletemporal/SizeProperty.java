@@ -47,8 +47,8 @@ public abstract class SizeProperty extends Property {
 	private String genBody(final String append){
 		return empty.genBody() + "\n"+ 
 				"all "+getTemporalQuantifiedVar()+": " + SName + " - last["+SName +","+SNext+"] |"+
-					"let " + getNextTemporalQuantifiedVar() + " = " + SName+"."+SNext +" |\n" +
-						growthLocality.genBody(getTemporalQuantifiedVar(), getNextTemporalQuantifiedVar())  + append;
+					"let " + getNextTemporalQuantifiedVar() + " = " + getTemporalQuantifiedVar()+"."+SNext +" |\n" +
+						growthLocality.genBody(getTemporalQuantifiedVar(), getNextTemporalQuantifiedVar())+ append;
 	}
 	
 	@Override
@@ -79,5 +79,7 @@ public abstract class SizeProperty extends Property {
 	protected String getNextTemporalQuantifiedVar(){
 		return SName+"''";
 	}
+	
+	protected abstract String orderedChange();
 
 }

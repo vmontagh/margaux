@@ -16,9 +16,11 @@ public class OrderDecreaseStrict extends Order {
 
 	@Override
 	protected String genOrder() {
-		return " gt[relational_properties/min["+sizeProp.growthLocality.getLetVariable1()+","+sideOrdered.getNext()+
-				"], relational_properties/max["+sizeProp.getGrowthOrderedDelta()+","+sideOrdered.getNext()+"],"+
-				sideOrdered.getNext()+"]";
+		return 
+				" lt[relational_properties/max["+sizeProp.getGrowthOrderedDelta() +","+ sideOrdered.getNext()+"],"+
+				"relational_properties/min["+sizeProp.orderedChange()+","+sideOrdered.getNext()+
+				"],"+sideOrdered.getNext()+"] )";
+				
 	}
 
 }

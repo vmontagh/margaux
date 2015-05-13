@@ -15,11 +15,20 @@ public class AlloyProcessedResult extends MyReporter {
 		this.params = new AlloyProcessingParam(params);
 	}
 	
+	
 	public String asRecord() {
 		return trasnalationTime + "," + totalVaraibles
 				+ "," + clauses + "," + solveTime
 				+ "," + evalTime + "," + evalInsts
 				+ "," + sat ;
+	}
+	
+	public boolean isTimedout(){
+		return (this instanceof TimeoutResult) ;
+	}
+	
+	public boolean isFailed() {
+		return (this instanceof FailedResult) ;
 	}
 	
 	
@@ -42,7 +51,7 @@ public class AlloyProcessedResult extends MyReporter {
 			this.solveTime = 0;
 			this.evalInsts = 0;
 			this.evalTime = 0;
-			this.sat = -1;
+			this.sat = 0;
 		}
 		
 	}
@@ -62,10 +71,12 @@ public class AlloyProcessedResult extends MyReporter {
 			this.solveTime = -1;
 			this.evalInsts = -1;
 			this.evalTime = -1;
-			this.sat = -1;
+			this.sat = 0;
 		}
 		
 	}
+
+
 	
 
 }

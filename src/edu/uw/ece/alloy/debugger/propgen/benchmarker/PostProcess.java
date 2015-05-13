@@ -137,14 +137,14 @@ public abstract class PostProcess implements Runnable {
 		@Override
 		protected void action(AlloyProcessedResult result) throws InterruptedException  {
 
-			AlloyProcessed command = new AlloyProcessed(AlloyProcessRunner.getInstance().PID, result.params);
-			logger.info("["+Thread.currentThread().getName()+"] " +"Start sending a done message: "+command+" to "+ remoteAddres);
+			AlloyProcessed command = new AlloyProcessed(AlloyProcessRunner.getInstance().PID, result);
+			logger.info("["+Thread.currentThread().getName()+"] " +"Start sending a done message: "+command+" as the result is:"+result+" TO: "+ remoteAddres);
 			
 			try {
 				command.sendMe(remoteAddres);
 				logger.info("["+Thread.currentThread().getName()+"] " +"message sent: "+command);
 			} catch (InterruptedException e) {
-				logger.info("["+Thread.currentThread().getName()+"] " +"Sending the result is interrupted: "+ result+ " to: "+ remoteAddres);
+				logger.info("["+Thread.currentThread().getName()+"] " +"Sending the result is interrupted: "+ result+ " TO: "+ remoteAddres);
 				throw e;
 			}
 

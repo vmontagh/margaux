@@ -48,6 +48,7 @@ public class AlloyExecuter implements Runnable {
 		for (PostProcess e : postProcesses) {
 			try {
 				e.doAction(result);
+				
 			} catch (InterruptedException e1) {
 				logger.info("["+Thread.currentThread().getName()+"] " +"The post processing action <" + e
 						+ "> is interrupted on: " + result);
@@ -56,10 +57,16 @@ public class AlloyExecuter implements Runnable {
 		}
 	}
 
+	/**
+	 * This method is called by the self monitor or any external entity to send and record a timeout.
+	 */
 	public void recordATimeout() {
 		try {
+			if(lastProccessing == null ) return;
+			logger.info("["+Thread.currentThread().getName()+"] " +"The timeout is recorded for " + lastProccessing);
 			runPostProcesses(new AlloyProcessedResult.TimeoutResult(
 					lastProccessing));
+			lastProccessing = null;
 		} catch (InterruptedException e) {
 			logger.info("["+Thread.currentThread().getName()+"] " +"The thread is interuupted while recording a timeout message.");
 		}
@@ -76,13 +83,14 @@ public class AlloyExecuter implements Runnable {
 	private void runAlloy() throws InterruptedException {
 
 		lastProccessing = queue.take();// wait here.
-		logger.info("["+Thread.currentThread().getName()+"]" + "Start processing "+lastProccessing);
+		long time = System.currentTimeMillis();
+		logger.info("["+Thread.currentThread().getName()+"]" + " Start processing "+lastProccessing);
 		AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 		try {
 			A4CommandExecuter.getInstance().run(
 					new String[] { lastProccessing.srcPath.getAbsolutePath() },
 					rep);
-			logger.info("["+Thread.currentThread().getName()+"]" + "Alloy processing result"+rep);
+			logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);
 			runPostProcesses(rep);
 			processed.incrementAndGet();
 		} catch (Err e) {

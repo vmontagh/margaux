@@ -33,7 +33,12 @@ public class IamAlive extends RemoteCommand {
 	}
 
 	public void updatePorcessorLiveness(final ProcessesManager manager){
-		if(manager.getAlloyProcess(PID).status == Status.KILLING){
+		
+		if(manager.getAlloyProcess(PID) == null){
+			logger.info("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" "+this);
+			return;
+		}
+		if( manager.getAlloyProcess(PID).status == Status.KILLING){
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"The killing process is sending a live signal: "+PID);
 		}else{
 			//Does not need to be done atomically.

@@ -7,6 +7,7 @@ import java.util.Properties;
 
 public class Configuration {
 
+	final private static String properties_path = "resources/debugger.expriment.config";
 	
 	final public static String PACE = "PACE";
 	final public static String ONE_FOUND = "oneFound";
@@ -45,13 +46,15 @@ public class Configuration {
 	}
 	
 	public static String getProp(String key){
-		myself = myself==null ? new Configuration("") : myself;
+		myself = myself==null ? new Configuration(properties_path) : myself;
 		return myself.props.getProperty(key);
 	}
 	
 	public static void setProp(String key, String value){
-		myself = myself==null ? new Configuration("") : myself;
+		myself = myself==null ? new Configuration(properties_path) : myself;
 		myself.props.setProperty(key,value);
 	}
+	
+	
 	
 }

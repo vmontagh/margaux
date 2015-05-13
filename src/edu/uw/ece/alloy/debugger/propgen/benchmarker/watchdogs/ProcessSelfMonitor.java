@@ -43,8 +43,9 @@ public class ProcessSelfMonitor implements Runnable {
 		int livenessFailed = 0;
 		while(!Thread.currentThread().isInterrupted()){
 			try {
+				logger.info("["+Thread.currentThread().getName()+"]"+ "Monitor takes: processedSoFar:"+processedSoFar+" currently_processed="+alloyProcessRunner.getExecuter().processed+" isEmpty="+alloyProcessRunner.getExecuter().isEmpty());
 				//monitor the executer
-				if(processedSoFar == alloyProcessRunner.getExecuter().processed.longValue() && !alloyProcessRunner.getExecuter().isEmpty()){
+				if(processedSoFar == alloyProcessRunner.getExecuter().processed.intValue() && !alloyProcessRunner.getExecuter().isEmpty()){
 					//The executer does not proceeded.
 					logger.info("["+Thread.currentThread().getName()+"]"+ "A request is timed out to be executed");
 					alloyProcessRunner.getExecuter().recordATimeout();
@@ -105,7 +106,7 @@ public class ProcessSelfMonitor implements Runnable {
 
 					Runtime.getRuntime().halt(0);
 				}
-
+				System.gc();
 
 				Thread.sleep(monitorInterval);
 			} catch (InterruptedException e) {

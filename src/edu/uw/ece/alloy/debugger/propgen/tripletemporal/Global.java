@@ -27,7 +27,8 @@ public class Global extends Locality {
 
 	@Override
 	public String getQunatifiedVar() {
-		return side.genBody() ;
+		//return side.genBody() ;
+		return side.getOther() ;
 	}
 
 }

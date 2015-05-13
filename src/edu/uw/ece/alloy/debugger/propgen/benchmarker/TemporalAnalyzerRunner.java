@@ -7,11 +7,16 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.BenchmarkRunner;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
 public class TemporalAnalyzerRunner {
 
-	final static int  proccessNumber = 1;
+	final static int  proccessNumber = Integer.valueOf(Configuration.getProp("processes_number"));
+	final static int  RemoteMonitorInterval = Integer.valueOf(Configuration.getProp("remote_monitor_interval"));
+	final static String ProcessLoggerConfig = Configuration.getProp("process_logger_config");
+	final static  int SubMemory = Integer.valueOf(Configuration.getProp("sub_memory"));
+	final static  int SubStack = Integer.valueOf(Configuration.getProp("sub_stak"));
 	
 	protected final static Logger logger = Logger.getLogger(TemporalAnalyzerRunner.class.getName()+"--"+Thread.currentThread().getName());
 	
@@ -36,11 +41,11 @@ public class TemporalAnalyzerRunner {
 	}
 	
 	public void start() throws Exception{
-		manager = new ProcessesManager(proccessNumber, null, BenchmarkRunner.SubMemory, BenchmarkRunner.SubStack, "", "java.logger.remote.config");
+		manager = new ProcessesManager(proccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);
 
 		 feeder = new AlloyFeeder(manager);
 
-		 monitor = new ProcessRemoteMonitor(20000, feeder, manager, manager.getProcessRemoteMonitorAddress());
+		 monitor = new ProcessRemoteMonitor(RemoteMonitorInterval, feeder, manager, manager.getProcessRemoteMonitorAddress());
 		timeoutMonitor = monitor.new MonitorTimedoutProcesses();
 
 		analyzer = new TemporalPropertiesAnalyzer();
@@ -66,9 +71,8 @@ public class TemporalAnalyzerRunner {
 			throw e1;
 		}
 
-		int i = 0;
+		
 		for(AlloyProcessingParam ap: aps){
-			if(++i > 201) break;
 			try {
 				feeder.addProcessTask(ap);
 				logger.info("["+Thread.currentThread().getName()+"]" + "a process is added");
@@ -83,13 +87,17 @@ public class TemporalAnalyzerRunner {
 
 	public static void main(String[] args) throws Exception {
 		
+		
 		TemporalAnalyzerRunner.getInstance().start();		
 		
 		//busywait
 		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 		while(true){
-			Thread.sleep(100000);
+			Thread.sleep(20000);
 			logger.info("["+Thread.currentThread().getName()+"]" + "Main is alive.... ");
+			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().manager.getStatus());
+			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().monitor.getStatus());
+			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().feeder.getStatus());
 			Thread.currentThread().yield();
 		}
 	}

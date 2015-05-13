@@ -3,6 +3,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 import java.io.File;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,11 +13,16 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMoni
 
 public class AlloyFeeder implements Runnable {
 
-	final static BlockingQueue<ProcessIt> queue = new ArrayBlockingQueue<>(100);
+	final static BlockingQueue<ProcessIt> queue = new LinkedBlockingQueue<>();
+	
 	final ProcessesManager processesManager;
 	ProcessRemoteMonitor monitor = null;
+	
+	
 	final static Logger logger = Logger.getLogger(AlloyFeeder.class.getName()+"--"+Thread.currentThread().getName());
 
+	
+	
 	public AlloyFeeder(final ProcessesManager processesManager) {
 		this.processesManager = processesManager;
 	}
@@ -32,7 +38,7 @@ public class AlloyFeeder implements Runnable {
 		try {
 			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"a request is added to be sent:" + p);
 			queue.put(p);
-			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"a request is added to be sent and the queue suze is:" + queue.size());
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"a request is added to be sent and the queue size is:" + queue.size());
 		} catch (InterruptedException e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+"a new Alloy process message cannot be added to the queue:" + p, e);
 			throw e;
@@ -40,15 +46,15 @@ public class AlloyFeeder implements Runnable {
 	}
 
 	public void addProcessTask( AlloyProcessingParam p) throws InterruptedException{
-		addProcessTask(new ProcessIt(p));
+		addProcessTask(new ProcessIt(p,processesManager));
 	}
 
 	public void addProcessTask( File src, File dest, int priority, String content) throws InterruptedException{
-		addProcessTask(new ProcessIt( new AlloyProcessingParam(src, dest, priority ,content) ));
+		addProcessTask(new ProcessIt( new AlloyProcessingParam(src, dest, priority ,content) ,processesManager));
 	}
 
 	public void addProcessTask( File src, File dest) throws InterruptedException{
-		addProcessTask(new ProcessIt( new AlloyProcessingParam(src, dest, 1) ));
+		addProcessTask(new ProcessIt( new AlloyProcessingParam(src, dest, 1) ,processesManager));
 	}
 	
 	
@@ -65,14 +71,21 @@ public class AlloyFeeder implements Runnable {
 		ProcessesManager.AlloyProcess process = processesManager.getActiveRandomeProcess();
 		logger.info("["+Thread.currentThread().getName()+"]" + "got a process "+e);
 		try {
-			e.sendMe(process.address);
 			monitor.addMessage(process.address.getPort(), e.param);
+			e.sendMe(process.address);
 			logger.info("["+Thread.currentThread().getName()+"]" + "Message sent to "+process.address);
 		} catch (InterruptedException e1) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "The command cannot be sent.", e1);
+			monitor.removeMessage(process.address.getPort(), e.param);
 			//Put it back
 			queue.put(e);
 			throw e1;
+		} catch (Throwable t){
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "The command cannot be sent.", t);
+			monitor.removeMessage(process.address.getPort(), e.param);
+			//Put it back
+			queue.put(e);
+			throw t;
 		}
 		
 	}
@@ -91,13 +104,10 @@ public class AlloyFeeder implements Runnable {
 				logger.info("["+Thread.currentThread().getName()+"]" + "Message is going to be sent, queue size is: "+queue.size());
 				sendCommand();
 				
-				
-
-				
 				logger.info("["+Thread.currentThread().getName()+"]" + "Message sent ");
 				i = 0;
-			} catch (InterruptedException e) {
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Sendin a command is interrupted.", e);
+			} catch (Throwable e) {
+				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Sending a command is failed.", e);
 				i++;
 			}
 		}
@@ -108,6 +118,10 @@ public class AlloyFeeder implements Runnable {
 		Thread.currentThread().interrupt();
 	}
 
+	
+	public String getStatus(){
+		return "Number of requests waiting to be fed: "+queue.size();
+	}
 	
 	public static void main(String ... args) throws InterruptedException{
 		

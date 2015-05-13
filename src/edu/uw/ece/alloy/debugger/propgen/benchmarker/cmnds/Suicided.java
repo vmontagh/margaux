@@ -25,6 +25,8 @@ public class Suicided extends RemoteCommand {
 	}
 
 	public void killProcess(ProcessesManager manager){
+		logger.info("["+Thread.currentThread().getName()+"] " + " A proces asked to be killed: " +PID);
 		manager.changeStatus(PID, Status.KILLING);
+		logger.info("["+Thread.currentThread().getName()+"] " + " A proces asked to be killed: " +PID);
 	}
 }

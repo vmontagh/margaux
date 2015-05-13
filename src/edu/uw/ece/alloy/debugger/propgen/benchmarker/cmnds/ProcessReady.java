@@ -23,6 +23,7 @@ public class ProcessReady extends RemoteCommand {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Failed to transfer registercallback: "+pId);
 		}*/
 		manager.changeStatus(pId, Status.IDLE);	
+		manager.resetMessageCounter(pId);
 	}
 	
 }

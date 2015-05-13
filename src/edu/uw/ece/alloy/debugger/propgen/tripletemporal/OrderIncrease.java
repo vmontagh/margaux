@@ -16,10 +16,9 @@ public class OrderIncrease extends Order {
 	@Override
 	protected String genOrder() {
 		
-		return " gte[relational_properties/min["+sizeProp.getGrowthOrderedDelta()+","+
-					sideOrdered.getNext()+"],relational_properties/min["+sizeProp.growthLocality.getLetVariable1()+","+
-						sideOrdered.getNext()+"],"+sideOrdered.getNext()+"]";
-				
+		return " lte[relational_properties/min["+sizeProp.growthLocality.getLetVariable1()+","+
+					sideOrdered.getNext()+"],relational_properties/min["+sizeProp.getGrowthOrderedDelta()+","+
+						sideOrdered.getNext()+"],"+sideOrdered.getNext()+"] )";
 
 	}
 

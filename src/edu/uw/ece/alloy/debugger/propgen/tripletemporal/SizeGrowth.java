@@ -25,8 +25,27 @@ public class SizeGrowth extends SizeProperty {
 	@Override
 	protected String genGrowthOredred() {
 		return " let "+getGrowthOrderedDelta()+" = "+growthLocality.getLetVariable2()+
-				" - "+growthLocality.getLetVariable1() + " | (some "+getGrowthOrderedDelta()+
-				") implies ";
+				" - "+growthLocality.getLetVariable1() + " | "+
+				"  (" + growthLocality.getLetVariable1() + " in " +growthLocality.getLetVariable2() +" ) and "+
+				"  (some "+growthLocality.getLetVariable1()+" implies";
+	}
+
+
+	@Override
+	protected String orderedChange() {
+		return growthLocality.getLetVariable1();
+	}
+	
+	
+	@Override
+	protected boolean isConsistent() {
+		
+		if(!super.isConsistent()) return false;
+		
+		if(empty instanceof EmptyEnd) return false;
+		if(empty instanceof EmptyStartAndEnd) return false;
+		
+		return true;
 	}
 	
 }

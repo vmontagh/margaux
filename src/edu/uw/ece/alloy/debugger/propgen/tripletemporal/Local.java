@@ -17,12 +17,13 @@ public class Local extends Locality {
 
 	@Override
 	public String genQuantifier() {
-		return " all "+getQunatifiedVar() + " : "+side.genBody()+"| ";
+		return " all "+getQunatifiedVar() + " : "+side.getOther()+"| ";
 	}
 
 	@Override
 	public String getQunatifiedVar() {
-		return side.genBody()+"'";
+		//return side.genBody()+"'";
+		return side.getOther()+"'" ;
 	}
 	
 	@Override
