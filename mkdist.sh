@@ -41,6 +41,8 @@ function dist {
     rm -rf bin/tmp
     cp -r bin/* $DST/alloy/
     cp -r src/* $DST/alloy/
+    pwd
+    cp -r resources $DST/alloy/
     rm -rf $DST/alloy/kodkod
     cp -r $KODKOD_HOME/bin/kodkod $DST/alloy/kodkod
     cp -r $KODKOD_HOME/src/kodkod/* $DST/alloy/kodkod/
@@ -103,7 +105,7 @@ function dist {
 
 if [[ "X"$1 == "X" ]]
 then
-  compile 
+  #compile 
   dist
 else
   $1

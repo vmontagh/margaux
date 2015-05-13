@@ -7,10 +7,10 @@
              classname="net.sourceforge.jarbundler.JarBundler" />
 
     <jarbundler dir="dist"
-		name="Alloy4.2-rc"
+		name="Alloy4.3-rc"
 		mainclass="edu.mit.csail.sdg.alloy4whole.SimpleGUI"
-		jar="dist/alloy-dev.jar" 
-		build="4.2"
+		jar="dist/alloy-dev-debugger.jar" 
+		build="4.3"
 		bundleid="edu.mit.csail.sdg.alloy4whole.SimpleGUI"
 		stubfile="OSX-JavaStub/JavaApplicationStub"
 		icon="OSX-icons/AlloyLogo.icns"
