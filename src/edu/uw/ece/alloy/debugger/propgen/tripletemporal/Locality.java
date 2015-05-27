@@ -69,7 +69,69 @@ public abstract class Locality extends Property {
 //	public abstract String getLetExprssion2(final String quantifier);
 
 	public String getLetVariable1() {return "c";}
-	public String getLetVariable2() {return "c'";}
+	public String getLetVariable2() {return getLetVariable1()+"'";}
 
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime
+				* result
+				+ ((quantifiedFirstForLet == null) ? 0 : quantifiedFirstForLet
+						.hashCode());
+		result = prime
+				* result
+				+ ((quantifiedNextForLet == null) ? 0 : quantifiedNextForLet
+						.hashCode());
+		result = prime * result + ((side == null) ? 0 : side.hashCode());
+		return result;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof Locality)) {
+			return false;
+		}
+		Locality other = (Locality) obj;
+		if (quantifiedFirstForLet == null) {
+			if (other.quantifiedFirstForLet != null) {
+				return false;
+			}
+		} else if (!quantifiedFirstForLet.equals(other.quantifiedFirstForLet)) {
+			return false;
+		}
+		if (quantifiedNextForLet == null) {
+			if (other.quantifiedNextForLet != null) {
+				return false;
+			}
+		} else if (!quantifiedNextForLet.equals(other.quantifiedNextForLet)) {
+			return false;
+		}
+		if (side == null) {
+			if (other.side != null) {
+				return false;
+			}
+		} else if (!side.equals(other.side)) {
+			return false;
+		}
+		return true;
+	}
+
+	
+	
 	
 }

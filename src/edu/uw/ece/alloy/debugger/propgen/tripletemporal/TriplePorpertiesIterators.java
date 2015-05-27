@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Iterator;
@@ -147,6 +148,61 @@ public class TriplePorpertiesIterators {
 
 	}
 	
+	
+	public class CompositeOrdersIterator extends PropertyIterator<CompositeOrders, CompositeOrdersIterator>{
+		
+		final Order order1, order2;
+
+		public CompositeOrdersIterator(final TripleBuilder builder, final Order order1, final Order order2) {
+			super(builder);
+			this.order1 = order1;
+			this.order2 = order2;
+		}
+
+		@Override
+		protected CompositeOrders convertNext(Class t) {
+			try {
+				return builder.createCompositeOrdersInstance(t, order1, order2);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException("Cannot be created");
+			}		
+		}
+
+		@Override
+		protected CompositeOrdersIterator makeSelf() {
+			return new CompositeOrdersIterator(builder, order1, order2);
+		}
+
+	}
+	
+	public class CompositeSizesIterator extends PropertyIterator<CompositeSizes, CompositeSizesIterator>{
+		
+		final SizeProperty size1, size2;
+
+		public CompositeSizesIterator(final TripleBuilder builder, final SizeProperty size1, final SizeProperty size2) {
+			super(builder);
+			this.size1 = size2;
+			this.size2 = size2;
+		}
+
+		@Override
+		protected CompositeSizes convertNext(Class t) {
+			try {
+				return builder.createCompositeSizesInstance(t, size1, size2);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException("Cannot be created");
+			}		
+		}
+
+		@Override
+		protected CompositeSizesIterator makeSelf() {
+			return new CompositeSizesIterator(builder, size1, size2);
+		}
+
+	}
+	
 
 	public abstract class PropertyIterator<T,S extends Iterable<T>> implements Iterator<T>, Iterable<T>{
 
@@ -160,8 +216,8 @@ public class TriplePorpertiesIterators {
 			Type t = ((ParameterizedType)sooper).getActualTypeArguments()[ 0 ];
 
 			try {
-				
-				iterator = (new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).iterator();
+				iterator =(new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).stream().filter(a->!Modifier.isAbstract(a.getModifiers() )).iterator();
+				//iterator = (new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).iterator();
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -192,7 +248,7 @@ public class TriplePorpertiesIterators {
 	}
 
 
-	public  Set<Class<? extends Side>> getAllSizeSide(){
+	/*public  Set<Class<? extends Side>> getAllSizeSide(){
 		return new Reflections(packageName).getSubTypesOf(Side.class);
 	}
 
@@ -206,7 +262,7 @@ public class TriplePorpertiesIterators {
 
 	public  Set<Class<? extends Locality>> getAllLocality(){
 		return new Reflections(packageName).getSubTypesOf(Locality.class);
-	}
+	}*/
 
 
 

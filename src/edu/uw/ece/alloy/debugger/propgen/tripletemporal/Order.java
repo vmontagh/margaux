@@ -59,4 +59,42 @@ public abstract class Order extends Property {
 		return super.genParametesCall()+","+sideOrdered.getConcreteOrderedParameters() ;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result
+				+ ((sizeProp == null) ? 0 : sizeProp.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof Order)) {
+			return false;
+		}
+		Order other = (Order) obj;
+		if (sizeProp == null) {
+			if (other.sizeProp != null) {
+				return false;
+			}
+		} else if (!sizeProp.equals(other.sizeProp)) {
+			return false;
+		}
+		return true;
+	}
+
+	
 }

@@ -20,13 +20,11 @@ public abstract class SizeProperty extends Property {
 
 	@Override
 	protected String getPredecessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected String getSuccessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -53,16 +51,12 @@ public abstract class SizeProperty extends Property {
 	
 	@Override
 	protected String genBody() {
-		
 		return genBody(genGrowth());
-				
 	}
 
 	protected String genBodyOrdered() {
-		
 		return genBody(genGrowthOredred());
 	}
-	
 	
 	protected abstract String genGrowth();
 	
@@ -77,9 +71,56 @@ public abstract class SizeProperty extends Property {
 	}
 	
 	protected String getNextTemporalQuantifiedVar(){
-		return SName+"''";
+		return getTemporalQuantifiedVar()+"'";
 	}
 	
 	protected abstract String orderedChange();
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((empty == null) ? 0 : empty.hashCode());
+		result = prime * result
+				+ ((growthLocality == null) ? 0 : growthLocality.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof SizeProperty)) {
+			return false;
+		}
+		SizeProperty other = (SizeProperty) obj;
+		if (empty == null) {
+			if (other.empty != null) {
+				return false;
+			}
+		} else if (!empty.equals(other.empty)) {
+			return false;
+		}
+		if (growthLocality == null) {
+			if (other.growthLocality != null) {
+				return false;
+			}
+		} else if (!growthLocality.equals(other.growthLocality)) {
+			return false;
+		}
+		return true;
+	}
+
+	
+	
 }

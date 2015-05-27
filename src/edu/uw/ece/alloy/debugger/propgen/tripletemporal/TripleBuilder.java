@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.CompositeOrdersIterator;
+import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.CompositeSizesIterator;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.EmptinessIterator;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.LocalityIterator;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.OrderIterator;
@@ -121,7 +123,7 @@ public class TripleBuilder {
 	}
 
 
-	public Side createSideInstance(final Class<Side> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public Side createSideInstance(final Class<? extends Side> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -139,7 +141,7 @@ public class TripleBuilder {
 
 	}
 
-	public Emptiness createEmptinessInstance(final Class<Emptiness> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public Emptiness createEmptinessInstance(final Class<? extends Emptiness> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -166,6 +168,31 @@ public class TripleBuilder {
 				SConcreteFirst, MConcreteName,  EConcreteName, size);
 	}
 
+	public CompositeOrders createCompositeOrdersInstance(final Class<? extends CompositeOrders> clazz, final Order order1, final Order order2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+
+		Constructor<?>[] constructors = clazz.getConstructors();
+
+		if(constructors.length != 1)
+			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
+
+		return (CompositeOrders) constructors[0].newInstance(RName, SName, SNext, 
+				SFirst, MiddleName, EndName, 
+				RConcreteName, SConcreteName, SConcreteNext, 
+				SConcreteFirst, MConcreteName,  EConcreteName, order1, order2);
+	}
+	
+	public CompositeSizes createCompositeSizesInstance(final Class<? extends CompositeSizes> clazz, final SizeProperty size1, final SizeProperty size2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+
+		Constructor<?>[] constructors = clazz.getConstructors();
+
+		if(constructors.length != 1)
+			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
+
+		return (CompositeSizes) constructors[0].newInstance(RName, SName, SNext, 
+				SFirst, MiddleName, EndName, 
+				RConcreteName, SConcreteName, SConcreteNext, 
+				SConcreteFirst, MConcreteName,  EConcreteName, size1, size2);
+	}
 
 	public Map<String, Pair<String,String>> getAllProperties(){
 
@@ -184,6 +211,32 @@ public class TripleBuilder {
 						for(Order order: iterators. new OrderIterator(this, size)){
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
+							
+							//Composite structures for two size and orders
+							for(SizeProperty size2: iterators. new SizeIterator(this, local, empty)){
+								if(!size2.isConsistent()) continue;
+								
+								for(CompositeSizes compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
+									if(!compositeSizes.isConsistent()) continue;
+									//Add to the list here
+									preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
+								}
+
+								for(Order order2: iterators. new OrderIterator(this, size2)){
+									if(!order2.isConsistent()) continue;
+									
+									for(CompositeOrders compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
+										if(!compositeOrders.isConsistent()) continue;
+										//Add to the list here
+										preds.put(compositeOrders.genPredName(), new Pair(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
+									}
+									
+								}
+								
+							}
+							
+							
+							
 						}
 						
 					}
