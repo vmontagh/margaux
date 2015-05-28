@@ -63,7 +63,7 @@ public class TemporalPropertiesAnalyzer {
 
 	public TemporalPropertiesAnalyzer() {
 	}
-
+/*
 	public static class SimpleAsynchFileWriter {
 		final ConcurrentLinkedQueue<Pair<File,String>> logQueue = new ConcurrentLinkedQueue<>();
 
@@ -116,7 +116,7 @@ public class TemporalPropertiesAnalyzer {
 			t.setPriority(priority);
 			t.start();		}
 	}
-
+*/
 
 	private Set<String> filterFileNames(){
 		final Set<String> fileNames = new HashSet<>();
@@ -165,7 +165,9 @@ public class TemporalPropertiesAnalyzer {
 
 		logger.info("["+Thread.currentThread().getName()+"] " + tripleProps.size()+ " properties are generated.");
 		
+		tripleProps.keySet().stream().forEach(p->System.out.println(p));
 		
+		System.exit(-10);
 		//done is kind of like result, but presumly smaller size and only comare the name.
 		Set<String> doneNames = new HashSet<>();
 
@@ -273,7 +275,7 @@ public class TemporalPropertiesAnalyzer {
 
 		if( !workingDir.exists() ){
 			workingDir.mkdir();
-			logger.info("["+Thread.currentThread().getName()+"] " + "Workinf directory is created: "+workingDir.getAbsolutePath());
+			logger.info("["+Thread.currentThread().getName()+"] " + "Working directory is created: "+workingDir.getAbsolutePath());
 		}
 
 		if( tmpDirectory.exists() ){

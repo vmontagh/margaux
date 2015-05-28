@@ -2,7 +2,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.net.InetSocketAddress;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.FrontAlloyProcess;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
 
 public class RegisterCallback extends RemoteCommand {
 

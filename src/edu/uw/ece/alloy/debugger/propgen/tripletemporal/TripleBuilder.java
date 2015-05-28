@@ -3,7 +3,9 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import edu.mit.csail.sdg.alloy4.Pair;
@@ -201,6 +203,7 @@ public class TripleBuilder {
 
 		//A map from each call to the actual pred
 		Map<String, Pair<String, String>> preds = new TreeMap<>();
+		Set<String> revComposite = new HashSet<String>();
 
 		for(Side side: iterators. new SideIterator(this)){
 			for(Locality local: iterators. new LocalityIterator(this, side)){
@@ -216,8 +219,15 @@ public class TripleBuilder {
 							for(SizeProperty size2: iterators. new SizeIterator(this, local, empty)){
 								if(!size2.isConsistent()) continue;
 								
+								//record the reverse in advance
+								for(CompositeSizes compositeSizes: iterators. new CompositeSizesIterator(this, size2, size)){
+									if(!compositeSizes.isConsistent()) continue;
+									//Add to the list here
+									revComposite.add(compositeSizes.genPredName());
+								}
 								for(CompositeSizes compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
 									if(!compositeSizes.isConsistent()) continue;
+									if(revComposite.contains(compositeSizes.genPredName())) break;
 									//Add to the list here
 									preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
 								}
@@ -225,8 +235,16 @@ public class TripleBuilder {
 								for(Order order2: iterators. new OrderIterator(this, size2)){
 									if(!order2.isConsistent()) continue;
 									
+									//record the reverse in advance
+									for(CompositeOrders compositeOrders: iterators. new CompositeOrdersIterator(this, order2, order)){
+										if(!compositeOrders.isConsistent()) continue;
+										//Add to the list here
+										revComposite.add(compositeOrders.genPredName());
+									}
+									
 									for(CompositeOrders compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
 										if(!compositeOrders.isConsistent()) continue;
+										if(revComposite.contains(compositeOrders.genPredName())) break;
 										//Add to the list here
 										preds.put(compositeOrders.genPredName(), new Pair(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
 									}

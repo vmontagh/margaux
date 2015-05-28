@@ -61,9 +61,6 @@ public abstract class CompositeSizes extends Property {
 	protected String genBody() {
 		String result = size1.genBody();
 		result = result + compositeOperator() + size2.genGrowth();
-
-		System.out.println(result);
-		
 		return result;
 	}
 
@@ -126,5 +123,15 @@ public abstract class CompositeSizes extends Property {
 		}
 		return true;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "CompositeSizes [size1=" + size1 + ", size2=" + size2 + "]";
+	}
+	
+	
 	
 }

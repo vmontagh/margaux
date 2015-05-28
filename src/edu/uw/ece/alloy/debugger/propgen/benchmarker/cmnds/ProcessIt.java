@@ -1,11 +1,10 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 
 public class ProcessIt extends RemoteCommand {
 

@@ -2,8 +2,8 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.util.logging.Level;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager.AlloyProcess.Status;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 
 
 public class IamAlive extends RemoteCommand {

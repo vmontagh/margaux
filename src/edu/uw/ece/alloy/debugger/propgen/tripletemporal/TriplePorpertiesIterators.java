@@ -182,7 +182,7 @@ public class TriplePorpertiesIterators {
 
 		public CompositeSizesIterator(final TripleBuilder builder, final SizeProperty size1, final SizeProperty size2) {
 			super(builder);
-			this.size1 = size2;
+			this.size1 = size1;
 			this.size2 = size2;
 		}
 

@@ -1,9 +1,8 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessedResult;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager.AlloyProcess.Status;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
 public class AlloyProcessed extends RemoteCommand {

@@ -5,7 +5,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
 import java.util.concurrent.ExecutionException;
@@ -13,9 +12,9 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyExecuter;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.FrontAlloyProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
 public abstract class RemoteCommand implements Serializable {

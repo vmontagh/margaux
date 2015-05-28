@@ -148,6 +148,13 @@ public class TriplePropsTester {
 		order2 = builder.createOrderInstance(OrderDecrease.class, size2);
 		compositeOrder = builder.createCompositeOrdersInstance(CompositeOrdersOR.class, order1, order2);
 		assertTrue(compositeOrder.isConsistent() );
+		
+		CompositeSizes compositeSizes = builder.createCompositeSizesInstance(CompositeSizesOR.class, size1, size2);
+		assertTrue(compositeSizes.isConsistent());
+		
+		compositeSizes = builder.createCompositeSizesInstance(CompositeSizesOR.class, size1, size1);
+		assertFalse(compositeSizes.isConsistent());
+		
 	}
 	
 	

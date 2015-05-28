@@ -1,7 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessesManager.AlloyProcess.Status;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 
 public class ProcessReady extends RemoteCommand {
 
