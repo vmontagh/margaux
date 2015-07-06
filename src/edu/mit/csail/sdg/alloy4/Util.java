@@ -298,6 +298,7 @@ public final class Util {
          final String NL = System.getProperty("line.separator");
          byte[] array = content.replace("\n",NL).getBytes("UTF-8");
          fos.write(array);
+         fos.flush();
          fos.close();
          return array.length;
       } catch(IOException ex) {

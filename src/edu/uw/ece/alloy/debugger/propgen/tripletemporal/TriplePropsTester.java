@@ -2,7 +2,10 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
@@ -12,6 +15,14 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import edu.mit.csail.sdg.alloy4.Pair;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazy;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.VacPropertyToAlloyCode;
+import edu.uw.ece.alloy.util.Utils;
 
 public class TriplePropsTester {
 
@@ -32,7 +43,7 @@ public class TriplePropsTester {
 		builder = new TripleBuilder( "r", "s", "s_next",
 				"s_first", "m", "m_next",
 				"m_first", "e", "e_next",
-				"e_first", "R", "S",
+				"e_first", "r", "S",
 				"so/next", "so/first", "M",
 				"E", "eo/next", "eo/first",
 				"mo/next", "mo/first");
@@ -45,26 +56,24 @@ public class TriplePropsTester {
 
 	@Test
 	public void test() {
-
-		System.exit(-10);
 		
 		//A map from each call to the actual pred
 		Map<String, String> preds = new TreeMap<>();
 		
-		for(Side side: iterators. new SideIterator(builder)){
+		for(Sd side: iterators. new SideIterator(builder)){
 			//System.out.println(side);
-			for(Locality local: iterators. new LocalityIterator(builder, side)){
+			for(Lclty local: iterators. new LocalityIterator(builder, side)){
 				//System.out.println(local);
-				for(Emptiness empty: iterators. new EmptinessIterator(builder)){
+				for(Emptnes empty: iterators. new EmptinessIterator(builder)){
 					//System.out.println(empty);
-					for(SizeProperty size: iterators. new SizeIterator(builder, local, empty)){
+					for(SzPrpty size: iterators. new SizeIterator(builder, local, empty)){
 						if(!size.isConsistent()) continue;
 						preds.put(size.genPredCall(), size.generateProp());
 						
 						//System.out.println(size.genPredCall());
 						//System.out.println(size.generateProp());
 						
-						for(Order order: iterators. new OrderIterator(builder, size)){
+						for(Ord order: iterators. new OrderIterator(builder, size)){
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredCall(), order.generateProp());
 							
@@ -73,18 +82,18 @@ public class TriplePropsTester {
 							
 							
 							//Composite structures for two size and orders
-							for(SizeProperty size2: iterators. new SizeIterator(builder, local, empty)){
+							for(SzPrpty size2: iterators. new SizeIterator(builder, local, empty)){
 								if(!size2.isConsistent()) continue;
 								
-								for(CompositeSizes compositeSizes: iterators. new CompositeSizesIterator(builder, size, size2)){
+								for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(builder, size, size2)){
 									if(!compositeSizes.isConsistent()) continue;
 									//Add to the list here
 								}
 
-								for(Order order2: iterators. new OrderIterator(builder, size2)){
+								for(Ord order2: iterators. new OrderIterator(builder, size2)){
 									if(!order2.isConsistent()) continue;
 									
-									for(CompositeOrders compositeOrders: iterators. new CompositeOrdersIterator(builder, order, order2)){
+									for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(builder, order, order2)){
 										if(!compositeOrders.isConsistent()) continue;
 										//Add to the list here
 									}
@@ -106,20 +115,20 @@ public class TriplePropsTester {
 	@Test
 	public void test_CompositeOrders() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		
-		Side side = builder.createSideInstance(SideMiddle.class);
-		Emptiness empty = builder.createEmptinessInstance(EmptyNone.class);
+		Sd side = builder.createSideInstance(SdMdl.class);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
 		
-		Locality local = builder.createLocalityInstance(Global.class, side);
-		SizeProperty size1 = builder.createSizeInstance(SizeGrowth.class, local, empty);
-		SizeProperty size2 = builder.createSizeInstance(SizeShrink.class, local, empty);
+		Lclty local = builder.createLocalityInstance(Glbl.class, side);
+		SzPrpty size1 = builder.createSizeInstance(SzGrwt.class, local, empty);
+		SzPrpty size2 = builder.createSizeInstance(SzShrnk.class, local, empty);
 		
-		Order order1 = builder.createOrderInstance(OrderDecrease.class, size1);
-		Order order2 = builder.createOrderInstance(OrderDecrease.class, size2);
+		Ord order1 = builder.createOrderInstance(OrdDcrs.class, size1);
+		Ord order2 = builder.createOrderInstance(OrdDcrs.class, size2);
 		
-		CompositeOrders compositeOrder = builder.createCompositeOrdersInstance(CompositeOrdersOR.class, order1, order2);
+		CmpstOrds compositeOrder = builder.createCompositeOrdersInstance(CmpstOrdOR.class, order1, order2);
 		compositeOrder.genBody();
 		
-		CompositeSizes compositeSize = builder.createCompositeSizesInstance(CompositeSizesOR.class, size1, size2);
+		CmpstSz compositeSize = builder.createCompositeSizesInstance(CmpstSzOR.class, size1, size2);
 		compositeSize.genBody();
 		compositeSize.isConsistent();
 		
@@ -132,31 +141,122 @@ public class TriplePropsTester {
 	@Test
 	public void test_CompositeOrders_Consistency_SameSizes() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		
-		Side side = builder.createSideInstance(SideMiddle.class);
-		Emptiness empty = builder.createEmptinessInstance(EmptyNone.class);
+		Sd side = builder.createSideInstance(SdMdl.class);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
 		
-		Locality local = builder.createLocalityInstance(Global.class, side);
-		SizeProperty size1 = builder.createSizeInstance(SizeGrowth.class, local, empty);
-		SizeProperty size2 = builder.createSizeInstance(SizeShrink.class, local, empty);
+		Lclty local = builder.createLocalityInstance(Glbl.class, side);
+		SzPrpty size1 = builder.createSizeInstance(SzGrwt.class, local, empty);
+		SzPrpty size2 = builder.createSizeInstance(SzShrnk.class, local, empty);
 		
-		Order order1 = builder.createOrderInstance(OrderDecrease.class, size1);
-		Order order2 = builder.createOrderInstance(OrderDecrease.class, size1);
+		Ord order1 = builder.createOrderInstance(OrdDcrs.class, size1);
+		Ord order2 = builder.createOrderInstance(OrdDcrs.class, size1);
 		
-		CompositeOrders compositeOrder = builder.createCompositeOrdersInstance(CompositeOrdersOR.class, order1, order2);
+		CmpstOrds compositeOrder = builder.createCompositeOrdersInstance(CmpstOrdOR.class, order1, order2);
 		assertFalse(compositeOrder.isConsistent() );
 		
-		order2 = builder.createOrderInstance(OrderDecrease.class, size2);
-		compositeOrder = builder.createCompositeOrdersInstance(CompositeOrdersOR.class, order1, order2);
+		order2 = builder.createOrderInstance(OrdDcrs.class, size2);
+		compositeOrder = builder.createCompositeOrdersInstance(CmpstOrdOR.class, order1, order2);
 		assertTrue(compositeOrder.isConsistent() );
 		
-		CompositeSizes compositeSizes = builder.createCompositeSizesInstance(CompositeSizesOR.class, size1, size2);
+		CmpstSz compositeSizes = builder.createCompositeSizesInstance(CmpstSzOR.class, size1, size2);
 		assertTrue(compositeSizes.isConsistent());
 		
-		compositeSizes = builder.createCompositeSizesInstance(CompositeSizesOR.class, size1, size1);
+		compositeSizes = builder.createCompositeSizesInstance(CmpstSzOR.class, size1, size1);
 		assertFalse(compositeSizes.isConsistent());
 		
 	}
 	
+	@Test
+	public void test_generate_papers_properties() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		
+		Sd side = builder.createSideInstance(SdEnd.class);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
+		
+		Lclty local = builder.createLocalityInstance(Lcl.class, side);
+		SzPrpty size1 = builder.createSizeInstance(SzGrwt.class, local, empty);
+		
+		Ord order1 = builder.createOrderInstance(OrdIncrs.class, size1);
+		
+		System.out.println(order1.genBody());
+		
+		empty = builder.createEmptinessInstance(EmptEnd.class);
+		
+		size1 = builder.createSizeInstance(SzShrnkStrc.class, local, empty);
+		
+		order1 = builder.createOrderInstance(OrdDcrsStrc.class, size1);
+
+		System.out.println(order1.genBody());
+		
+		side = builder.createSideInstance(SdMdl.class);
+		local = builder.createLocalityInstance(Glbl.class, side);
+		size1 = builder.createSizeInstance(SzShrnkStrc.class, local, empty);
+		
+		System.out.println(size1.genBody());
+
+		size1 = builder.createSizeInstance(SzNChng.class, local, empty);
+		order1 = builder.createOrderInstance(OrdIncrs.class, size1);
+
+		System.out.println(order1.genBody());
+	}
 	
+	@Test
+	public void test_generate_all_properties() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		
+		System.out.println(builder.getAllProperties().size());
+	}
 	
+	/**
+	 * The following 'test_tobe_excluded_' set of test cases are
+	 * developed to check whether the properties are inconsistent internally.
+	 * If so, the the property generator has to excluded them.
+	 * @throws InvocationTargetException 
+	 * @throws IllegalArgumentException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * 
+	 */
+	@Test
+	public void test_tobe_excluded_OrdIncrs_SzNChng_Lcl_SdMdl_EmptNon__VAC_OrdIncrs_SzNChng_Lcl_SdMdl_EmptNon_() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		Sd side = builder.createSideInstance(SdMdl.class);
+		Lclty local = builder.createLocalityInstance(Lcl.class, side);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
+		SzPrpty size = builder.createSizeInstance(SzNChng.class, local, empty);
+		Ord order = builder.createOrderInstance(OrdIncrs.class, size);
+		
+		String predBodyA = order.generateProp();
+		String predBodyB = order.generateProp();
+		
+		String predCallA = order.genPredCall();
+		String predCallB = order.genPredCall();
+		
+		String predNameA = order.genPredName();
+		String predNameB = order.genPredName();
+		
+		File tempDirectory4Test = new File("tmp/testing");
+
+		
+		final List<Pair<File, String>> dependencies = new LinkedList<Pair<File,String>>(); 
+		dependencies.add(new Pair<File, String>(new File(tempDirectory4Test,TemporalPropertiesGenerator.relationalPropModuleOriginal.getName() ), 
+				Utils.readFile(TemporalPropertiesGenerator.relationalPropModuleOriginal.getAbsolutePath())));
+		
+		final String SigDecl = "sig M,E{}\nsig S{r:M->E}";
+		final String ModuleS = "open util/ordering [S] as so";
+		final String ModuleM = "open util/ordering [M] as mo";
+		final String ModuleE = "open util/ordering [E] as eo";
+		final String RelationProps = "open relational_properties";
+		final String header =  ModuleS + '\n' + ModuleM + '\n' + ModuleE + '\n' + RelationProps +'\n'+ SigDecl + '\n';
+		final String scope = " for 5";
+		
+		AlloyProcessingParam paramCreator = AlloyProcessingParamLazy.EMPTY_PARAM;		
+		
+		PropertyToAlloyCode creator = VacPropertyToAlloyCode.EMPTY_CONVERTOR.createIt(
+				predBodyA, predBodyB, 
+				predCallA, predCallB, 
+				predNameA, predNameB, dependencies, paramCreator, header, scope, tempDirectory4Test );
+		
+		AlloyProcessingParam param = creator.generate();
+		
+		param.dumpAll();
+		
+	}
 }

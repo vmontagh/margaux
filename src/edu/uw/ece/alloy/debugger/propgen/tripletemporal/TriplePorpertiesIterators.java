@@ -19,19 +19,19 @@ public class TriplePorpertiesIterators {
 	}
 
 
-	public class SizeIterator extends PropertyIterator<SizeProperty, SizeIterator>{
+	public class SizeIterator extends PropertyIterator<SzPrpty, SizeIterator>{
 
-		final Locality local;
-		final Emptiness empty;
+		final Lclty local;
+		final Emptnes empty;
 
-		public SizeIterator(final TripleBuilder builder, final Locality local, final Emptiness empty) {
+		public SizeIterator(final TripleBuilder builder, final Lclty local, final Emptnes empty) {
 			super(builder);
 			this.local = local;
 			this.empty = empty;
 		}
 
 		@Override
-		protected SizeProperty convertNext(Class t) {
+		protected SzPrpty convertNext(Class t) {
 			try {
 				return builder.createSizeInstance(t,local, empty);
 			} catch (Exception e) {
@@ -48,18 +48,18 @@ public class TriplePorpertiesIterators {
 	}
 
 
-	public class LocalityIterator extends PropertyIterator<Locality, LocalityIterator>{
+	public class LocalityIterator extends PropertyIterator<Lclty, LocalityIterator>{
 
 
-		final Side side;
+		final Sd side;
 
-		public LocalityIterator(final TripleBuilder builder, final Side side) {
+		public LocalityIterator(final TripleBuilder builder, final Sd side) {
 			super(builder);
 			this.side = side;
 		}
 
 		@Override
-		protected Locality convertNext(Class t) {
+		protected Lclty convertNext(Class t) {
 			try {
 				return builder.createLocalityInstance(t,side);
 			} catch (Exception e) {
@@ -76,14 +76,14 @@ public class TriplePorpertiesIterators {
 	}
 
 
-	public class SideIterator extends PropertyIterator<Side, SideIterator>{
+	public class SideIterator extends PropertyIterator<Sd, SideIterator>{
 
 		public SideIterator(final TripleBuilder builder) {
 			super(builder);
 		}
 
 		@Override
-		protected Side convertNext(Class t) {
+		protected Sd convertNext(Class t) {
 			try {
 				return builder.createSideInstance(t);
 			} catch (Exception e) {
@@ -99,14 +99,14 @@ public class TriplePorpertiesIterators {
 
 	}
 
-	public class EmptinessIterator extends PropertyIterator<Emptiness, EmptinessIterator>{
+	public class EmptinessIterator extends PropertyIterator<Emptnes, EmptinessIterator>{
 
 		public EmptinessIterator(final TripleBuilder builder) {
 			super(builder);
 		}
 
 		@Override
-		protected Emptiness convertNext(Class t) {
+		protected Emptnes convertNext(Class t) {
 			try {
 				return builder.createEmptinessInstance(t);
 			} catch (Exception e) {
@@ -122,17 +122,17 @@ public class TriplePorpertiesIterators {
 
 	}
 	
-	public class OrderIterator extends PropertyIterator<Order, OrderIterator>{
+	public class OrderIterator extends PropertyIterator<Ord, OrderIterator>{
 		
-		final SizeProperty size;
+		final SzPrpty size;
 
-		public OrderIterator(final TripleBuilder builder, final SizeProperty size) {
+		public OrderIterator(final TripleBuilder builder, final SzPrpty size) {
 			super(builder);
 			this.size = size;
 		}
 
 		@Override
-		protected Order convertNext(Class t) {
+		protected Ord convertNext(Class t) {
 			try {
 				return builder.createOrderInstance(t, size);
 			} catch (Exception e) {
@@ -149,18 +149,18 @@ public class TriplePorpertiesIterators {
 	}
 	
 	
-	public class CompositeOrdersIterator extends PropertyIterator<CompositeOrders, CompositeOrdersIterator>{
+	public class CompositeOrdersIterator extends PropertyIterator<CmpstOrds, CompositeOrdersIterator>{
 		
-		final Order order1, order2;
+		final Ord order1, order2;
 
-		public CompositeOrdersIterator(final TripleBuilder builder, final Order order1, final Order order2) {
+		public CompositeOrdersIterator(final TripleBuilder builder, final Ord order1, final Ord order2) {
 			super(builder);
 			this.order1 = order1;
 			this.order2 = order2;
 		}
 
 		@Override
-		protected CompositeOrders convertNext(Class t) {
+		protected CmpstOrds convertNext(Class t) {
 			try {
 				return builder.createCompositeOrdersInstance(t, order1, order2);
 			} catch (Exception e) {
@@ -176,18 +176,18 @@ public class TriplePorpertiesIterators {
 
 	}
 	
-	public class CompositeSizesIterator extends PropertyIterator<CompositeSizes, CompositeSizesIterator>{
+	public class CompositeSizesIterator extends PropertyIterator<CmpstSz, CompositeSizesIterator>{
 		
-		final SizeProperty size1, size2;
+		final SzPrpty size1, size2;
 
-		public CompositeSizesIterator(final TripleBuilder builder, final SizeProperty size1, final SizeProperty size2) {
+		public CompositeSizesIterator(final TripleBuilder builder, final SzPrpty size1, final SzPrpty size2) {
 			super(builder);
 			this.size1 = size1;
 			this.size2 = size2;
 		}
 
 		@Override
-		protected CompositeSizes convertNext(Class t) {
+		protected CmpstSz convertNext(Class t) {
 			try {
 				return builder.createCompositeSizesInstance(t, size1, size2);
 			} catch (Exception e) {
@@ -216,7 +216,7 @@ public class TriplePorpertiesIterators {
 			Type t = ((ParameterizedType)sooper).getActualTypeArguments()[ 0 ];
 
 			try {
-				iterator =(new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).stream().filter(a->!Modifier.isAbstract(a.getModifiers() )).iterator();
+				iterator =(new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).stream().filter(a->!Modifier.isAbstract(a.getModifiers() )).sorted((Class c1, Class c2)->c1.getName().compareTo(c2.getName())).iterator();
 				//iterator = (new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).iterator();
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block

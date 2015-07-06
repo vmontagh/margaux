@@ -91,7 +91,7 @@ public class TripleBuilder {
 
 
 
-	public SizeProperty createSizeInstance(final Class<? extends SizeProperty> clazz, final Locality local, final Emptiness empty) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public SzPrpty createSizeInstance(final Class<? extends SzPrpty> clazz, final Lclty local, final Emptnes empty) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -99,7 +99,7 @@ public class TripleBuilder {
 			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
 
 
-		return (SizeProperty) constructors[0].newInstance(RName, SName, SNext, 
+		return (SzPrpty) constructors[0].newInstance(RName, SName, SNext, 
 				SFirst, MiddleName, EndName, 
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName,
@@ -107,7 +107,7 @@ public class TripleBuilder {
 	}
 
 
-	public Locality createLocalityInstance(final Class<? extends Locality> clazz, final Side side) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public Lclty createLocalityInstance(final Class<? extends Lclty> clazz, final Sd side) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -117,7 +117,7 @@ public class TripleBuilder {
 
 
 
-		return (Locality) constructors[0].newInstance(RName, SName, SNext, SFirst,
+		return (Lclty) constructors[0].newInstance(RName, SName, SNext, SFirst,
 				MiddleName, EndName, RConcreteName,
 				SConcreteName, SConcreteNext, SConcreteFirst,
 				MConcreteName, EConcreteName, side,
@@ -125,7 +125,7 @@ public class TripleBuilder {
 	}
 
 
-	public Side createSideInstance(final Class<? extends Side> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public Sd createSideInstance(final Class<? extends Sd> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -133,7 +133,7 @@ public class TripleBuilder {
 			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
 
 
-		return (Side) constructors[0].newInstance(RName, SName, SNext, 
+		return (Sd) constructors[0].newInstance(RName, SName, SNext, 
 				SFirst, MiddleName, EndName, 
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName,
@@ -143,7 +143,7 @@ public class TripleBuilder {
 
 	}
 
-	public Emptiness createEmptinessInstance(final Class<? extends Emptiness> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public Emptnes createEmptinessInstance(final Class<? extends Emptnes> clazz) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
@@ -151,51 +151,57 @@ public class TripleBuilder {
 			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
 
 
-		return (Emptiness) constructors[0].newInstance(RName, SName, SNext, 
+		return (Emptnes) constructors[0].newInstance(RName, SName, SNext, 
 				SFirst, MiddleName, EndName, 
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName);
 	}
 
-	public Order createOrderInstance(final Class<? extends Order> clazz, final SizeProperty size) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public Ord createOrderInstance(final Class<? extends Ord> clazz, final SzPrpty size) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if(constructors.length != 1)
 			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
 
-		return (Order) constructors[0].newInstance(RName, SName, SNext, 
+		return (Ord) constructors[0].newInstance(RName, SName, SNext, 
 				SFirst, MiddleName, EndName, 
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName, size);
 	}
 
-	public CompositeOrders createCompositeOrdersInstance(final Class<? extends CompositeOrders> clazz, final Order order1, final Order order2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public CmpstOrds createCompositeOrdersInstance(final Class<? extends CmpstOrds> clazz, final Ord order1, final Ord order2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if(constructors.length != 1)
 			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
 
-		return (CompositeOrders) constructors[0].newInstance(RName, SName, SNext, 
+		return (CmpstOrds) constructors[0].newInstance(RName, SName, SNext, 
 				SFirst, MiddleName, EndName, 
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName, order1, order2);
 	}
 	
-	public CompositeSizes createCompositeSizesInstance(final Class<? extends CompositeSizes> clazz, final SizeProperty size1, final SizeProperty size2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public CmpstSz createCompositeSizesInstance(final Class<? extends CmpstSz> clazz, final SzPrpty size1, final SzPrpty size2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if(constructors.length != 1)
 			throw new RuntimeException("There has to be only one constrcutor for "+clazz);
 
-		return (CompositeSizes) constructors[0].newInstance(RName, SName, SNext, 
+		return (CmpstSz) constructors[0].newInstance(RName, SName, SNext, 
 				SFirst, MiddleName, EndName, 
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName, size1, size2);
 	}
 
+	
+	
+	/**
+	 * 
+	 * @return output is the list of generated predicates. (predicateName->(PredicateCAll, PredicateFulBody))
+	 */
 	public Map<String, Pair<String,String>> getAllProperties(){
 
 		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(this);
@@ -205,44 +211,45 @@ public class TripleBuilder {
 		Map<String, Pair<String, String>> preds = new TreeMap<>();
 		Set<String> revComposite = new HashSet<String>();
 
-		for(Side side: iterators. new SideIterator(this)){
-			for(Locality local: iterators. new LocalityIterator(this, side)){
-				for(Emptiness empty: iterators. new EmptinessIterator(this)){
-					for(SizeProperty size: iterators. new SizeIterator(this, local, empty)){
+		for(Sd side: iterators. new SideIterator(this)){
+			for(Lclty local: iterators. new LocalityIterator(this, side)){
+				for(Emptnes empty: iterators. new EmptinessIterator(this)){
+					for(SzPrpty size: iterators. new SizeIterator(this, local, empty)){
 						if(!size.isConsistent()) continue;
 						preds.put(size.genPredName(), new Pair(size.genPredCall(),  size.generateProp()));
-						for(Order order: iterators. new OrderIterator(this, size)){
+						
+						for(Ord order: iterators. new OrderIterator(this, size)){
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
 							
 							//Composite structures for two size and orders
-							for(SizeProperty size2: iterators. new SizeIterator(this, local, empty)){
+							for(SzPrpty size2: iterators. new SizeIterator(this, local, empty)){
 								if(!size2.isConsistent()) continue;
 								
 								//record the reverse in advance
-								for(CompositeSizes compositeSizes: iterators. new CompositeSizesIterator(this, size2, size)){
+								for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size2, size)){
 									if(!compositeSizes.isConsistent()) continue;
 									//Add to the list here
 									revComposite.add(compositeSizes.genPredName());
 								}
-								for(CompositeSizes compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
+								for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
 									if(!compositeSizes.isConsistent()) continue;
 									if(revComposite.contains(compositeSizes.genPredName())) break;
 									//Add to the list here
 									preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
 								}
 
-								for(Order order2: iterators. new OrderIterator(this, size2)){
+								for(Ord order2: iterators. new OrderIterator(this, size2)){
 									if(!order2.isConsistent()) continue;
 									
 									//record the reverse in advance
-									for(CompositeOrders compositeOrders: iterators. new CompositeOrdersIterator(this, order2, order)){
+									for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order2, order)){
 										if(!compositeOrders.isConsistent()) continue;
 										//Add to the list here
 										revComposite.add(compositeOrders.genPredName());
 									}
 									
-									for(CompositeOrders compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
+									for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
 										if(!compositeOrders.isConsistent()) continue;
 										if(revComposite.contains(compositeOrders.genPredName())) break;
 										//Add to the list here
@@ -253,15 +260,21 @@ public class TripleBuilder {
 								
 							}
 							
-							
-							
 						}
+						//break;
 						
 					}
+					//break;
 				}
+				//break;
 			}
+			//break;
 		}
 
+		//System.out.println(preds.size());
+		
+		//System.exit(-1);
+		
 		return Collections.unmodifiableMap(preds);
 	}
 

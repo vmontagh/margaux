@@ -51,7 +51,7 @@ public abstract class Property {
 	
 	protected abstract boolean isConsistent();
 	
-	protected  String genPredName(){
+	public  String genPredName(){
 		return this.getClass().getSimpleName()+"_";
 	}
 	protected String genParameters(){
