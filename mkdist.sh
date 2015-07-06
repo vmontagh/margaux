@@ -44,8 +44,8 @@ function dist {
     pwd
     cp -r resources $DST/alloy/
     rm -rf $DST/alloy/kodkod
-    cp -r $KODKOD_HOME/bin/kodkod $DST/alloy/kodkod
-    cp -r $KODKOD_HOME/src/kodkod/* $DST/alloy/kodkod/
+    #cp -r $KODKOD_HOME/bin/kodkod $DST/alloy/kodkod
+    #cp -r $KODKOD_HOME/src/kodkod/* $DST/alloy/kodkod/
     rm -rf $DST/alloy/META-INF
  
     find $DST/alloy -type d -name ".svn" | xargs rm -rf 

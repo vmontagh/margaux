@@ -1,7 +1,9 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
+import java.net.InetSocketAddress;
+
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 
 public class ProcessReady extends RemoteCommand {
 
@@ -10,9 +12,9 @@ public class ProcessReady extends RemoteCommand {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	final int pId;
+	final InetSocketAddress pId;
 	
-	public ProcessReady(final int pId) {
+	public ProcessReady(final InetSocketAddress pId) {
 		this.pId = pId;
 	}
 

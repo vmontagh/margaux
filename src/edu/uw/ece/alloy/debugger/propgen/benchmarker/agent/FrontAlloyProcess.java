@@ -77,7 +77,7 @@ public class FrontAlloyProcess implements Runnable {
 			serverSocketChannel = AsynchronousServerSocketChannel
 					.open().bind(hostAddress);
 			logger.info("["+Thread.currentThread().getName()+"] "+" Sending a readyness message pId: "+hostAddress.getPort());
-			(new ProcessReady(+hostAddress.getPort())).sendMe(remoteAddress);
+			(new ProcessReady(hostAddress)).sendMe(remoteAddress);
 
 			Future<AsynchronousSocketChannel> serverFuture = null;
 			AsynchronousSocketChannel clientSocket = null;
@@ -128,8 +128,6 @@ public class FrontAlloyProcess implements Runnable {
 							logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while closing Client socket: ", e);
 						}
 				}
-
-
 			}
 
 		} catch (Throwable t  ){
@@ -165,11 +163,11 @@ public class FrontAlloyProcess implements Runnable {
 
 		while(true){
 			Thread.sleep(500);
-			ProcessIt c = new ProcessIt(new AlloyProcessingParam(new File("."),new File(".."),1), manager);
+			ProcessIt c = new ProcessIt(AlloyProcessingParam.EMPTY_PARAM, manager);
 			c.sendMe(new InetSocketAddress(45321));
 			//Thread.sleep(1000);
 
-			ProcessIt c2 = new ProcessIt(new AlloyProcessingParam(new File("user"),new File(".."),2), manager);
+			ProcessIt c2 = new ProcessIt(AlloyProcessingParam.EMPTY_PARAM, manager);
 			c2.sendMe(new InetSocketAddress(45321));
 
 			//Thread.sleep(1000);

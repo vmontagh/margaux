@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
 
+//TODO: This class has to be immutable.
 public class MyReporter extends A4Reporter implements Serializable{
 	
 	private static final long serialVersionUID = 7526472295622776147L;

@@ -13,6 +13,17 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+/*
+ * 
+ * 
+ * IMPORTANT NOTE: parseEvalExpressionFromString at the end of this file is removed because the debugger code base does not have generator axiom codes. 
+ * 
+ * 
+ * 
+ */
+
+
 package edu.mit.csail.sdg.alloy4compiler.parser;
 
 import java.io.File;
@@ -171,6 +182,17 @@ public final class CompUtil {
             if (ex instanceof Err) throw (Err)ex; else throw new ErrorFatal("Unknown exception occurred: "+ex, ex);
         }
     }
+    
+    /**
+     * [VM] added to parse a file and skip the file I/O in massive processing.
+     * @param content
+     * @param rep
+     * @return
+     * @throws Err
+     */
+    public static CompModule parseOneModule(A4Reporter rep, String content) throws Err {
+    	return CompModule.resolveAll( rep == null ? A4Reporter.NOP : rep, parseOneModule(content)); 
+    }
 
     //=============================================================================================================//
 
@@ -266,8 +288,10 @@ public final class CompUtil {
         }
     }
     
+    
+    //This function is discontinued for the debugger project since its dependencies are out-of-date 
 	/**[VM] Parse the input string as an evaluating query.**/
-	public static Expr parseEvalExpressionFromString(String input, CompModule root) throws Err, FileNotFoundException, IOException {
+	/*public static Expr parseEvalExpressionFromString(String input, CompModule root) throws Err, FileNotFoundException, IOException {
 		Map<String,String> fc = new LinkedHashMap<String,String>();
 		fc.put("", input); // We prepend the line "run{"
 		CompParser.alloy_parseStream(new ArrayList<Object>(), null, fc, root, -1, "", " ", 1);
@@ -279,6 +303,6 @@ public final class CompUtil {
 			throw root.getEvalQuery().errors.pick(); 
 		else 
 			return root.getEvalQuery();
-	}
+	}*/
 
 }

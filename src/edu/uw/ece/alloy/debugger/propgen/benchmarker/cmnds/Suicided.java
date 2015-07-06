@@ -1,7 +1,9 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
+import java.net.InetSocketAddress;
+
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 
 public class Suicided extends RemoteCommand {
 
@@ -10,10 +12,10 @@ public class Suicided extends RemoteCommand {
 	 */
 	private static final long serialVersionUID = -7428348074019906490L;
 	
-	public final int PID;
+	public final InetSocketAddress PID;
 	public final long time;
 	
-	public Suicided(int pID, long time) {
+	public Suicided(final InetSocketAddress pID, long time) {
 		super();
 		PID = pID;
 		this.time = time;

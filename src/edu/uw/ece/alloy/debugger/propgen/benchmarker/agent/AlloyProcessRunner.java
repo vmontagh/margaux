@@ -1,11 +1,13 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.FileWrite;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
 
 public class AlloyProcessRunner {
@@ -16,8 +18,8 @@ public class AlloyProcessRunner {
 
 	
 	//The PID is as the port number that the processor is listening to.
-	public final int PID;
-	public final int remotePort;
+	public final InetSocketAddress PID;
+	public final InetSocketAddress remotePort;
 	
 	protected final static Logger logger = Logger.getLogger(AlloyProcessRunner.class.getName()+"--"+Thread.currentThread().getName());
 
@@ -25,18 +27,20 @@ public class AlloyProcessRunner {
 	private Thread executerThread;
 	private Thread fileThread;
 	private Thread socketThread;
+	private Thread dbThread;
 	private Thread watchdogThread; 
 	
 	private FrontAlloyProcess front;
 	private AlloyExecuter executer;
 	private PostProcess.FileWrite fileWriter;
 	private PostProcess.SocketWriter socketWriter;
+	private PostProcess.DBWriter dbWriter;
 	private ProcessSelfMonitor watchdog;
 	
 	private static AlloyProcessRunner self = null;
 
 	
-	public static AlloyProcessRunner getInstance(final int localPort, final int remotePort){
+	public static AlloyProcessRunner getInstance(final InetSocketAddress localPort, final InetSocketAddress remotePort){
 		if(self != null)
 			throw new RuntimeException("Alloy Processoer cannot be changed.");
 		self = new AlloyProcessRunner(localPort, remotePort);
@@ -49,7 +53,7 @@ public class AlloyProcessRunner {
 		return self;
 	}
 	
-	private AlloyProcessRunner(int localPort, final int remotePort) {
+	private AlloyProcessRunner(final InetSocketAddress localPort, final InetSocketAddress remotePort) {
 		PID = localPort;
 		this.remotePort = remotePort; 
 	}
@@ -71,19 +75,23 @@ public class AlloyProcessRunner {
 		frontThread = new Thread(front);		
 		frontThread.start();
 		
-		socketWriter = new PostProcess.SocketWriter(front.getRemoteAddress());
-		fileWriter = new PostProcess.FileWrite(socketWriter);
-		
+		dbWriter = new PostProcess.DBWriter();
+		socketWriter = new PostProcess.SocketWriter(/*dbWriter,*/ front.getRemoteAddress());
+		fileWriter = new PostProcess.FileWrite(/*socketWriter*/);
+
 		executer.resgisterPostProcess(fileWriter);
-		//executer.resgisterPostProcess(socketWriter);
+		executer.resgisterPostProcess(socketWriter);
+		executer.resgisterPostProcess(dbWriter);
 		
 		executerThread = new Thread(executer);
 		fileThread = new Thread(fileWriter);
 		socketThread = new Thread(socketWriter);
+		dbThread = new Thread(dbWriter);
 		
 		executerThread.start();
 		fileThread.start();
 		socketThread.start();
+		dbThread.start();
 		
 		watchdog = new ProcessSelfMonitor(SelfMonitorInterval, 3, 1, this);
 		watchdogThread = new Thread(watchdog);
@@ -108,28 +116,42 @@ public class AlloyProcessRunner {
 	}
 
 	public static void main(String[] args) {
-
+		
 		logger.info("["+Thread.currentThread().getName()+"] "+"The process is started.");
 		
-		if(args.length < 2)
+		if(args.length < 4)
 			throw new RuntimeException("Enter the port number");
 		
-		if(args.length > 2)
+		if(args.length > 4)
 			throw new RuntimeException("Inappropriate number of inputs. Only enter the remote port number as an interger.");
 		
 		int localPort;
 		int remotePort;
+		InetAddress localIP;
+		InetAddress remoteIP;
 		
 		try{
 			localPort = Integer.parseInt(args[0]);
-			logger.info("["+Thread.currentThread().getName()+"] "+"The port is assigned to this process: "+localPort);
-			remotePort = Integer.parseInt(args[1]);
-			logger.info("["+Thread.currentThread().getName()+"] "+"The remote port is: "+remotePort);
+			localIP   = InetAddress.getByName(args[1]);
+			logger.info("["+Thread.currentThread().getName()+"] "+"The port is assigned to this process: "+localPort+ " and the IP is: "+ localIP);
+			
+			remotePort = Integer.parseInt(args[2]);
+			remoteIP   = InetAddress.getByName(args[3]);;
+			logger.info("["+Thread.currentThread().getName()+"] "+"The remote port is: "+remotePort + " and the IP is: "+ remoteIP);
+		
 		}catch(NumberFormatException nfe){
-			throw new RuntimeException("The port number is not an integer: "+args[0]);
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The passed port is not acceptable: ", nfe.getMessage());
+			throw new RuntimeException("The port number is not an integer: "+nfe);
+		}catch(UnknownHostException uhe){
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The passed IP is not acceptable: ", uhe.getMessage());
+			throw new RuntimeException("The IP address is not acceptable: "+uhe);
 		}
 		
-		AlloyProcessRunner.getInstance(localPort, remotePort).start();
+		
+		final InetSocketAddress  localSocket  = new InetSocketAddress(localIP, localPort);
+		final InetSocketAddress  remoteSocket = new InetSocketAddress(remoteIP, remotePort);
+		
+		AlloyProcessRunner.getInstance(localSocket, remoteSocket).start();
 		
 		//busywait
 		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);

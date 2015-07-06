@@ -1,9 +1,10 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
+import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 
 
 public class IamAlive extends RemoteCommand {
@@ -13,12 +14,12 @@ public class IamAlive extends RemoteCommand {
 	 */
 	private static final long serialVersionUID = 6849804839852749815L;
 
-	public final int PID;
+	public final InetSocketAddress PID;
 	public long time;
 	public int porcessed;
 	public int toBeProcessed;
 
-	public IamAlive(int pID, long time, int porcessed, int toBeProcessed) {
+	public IamAlive(final InetSocketAddress pID, long time, int porcessed, int toBeProcessed) {
 		super();
 		PID = pID;
 		this.time = time;

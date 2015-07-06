@@ -1,8 +1,8 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,36 +18,32 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 
 public class ProcessesManager {
 
 	protected final static Logger logger = Logger.getLogger(ProcessesManager.class.getName()+"--"+Thread.currentThread().getName());;
 
-	public final static int MaxPortNumber = Integer.valueOf(Configuration.getProp("max_port"));
-	public final static int MinPortNumber = Integer.valueOf(Configuration.getProp("min_port"));
 	public final static int MaxFeedThreashold = Integer.valueOf(Configuration.getProp("max_feed_treashold"));
-	public final static int MaxTryPort = 10000000;
-
 
 	final int ProcessNumbers, newmem, newstack;
 	final String jniPath, classPath;
 	final InetSocketAddress watchdogAddress;
 
 	//TODO change the key type to Process
-	final ConcurrentHashMap<Integer, AlloyProcess> processes = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<InetSocketAddress, AlloyProcess> processes = new ConcurrentHashMap<>();
 	//This map stores how many messages are sent to an Alloy processor to be processed. The value is used to stop sent many messages to an Alloy processor.
 	//If the value.a is 0, means that the processor is IDLE or INIATED
 	//value.b stores all the messages sent
-	final ConcurrentHashMap<Integer, Pair<AtomicInteger, AtomicInteger>> sentMessagesCounter = new ConcurrentHashMap<>();
+	final ConcurrentHashMap<InetSocketAddress, Pair<AtomicInteger, AtomicInteger>> sentMessagesCounter = new ConcurrentHashMap<>();
 
 	final String processLoggerConfig;
 
-	static int  lastFoundPort = MinPortNumber;
 
 	public ProcessesManager(int ProcessNumbers, String classPath, int newMem, int newStack, final String jniPath, final String processLogConfig) {
-		this(ProcessNumbers, classPath, newMem, newStack, jniPath, new InetSocketAddress(findEmptyLocalSocket()) , processLogConfig);
+		this(ProcessNumbers, classPath, newMem, newStack, jniPath, ProcessorUtil. findEmptyLocalSocket() , processLogConfig);
 	}
 
 	public ProcessesManager(int ProcessNumbers, String classPath, int newMem, int newStack, final String jniPath, final InetSocketAddress watchdogAddress, final String processLogConfig) {
@@ -67,168 +63,16 @@ public class ProcessesManager {
 		return watchdogAddress;
 	}
 
-	public static final class AlloyProcess{
-		public enum Status{
-			INITIATED, //Initial state is when the process is created but not get an ack from the actual process. 
-			IDLE, //Once the process gets the ack or no more process are ready to be processed. 
-			WORKING, //Working 
-			KILLING, //Suicided to being killed. 
-			NOANSWER
-		}
-		public final InetSocketAddress address;
-		public final int doneTasks;
-		public final int doingTasks;
-		public final int sentTasks;
-		public final Status status;
-		public final long lastLiveTimeRecieved;
-		public final long lastLiveTimeReported;
-
-		public final Process process;
-
-		public AlloyProcess(InetSocketAddress address, Process process) {
-
-			this( new InetSocketAddress( address.getAddress(), address.getPort()),
-					0,
-					0,
-					0,
-					Status.INITIATED,
-					process, 0, 0);
-		}
 
 
-		public AlloyProcess(InetSocketAddress address, int doneTasks,
-				int doingTasks, int sentTasks,
-				Status status, Process process, final long lastLiveTimeReported, final long lastLiveTimeRecieved) {
-			super();
-			this.address = address;
-			this.doneTasks = doneTasks;
-			this.doingTasks = doingTasks;
-			this.sentTasks = sentTasks;
-			this.status = status;
-			this.process = process;
-			this.lastLiveTimeReported = lastLiveTimeReported;
-			this.lastLiveTimeRecieved = lastLiveTimeRecieved;
-		}
 
-
-		public AlloyProcess changeDoneTasks(int i){
-			return new AlloyProcess(address, i, doingTasks, sentTasks, status, process, lastLiveTimeReported,lastLiveTimeRecieved);
-		}
-
-		public AlloyProcess changeStatus(Status s){
-			return new AlloyProcess(address, doneTasks, doingTasks, sentTasks, s, process, lastLiveTimeReported,lastLiveTimeRecieved);
-		}
-
-		public AlloyProcess changeDoingTasks(int i){
-			return new AlloyProcess(address, doneTasks, i, sentTasks, status, process, lastLiveTimeReported,lastLiveTimeRecieved);
-		}
-
-		public AlloyProcess changeSentTasks(int i){
-			return new AlloyProcess(address, doneTasks, doingTasks, i, status, process, lastLiveTimeReported,lastLiveTimeRecieved);
-		}
-
-		public AlloyProcess changeLastLiveTimeReported(long i){
-			return new AlloyProcess(address, doneTasks, doingTasks, sentTasks, status, process, i, lastLiveTimeRecieved);
-		}
-
-		public AlloyProcess changeLastLiveTimeRecieved(long i){
-			return new AlloyProcess(address, doneTasks, doingTasks, sentTasks, status, process, lastLiveTimeReported, i);
-		}
-
-		public int getPId(){return address.getPort();}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result
-					+ ((address == null) ? 0 : address.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			AlloyProcess other = (AlloyProcess) obj;
-			if (address == null) {
-				if (other.address != null)
-					return false;
-			} else if (!address.equals(other.address))
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "AlloyProcess [address=" + address + ", doneTasks="
-					+ doneTasks + ", doingTasks=" + doingTasks + ", sentTasks="
-					+ sentTasks + ", status=" + status
-					+ ", lastLiveTimeRecieved=" + lastLiveTimeRecieved
-					+ ", lastLiveTimeReported=" + lastLiveTimeReported
-					+ ", process=" + process + "]";
-		}
-
-
-		public boolean isActive(){
-			return status.equals(Status.IDLE) || status.equals(Status.WORKING); 
-		}
-
-		private boolean isAccepting(final ConcurrentHashMap<Integer, Pair<AtomicInteger, AtomicInteger>> sentMessagesCounter){
-
-			if(!isActive()) return false;
-
-			if(status.equals(Status.WORKING) &&  
-					sentMessagesCounter.get(address.getPort()/*getPort is eaual to ID*/).b.intValue() > MaxFeedThreashold ){
-				return false;
-			}
-			return true;
-		}
-	}
-
-
-	/**
-	 * This function may returns already used ports. So the history in sentMessagesCounter should be cleaned.
-	 * @return
-	 */
-	public synchronized static int  findEmptyLocalSocket(){
-		int port = lastFoundPort;
-		int tmpPort = lastFoundPort - MinPortNumber + 1;
-
-		int findPortTriesMax = 1;
-
-		while( ++findPortTriesMax < MaxTryPort){
-			tmpPort = (tmpPort + 2) % (MaxPortNumber - MinPortNumber);/*The range is an odd number so the second round it iterates the other sent of numbers.*/
-			int actualport = tmpPort + MinPortNumber;
-
-			try {
-				ServerSocket socket= new ServerSocket( actualport );
-				port = socket.getLocalPort();
-				socket.close();
-				break;
-			} catch (IOException e) {
-				logger.info("The port is not available: "+actualport);
-			}
-		}
-
-		if(port == lastFoundPort){
-			throw new RuntimeException("No port available");
-		}
-		lastFoundPort = port;
-		return lastFoundPort;
-
-	}
 
 	/**
 	 * The method is called by feeder to record how many message is sent so far an Alloy Process.
 	 * This method has to called whenever the message is sent to the processor. 
 	 * @param pId
 	 */
-	public void recordAMessageSentCounter(Integer pId){
+	public void recordAMessageSentCounter(InetSocketAddress pId){
 		if(!sentMessagesCounter.containsKey(pId)){
 			sentMessagesCounter.put(pId, new Pair<AtomicInteger, AtomicInteger>(new AtomicInteger(1), new AtomicInteger(1)));
 		}else{
@@ -238,11 +82,11 @@ public class ProcessesManager {
 	}
 
 	/**
-	 * This function resets the number of the messages sent the given Alloy processor in his shot.
+	 * This function resets the number of the messages sent the given Alloy processor in this shot.
 	 * This method should be called whenever the process becomes IDLE or INITIATED
 	 * @param pId
 	 */
-	public void resetMessageCounter(Integer pId){
+	public void resetMessageCounter(InetSocketAddress pId){
 		if(!sentMessagesCounter.containsKey(pId)){
 			sentMessagesCounter.put(pId, new Pair<AtomicInteger, AtomicInteger>(new AtomicInteger(0), new AtomicInteger(0)));
 		}else{
@@ -255,7 +99,7 @@ public class ProcessesManager {
 	 * 
 	 * @param pId
 	 */
-	public void decreaseMessageCounter(Integer pId){
+	public void decreaseMessageCounter(final InetSocketAddress pId){
 		if(!sentMessagesCounter.containsKey(pId)){
 			throw new RuntimeException("The message counter is not in the map.");
 		}else{
@@ -271,31 +115,37 @@ public class ProcessesManager {
 		final String debug = "yes".equals(System.getProperty("debug")) ? "yes" : "no";
 
 		try {
-			if (jniPath!=null && jniPath.length()>0)
-				sub = Runtime.getRuntime().exec(new String[] {
-						java,
-						"-Xmx" + newmem + "m",
-						"-Xss" + newstack + "k",
-						"-Djava.library.path=" + jniPath,
-						"-Ddebug=" + debug,
-						"-cp", classPath, AlloyProcessRunner.class.getName(),
-						""+address.getPort(),
-						""+watchdogAddress.getPort()
+			ProcessBuilder pb = (jniPath!=null && jniPath.length()>0) ?
+					new ProcessBuilder(java,
+							"-Xmx" + newmem + "m",
+							"-Xss" + newstack + "k",
+							"-Djava.library.path=" + jniPath,
+							"-Ddebug=" + debug,
+							"-cp", classPath, AlloyProcessRunner.class.getName(),
+							""+address.getPort(),
+							""+address.getAddress().getHostAddress(),
+							""+watchdogAddress.getPort(),
+							""+watchdogAddress.getAddress().getHostAddress())
 
-				});
 
-			else
-				sub = Runtime.getRuntime().exec(new String[] {
-						java,
+			:
+				new ProcessBuilder(java,
 						"-Xmx" + newmem + "m",
 						"-Xss" + newstack + "k",
 						"-Ddebug=" + debug,
 						"-Djava.util.logging.config.file=" + processLoggerConfig,
 						"-cp", classPath, AlloyProcessRunner.class.getName(),
 						""+address.getPort(),
-						""+watchdogAddress.getPort()
+						""+address.getAddress().getHostAddress(),
+						""+watchdogAddress.getPort(),
+						""+watchdogAddress.getAddress().getHostAddress());
 
-				});
+
+					pb.redirectOutput(Redirect.INHERIT);
+					pb.redirectError(Redirect.INHERIT);
+
+					sub = pb.start();
+
 		} catch (IOException e) {
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not able to create a new process on port: "+address, e);
 			throw e;
@@ -336,12 +186,12 @@ public class ProcessesManager {
 		}
 	}*/
 
-	public AlloyProcess createProcess(final int port) throws IOException{
+	/*public AlloyProcess createProcess(final int port) throws IOException{
 		return createProcess(new InetSocketAddress(port));
-	}
+	}*/
 
 	public void addProcess() throws IOException{
-		int port = findEmptyLocalSocket();
+		InetSocketAddress port = ProcessorUtil.findEmptyLocalSocket();
 		processes.putIfAbsent( port , createProcess(port));
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is added to the process list "+processes);
 	}
@@ -380,16 +230,16 @@ public class ProcessesManager {
 	 * Precondition. The process has to be in the Killing state
 	 * @param port
 	 */
-	public boolean killProcess(final int port){
+	public boolean killProcess(final InetSocketAddress port){
 		boolean result = false;
 		if(!processes.containsKey(port) ){
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process is not found: "+port);
-		}else if( processes.get(port).status != Status.KILLING ){
+		}else if( processes.get(port).status != AlloyProcess.Status.KILLING ){
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process: "+port+" is not in the killing state and cannot be killed: "+processes.get(port).status);
 		}else{
-			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Killing a process:",+port);
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Killing a process:"+port);
 			synchronized (processes) {
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Entering a lock for killing a process:",+port);
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Entering a lock for killing a process:"+port);
 				processes.get(port).process.destroy();
 				processes.remove(port);
 				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is killed to the process list "+processes);
@@ -404,7 +254,7 @@ public class ProcessesManager {
 	 * Precondition. The process has to be in the Killing state
 	 * @param port
 	 */
-	public void killAndReplaceProcess(final int port){
+	public void killAndReplaceProcess(final InetSocketAddress port){
 		//synchronized (processes) {
 		if(killProcess(port)){
 			addAllProcesses();
@@ -415,7 +265,7 @@ public class ProcessesManager {
 	public AlloyProcess getRandomProcess(){
 		synchronized(processes){
 			@SuppressWarnings("rawtypes")
-			List<Integer> randomArray = new ArrayList<Integer>(processes.keySet());
+			List<InetSocketAddress> randomArray = new ArrayList<InetSocketAddress>(processes.keySet());
 			final int max = randomArray.size();
 			final int randomIndex = (new Random()).nextInt(max);
 			return processes.get(randomArray.get(randomIndex));
@@ -431,32 +281,44 @@ public class ProcessesManager {
 		throw new RuntimeException("Unimplemented");
 	}
 
+	private boolean isAccepting(final AlloyProcess process){
+
+		if(!process.isActive()) return false;
+
+		if(process.status.equals(Status.WORKING) &&  
+				sentMessagesCounter.get(process.address/*getPort is eaual to ID*/).b.intValue() > MaxFeedThreashold ){
+			return false;
+		}
+		return true;
+	}
+
+
 	public AlloyProcess getActiveRandomeProcess(){
 
 		AlloyProcess result;
-		int i = 10;
-		int attempts = 10000; 
+		int retry = 10;
+		int maxRetry = 10000; 
 		do{
-			if( i > attempts  ){
-				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not abale to find a random working process after atempting: "+i);
+			if( retry > maxRetry  ){
+				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not abale to find a random working process after atempting: "+retry);
 				throw new RuntimeException("Not working process was found.");
 			}
 			result = getRandomProcess();
-			++i;
+			++retry;
 			try {
-				Thread.sleep(i);
+				Thread.sleep(retry);
 			} catch (InterruptedException e) {
 				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Interrupted while waiting for an active process. ");
 			}
 
-		}while(!result.isAccepting(sentMessagesCounter));
+		}while(!isAccepting(result));
 
 		return result;
 	}
 
 
 
-	public void changeStatus(int pId, Status status){
+	public void changeStatus(final InetSocketAddress pId, Status status){
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Changing the status of PID:"+pId+" to: "+ status);
 		synchronized(processes){
 			if(processes.containsKey(pId)){
@@ -469,7 +331,7 @@ public class ProcessesManager {
 	}
 
 
-	private void changeNumber(int pId, AlloyProcess newProcess){
+	private void changeNumber(final InetSocketAddress pId, AlloyProcess newProcess){
 		if(processes.containsKey(pId)){
 			processes.replace(pId, newProcess );
 		}else{
@@ -477,56 +339,61 @@ public class ProcessesManager {
 		}
 	}
 
-	public void changeSentTasks(int pId, int sentTasks){
+	public void changeSentTasks(final InetSocketAddress pId, int sentTasks){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeSentTasks(sentTasks) );
 		}
 	}
 
-	public void IncreaseSentTasks(int pId, int sentTasks){
+	public void IncreaseSentTasks(final InetSocketAddress pId, int sentTasks){
 		synchronized(processes){
-			changeNumber(pId,processes.get(pId).changeSentTasks(processes.get(pId).sentTasks + sentTasks) );
+			if(!processes.containsKey(pId)){
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The process is deleted whiling sending a message to it. PID:"+pId);
+
+			}else{
+				changeNumber(pId,processes.get(pId).changeSentTasks(processes.get(pId).sentTasks + sentTasks) );
+			}
 		}
 	}
 
-	public void changeDoingTasks(int pId, int doingTasks){
+	public void changeDoingTasks(final InetSocketAddress pId, int doingTasks){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeDoingTasks(doingTasks) );
 		}
 	}
 
-	public void IncreaseDoingTasks(int pId, int doingTasks){
+	public void IncreaseDoingTasks(final InetSocketAddress pId, int doingTasks){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeDoneTasks(processes.get(pId).doingTasks + doingTasks) );
 		}
 	}
 
-	public void changeDoneTasks(int pId, int doneTasks){
+	public void changeDoneTasks(final InetSocketAddress pId, int doneTasks){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeDoneTasks(doneTasks) );
 		}
 	}
 
-	public void IncreaseDoneTasks(int pId, int doneTasks){
+	public void IncreaseDoneTasks(final InetSocketAddress pId, int doneTasks){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeDoneTasks(processes.get(pId).doneTasks + doneTasks) );
 		}
 	}
 
 
-	public void changeLastLiveTimeReported(int pId, long lastLiveTimeReported){
+	public void changeLastLiveTimeReported(final InetSocketAddress pId, long lastLiveTimeReported){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeLastLiveTimeReported(lastLiveTimeReported) );
 		}
 	}
 
-	public void changeLastLiveTimeRecieved(int pId, long lastLiveTimeRecieved){
+	public void changeLastLiveTimeRecieved(final InetSocketAddress pId, long lastLiveTimeRecieved){
 		synchronized(processes){
 			changeNumber(pId, processes.get(pId).changeLastLiveTimeRecieved(lastLiveTimeRecieved) );
 		}
 	}
 
-	public AlloyProcess getAlloyProcess(int pId){
+	public AlloyProcess getAlloyProcess(final InetSocketAddress pId){
 		logger.info("["+Thread.currentThread().getName()+"] "+" The Pid: "+pId+" is in ?"+Arrays.asList(processes.keySet()));
 		return processes.get(pId);
 	}
@@ -547,12 +414,12 @@ public class ProcessesManager {
 	}
 
 	public void finalize(){
-		for(Integer port: processes.keySet())
+		for(final InetSocketAddress port: processes.keySet())
 			killProcess(port);
 	}
 
 
-	public Set<Integer> getLiveProcessIDs(){
+	public Set<InetSocketAddress> getLiveProcessIDs(){
 		return Collections.unmodifiableSet(processes.keySet());
 
 	}
@@ -561,7 +428,7 @@ public class ProcessesManager {
 		final StringBuilder result = new StringBuilder();
 		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		int waiting = 0, done = 0, doneForPId = 0, waitingForPId = 0;
-		for(Integer pId: processes.keySet()){
+		for(InetSocketAddress pId: processes.keySet()){
 			doneForPId = processes.get(pId).doneTasks;
 			done += doneForPId;
 			result.append("Current reported Done Meessages for PID=<"+pId+"> is:"+done).append("\n");
@@ -578,11 +445,11 @@ public class ProcessesManager {
 		result.append("The current total waiting: ").append(waiting).append("\n").append("The current total Done: ").append(done).append("\n");
 		done = 0;
 		waiting = 0;
-		for(Integer pId: sentMessagesCounter.keySet()){
+		for(InetSocketAddress pId: sentMessagesCounter.keySet()){
 			doneForPId = sentMessagesCounter.get(pId).a.intValue();
 			done += doneForPId;
 			result.append("Total sent Meessages for PID=<"+pId+"> is:").append(doneForPId).append("\n");
-			
+
 			waitingForPId = sentMessagesCounter.get(pId).b.intValue();
 			waiting += waitingForPId;
 			result.append("Send Meessages for PID=<"+pId+"> is:").append(waitingForPId).append("\n");
@@ -590,7 +457,7 @@ public class ProcessesManager {
 		}			
 
 		result.append("Total messages are sent: ").append(done).append("\n").append("Message are waiting now: ").append(waiting).append("\n");
-		
+
 		return result.toString();
 	}
 

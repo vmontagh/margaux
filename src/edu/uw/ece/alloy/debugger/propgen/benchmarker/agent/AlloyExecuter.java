@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazyCompressing;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.FailedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.TimeoutResult;
 
@@ -21,7 +22,7 @@ public class AlloyExecuter implements Runnable {
 
 	private final BlockingQueue<AlloyProcessingParam> queue = new LinkedBlockingQueue<>();
 	private final List<PostProcess> postProcesses = Collections
-			.synchronizedList(new LinkedList<>());
+			.synchronizedList(new LinkedList<PostProcess>());
 
 	public volatile AtomicInteger processed = new AtomicInteger(0);
 	private volatile AlloyProcessingParam lastProccessing;
@@ -36,7 +37,6 @@ public class AlloyExecuter implements Runnable {
 	}
 
 	public void process(final AlloyProcessingParam p) {
-		logger.info("["+Thread.currentThread().getName()+"]" + "Message recieved "+p);
 		queue.add(p);
 	}
 
@@ -49,7 +49,7 @@ public class AlloyExecuter implements Runnable {
 		for (PostProcess e : postProcesses) {
 			try {
 				e.doAction(result);
-				
+
 			} catch (InterruptedException e1) {
 				logger.info("["+Thread.currentThread().getName()+"] " +"The post processing action <" + e
 						+ "> is interrupted on: " + result);
@@ -84,17 +84,50 @@ public class AlloyExecuter implements Runnable {
 	private void runAlloy() throws InterruptedException {
 
 		lastProccessing = queue.take();// wait here.
+		//Only what stored in the `lastProccessing' is unwrapped
+		/*try {
+			
+			System.out.println("before Run="+lastProccessing.hashCode());
+			
+			lastProccessing = lastProccessing.prepareToUse();
+			
+			System.out.println("After Run="+ AlloyProcessingParamLazyCompressing.EMPTY_PARAM.createItself(lastProccessing).hashCode());
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " +"failure on adding a request to queue: ", e);
+			e.printStackTrace();
+			try {
+				runPostProcesses(new AlloyProcessedResult.FailedResult(
+						lastProccessing, e.getMessage()));
+			} catch (InterruptedException e1) {
+				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " +"failure on processing a post failure message: ", e1);
+				e1.printStackTrace();
+			}
+		}*/
+
+		if(lastProccessing == null){
+			System.err.println("Why null?!!!");
+			return;
+		}
+		
 		long time = System.currentTimeMillis();
 		logger.info("["+Thread.currentThread().getName()+"]" + " Start processing "+lastProccessing);
+
 		AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 		try {
 			A4CommandExecuter.getInstance().run(
-					new String[] { lastProccessing.srcPath.getAbsolutePath() },
+					new String[] { lastProccessing.srcPath().getAbsolutePath() },
 					rep);
 			logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);
 			runPostProcesses(rep);
 			processed.incrementAndGet();
 		} catch (Err e) {
+			if(lastProccessing == null){
+				logger.severe("["+Thread.currentThread().getName()+"] " +"The parameter is null and no failed message can be sent: "
+						+ lastProccessing);
+				return;
+			}
+			
 			runPostProcesses(new AlloyProcessedResult.FailedResult(
 					lastProccessing));
 			logger.severe("["+Thread.currentThread().getName()+"] " +"The Alloy processor failed on processing: "
@@ -106,7 +139,7 @@ public class AlloyExecuter implements Runnable {
 
 	@Override
 	public void run() {
-		
+
 		int i = 0;
 		final int maxInterrupt = 1000;  
 		while (!Thread.currentThread().isInterrupted()){

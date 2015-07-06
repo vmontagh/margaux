@@ -1,9 +1,12 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 
 public class ProcessIt extends RemoteCommand {
@@ -12,6 +15,8 @@ public class ProcessIt extends RemoteCommand {
 	 * 
 	 */
 	private static final long serialVersionUID = 8188777849612332517L;
+	final static Logger logger = Logger.getLogger(ProcessIt.class.getName()+"--"+Thread.currentThread().getName());
+	
 	public final AlloyProcessingParam param;
 	public transient final ProcessesManager processesManager;
 	
@@ -21,20 +26,50 @@ public class ProcessIt extends RemoteCommand {
 		this.processesManager = processesManager;
 	}
 
+	/**
+	 * To be called by the client.
+	 */
 	public void process(AlloyExecuter executer) {
-		executer.process(param);
+		try {
+			final AlloyProcessingParam param = this.param.prepareToUse().dumpAll();
+			executer.process(param);
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or execute the message: "+ this.param, e);
+			e.printStackTrace();
+		}
+		
 	}
 
 	@Override
 	public String toString() {
+		AlloyProcessingParam param = this.param;
+		/*try {
+			param = this.param;
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on decompressing the message: "+ param, e);
+			e.printStackTrace();
+		}*/
 		return "ProcessIt [param=" + param + "]";
 	}
 	
-	public  void sendMe(final InetSocketAddress remoteAddres) throws InterruptedException{
+	/**
+	 * To be called by the btoker
+	 * @param remoteAddres
+	 * @throws InterruptedException
+	 */
+	public  void send(final InetSocketAddress remoteAddres) throws InterruptedException{
 	
-		super.sendMe(remoteAddres);
-		processesManager.recordAMessageSentCounter(remoteAddres.getPort());
-		processesManager.IncreaseSentTasks(remoteAddres.getPort(), 1);
+		try {
+			//Encoding the param.
+			final AlloyProcessingParam param = this.param.prepareToSend();
+			(new ProcessIt(param, this.processesManager) ).sendMe(remoteAddres);
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or send the message: "+ this.param, e);
+			e.printStackTrace();
+		}
+		
+		processesManager.recordAMessageSentCounter(remoteAddres);
+		processesManager.IncreaseSentTasks(remoteAddres, 1);
 
 	}
 	

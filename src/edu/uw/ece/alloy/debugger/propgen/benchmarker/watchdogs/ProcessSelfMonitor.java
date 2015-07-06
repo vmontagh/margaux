@@ -43,6 +43,7 @@ public class ProcessSelfMonitor implements Runnable {
 		int livenessFailed = 0;
 		while(!Thread.currentThread().isInterrupted()){
 			try {
+				Thread.sleep(monitorInterval/2);
 				logger.info("["+Thread.currentThread().getName()+"]"+ "Monitor takes: processedSoFar:"+processedSoFar+" currently_processed="+alloyProcessRunner.getExecuter().processed+" isEmpty="+alloyProcessRunner.getExecuter().isEmpty());
 				//monitor the executer
 				if(processedSoFar == alloyProcessRunner.getExecuter().processed.intValue() && !alloyProcessRunner.getExecuter().isEmpty()){
@@ -108,7 +109,7 @@ public class ProcessSelfMonitor implements Runnable {
 				}
 				System.gc();
 
-				Thread.sleep(monitorInterval);
+				Thread.sleep(monitorInterval/2);
 			} catch (InterruptedException e) {
 				logger.info("["+Thread.currentThread().getName()+"]"+ "Watchdog main loop is interrpted.");
 

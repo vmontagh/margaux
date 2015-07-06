@@ -13,8 +13,34 @@ public class AlloyProcessedResult extends MyReporter {
 
 	public AlloyProcessedResult(AlloyProcessingParam params) {
 		super();
-		this.params = new AlloyProcessingParam(params);
+		this.params = 
+				params!=null ? 
+						params.createItself() : 
+							AlloyProcessingParam.EMPTY_PARAM;
 	}
+	
+	public AlloyProcessedResult(AlloyProcessedResult result) {
+		this(result.params);
+		this.clauses = result.clauses;
+		this.evalInsts = result.evalInsts;
+		this.trasnalationTime = result.trasnalationTime;
+		this.totalVaraibles = result.totalVaraibles;
+		this.solveTime = result.solveTime;
+		this.evalTime = result.evalTime;
+		this.sat = result.sat;
+	}
+	
+	public AlloyProcessedResult(AlloyProcessingParam params,long clauses, long evalInsts, long trasnalationTime, long totalVaraibles, long solveTime, long evalTime, int sat) {
+		this(params);
+		this.clauses = clauses;
+		this.evalInsts = evalInsts;
+		this.trasnalationTime = trasnalationTime;
+		this.totalVaraibles = totalVaraibles;
+		this.solveTime = solveTime;
+		this.evalTime = evalTime;
+		this.sat = sat;
+	}
+	
 	
 	
 	public String asRecord() {
@@ -22,6 +48,10 @@ public class AlloyProcessedResult extends MyReporter {
 				+ "," + clauses + "," + solveTime
 				+ "," + evalTime + "," + evalInsts
 				+ "," + sat ;
+	}
+	
+	public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
+		return new AlloyProcessedResult(params, clauses,  evalInsts,  trasnalationTime,  totalVaraibles,  solveTime,  evalTime,  sat);
 	}
 	
 	public boolean isTimedout(){
@@ -38,13 +68,19 @@ public class AlloyProcessedResult extends MyReporter {
 	}
 	
 	public static class FailedResult extends AlloyProcessedResult{
-
+		
+		final public String REASON;
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -8538317738030842240L;
 
 		public FailedResult(AlloyProcessingParam params) {
+			
+			this(params, "?");			
+		}
+		
+		public FailedResult(final AlloyProcessingParam params, final String reason) {
 			super(params);
 			this.trasnalationTime = 0;
 			this.totalVaraibles = 0;
@@ -53,7 +89,13 @@ public class AlloyProcessedResult extends MyReporter {
 			this.evalInsts = 0;
 			this.evalTime = 0;
 			this.sat = 0;
+			this.REASON = reason;
 		}
+		
+		public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
+			return new FailedResult(params, REASON);
+		}
+
 		
 	}
 	
@@ -75,9 +117,12 @@ public class AlloyProcessedResult extends MyReporter {
 			this.sat = 0;
 		}
 		
+		public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
+			return new TimeoutResult(params);
+		}
+		
+		
 	}
 
-
-	
 
 }

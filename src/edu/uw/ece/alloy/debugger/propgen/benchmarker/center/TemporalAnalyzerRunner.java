@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -9,7 +10,7 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.BenchmarkRunner;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesAnalyzer;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
 public class TemporalAnalyzerRunner {
@@ -26,7 +27,7 @@ public class TemporalAnalyzerRunner {
 	AlloyFeeder feeder;
 	ProcessRemoteMonitor monitor;
 	ProcessRemoteMonitor.MonitorTimedoutProcesses timeoutMonitor;
-	TemporalPropertiesAnalyzer analyzer = new TemporalPropertiesAnalyzer();
+	TemporalPropertiesGenerator analyzer = new TemporalPropertiesGenerator();
 
 	Thread feederThread;
 	Thread monitorThread;
@@ -50,7 +51,7 @@ public class TemporalAnalyzerRunner {
 		monitor = new ProcessRemoteMonitor(RemoteMonitorInterval, feeder, manager, manager.getProcessRemoteMonitorAddress());
 		timeoutMonitor = monitor.new MonitorTimedoutProcesses();
 
-		analyzer = new TemporalPropertiesAnalyzer();
+		analyzer = new TemporalPropertiesGenerator();
 
 		feederThread = new Thread(feeder); 
 		monitorThread = new Thread(monitor);
@@ -65,23 +66,25 @@ public class TemporalAnalyzerRunner {
 		feederThread.start();
 		feederThread.setPriority(Thread.MAX_PRIORITY);
 
-		List<AlloyProcessingParam>  aps;
+		//List<AlloyProcessingParam>  aps = Collections.EMPTY_LIST;
 		try {
-			aps = analyzer.generateRemoteFiles();
+			//aps = analyzer.generateRemoteFiles();
+			//The files are generated while fed into the feeder
+			analyzer.generateAlloyProcessingParams(feeder);
 		} catch (Err | IOException e1) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to generate alloy files: ", e1);
 			throw e1;
 		}
 
 
-		for(AlloyProcessingParam ap: aps){
+		/*for(AlloyProcessingParam ap: aps){
 			try {
 				feeder.addProcessTask(ap);
 				logger.info("["+Thread.currentThread().getName()+"]" + "a process is added");
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to add alloy files: ", e);
 			}
-		}
+		}*/
 
 
 	}
@@ -101,6 +104,7 @@ public class TemporalAnalyzerRunner {
 			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().monitor.getStatus());
 			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().feeder.getStatus());
 			Thread.currentThread().yield();
+			System.gc();
 		}
 	}
 

@@ -7,6 +7,6 @@ CP=$(ls -1 dist/*.jar | xargs | sed "s/\ /:/g"):$(ls -1 lib/*.jar | xargs | sed 
 echo $CP
 #CP=$CP:classes:$(ls -1 dist/*.jar | xargs | sed "s/\ /:/g")
 
-java -Xmx$xmx -Xms$xms -cp $CP edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalAnalyzerRunner
+java -Xmx$xmx -Xms$xms -cp $CP edu.uw.ece.alloy.debugger.propgen.benchmarker.center.TemporalAnalyzerRunner
 
 echo $classpath

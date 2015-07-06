@@ -5,19 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,9 +26,9 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessIt;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 
@@ -42,7 +36,7 @@ public class ProcessRemoteMonitor implements Runnable {
 
 
 	final static int MaxTimeoutRetry = Integer.valueOf(Configuration.getProp("remote_timeout_retry")); 
-	
+
 	final InetSocketAddress hostAddress;
 
 	final AlloyFeeder feeder;
@@ -50,11 +44,11 @@ public class ProcessRemoteMonitor implements Runnable {
 	public final int monitorInterval;
 
 	//TODO change the key to AlloyProcessingParam from Integer
-	final private Map<Integer, Map<AlloyProcessingParam, Integer/*The number of duplications*/>>  incompleteMessages =  new ConcurrentHashMap<Integer, Map<AlloyProcessingParam,Integer>>();
-	final private Map<AlloyProcessingParam, List<Integer>>  sentMessages =  new ConcurrentHashMap<>();
+	final private Map<InetSocketAddress, Map<AlloyProcessingParam, Integer/*The number of duplications*/>>  incompleteMessages =  new ConcurrentHashMap<InetSocketAddress, Map<AlloyProcessingParam,Integer>>();
+	final private Map<AlloyProcessingParam, List<InetSocketAddress>>  sentMessages =  new ConcurrentHashMap<>();
 	final private Map<AlloyProcessingParam, Integer>  timeoutRetry =  new ConcurrentHashMap<>();
 	///Once a message is removed from incompleteMessages, its value is increased.
-	final private Map<Integer, AtomicInteger>  receivedMessagesNumber =  new ConcurrentHashMap<>();
+	final private Map<InetSocketAddress, AtomicInteger>  receivedMessagesNumber =  new ConcurrentHashMap<>();
 	protected final static Logger logger = Logger.getLogger(ProcessRemoteMonitor.class.getName()+"--"+Thread.currentThread().getName());
 
 	public ProcessRemoteMonitor(int monitorInterval, AlloyFeeder feeder, ProcessesManager manager, final InetSocketAddress hostAddress) {
@@ -66,16 +60,18 @@ public class ProcessRemoteMonitor implements Runnable {
 		this.feeder.setMonitor(this);
 	}
 
-	public ProcessRemoteMonitor(int monitorInterval, AlloyFeeder feeder, ProcessesManager manager, final int port) {
+	public ProcessRemoteMonitor(final int monitorInterval, final AlloyFeeder feeder, final ProcessesManager manager, final int port) {
 		this(monitorInterval, feeder, manager, new InetSocketAddress( port));
 	}
 
-	public ProcessRemoteMonitor(int monitorInterval, AlloyFeeder feeder, ProcessesManager manager, final String address, final int port) {
+	public ProcessRemoteMonitor(final int monitorInterval, final AlloyFeeder feeder, final ProcessesManager manager, final String address, final int port) {
 		this(monitorInterval, feeder, manager, new InetSocketAddress(address, port));
 
 	}
 
-	public void addMessage(final int pId, AlloyProcessingParam e){
+	public void addMessage(final InetSocketAddress pId, final AlloyProcessingParam e){
+		
+		//TODO message: All message the AlloyProcessingParam objects are compressed already. to read them, they have to be decomrepssed.
 		if( ! incompleteMessages.containsKey(pId) ){
 			incompleteMessages.put(pId,new ConcurrentHashMap<>() );
 		}
@@ -96,17 +92,16 @@ public class ProcessRemoteMonitor implements Runnable {
 		}
 
 		if( ! sentMessages.containsKey(e) ){
-			sentMessages.put(e,Collections.synchronizedList(new LinkedList()) );
+			sentMessages.put(e,Collections.synchronizedList(new LinkedList<InetSocketAddress>()) );
 		}
 
-		List<Integer> listPID = sentMessages.get(e);
+		List<InetSocketAddress> listPID = sentMessages.get(e);
 		listPID.add(pId);
-
-
 
 	}
 
-	public void removeMessage(final int pId, AlloyProcessingParam e){
+	public void removeMessage(final InetSocketAddress pId, final AlloyProcessingParam e){
+		
 		if( ! incompleteMessages.containsKey(pId) ){
 			logger.severe("["+Thread.currentThread().getName()+"] "+"No message set is available for process: "+pId);
 		}else{
@@ -134,7 +129,7 @@ public class ProcessRemoteMonitor implements Runnable {
 		}
 	}
 
-	private void recordRemovedMessage(Integer pId){
+	private void recordRemovedMessage(final InetSocketAddress pId){
 		if(! receivedMessagesNumber.containsKey(pId)){
 			receivedMessagesNumber.put(pId, new AtomicInteger(1));
 		}else{
@@ -145,13 +140,13 @@ public class ProcessRemoteMonitor implements Runnable {
 	public final String getStatus(){
 		StringBuilder result = new StringBuilder();
 		int waiting = 0;
-		for(Integer pId: incompleteMessages.keySet()){
+		for(InetSocketAddress pId: incompleteMessages.keySet()){
 			int waitingForPId = incompleteMessages.get(pId).size();
 			waiting += waitingForPId;
 			result.append("Unresponded Message for PID<").append(pId).append(">=").append(waitingForPId).append("\n");
 		}
 		int done = 0;
-		for(Integer pId: receivedMessagesNumber.keySet()){
+		for(InetSocketAddress pId: receivedMessagesNumber.keySet()){
 			int doneForPID = receivedMessagesNumber.get(pId).intValue();
 			done += doneForPID;
 			result.append("Responded Message for PID<").append(pId).append(">=").append(doneForPID).append("\n");
@@ -179,6 +174,7 @@ public class ProcessRemoteMonitor implements Runnable {
 
 		AsynchronousServerSocketChannel serverSocketChannel = null;
 		try {
+						
 			serverSocketChannel = AsynchronousServerSocketChannel
 					.open().bind(hostAddress);
 			logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"The remote monitor is tarted to monitor the process on: "+hostAddress);
@@ -198,7 +194,9 @@ public class ProcessRemoteMonitor implements Runnable {
 						processCommand( (RemoteCommand)ois.readObject() );
 
 					}
-				} catch (EOFException e) {
+				} catch(BindException be){
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while monitoring: ", be);
+				}catch (EOFException e) {
 					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while monitoring: ", e);
 				} catch (IOException e) {
 					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while monitoring: ", e);
@@ -208,7 +206,8 @@ public class ProcessRemoteMonitor implements Runnable {
 					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while monitoring: ", e);
 				} catch (ClassNotFoundException e) {
 					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while monitoring: ", e);
-				}finally{
+				} 
+				finally{
 					if(ois != null)
 						try{
 							ois.close();
@@ -262,25 +261,25 @@ public class ProcessRemoteMonitor implements Runnable {
 	 * @param pId
 	 * @param param
 	 */
-	public void removeAndPushUndoneRequest(final int pId, final AlloyProcessingParam param) {
+	public void removeAndPushUndoneRequest(final InetSocketAddress pId, final AlloyProcessingParam param) {
 
 		removeMessage(pId, param);
-		
+
 		if(!timeoutRetry.containsKey(param)){
 			timeoutRetry.put(param, 1);
 		}
-		
+
 		if(timeoutRetry.get(param) <= MaxTimeoutRetry){
 			logger.info("["+Thread.currentThread().getName()+"] " + "The task was timed out on " + pId + " but it will be retried for: " + timeoutRetry.get(param) + " time.");	
 			pushUndoneRequest(pId, param);
 			timeoutRetry.replace(param, timeoutRetry.get(param)+1);
 		}
-		
+
 
 	}
 
 
-	private void pushUndoneRequest(final int pId, AlloyProcessingParam param) {
+	private void pushUndoneRequest(final InetSocketAddress pId, AlloyProcessingParam param) {
 		try {
 			feeder.addProcessTask(param);
 		} catch (InterruptedException e) {
@@ -288,7 +287,7 @@ public class ProcessRemoteMonitor implements Runnable {
 		}
 	}
 
-	private void pushUndoneRequests(final int pId, Iterable<AlloyProcessingParam> itr) {
+	private void pushUndoneRequests(final InetSocketAddress pId, Iterable<AlloyProcessingParam> itr) {
 		for(AlloyProcessingParam param: itr){
 			pushUndoneRequest(pId,param);
 		}
@@ -298,7 +297,7 @@ public class ProcessRemoteMonitor implements Runnable {
 	 * Remove from the pId from incompleteMessages and push the params into the feeder 
 	 * @param pId
 	 */
-	public void removeAndPushUndoneRequests(final int pId){
+	public void removeAndPushUndoneRequests(final InetSocketAddress pId){
 		if(manager.getAlloyProcess(pId) == null){
 			logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"The process is not avaialable: "+pId);
 			return;
@@ -341,7 +340,7 @@ public class ProcessRemoteMonitor implements Runnable {
 		public void run() {
 			while(!Thread.currentThread().isInterrupted()){
 				try {
-					Thread.currentThread().sleep(monitorInterval);
+					Thread.currentThread().sleep(15 * monitorInterval / 10);
 					for(AlloyProcess ap: manager.getTimedoutProcess(monitorInterval)){
 						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The processes is timedout and will be killed:"+ap.getPId());
 						manager.changeStatus(ap.getPId(), Status.KILLING);
@@ -351,10 +350,10 @@ public class ProcessRemoteMonitor implements Runnable {
 						manager.killAndReplaceProcess(ap.getPId());
 					}
 
-					for(Integer i: findOrphanProcessTasks(manager)){
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Orphan processes are to be removed from the process: "+i);
-						removeAndPushUndoneRequests(i);
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Orphan processes are are removed process: "+i);
+					for(InetSocketAddress pId: findOrphanProcessTasks(manager)){
+						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Orphan processes are to be removed from the process: "+pId);
+						removeAndPushUndoneRequests(pId);
+						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Orphan processes are are removed process: "+pId);
 					}
 
 				} catch (InterruptedException e) {
@@ -369,27 +368,13 @@ public class ProcessRemoteMonitor implements Runnable {
 		}
 	}
 
-	public synchronized Set<Integer> findOrphanProcessTasks(ProcessesManager manager){
-		Set<Integer> result = new HashSet( incompleteMessages.keySet());
+	public synchronized Set<InetSocketAddress> findOrphanProcessTasks(ProcessesManager manager){
+		Set<InetSocketAddress> result = new HashSet<InetSocketAddress>( incompleteMessages.keySet());
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"registered incmplemete processes are: "+result);
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Active processes are: "+manager.getLiveProcessIDs());
 		result.removeAll(manager.getLiveProcessIDs());
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"orphan process are: "+result);
 		return Collections.unmodifiableSet(result);
-	}
-
-	public static void main(String... args) throws InterruptedException{
-
-		ProcessRemoteMonitor f = new ProcessRemoteMonitor(0,new AlloyFeeder(null),null, new InetSocketAddress(45321));
-
-		//(new Thread(f)).start();
-
-		ProcessIt c = new ProcessIt(new AlloyProcessingParam(new File("."),new File(".."),1),f.manager);
-
-		f.addMessage(1, c.param);
-
-		f.removeMessage(1, new AlloyProcessingParam( c.param ));
-
 	}
 
 

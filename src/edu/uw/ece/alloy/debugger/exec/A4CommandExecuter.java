@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.Locale;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
@@ -21,6 +23,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.gen.MyReporter;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 
 /**
  * This class is for executing the decomposer using Alloy 4
@@ -29,7 +32,8 @@ import edu.mit.csail.sdg.gen.MyReporter;
  */
 public class A4CommandExecuter {
 
-	
+	final static Logger logger = Logger.getLogger(A4CommandExecuter.class.getName()+"--"+Thread.currentThread().getName());
+
 	private  static A4CommandExecuter itself;
 
 	private A4CommandExecuter(){
@@ -60,22 +64,46 @@ public class A4CommandExecuter {
 	}
 
 	public Module  parse(final String fileName,final A4Reporter rep) throws Err{
-
 		
 		return CompUtil.parseEverything_fromFile(rep, null, fileName);
 	}
+
+	public Module  parseOneModule(final String content,final A4Reporter rep) throws Err{
+		
+		return CompUtil.parseOneModule(rep, content);
+	}
+	
+	
+	public void runOverString(String content, A4Reporter rep) throws Err{
+		
+		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy content is being processed soon.");
+		
+		CompModule world = (CompModule) parseOneModule(  content, rep);
+		
+		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is parsed.");
+		
+		A4Options options = new A4Options();
+
+		options.solver = A4Options.SatSolver.SAT4J;
+		options.symmetry = 0;
+		
+		for (Command command: world.getAllCommands()) {
+			A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is executed and the result is: "+ ans);
+
+		}
+		
+	}
 	
 	public void run(String[] args,A4Reporter rep) throws Err{
-
-
-
 
 		// Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
 
 		for(String filename:args) {
 			// Parse+typecheck the model
-			System.out.println("=========== Parsing+Typechecking "+filename+" =============");
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
+			
 			CompModule world = (CompModule) parse(  filename, rep);
 
 			// Choose some default options for how you want to execute the commands
@@ -88,8 +116,7 @@ public class A4CommandExecuter {
 
 
 				// Execute the command
-				System.out.println("============ Command "+command+": ============");
-				System.out.println("Starting to evlauate the code....");
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
 				long time = System.currentTimeMillis();
 				PrintWriter out=null;
 
