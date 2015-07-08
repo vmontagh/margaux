@@ -91,7 +91,7 @@ public abstract class RemoteCommand implements Serializable {
 		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 
-	public void processDone(ProcessRemoteMonitor monitor, final ProcessesManager manager){
+	public void processDone(final ProcessRemoteMonitor monitor){
 		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 

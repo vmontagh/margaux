@@ -23,7 +23,7 @@ public class SzShrnk extends SzPrpty {
 		return " let "+getGrowthOrderedDelta()+" = "+growthLocality.getLetVariable1()+
 				" - "+growthLocality.getLetVariable2() + " | " +
 				"  (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" ) and "+
-				"  (some "+growthLocality.getLetVariable2()+" implies"
+				"  (some "+getGrowthOrderedDelta()+" implies"
 				;
 	}
 

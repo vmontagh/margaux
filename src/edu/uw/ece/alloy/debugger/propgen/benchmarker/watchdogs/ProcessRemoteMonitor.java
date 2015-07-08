@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
@@ -121,6 +122,7 @@ public class ProcessRemoteMonitor implements Runnable {
 					mapValue.remove(e);
 					logger.info("["+Thread.currentThread().getName()+"] "+"Message "+e+" is received and removed for process: "+pId);
 				}
+				
 				logger.info("["+Thread.currentThread().getName()+"] " + " The map size is after: " + mapValue.size()+ " for pId:"+pId);
 
 			}
@@ -164,7 +166,7 @@ public class ProcessRemoteMonitor implements Runnable {
 		//logger.info("["+Thread.currentThread().getName()+"] "+"processCommand 2:" +command);
 		command.updatePorcessorLiveness(manager);
 		//logger.info("["+Thread.currentThread().getName()+"] "+"processCommand 3:" +command);
-		command.processDone(this, manager);
+		command.processDone(this);
 		//logger.info("["+Thread.currentThread().getName()+"] "+"processCommand 4:" +command);
 		command.activateMe(manager);
 		logger.info("["+Thread.currentThread().getName()+"] "+"processCommand Exit:" +command);
@@ -375,6 +377,29 @@ public class ProcessRemoteMonitor implements Runnable {
 		result.removeAll(manager.getLiveProcessIDs());
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"orphan process are: "+result);
 		return Collections.unmodifiableSet(result);
+	}
+	
+	/**
+	 * This method is called by AlloyProcessed, once a message is received from the process as a task is done. 
+	 * @param result
+	 */
+	public void processResponded(AlloyProcessedResult result, InetSocketAddress PID){
+		
+		if(manager.getAlloyProcess(PID) == null){
+			logger.severe("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" "+this);
+			return;
+		}
+		
+		if(result.isTimedout() || result.isFailed()){
+			logger.info("["+Thread.currentThread().getName()+"] " + "The process is timed out and is pushed back to be retried later: pID= "+PID +" param="+result.params);
+			removeAndPushUndoneRequest(PID, result.params);
+		}else{
+			removeMessage(PID, result.params);
+		}
+		
+		manager.changeStatus(PID, Status.WORKING);
+		manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
+		manager.decreaseMessageCounter(PID);
 	}
 
 

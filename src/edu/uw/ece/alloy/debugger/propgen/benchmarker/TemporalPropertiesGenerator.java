@@ -71,7 +71,7 @@ public class TemporalPropertiesGenerator {
 
 	final static List<Pair<File, String>> dependencies = new LinkedList<Pair<File,String>>(); 
 	static{
-		dependencies.add(new Pair<File, String>(new File(tmpDirectory, relationalPropModuleOriginal.getAbsolutePath()), Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
+		dependencies.add(new Pair<File, String>(new File(tmpDirectory, relationalPropModuleOriginal.getName()), Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
 	}
 	final PropertyToAlloyCodeBuilder propertyBuilder;;
 
@@ -103,61 +103,6 @@ public class TemporalPropertiesGenerator {
 
 
 	}
-
-	/*
-	public static class SimpleAsynchFileWriter {
-		final ConcurrentLinkedQueue<Pair<File,String>> logQueue = new ConcurrentLinkedQueue<>();
-
-		final private File outputFile;
-		private boolean stop;
-
-		final void log(File destFile, String content){
-			logQueue.add(new Pair(destFile, content));
-		}
-
-		final void log( String content){
-			if(outputFile == null) throw new RuntimeException("The output loog is not set.");
-			logQueue.add(new Pair(outputFile, content));
-		}
-
-		public SimpleAsynchFileWriter(){
-			this(null, Thread.MIN_PRIORITY);
-		}
-
-		public SimpleAsynchFileWriter(final int priority){
-			this(null, priority);
-		}
-
-		private void stop(){
-			stop = true;
-		}
-
-		public SimpleAsynchFileWriter(final File destFile, final int priority){
-			outputFile = destFile;
-			stop = false;
-			Thread t = new Thread(new Runnable() {
-				public void run() {
-					while(true){
-						if(!logQueue.isEmpty()){
-							final Pair<File, String> p = logQueue.poll();
-							try {
-								Util.writeAll(p.a.getAbsolutePath(), p.b);
-							} catch (Err e) {
-								e.printStackTrace();
-							}
-						}else{
-							//no more String is in the queue
-							if(stop) break;
-						}
-					}
-				}
-			});
-
-
-			t.setPriority(priority);
-			t.start();		}
-	}
-	 */
 
 	private Set<String> filterFileNames(){
 		final Set<String> fileNames = new HashSet<>();

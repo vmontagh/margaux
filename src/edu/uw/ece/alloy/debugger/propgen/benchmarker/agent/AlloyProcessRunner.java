@@ -60,13 +60,23 @@ public class AlloyProcessRunner {
 	
 	public void resetExecuterThread(){
 		if(executerThread != null && executerThread.isAlive()){
-			executerThread.stop();
-			executerThread = new Thread(executer);
-			executerThread.start();
+			
+			if(executer.isSpilledTimeout()){
+				logger.info("["+Thread.currentThread().getName()+"]" + " The AlloyExecuter thread is interrupted again and again. Replace the thread now. ");
+				executer.stop();
+				executerThread.interrupt();
+				executerThread = new Thread(executer);
+				executerThread.start();
+			}else{
+				logger.info("["+Thread.currentThread().getName()+"]" + " Interrupt the AlloyExecuter thread. ");
+				executerThread.interrupt();
+			}
+			
 		}
 	}
 	
 	public void start(){
+		
 		
 		logger.info("["+Thread.currentThread().getName()+"] "+" Starting to create Alloy Processing objects");
 		
@@ -74,6 +84,7 @@ public class AlloyProcessRunner {
 		front = new FrontAlloyProcess(PID,remotePort,executer);
 		frontThread = new Thread(front);		
 		frontThread.start();
+
 		
 		dbWriter = new PostProcess.DBWriter();
 		socketWriter = new PostProcess.SocketWriter(/*dbWriter,*/ front.getRemoteAddress());
@@ -89,13 +100,18 @@ public class AlloyProcessRunner {
 		dbThread = new Thread(dbWriter);
 		
 		executerThread.start();
+
 		fileThread.start();
+
 		socketThread.start();
+
 		dbThread.start();
+
 		
 		watchdog = new ProcessSelfMonitor(SelfMonitorInterval, 3, 1, this);
 		watchdogThread = new Thread(watchdog);
 		watchdogThread.start();
+
 		
 	}
 	
@@ -124,6 +140,8 @@ public class AlloyProcessRunner {
 		
 		if(args.length > 4)
 			throw new RuntimeException("Inappropriate number of inputs. Only enter the remote port number as an interger.");
+		
+
 		
 		int localPort;
 		int remotePort;

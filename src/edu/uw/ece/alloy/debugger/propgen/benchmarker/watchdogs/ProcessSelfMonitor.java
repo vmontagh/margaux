@@ -49,8 +49,8 @@ public class ProcessSelfMonitor implements Runnable {
 				if(processedSoFar == alloyProcessRunner.getExecuter().processed.intValue() && !alloyProcessRunner.getExecuter().isEmpty()){
 					//The executer does not proceeded.
 					logger.info("["+Thread.currentThread().getName()+"]"+ "A request is timed out to be executed");
-					alloyProcessRunner.getExecuter().recordATimeout();
 					alloyProcessRunner.resetExecuterThread();
+					//alloyProcessRunner.getExecuter().recordATimeout();//It is called internally once the thread is restarted again.
 					logger.info("["+Thread.currentThread().getName()+"]"+ "The executer thread is restarted and i ready to go.");
 					recoveryAttempts++;
 				}else{

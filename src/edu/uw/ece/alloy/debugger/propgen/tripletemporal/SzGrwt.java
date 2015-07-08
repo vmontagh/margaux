@@ -27,7 +27,7 @@ public class SzGrwt extends SzPrpty {
 		return " let "+getGrowthOrderedDelta()+" = "+growthLocality.getLetVariable2()+
 				" - "+growthLocality.getLetVariable1() + " | "+
 				"  (" + growthLocality.getLetVariable1() + " in " +growthLocality.getLetVariable2() +" ) and "+
-				"  (some "+growthLocality.getLetVariable1()+" implies";
+				"  (some "+getGrowthOrderedDelta()+" implies";
 	}
 
 

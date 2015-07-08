@@ -6,7 +6,6 @@ package edu.uw.ece.alloy.debugger.exec;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.Locale;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,9 +20,7 @@ import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
-import edu.mit.csail.sdg.alloy4viz.VizGUI;
 import edu.mit.csail.sdg.gen.MyReporter;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 
 /**
  * This class is for executing the decomposer using Alloy 4
@@ -97,6 +94,7 @@ public class A4CommandExecuter {
 	
 	public void run(String[] args,A4Reporter rep) throws Err{
 
+		
 		// Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
 

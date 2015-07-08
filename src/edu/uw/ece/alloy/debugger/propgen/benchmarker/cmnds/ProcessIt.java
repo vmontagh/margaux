@@ -31,8 +31,10 @@ public class ProcessIt extends RemoteCommand {
 	 */
 	public void process(AlloyExecuter executer) {
 		try {
+			logger.info("["+Thread.currentThread().getName()+"] " + "Received a message: "+param);
 			final AlloyProcessingParam param = this.param.prepareToUse().dumpAll();
 			executer.process(param);
+			logger.info("["+Thread.currentThread().getName()+"] " + "Prepared and queued: "+param);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or execute the message: "+ this.param, e);
 			e.printStackTrace();
@@ -61,8 +63,10 @@ public class ProcessIt extends RemoteCommand {
 	
 		try {
 			//Encoding the param.
+			logger.info("["+Thread.currentThread().getName()+"] " + "Sending a message: "+param);
 			final AlloyProcessingParam param = this.param.prepareToSend();
 			(new ProcessIt(param, this.processesManager) ).sendMe(remoteAddres);
+			logger.info("["+Thread.currentThread().getName()+"] " + "prepared and sent: "+param);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or send the message: "+ this.param, e);
 			e.printStackTrace();

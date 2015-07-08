@@ -28,7 +28,7 @@ public class SzShrnkStrc extends SzShrnk {
 				" - "+growthLocality.getLetVariable2() + " | "+
 				"  (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" ) and "+
 				"  (" + growthLocality.getLetVariable1() + " !in " +growthLocality.getLetVariable2() +" ) and " +
-				"  (some "+growthLocality.getLetVariable2()+" implies"
+				"  (some "+getGrowthOrderedDelta()+" implies"
 				;
 	}
 	

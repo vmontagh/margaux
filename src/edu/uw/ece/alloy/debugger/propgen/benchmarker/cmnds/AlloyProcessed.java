@@ -24,35 +24,24 @@ public class AlloyProcessed extends RemoteCommand {
 		this.result = result;
 	}
 
-	public void processDone(ProcessRemoteMonitor monitor, final ProcessesManager manager){
+	@Override
+	public void processDone(ProcessRemoteMonitor monitor){
 		
-		if(manager.getAlloyProcess(PID) == null){
-			logger.info("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" "+this);
-			return;
-		}
+		logger.info("["+Thread.currentThread().getName()+"] " + "Processeing the response: pID= "+PID +" param="+this.result.params);
 		
-		
-		AlloyProcessingParam param;
+		AlloyProcessingParam param = this.result.params;
 		AlloyProcessedResult result = this.result;
 		try {
 			param = this.result.params.prepareToUse();
 			result = this.result.changeParams(param);
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or send the message: "+ this.result, e);
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or send the message: PID="+PID+", "+ this.result, e);
 			e.printStackTrace();
 		}
 		
-		logger.info("["+Thread.currentThread().getName()+"] " + "Done and reported: pID= "+PID +" param="+result.params);
-		if(result.isTimedout() || result.isFailed()){
-			logger.info("["+Thread.currentThread().getName()+"] " + "The process is timed out and is pushed back to be retried later: pID= "+PID +" param="+result.params);
-			monitor.removeAndPushUndoneRequest(PID, result.params);
-		}else{
-			monitor.removeMessage(PID, result.params);
-		}
+		logger.info("["+Thread.currentThread().getName()+"] " + "Done and reported: pID= "+PID +" param="+param);
 		
-		manager.changeStatus(PID, Status.WORKING);
-		manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
-		manager.decreaseMessageCounter(PID);
+		monitor.processResponded(result, PID);
 	}
 
 
@@ -64,11 +53,13 @@ public class AlloyProcessed extends RemoteCommand {
 	
 	public  void send(final InetSocketAddress remoteAddres) throws InterruptedException{
 		
+		logger.info("["+Thread.currentThread().getName()+"] " + "Sending a response: pID= "+PID +" param="+result.params);
 		//super.sendMe(remoteAddres);
 		try {
 			final AlloyProcessingParam param = this.result.params.removeContent().prepareToSend();
 			//System.out.println("The file stored in? "+this.result.params.srcPath.exists());
 			(new AlloyProcessed(PID, this.result.changeParams(param)) ).sendMe(remoteAddres);
+			logger.info("["+Thread.currentThread().getName()+"] " + "Response is sent: pID= "+PID +" param="+param);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or send the message: "+ this.result, e);
 			e.printStackTrace();

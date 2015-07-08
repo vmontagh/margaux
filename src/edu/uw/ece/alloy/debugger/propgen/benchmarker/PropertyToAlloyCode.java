@@ -183,7 +183,7 @@ public class PropertyToAlloyCode implements Serializable {
 		
 		final byte[] headerComporessed  = Utils.compress(header, ENCODING);
 		final byte[] scopeCompressed  = Utils.compress(scope, ENCODING);
-		final byte[] tmpDirectoryCompressed  = Utils.compress(tmpDirectory.getAbsolutePath(), ENCODING);
+		final byte[] tmpDirectoryCompressed  = Utils.compress(tmpDirectory.getPath(), ENCODING);
 				
 		final byte[][] dependenciesFileNameCompressed = new byte[dependencies.size()][];
 		final byte[][] dependenciesContentCompressed  = new byte[dependencies.size()][];
@@ -232,7 +232,6 @@ public class PropertyToAlloyCode implements Serializable {
 		final String header  = Utils.decompress(headerComporessed, ENCODING);
 		final String scope = Utils.decompress(scopeCompressed, ENCODING);
 		final File tmpDirectory = new File( Utils.decompress(tmpDirectoryCompressed, ENCODING));
-		
 		final List<Pair<File, String>> dependencies = new LinkedList<Pair<File,String>>();
 		
 		for(int i = 0; i < dependenciesFileNameCompressed.length; ++i){

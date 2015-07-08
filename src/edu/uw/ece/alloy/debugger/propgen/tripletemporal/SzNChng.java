@@ -25,7 +25,7 @@ public class SzNChng extends SzPrpty {
 				" - "+growthLocality.getLetVariable2() + " | "+
 				"  (" + growthLocality.getLetVariable1() + " in " +growthLocality.getLetVariable2() +" ) and "+
 				"  (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" ) and "+				
-				"  (some "+growthLocality.getLetVariable1()+" implies";
+				"  (some "+getGrowthOrderedDelta()+" implies";
 	}
 
 	@Override

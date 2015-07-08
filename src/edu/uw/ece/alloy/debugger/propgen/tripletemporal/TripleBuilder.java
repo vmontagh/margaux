@@ -221,7 +221,7 @@ public class TripleBuilder {
 						for(Ord order: iterators. new OrderIterator(this, size)){
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
-							
+							/*
 							//Composite structures for two size and orders
 							for(SzPrpty size2: iterators. new SizeIterator(this, local, empty)){
 								if(!size2.isConsistent()) continue;
@@ -258,7 +258,7 @@ public class TripleBuilder {
 									
 								}
 								
-							}
+							}*/
 							
 						}
 						//break;
