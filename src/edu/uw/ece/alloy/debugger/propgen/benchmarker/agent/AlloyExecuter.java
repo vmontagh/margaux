@@ -19,7 +19,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.
 
 public class AlloyExecuter implements Runnable {
 
-	private final static AlloyExecuter self = new AlloyExecuter( Integer.valueOf(Configuration.getProp("self_correction_interrupt") ) );
+	private final static AlloyExecuter self = new AlloyExecuter( Integer.valueOf(Configuration.getProp("self_monitor_retry_attempt") ) );
 
 	private final BlockingQueue<AlloyProcessingParam> queue = new LinkedBlockingQueue<>();
 	private final List<PostProcess> postProcesses = Collections
