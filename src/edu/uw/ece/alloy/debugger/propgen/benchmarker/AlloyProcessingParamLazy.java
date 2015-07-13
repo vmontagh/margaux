@@ -1,5 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
+import java.io.File;
+
 
 public class AlloyProcessingParamLazy extends AlloyProcessingParam{
 
@@ -8,6 +10,10 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam{
 	
 	final public static AlloyProcessingParamLazy EMPTY_PARAM = new AlloyProcessingParamLazy();
 
+	protected AlloyProcessingParamLazy(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
+		super(alloyCoder,priority, tmpDirectory);
+	}
+	
 	protected AlloyProcessingParamLazy(final PropertyToAlloyCode alloyCoder, int priority) {
 		super(alloyCoder,priority);
 	}
@@ -21,12 +27,16 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam{
 	 * used for composition. The subclasses also have such methods and their functionality will be composed
 	 * at runtime with the property generators.   
 	 */
+	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
+		return new AlloyProcessingParamLazy(alloyCoder,  priority, tmpDirectory);
+	}
+
 	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority) {
 		return new AlloyProcessingParamLazy(alloyCoder,  priority);
 	}
-
+	
 	public AlloyProcessingParam createIt(AlloyProcessingParamLazy param) {
-		return createIt(param.alloyCoder,  param.priority);
+		return new AlloyProcessingParamLazy(param.alloyCoder,  param.priority, param.tmpDirectory);
 	}
 	
 

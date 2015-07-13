@@ -70,7 +70,7 @@ public class PrecomputedProperties {
 		};
 		try (BufferedReader reader = new BufferedReader(new FileReader(mapFile))) {
 			reader.lines()
-			.substream(1)
+			.skip(1)
 			.map(line -> Arrays.asList(line.split(",")))
 			//.filter(list -> list.size() == 5)
 			.forEach( toMaps);

@@ -48,7 +48,7 @@ public abstract class RemoteCommand implements Serializable {
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] "+"Failed on sending the done message " + command +" TO ="+remoteAddres, e);
 			throw new RuntimeException("Unseccesful sending message "+ e.getMessage());
 		} catch (InterruptedException e) {
-			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] "+"Sendining the done message is interrupted: "+command+" TO ="+remoteAddres, e);
+			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] "+"Sending the done message is interrupted: "+command+" TO ="+remoteAddres, e);
 			throw e;
 		}finally{
 			if(oos !=null)

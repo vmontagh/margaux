@@ -27,7 +27,7 @@ public class AlloyProcessed extends RemoteCommand {
 	@Override
 	public void processDone(ProcessRemoteMonitor monitor){
 		
-		logger.info("["+Thread.currentThread().getName()+"] " + "Processeing the response: pID= "+PID +" param="+this.result.params);
+		logger.fine("["+Thread.currentThread().getName()+"] " + "Processeing the response: pID= "+PID +" param="+this.result.params);
 		
 		AlloyProcessingParam param = this.result.params;
 		AlloyProcessedResult result = this.result;
@@ -39,7 +39,7 @@ public class AlloyProcessed extends RemoteCommand {
 			e.printStackTrace();
 		}
 		
-		logger.info("["+Thread.currentThread().getName()+"] " + "Done and reported: pID= "+PID +" param="+param);
+		logger.fine("["+Thread.currentThread().getName()+"] " + "Done and reported: pID= "+PID +" param="+param);
 		
 		monitor.processResponded(result, PID);
 	}
@@ -53,13 +53,14 @@ public class AlloyProcessed extends RemoteCommand {
 	
 	public  void send(final InetSocketAddress remoteAddres) throws InterruptedException{
 		
-		logger.info("["+Thread.currentThread().getName()+"] " + "Sending a response: pID= "+PID +" param="+result.params);
+		logger.fine("["+Thread.currentThread().getName()+"] " + "Sending a response: pID= "+PID +" param="+result.params);
 		//super.sendMe(remoteAddres);
 		try {
-			final AlloyProcessingParam param = this.result.params.removeContent().prepareToSend();
+			AlloyProcessingParam param = this.result.params.prepareToSend();
+			param = param.resetToEmptyTmpDirectory();
 			//System.out.println("The file stored in? "+this.result.params.srcPath.exists());
 			(new AlloyProcessed(PID, this.result.changeParams(param)) ).sendMe(remoteAddres);
-			logger.info("["+Thread.currentThread().getName()+"] " + "Response is sent: pID= "+PID +" param="+param);
+			logger.fine("["+Thread.currentThread().getName()+"] " + "Response is sent: pID= "+PID +" param="+param);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed on prepare or send the message: "+ this.result, e);
 			e.printStackTrace();

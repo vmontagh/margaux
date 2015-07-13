@@ -1,7 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -13,14 +12,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess;
 import edu.uw.ece.alloy.util.Utils;
 
@@ -31,7 +31,7 @@ import edu.uw.ece.alloy.util.Utils;
  */
 public class ProgressReporter {
 
-
+	protected final static Logger logger = Logger.getLogger(PostProcess.class.getName()+"--"+Thread.currentThread().getName());
 
 	public static class ProgressTracker{
 		int oldC;
@@ -117,7 +117,7 @@ public class ProgressReporter {
 
 	final protected static DBConnectionPool dBConnection = new H2DBConnectionPool(Configuration.getProp("db_file_root")+"/"+"merged_"+logTime+".db");
 
-	final protected static String OUTPUT_REPORT_EXTENSION = ".als.out.txt";
+	final protected static String OUTPUT_REPORT_EXTENSION = ".*\\.out\\.txt";
 
 	final boolean DO_LAZY;
 
@@ -146,40 +146,11 @@ public class ProgressReporter {
 	};
 
 
-
-	private File[] findAllFilesByName(String pattern, File path){
-		FilenameFilter textFilter = new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				String lowercaseName = name.toLowerCase();
-				if (lowercaseName.contains(pattern) && 
-						!lowercaseName.contains(".trace.") && 
-						!lowercaseName.contains(".lock.") 
-						//&& !lowercaseName.contains(".mv.")
-
-						) {
-					return true;
-				} else {
-					return false;
-				}
-			}
-		};
-		return path.listFiles(textFilter);
-	}
-
 	private File[] findAllFilesByNameAndBeforeTime(String pattern, File path, long time){
-		FileFilter textFilter = new FileFilter() {
-			public boolean accept(File file) {
-				String lowercaseName = file.getName().toLowerCase();
-				long modifiedTime = file.lastModified();
-				if (lowercaseName.contains(pattern) && 
-						modifiedTime < time ) {
-					return true;
-				} else {
-					return false;
-				}
-			}
-		};
-		return path.listFiles(textFilter);
+		
+		File[] allFiles = Utils.filesR(pathLogFiles.getAbsolutePath(), pattern);
+		return (File[]) Arrays.asList(allFiles).stream().filter(f->f.lastModified() < time).toArray(size->new File[size]);
+		
 	}
 
 	private int mergeFiles(){
@@ -199,7 +170,7 @@ public class ProgressReporter {
 	}
 
 	public int filesCount(){
-		return findAllFilesByName(OUTPUT_REPORT_EXTENSION, pathLogFiles).length;
+		return Utils.filesR(pathLogFiles.getAbsolutePath(), OUTPUT_REPORT_EXTENSION).length;
 	}
 
 
@@ -210,8 +181,8 @@ public class ProgressReporter {
 	public String fileReporter(){
 		final int merged = mergeFiles();
 		final int total = /*merged + */filesCount();
-		String result = "Merging Files:\t"+fileMergerProgressTracker.progressDeltaReport(merged);
-		return result += "\nFile:\t\t\t\t\t\t"+fileProgressTracker. progressReport(total);
+		String result = "Merging Files:   "+fileMergerProgressTracker.progressDeltaReport(merged);
+		return result += "\nFile:            "+fileProgressTracker. progressReport(total);
 	}
 
 	public ProgressReporter(final boolean doLazy) throws SQLException {
@@ -412,14 +383,18 @@ public class ProgressReporter {
 	public String dBReporter(){
 
 		String result = "";
-		final File[] dbFiles = findAllFilesByName("alloy", pathDBFiles);
+		final File[] dbFiles = Utils.filesR(pathDBFiles.getAbsolutePath(), "^alloy((?!trace|lock).)*"); 
+				//findAllFilesByName("alloy", pathDBFiles);
 
 		int updatedCount = 0;
 		int sat = 0, unsat = 0, failed = 0, timeout = 0;
 		for(final File dbFile: dbFiles){
 			try {
+				
 				String filename = dbFile.getAbsolutePath().replace(".h2.db", "").replace(".mv.db", "");
-
+				logger.info("The DB file is: "+ filename);
+				
+				
 				sat += getSATNewRecordsCount(filename);
 				unsat += getUnSATNewRecordsCount(filename);
 				timeout += getTimeoutNewRecordsCount(filename);
@@ -438,18 +413,17 @@ public class ProgressReporter {
 
 		}
 
-		result  = "DB-SAT:\t\t\t\t\t"+dbSATProgressTracker.progressDeltaReport(sat);
-		result += "\nDB-UnSAT:\t\t\t\t"+dbUnSATProgressTracker.progressDeltaReport(unsat);
-		result += "\nDB-Timeout:\t\t\t"+dbTimeoutProgressTracker.progressDeltaReport(timeout);
-		result += "\nDB-Failed:\t\t\t"+dbFailedProgressTracker.progressDeltaReport(failed);
-		result += "\nDB-total:\t\t\t\t"+dbTotalProgressTracker.progressDeltaReport(updatedCount);
+		result  = "DB-SAT:          "+dbSATProgressTracker.progressDeltaReport(sat);
+		result += "\nDB-UnSAT:        "+dbUnSATProgressTracker.progressDeltaReport(unsat);
+		result += "\nDB-Timeout:      "+dbTimeoutProgressTracker.progressDeltaReport(timeout);
+		result += "\nDB-Failed:       "+dbFailedProgressTracker.progressDeltaReport(failed);
+		result += "\nDB-total:        "+dbTotalProgressTracker.progressDeltaReport(updatedCount);
 
 		return result;
 
 	}
 
 	public static void main(String[] args) throws InterruptedException, SQLException {
-
 
 		boolean doLazy = true;
 
@@ -473,5 +447,8 @@ public class ProgressReporter {
 		}
 
 	}
+	
+	
+	
 
 }

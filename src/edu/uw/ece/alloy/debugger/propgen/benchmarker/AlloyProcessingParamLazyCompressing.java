@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,6 +20,10 @@ public class AlloyProcessingParamLazyCompressing extends
 	final public static AlloyProcessingParamLazyCompressing EMPTY_PARAM = new AlloyProcessingParamLazyCompressing();
 	
 	
+	protected AlloyProcessingParamLazyCompressing(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory){
+		super(alloyCoder, priority, tmpDirectory);
+	}
+	
 	protected AlloyProcessingParamLazyCompressing(final PropertyToAlloyCode alloyCoder, int priority){
 		super(alloyCoder, priority);
 	}
@@ -27,18 +32,22 @@ public class AlloyProcessingParamLazyCompressing extends
 		super();
 	}
 	
+	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
+		return new AlloyProcessingParamLazyCompressing(alloyCoder, priority, tmpDirectory);
+	}
+	
 	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority) {
 		return new AlloyProcessingParamLazyCompressing(alloyCoder, priority);
 	}
 	
 	public AlloyProcessingParam createIt(AlloyProcessingParamLazyCompressing param) {
-		return createIt(param.alloyCoder, param.priority);
+		return new AlloyProcessingParamLazyCompressing(param.alloyCoder, param.priority, param.tmpDirectory);
 	}
 
 	
 	public AlloyProcessingParam prepareToSend(){
 		try {
-			return AlloyProcessingParamLazyDecompressing.EMPTY_PARAM.createIt(alloyCoder.compress(), this.priority);
+			return AlloyProcessingParamLazyDecompressing.EMPTY_PARAM.createIt(alloyCoder.compress(), this.priority, this.tmpDirectory);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to compress the object: "+ this, e);
 			e.printStackTrace();

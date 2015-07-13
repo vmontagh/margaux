@@ -112,13 +112,14 @@ public class ProcessesManager {
 
 		final Process sub;
 		final String java = "java";
-		final String debug = "yes".equals(System.getProperty("debug")) ? "yes" : "no";
+		final String debug = Boolean.parseBoolean(System.getProperty("debug")) ? "yes" : "no";
 
 		try {
 			ProcessBuilder pb = (jniPath!=null && jniPath.length()>0) ?
 					new ProcessBuilder(java,
 							"-Xmx" + newmem + "m",
 							"-Xss" + newstack + "k",
+							"-Djava.util.logging.config.file=" + processLoggerConfig,
 							"-Djava.library.path=" + jniPath,
 							"-Ddebug=" + debug,
 							"-cp", classPath, AlloyProcessRunner.class.getName(),
@@ -213,7 +214,7 @@ public class ProcessesManager {
 				try {
 					addProcess();
 					++i;
-					logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process is added to the processes list:"+processes);
+					logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"A process is added to the processes list:"+processes);
 				} catch (IOException e) {
 					logger.info("["+Thread.currentThread().getName()+"]"+"Processes cannot be created in setUpAllProcesses");			
 				} finally{
@@ -232,19 +233,21 @@ public class ProcessesManager {
 	 */
 	public boolean killProcess(final InetSocketAddress port){
 		boolean result = false;
-		if(!processes.containsKey(port) ){
-			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process is not found: "+port);
-		}else if( processes.get(port).status != AlloyProcess.Status.KILLING ){
-			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process: "+port+" is not in the killing state and cannot be killed: "+processes.get(port).status);
-		}else{
-			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Killing a process:"+port);
-			synchronized (processes) {
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Entering a lock for killing a process:"+port);
-				processes.get(port).process.destroy();
-				processes.remove(port);
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is killed to the process list "+processes);
+		synchronized (processes) {
+			if(!processes.containsKey(port) ){
+				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process is not found: "+port);
+			}else if( processes.get(port).status != AlloyProcess.Status.KILLING ){
+				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process: "+port+" is not in the killing state and cannot be killed: "+processes.get(port).status);
+			}else{
+				logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Killing a process:"+port);
+				synchronized (processes) {
+					logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Entering a lock for killing a process:"+port);
+					processes.get(port).process.destroyForcibly();
+					processes.remove(port);
+					logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is killed to the process list "+processes);
+				}
+				result = true;
 			}
-			result = true;
 		}
 		return result;
 	}
@@ -396,6 +399,10 @@ public class ProcessesManager {
 	public AlloyProcess getAlloyProcess(final InetSocketAddress pId){
 		logger.info("["+Thread.currentThread().getName()+"] "+" The Pid: "+pId+" is in ?"+Arrays.asList(processes.keySet()));
 		return processes.get(pId);
+	}
+
+	public Set<InetSocketAddress> getAllRegisteredPIDs(){
+		return processes.keySet();
 	}
 
 	/**

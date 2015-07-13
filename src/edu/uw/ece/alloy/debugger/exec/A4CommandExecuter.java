@@ -47,7 +47,7 @@ public class A4CommandExecuter {
 	private void setUp(){
 		copyFromJAR();
 		final String binary = alloyHome() + fs + "binary";
-		System.out.println(binary);
+		//System.out.println(binary);
 		// Add the new JNI location to the java.library.path
 		try {
 			System.setProperty("java.library.path", binary);

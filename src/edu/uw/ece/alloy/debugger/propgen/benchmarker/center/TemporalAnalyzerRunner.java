@@ -1,15 +1,11 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.gen.BenchmarkRunner;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
@@ -99,10 +95,10 @@ public class TemporalAnalyzerRunner {
 		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 		while(true){
 			Thread.sleep(20000);
-			logger.info("["+Thread.currentThread().getName()+"]" + "Main is alive.... ");
-			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().manager.getStatus());
-			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().monitor.getStatus());
-			logger.info("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().feeder.getStatus());
+			logger.severe("["+Thread.currentThread().getName()+"]" + "Main is alive.... ");
+			logger.severe("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().manager.getStatus());
+			logger.severe("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().monitor.getStatus());
+			logger.severe("["+Thread.currentThread().getName()+"]" + "\n"+TemporalAnalyzerRunner.getInstance().feeder.getStatus());
 			Thread.currentThread().yield();
 			System.gc();
 		}

@@ -16,16 +16,25 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazyCompressing;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.FailedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.TimeoutResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Suicided;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
 
-public class AlloyExecuter implements Runnable {
+public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 
-	private final static AlloyExecuter self = new AlloyExecuter( Integer.valueOf(Configuration.getProp("self_monitor_retry_attempt") ) );
+	private Thread executerThread = new Thread(this);
+
+	private final static AlloyExecuter self = new AlloyExecuter( Integer.valueOf(Configuration.getProp("max_alloy_executer_intterupts") ) );
 
 	private final BlockingQueue<AlloyProcessingParam> queue = new LinkedBlockingQueue<>();
 	private final List<PostProcess> postProcesses = Collections
 			.synchronizedList(new LinkedList<PostProcess>());
 
-	public volatile AtomicInteger processed = new AtomicInteger(0);
+	protected volatile AtomicInteger processed = new AtomicInteger(0);
+	protected volatile AtomicInteger shadowProcessed = new AtomicInteger(0);
+	protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
+	protected volatile AtomicInteger recoveryAttempts = new AtomicInteger(0);
+
 	private volatile AlloyProcessingParam lastProccessing = AlloyProcessingParam.EMPTY_PARAM;
 
 	protected final static Logger logger = Logger.getLogger(AlloyExecuter.class.getName()+"--"+Thread.currentThread().getName());
@@ -33,7 +42,7 @@ public class AlloyExecuter implements Runnable {
 	protected int iInterrupt = 0;
 	protected final int maxInterrupt ;  
 	protected boolean killToken = false;
-	
+
 	private AlloyExecuter(final int maxInterrupt) {
 		this.maxInterrupt = maxInterrupt;
 	}
@@ -98,7 +107,7 @@ public class AlloyExecuter implements Runnable {
 
 		synchronized (lastProccessing) {
 			lastProccessing = queue.take();
-			
+
 			if(lastProccessing.equals(lastProccessing.EMPTY_PARAM)){
 				logger.severe("["+Thread.currentThread().getName()+"] "+"Why null?!!!");
 				return;
@@ -141,11 +150,11 @@ public class AlloyExecuter implements Runnable {
 	public boolean isSpilledTimeout(){
 		return iInterrupt == maxInterrupt/2;
 	}
-	
-	public void stop(){
+
+	public void stopMe(){
 		killToken = true;
 	}
-	
+
 	@Override
 	public void run() {
 
@@ -167,5 +176,101 @@ public class AlloyExecuter implements Runnable {
 		}
 
 	}
+
+	@Override
+	public int triesOnStuck() {
+		return recoveryAttempts.get();
+	}
+
+	@Override
+	public void actionOnStuck() {
+
+		if(executerThread.isAlive()){
+			if(this.isSpilledTimeout()){
+				logger.info("["+Thread.currentThread().getName()+"]" + " The AlloyExecuter thread is interrupted again and again. Replace the thread now. ");
+				this.stopMe();
+				executerThread.interrupt();
+				executerThread = new Thread(this);
+				executerThread.start();
+			}else{
+				logger.info("["+Thread.currentThread().getName()+"]" + " Interrupt the AlloyExecuter thread. ");
+				executerThread.interrupt();
+			}
+		}
+
+	}
+
+	protected void sendLivenessMessage(){
+		//The executer starts to processing, so no need to recover or kill itself. Reset the countr.
+		recoveryAttempts.set(0);
+		try{
+
+			IamAlive iamAlive =  new IamAlive(AlloyProcessRunner.getInstance().PID, System.currentTimeMillis(), 
+					processed.get(), size());
+
+			iamAlive.sendMe(AlloyProcessRunner.getInstance().remotePort);
+			livenessFailed.set(0);
+			logger.info("["+Thread.currentThread().getName()+"]"+ "A live message is sent from pId: "+AlloyProcessRunner.getInstance().PID +" >"+iamAlive);
+		}catch(Exception e){
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a live signal on PID: "+ AlloyProcessRunner.getInstance().PID+" this is "+livenessFailed+" attempt", e);
+			livenessFailed.incrementAndGet();
+
+		}
+
+	}
+
+	protected void haltIfCantProceed(final int maxRetryAttepmpts){
+		AlloyProcessRunner.getInstance();
+		//recovery was not enough, the whole processes has to be shut-down
+		if(recoveryAttempts.get() > maxRetryAttepmpts || 
+				livenessFailed.get() > maxRetryAttepmpts ){
+			logger.severe("["+Thread.currentThread().getName()+"]"+ "After recovery "+ recoveryAttempts+ " times or " + livenessFailed +" liveness message, attempts, the executer in PID:"+ 
+					AlloyProcessRunner.getInstance().PID +" does not prceeed, So the process is exited.");
+
+			try{
+				new Suicided(AlloyProcessRunner.getInstance().PID, System.currentTimeMillis()).
+				sendMe(AlloyProcessRunner.getInstance().remotePort);
+			}catch(Exception e){
+				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a Suicide signal on PID: "+ AlloyProcessRunner.getInstance().PID, e);
+			}
+
+			Runtime.getRuntime().halt(0);
+		}
+	}
+
+
+	@Override
+	public void actionOnNotStuck() {
+		sendLivenessMessage();
+		haltIfCantProceed(AlloyProcessRunner.getInstance().SelfMonitorRetryAttempt);
+	}
+
+	@Override
+	public String amIStuck() {
+		return isDelayed() == 0 ? "" :  "Processing PostProess"+getClass().getSimpleName()+" is stuck after processing "+processed+" messages.";
+	}
+
+	@Override
+	public long isDelayed() {
+		long result = 0;
+		//monitor the socket
+		if(shadowProcessed.equals(processed) && !isEmpty()){
+			//The executer does not proceeded.
+			result = processed.longValue(); 
+			//TODO manage to reset the socket thread
+		}else{
+			//The executer proceeded
+			shadowProcessed = processed;
+		}
+		return result;
+	}
+
+	@Override
+	public void startThread() {
+		if(!executerThread.isAlive())
+			executerThread.start();;
+	}
+
+
 
 }

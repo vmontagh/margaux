@@ -15,7 +15,7 @@ public class OrdIncrsStrc extends Ord {
 
 	@Override
 	protected String genOrder() {
-		return " lt[relational_properties/max["+sizeProp.orderedChange()+","
+		return " relational_properties/lt[relational_properties/max["+sizeProp.orderedChange()+","
 				+sideOrdered.getNext()+"],relational_properties/min["+sizeProp.getGrowthOrderedDelta()+","
 				+sideOrdered.getNext()+"],"+sideOrdered.getNext()+"] )";
 	}

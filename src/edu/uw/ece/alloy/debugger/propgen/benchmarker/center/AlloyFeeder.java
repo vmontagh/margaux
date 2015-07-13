@@ -1,6 +1,5 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
-import java.io.File;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;

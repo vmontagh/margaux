@@ -1,15 +1,11 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.mit.csail.sdg.alloy4.Pair;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.Compressor;
 
 public class PropertyToAlloyCode implements Serializable {
 
@@ -17,24 +13,16 @@ public class PropertyToAlloyCode implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -7891570520910464309L;
-	final static String ENCODING = "UTF-8";
-	final protected static byte[] EMPTY_1D = {};
-	final protected static byte[][] EMPTY_2D = {{}};
-	
-	final public File tmpDirectory ;
-	
-	final byte[][] dependenciesFileNameCompressed, dependenciesContentCompressed;
-	
-	final public static String EMPTY_STRING = "N";
-	final public static File EMPTY_FILE = new File(EMPTY_STRING);
 	
 	final public static PropertyToAlloyCode EMPTY_CONVERTOR = new PropertyToAlloyCode();
 
-	final boolean isCompressed;
+	final public Compressor.STATE compressedStatus;
+	
 	final byte[] predBodyACompressed, predBodyBCompressed, 
 	predCallACompressed, predCallBCompressed,
 		predNameACompressed, predNameBCompressed,
-			headerComporessed, scopeCompressed, tmpDirectoryCompressed;
+			headerComporessed, scopeCompressed
+			;
 	
 	//Sources are generated here.
 	
@@ -44,49 +32,21 @@ public class PropertyToAlloyCode implements Serializable {
 	final public String predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB, header, scope;
 	
 	//pair.a is the file and pair.b is the content
-	final List<Pair<File, String>> dependencies;
+	final List<Dependency> dependencies, compressedDependencies;
 	
 	final AlloyProcessingParam paramCreator;
 	
-	
-	/*protected PropertyToAlloyCode(String predBodyA, String predBodyB,
-			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope,
-			byte[] predBodyACompressed, byte[] predBodyBCompressed,
-			byte[] predCallACompressed, byte[] predCallBCompressed,
-			byte[] predNameACompressed, byte[] predNameBCompressed,
-			byte[] headerComporessed, byte[] scopeCompressed,
-			byte[] tmpDirectoryCompressed,
-			byte[][] dependenciesFileNameCompressed,
-			byte[][] dependenciesContentCompressed, boolean isCompressed
-			) {
-		this(predBodyA,  predBodyB,
-				 predCallA,  predCallB,  predNameA,
-				 predNameB,  dependencies,
-				 paramCreator,  header,  scope,
-				 predBodyACompressed,  predBodyBCompressed,
-				 predCallACompressed,  predCallBCompressed,
-				 predNameACompressed,  predNameBCompressed,
-				 headerComporessed,  scopeCompressed,
-				 tmpDirectoryCompressed,
-				 dependenciesFileNameCompressed,
-				 dependenciesContentCompressed,  isCompressed, new File( Configuration.getProp("temporary_directory") ));
-	}*/
-	
-	
 	protected PropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
+			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
 			byte[] headerComporessed, byte[] scopeCompressed,
-			byte[] tmpDirectoryCompressed,
-			byte[][] dependenciesFileNameCompressed,
-			byte[][] dependenciesContentCompressed, boolean isCompressed
-			,File tmpDirectory) {
+			List<Dependency> codeDependencies,
+			Compressor.STATE compressedStatus
+			) {
 		super();
 		this.predBodyA = predBodyA;
 		this.predBodyB = predBodyB;
@@ -96,8 +56,11 @@ public class PropertyToAlloyCode implements Serializable {
 		this.predNameB = predNameB;
 		this.paramCreator = paramCreator;
 		
-		this.dependencies = new LinkedList<Pair<File,String>>();
-		dependencies.forEach(p->this.dependencies.add(new Pair<File, String>(p.a, p.b)));
+		this.dependencies = new LinkedList<Dependency>();
+		dependencies.forEach(p->this.dependencies.add(p.createItsef()));
+		
+		this.compressedDependencies = new LinkedList<Dependency>();
+		codeDependencies.forEach(p->this.compressedDependencies.add(p.createItsef()));
 		
 		this.header = header;
 		this.scope = scope;
@@ -110,55 +73,38 @@ public class PropertyToAlloyCode implements Serializable {
 		this.predNameBCompressed = Arrays.copyOf(predNameBCompressed, predNameBCompressed.length) ;
 		this.headerComporessed = Arrays.copyOf(headerComporessed, headerComporessed.length) ;
 		this.scopeCompressed = Arrays.copyOf(scopeCompressed, scopeCompressed.length) ;
-		this.tmpDirectoryCompressed = Arrays.copyOf(tmpDirectoryCompressed, tmpDirectoryCompressed.length) ;
-				
-		this.dependenciesFileNameCompressed = new byte[dependenciesFileNameCompressed.length][];
-		for(int i = 0; i < dependenciesFileNameCompressed.length; ++i){
-			this.dependenciesFileNameCompressed[i] = Arrays.copyOf(dependenciesFileNameCompressed[i], dependenciesFileNameCompressed[i].length);
-		}
-		this.dependenciesContentCompressed = new byte[dependenciesContentCompressed.length][];
-		for(int i = 0; i < dependenciesContentCompressed.length; ++i){
-			this.dependenciesContentCompressed[i] = Arrays.copyOf(dependenciesContentCompressed[i], dependenciesContentCompressed[i].length);
-		}
 		
-		this.isCompressed = isCompressed;
+		this.compressedStatus = compressedStatus;
 		
-		this.tmpDirectory = tmpDirectory;
 	}
-	
-	/*protected PropertyToAlloyCode(String predBodyA, String predBodyB,
-			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope) {
-		this(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope, 
-				EMPTY_1D,EMPTY_1D,EMPTY_1D,EMPTY_1D,
-				EMPTY_1D,EMPTY_1D,EMPTY_1D,EMPTY_1D,
-				EMPTY_1D,
-				EMPTY_2D,EMPTY_2D, false);
-	}*/
 	
 	protected PropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope,
-			File tmpDirectory) {
+			String predNameB, List<Dependency> dependencies,
+			AlloyProcessingParam paramCreator, String header, String scope
+			) {
 		this(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
 				dependencies, paramCreator, header, scope, 
-				EMPTY_1D,EMPTY_1D,EMPTY_1D,EMPTY_1D,
-				EMPTY_1D,EMPTY_1D,EMPTY_1D,EMPTY_1D,
-				EMPTY_1D,
-				EMPTY_2D,EMPTY_2D, false,tmpDirectory);
+				Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
+				Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
+				Compressor.EMPTY_LIST,
+				Compressor.STATE.DEOMPRESSED
+				);
 	}
 	
 	
 	public PropertyToAlloyCode() {
-		this(EMPTY_STRING, EMPTY_STRING,EMPTY_STRING,EMPTY_STRING,EMPTY_STRING,EMPTY_STRING, Collections.emptyList() ,new AlloyProcessingParam(),EMPTY_STRING,EMPTY_STRING, EMPTY_FILE);
+		this(Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
+				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING,
+				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING, 
+				Compressor.EMPTY_LIST ,AlloyProcessingParam.EMPTY_PARAM,
+				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING
+				);
 	}
 	
 	public PropertyToAlloyCode compress() throws Exception{
 		
-		if( isCompressed ) throw new RuntimeException("The object is already compressed.");
+		if( compressedStatus.equals(Compressor.STATE.COMPRESSED) ) throw new RuntimeException("The object is already compressed.");
 		
 		if(predBodyA == null) throw new RuntimeException("The predBodyA is null and cannot be compressed.");
 		if(predBodyB == null) throw new RuntimeException("The predBodyB is null and cannot be compressed.");
@@ -172,43 +118,40 @@ public class PropertyToAlloyCode implements Serializable {
 		if(dependencies == null) throw new RuntimeException("The dependencies is empty and cannot be compressed.");
 
 		
-		final byte[] predBodyACompressed  = Utils.compress(predBodyA, ENCODING);
-		final byte[] predBodyBCompressed  = Utils.compress(predBodyB, ENCODING);
+		final byte[] predBodyACompressed  = Compressor.compress(predBodyA);
+		final byte[] predBodyBCompressed  = Compressor.compress(predBodyB);
 				
-		final byte[] predCallACompressed  = Utils.compress(predCallA, ENCODING);
-		final byte[] predCallBCompressed  = Utils.compress(predCallB, ENCODING);
+		final byte[] predCallACompressed  = Compressor.compress(predCallA);
+		final byte[] predCallBCompressed  = Compressor.compress(predCallB);
 		
-		final byte[] predNameACompressed  = Utils.compress(predNameA, ENCODING);
-		final byte[] predNameBCompressed  = Utils.compress(predNameB, ENCODING);
+		final byte[] predNameACompressed  = Compressor.compress(predNameA);
+		final byte[] predNameBCompressed  = Compressor.compress(predNameB);
 		
-		final byte[] headerComporessed  = Utils.compress(header, ENCODING);
-		final byte[] scopeCompressed  = Utils.compress(scope, ENCODING);
-		final byte[] tmpDirectoryCompressed  = Utils.compress(tmpDirectory.getPath(), ENCODING);
-				
-		final byte[][] dependenciesFileNameCompressed = new byte[dependencies.size()][];
-		final byte[][] dependenciesContentCompressed  = new byte[dependencies.size()][];
+		final byte[] headerComporessed  = Compressor.compress(header);
+		final byte[] scopeCompressed  = Compressor.compress(scope);
 		
-		for(int i = 0; i < dependencies.size(); ++i){
-			Pair<File, String> pair = dependencies.get(i);
-			dependenciesFileNameCompressed[i] = Utils.compress(pair.a.getAbsolutePath(), ENCODING);
-			dependenciesContentCompressed[i] = Utils.compress(pair.b, ENCODING);
+		final List<Dependency> compressedDependencies = new LinkedList<Dependency>();
+		for(Dependency dependency: this.dependencies){
+			compressedDependencies.add(dependency.compress());
 		}
-				
-		return createIt(EMPTY_STRING, EMPTY_STRING,
-						EMPTY_STRING, EMPTY_STRING,
-						EMPTY_STRING, EMPTY_STRING,
-						Collections.emptyList(), this.paramCreator, 
-						EMPTY_STRING, EMPTY_STRING,
+		
+		return createIt(Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
+				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
+				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
+				Compressor.EMPTY_LIST, this.paramCreator, 
+						Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 						predBodyACompressed, predBodyBCompressed,
 						predCallACompressed, predCallBCompressed,
 						predNameACompressed, predNameBCompressed,
-						headerComporessed, scopeCompressed, tmpDirectoryCompressed,
-						dependenciesFileNameCompressed, dependenciesContentCompressed, true, EMPTY_FILE);
+						headerComporessed, scopeCompressed, 
+						compressedDependencies,
+						Compressor.STATE.COMPRESSED
+						);
 	}
 	
-	public PropertyToAlloyCode decompress() throws Exception{
+	public PropertyToAlloyCode deCompress() throws Exception{
 		
-		if( !isCompressed ) throw new RuntimeException("The object is already uncompressed.");
+		if( compressedStatus.equals(Compressor.STATE.DEOMPRESSED) ) throw new RuntimeException("The object is not compressed.");
 
 		if(predBodyACompressed == null) throw new RuntimeException("The predBodyACompressed is null and cannot be compressed.");
 		if(predBodyBCompressed == null) throw new RuntimeException("The predBodyBCompressed is null and cannot be compressed.");
@@ -218,27 +161,20 @@ public class PropertyToAlloyCode implements Serializable {
 		if(predNameBCompressed == null) throw new RuntimeException("The predNameBCompressed is null and cannot be compressed.");
 		if(headerComporessed == null) throw new RuntimeException("The headerComporessed is null and cannot be compressed.");
 		if(scopeCompressed == null) throw new RuntimeException("The scopeCompressed is null and cannot be compressed.");
+		if(compressedDependencies == null) throw new RuntimeException("The compressedDependencies is null and cannot be compressed.");
 
-		if(dependenciesFileNameCompressed == null) throw new RuntimeException("The dependenciesFileNameCompressed is empty and cannot be decompressed.");
-		if(dependenciesContentCompressed == null) throw new RuntimeException("The dependenciesContentCompressed is empty and cannot be decompressed.");
-		if(dependenciesContentCompressed.length != dependenciesFileNameCompressed.length) throw new RuntimeException("The dependenciesFileNameCompressed and dependenciesContentCompressed have different lengths.");
+		final String predBodyA  = Compressor.decompress(predBodyACompressed);
+		final String predBodyB = Compressor.decompress(predBodyBCompressed);
+		final String predCallA  = Compressor.decompress(predCallACompressed);
+		final String predCallB = Compressor.decompress(predCallBCompressed);
+		final String predNameA  = Compressor.decompress(predNameACompressed);
+		final String predNameB = Compressor.decompress(predNameBCompressed);
+		final String header  = Compressor.decompress(headerComporessed);
+		final String scope = Compressor.decompress(scopeCompressed);
 		
-		final String predBodyA  = Utils.decompress(predBodyACompressed, ENCODING);
-		final String predBodyB = Utils.decompress(predBodyBCompressed, ENCODING);
-		final String predCallA  = Utils.decompress(predCallACompressed, ENCODING);
-		final String predCallB = Utils.decompress(predCallBCompressed, ENCODING);
-		final String predNameA  = Utils.decompress(predNameACompressed, ENCODING);
-		final String predNameB = Utils.decompress(predNameBCompressed, ENCODING);
-		final String header  = Utils.decompress(headerComporessed, ENCODING);
-		final String scope = Utils.decompress(scopeCompressed, ENCODING);
-		final File tmpDirectory = new File( Utils.decompress(tmpDirectoryCompressed, ENCODING));
-		final List<Pair<File, String>> dependencies = new LinkedList<Pair<File,String>>();
-		
-		for(int i = 0; i < dependenciesFileNameCompressed.length; ++i){
-			final File depFile = new File(Utils.decompress(dependenciesFileNameCompressed[i], ENCODING));
-			final String depContent = Utils.decompress(dependenciesContentCompressed[i], ENCODING);
-			final Pair<File, String> pair = new Pair<File, String>(depFile, depContent);
-			dependencies.add(pair);
+		final List<Dependency> dependencies = new LinkedList<Dependency>();
+		for(Dependency dependency: this.compressedDependencies){
+			dependencies.add(dependency.deCompress());
 		}
 		
 		return this.createIt(predBodyA, predBodyB, 
@@ -246,34 +182,33 @@ public class PropertyToAlloyCode implements Serializable {
 						predNameA, predNameB,
 						dependencies,this.paramCreator, 
 						header, scope, 
-						EMPTY_1D,EMPTY_1D,EMPTY_1D,EMPTY_1D,
-						EMPTY_1D,EMPTY_1D,EMPTY_1D,EMPTY_1D,
-						EMPTY_1D,
-						EMPTY_2D,EMPTY_2D, false, tmpDirectory
+						Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
+						Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
+						Compressor.EMPTY_LIST,
+						Compressor.STATE.DEOMPRESSED
 						);
 	}
 	
 	
 	public  PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope, 
-			File tmpDirectory){
+			String predNameB, List<Dependency> dependencies,
+			AlloyProcessingParam paramCreator, String header, String scope 
+			){
 		throw new RuntimeException("Invalid call!");
 	}
 	
 	protected PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
+			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
-			byte[] headerComporessed, byte[] scopeCompressed,
-			byte[] tmpDirectoryCompressed,
-			byte[][] dependenciesFileNameCompressed,
-			byte[][] dependenciesContentCompressed, boolean isCompressed,
-			File tmpDirectory){
+			byte[] headerComporessed, byte[] scopeCompressed
+			,List<Dependency> compressedDependencies
+			, Compressor.STATE compressedStatus
+			){
 		throw new RuntimeException("Invalid call!");
 	}
 	
@@ -287,9 +222,9 @@ public class PropertyToAlloyCode implements Serializable {
 				this. predCallACompressed, this. predCallBCompressed,
 				this. predNameACompressed, this. predNameBCompressed,
 				this. headerComporessed, this. scopeCompressed,
-				this.tmpDirectoryCompressed,
-				this.dependenciesFileNameCompressed, this. dependenciesContentCompressed,
-				this. isCompressed, this.tmpDirectory );
+				this.compressedDependencies,
+				compressedStatus 
+				);
 	}
 	
 	String generateAlloyCode(){
@@ -298,9 +233,7 @@ public class PropertyToAlloyCode implements Serializable {
 		source += generatePrepend();
 		source += '\n'+generatePredicateBody(predBodyA);
 		source += '\n'+generatePredicateBody(predBodyB);
-		
 		source += '\n'+commandStatement(predCallA, predCallB);
-		
 		source += scope;
 		
 		return source;
@@ -320,28 +253,24 @@ public class PropertyToAlloyCode implements Serializable {
 	String commandKeyword(){
 		throw new RuntimeException("Invalid call!");
 	}
-	/*String commandKeyword(){
-		return "check";
-	}*/
 	
 	public String commandOperator(){
 		throw new RuntimeException("Invalid call!");
 	}
-	/*String commandOperator(){
-		return "implies";
-	}*/
 	
 	String commandStatement(final String predCallA, final String predCallB){
 		return commandKeyword() + "{" + predCallA + " "+ commandOperator() + " "+ predCallB + "}";
 	}
 	
 	
-	public File srcPath(){
-		return  new File(tmpDirectory, srcName());
+	public String srcPath(){
+		return   
+				srcName();
 	}
 	
-	public File destPath(){
-		return  new File(tmpDirectory, destName());
+	public String destPath(){
+		return  
+				destName();
 	}
 	
 	public AlloyProcessingParam generate() {
@@ -374,9 +303,8 @@ public class PropertyToAlloyCode implements Serializable {
 		int result = 1;
 		
 		if(dependencies != null){
-			for(Pair<File, String> pair: dependencies){
-				result = prime * result + (pair.a == null ? 0 :  pair.a.getAbsolutePath().hashCode());
-				result = prime * result + (pair.b == null ? 0 :  pair.b.hashCode());				
+			for(Dependency dependency: dependencies){
+				result = prime * result +((dependency == null) ? 0 : dependency.hashCode());
 			}
 		}
 		
@@ -396,14 +324,15 @@ public class PropertyToAlloyCode implements Serializable {
 		result = prime * result
 				+ ((predNameB == null) ? 0 : predNameB.hashCode());
 		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-		result = prime * result
-				+ ((tmpDirectory == null) ? 0 : tmpDirectory.hashCode());
-		result = prime * result
-				+ Arrays.deepHashCode(dependenciesContentCompressed);
-		result = prime * result
-				+ Arrays.deepHashCode(dependenciesFileNameCompressed);
+		
+		if(compressedDependencies != null){
+			for(Dependency dependency: compressedDependencies){
+				result = prime * result +((dependency == null) ? 0 : dependency.hashCode());
+			}
+		}
+		
 		result = prime * result + Arrays.hashCode(headerComporessed);
-		result = prime * result + (isCompressed ? 1231 : 1237);
+		result = prime * result + compressedStatus.hashCode();
 		result = prime * result + Arrays.hashCode(predBodyACompressed);
 		result = prime * result + Arrays.hashCode(predBodyBCompressed);
 		result = prime * result + Arrays.hashCode(predCallACompressed);
@@ -411,7 +340,6 @@ public class PropertyToAlloyCode implements Serializable {
 		result = prime * result + Arrays.hashCode(predNameACompressed);
 		result = prime * result + Arrays.hashCode(predNameBCompressed);
 		result = prime * result + Arrays.hashCode(scopeCompressed);
-		result = prime * result + Arrays.hashCode(tmpDirectoryCompressed);
 		return result;
 	}
 
@@ -423,15 +351,23 @@ public class PropertyToAlloyCode implements Serializable {
 			if(dependencies.size() != other.dependencies.size())
 				return false;
 			for(int i = 0; i < dependencies.size(); ++i){
-				final Pair<File, String> pair = dependencies.get(i);
-				final Pair<File, String> otherPair = other.dependencies.get(i);
-				if(!pair.a.getAbsolutePath().equals(otherPair.a.getAbsolutePath())) 
+				if(!dependencies.get(i).equals(other.dependencies.get(i)))
 					return false;
-				if(!pair.b.equals(otherPair.b)) 
-					return false;
-				
 			}
 		}
+		
+		if (compressedDependencies == null) {
+			if (other.compressedDependencies != null)
+				return false;
+		} else{
+			if(compressedDependencies.size() != other.compressedDependencies.size())
+				return false;
+			for(int i = 0; i < compressedDependencies.size(); ++i){
+				if(!compressedDependencies.get(i).equals(other.compressedDependencies.get(i)))
+					return false;
+			}
+		}
+		
 		if (header == null) {
 			if (other.header != null)
 				return false;
@@ -477,20 +413,10 @@ public class PropertyToAlloyCode implements Serializable {
 				return false;
 		} else if (!scope.equals(other.scope))
 			return false;
-		if (tmpDirectory == null) {
-			if (other.tmpDirectory != null)
-				return false;
-		} else if (!tmpDirectory.equals(other.tmpDirectory))
-			return false;
-		if (!Arrays.deepEquals(dependenciesContentCompressed,
-				other.dependenciesContentCompressed))
-			return false;
-		if (!Arrays.deepEquals(dependenciesFileNameCompressed,
-				other.dependenciesFileNameCompressed))
-			return false;
+
 		if (!Arrays.equals(headerComporessed, other.headerComporessed))
 			return false;
-		if (isCompressed != other.isCompressed)
+		if (!compressedStatus.equals(other.compressedStatus) )
 			return false;
 		if (!Arrays.equals(predBodyACompressed, other.predBodyACompressed))
 			return false;
@@ -505,8 +431,6 @@ public class PropertyToAlloyCode implements Serializable {
 		if (!Arrays.equals(predNameBCompressed, other.predNameBCompressed))
 			return false;
 		if (!Arrays.equals(scopeCompressed, other.scopeCompressed))
-			return false;
-		if (!Arrays.equals(tmpDirectoryCompressed, other.tmpDirectoryCompressed))
 			return false;
 		
 		return true;

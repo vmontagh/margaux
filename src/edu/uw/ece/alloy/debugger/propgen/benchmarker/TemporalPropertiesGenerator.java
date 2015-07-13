@@ -47,7 +47,6 @@ public class TemporalPropertiesGenerator {
 
 	final File workingDir = new File( Configuration.getProp("working_directory") );
 	//final File tmpDirectory = new File(workingDir, Configuration.getProp("temporary_directory") );
-	final static File tmpDirectory = new File( Configuration.getProp("temporary_directory") );
 
 
 	//final File relationalPropModuleOriginal = new File( resourcesDir, "relational_properties.als");
@@ -69,9 +68,12 @@ public class TemporalPropertiesGenerator {
 
 	final AlloyProcessingParam paramCreator;
 
-	final static List<Pair<File, String>> dependencies = new LinkedList<Pair<File,String>>(); 
+	final static List<Dependency> dependencies = new LinkedList<Dependency>(); 
 	static{
-		dependencies.add(new Pair<File, String>(new File(tmpDirectory, relationalPropModuleOriginal.getName()), Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
+		
+		//dependencies.add(new Dependency(new File( relationalPropModuleOriginal.getName()), Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
+		//Some sort of hacking. The content of the dependency is the path to the original file. So it just need to to copy it instead of carry the content per every request param.
+		dependencies.add(new Dependency(new File( relationalPropModuleOriginal.getName()), relationalPropModuleOriginal.getAbsolutePath()));
 	}
 	final PropertyToAlloyCodeBuilder propertyBuilder;;
 
@@ -94,7 +96,8 @@ public class TemporalPropertiesGenerator {
 			paramCreator = AlloyProcessingParam.EMPTY_PARAM;
 		}
 
-		propertyBuilder = new PropertyToAlloyCodeBuilder(dependencies, Header, Scope, paramCreator,tmpDirectory);
+		propertyBuilder = new PropertyToAlloyCodeBuilder(dependencies, Header, Scope, paramCreator//[tmpDirectory],tmpDirectory
+				);
 
 		if(doVAC) propertyBuilder.registerPropertyToAlloyCode(VacPropertyToAlloyCode.EMPTY_CONVERTOR);
 		if(doIFF) propertyBuilder.registerPropertyToAlloyCode(IffPropertyToAlloyCode.EMPTY_CONVERTOR);
@@ -142,7 +145,8 @@ public class TemporalPropertiesGenerator {
 				for(final PropertyToAlloyCode alloyCodeGenerator: propertyBuilder.createObjects(
 						tripleProps.get(pred1).b, tripleProps.get(pred2).b, 
 						tripleProps.get(pred1).a, tripleProps.get(pred2).a, 
-						pred1, pred2, tmpDirectory) ){
+						pred1, pred2//[tmpDirectory], tmpDirectory
+						) ){
 					
 					if(doneNames.contains(alloyCodeGenerator.srcName())) continue;
 					if(filterNames.contains(alloyCodeGenerator.srcName())) continue;
@@ -200,28 +204,6 @@ public class TemporalPropertiesGenerator {
 		if( !workingDir.exists() ){
 			workingDir.mkdir();
 			logger.info("["+Thread.currentThread().getName()+"] " + "Working directory is created: "+workingDir.getAbsolutePath());
-		}
-
-		if( tmpDirectory.exists() ){
-			try {
-				logger.info("["+Thread.currentThread().getName()+"] " +" exists and has to be recreated." +tmpDirectory.getCanonicalPath());
-				Utils.deleteRecursivly(tmpDirectory);
-			} catch (IOException e) {
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to delete the previous files.", e);
-			}
-		}
-
-		//After deleting the temp directory create a new one.
-		if (!tmpDirectory.mkdir())
-			throw new RuntimeException("Can not create a new directory");
-
-		//Copy the relational module into the tmp directory
-		try {
-			Files.copy( relationalPropModuleOriginal.toPath(), 
-					(new File(tmpDirectory,relationalPropModuleOriginal.getName())).toPath());
-		} catch (IOException e) {
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to copy: "+relationalPropModuleOriginal.getAbsolutePath(), e);
-			throw e;
 		}
 
 	}

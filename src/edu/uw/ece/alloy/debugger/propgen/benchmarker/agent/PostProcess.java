@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sun.swing.internal.plaf.synth.resources.synth;
+
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
@@ -24,21 +26,28 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.H2DBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.SQLiteDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AlloyProcessed;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
 
 
-public abstract class PostProcess implements Runnable {
+public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 
-	public final BlockingQueue<AlloyProcessedResult> results = new LinkedBlockingQueue<>();
+	protected final BlockingQueue<AlloyProcessedResult> results = new LinkedBlockingQueue<>();
 	public final PostProcess nextAction;
 
-	public volatile AtomicInteger processed = new AtomicInteger(0);
+	protected volatile AtomicInteger processed = new AtomicInteger(0);
+
+	protected volatile AtomicInteger shadowProcessed = new AtomicInteger(-1);
+	protected volatile AtomicInteger recoveredTry = new AtomicInteger(0);
 
 	protected final static Logger logger = Logger.getLogger(PostProcess.class.getName()+"--"+Thread.currentThread().getName());
 	final public static boolean doCompress = Boolean.valueOf(Configuration.getProp("doCompressAlloyParams"));
-	
+
+	Thread postProcessThread;
+
 	public PostProcess(PostProcess nextAction) {
 		super();
 		this.nextAction = nextAction;
+		postProcessThread = new Thread(this);
 
 	}
 
@@ -49,7 +58,54 @@ public abstract class PostProcess implements Runnable {
 	public boolean isEmpty(){
 		return results.isEmpty();
 	}
-	
+
+	public String amIStuck(){
+		return isDelayed() == 0 ? "" :  "Processing PostProess"+getClass().getSimpleName()+" is stuck after processing "+processed+" messages.";
+	}
+
+	/**
+	 * If the delay condition is true, then it returns a message how many 
+	 * messages are stuck in the queue. 
+	 * This function is useful for monitoring the threads.
+	 * @return
+	 * Non-empty message means a delay is recorded
+	 * Empty message
+	 */
+	public synchronized long isDelayed(){
+		long result = 0;
+		//monitor the socket
+		if(shadowProcessed.equals(processed) && !isEmpty()){
+			//The executer does not proceeded.
+			result = processed.longValue(); 
+			//TODO manage to reset the socket thread
+		}else{
+			//The executer proceeded
+			shadowProcessed = processed;
+		}
+		return result;
+	}
+
+	public int triesOnStuck(){
+		return recoveredTry.get();
+	}
+
+	protected void doActionOnStuck(){
+		logger.finer("["+Thread.currentThread().getName()+"] " +"");
+	}
+
+	public void actionOnStuck(){
+		triesOnStuck();
+	}
+
+	public void startThread(){
+		postProcessThread.start();
+	}
+
+	public void actionOnNotStuck(){
+		logger.finer("["+Thread.currentThread().getName()+"] " +"");
+	}
+
+
 	protected String converSATResult(AlloyProcessedResult result) {
 		return result.isFailed() ? "F": result.isTimedout() ? "T" : result.sat == 1 ? "S" : result.sat == -1 ? "U": "N";
 	}
@@ -80,8 +136,6 @@ public abstract class PostProcess implements Runnable {
 
 	}
 
-
-
 	@Override
 	public void run() {
 
@@ -103,12 +157,16 @@ public abstract class PostProcess implements Runnable {
 
 	public void cancel() { Thread.currentThread().interrupt(); }
 
+
+
+
+
 	public static class FileWrite extends PostProcess{
 
 		public FileWrite() {
 			super();
 		}
-		
+
 		public FileWrite(PostProcess socketWriter) {
 			super(socketWriter);
 		}
@@ -133,7 +191,6 @@ public abstract class PostProcess implements Runnable {
 
 	}
 
-
 	public static class SocketWriter extends PostProcess{
 
 		final InetSocketAddress remoteAddres;
@@ -151,9 +208,9 @@ public abstract class PostProcess implements Runnable {
 
 		@Override
 		protected void action(AlloyProcessedResult result) throws InterruptedException  {
-			
+
 			AlloyProcessedResult updatedResult = result;
-			
+
 			AlloyProcessed command = new AlloyProcessed(AlloyProcessRunner.getInstance().PID, updatedResult);
 			logger.info("["+Thread.currentThread().getName()+"] " +"Start sending a done message: "+command+" as the result is:"+result+" TO: "+ remoteAddres);
 
@@ -171,24 +228,27 @@ public abstract class PostProcess implements Runnable {
 	}
 
 
+
+
+
 	public static class DBWriter extends PostProcess{
 
 		final public static String RECORDS_SCHEMA = "CREATE TABLE RECORDS(id INTEGER PRIMARY KEY AUTO_INCREMENT, result TEXT, params TEXT, date NUMERIC, prop1 TEXT, prop2 TEXT, op char(20), sat char(2), recordTime NUMERIC, recordsTimeConfirm NUMERIC, srcPath TEXT, destPath TEXT)";
 		final public static String RECORDS_INDEX = "CREATE INDEX IDX_RECORDS_SAT ON RECORDS(SAT)";
 		final public static String SQL_INSERT_STMT = "INSERT INTO records(result, params, date, prop1, prop2, op, sat, recordTime, recordsTimeConfirm, srcPath, destPath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		final public static DBConnectionPool dBConnection = new H2DBConnectionPool(Configuration.getProp("db_file_root")+"/"+Configuration.getProp("db_file_name")
-						.replace("%t",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-nnnnnnnnn")))
-							.replace("%p", AlloyProcessRunner.getInstance().PID.getHostString()+"-"+AlloyProcessRunner.getInstance().PID.getPort())
-							);
-		
+				.replace("%t",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-nnnnnnnnn")))
+				.replace("%p", AlloyProcessRunner.getInstance().PID.getHostString()+"-"+AlloyProcessRunner.getInstance().PID.getPort())
+				);
+
 		public DBWriter(){
 			super();
 		}
-		
+
 		public DBWriter(PostProcess nextAction){
 			super(nextAction);
 		}
-		
+
 		static{
 			//Create an appropriate table in the database. 
 			try(Connection connection  = dBConnection.getConnection()){
@@ -208,7 +268,7 @@ public abstract class PostProcess implements Runnable {
 							statement.close();
 						}
 					}
-					
+
 				}
 				logger.info("["+Thread.currentThread().getName()+"] " +"Database is created as: "+connection);
 				connection.close();
@@ -222,17 +282,17 @@ public abstract class PostProcess implements Runnable {
 
 		@Override
 		protected void action(AlloyProcessedResult result)  {
-			
+
 			logger.info("["+Thread.currentThread().getName()+"] " +"Inserting a record in the database: "+result);
 			try(Connection connection  = dBConnection.getConnection()){
 				connection.setAutoCommit(true);
 				try(Statement  statement = connection.createStatement()){
-					
+
 					String SATResult = converSATResult(result);
-					
+
 					//Extract properties and operator
 					PreparedStatement preparedSQLStmt = connection.prepareStatement(SQL_INSERT_STMT);
-					
+
 					preparedSQLStmt.setString(1, result.asRecord());
 					preparedSQLStmt.setString(2, result.params.content());
 					preparedSQLStmt.setInt(3, -1);
@@ -242,14 +302,14 @@ public abstract class PostProcess implements Runnable {
 					preparedSQLStmt.setString(7, SATResult);
 					preparedSQLStmt.setLong(8, System.currentTimeMillis() /*LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))*/);
 					preparedSQLStmt.setInt(9, -1);
-					preparedSQLStmt.setString(10, result.params.alloyCoder.srcPath().getName());
-					preparedSQLStmt.setString(11, result.params.alloyCoder.destPath().getName());
-					
+					preparedSQLStmt.setString(10, result.params.srcPath().getName());
+					preparedSQLStmt.setString(11, result.params.destPath().getName());
+
 					//System.out.println(preparedSQLStmt);
-					
+
 					preparedSQLStmt.executeUpdate();
 				}
-				
+
 				logger.info("["+Thread.currentThread().getName()+"] " +"The records is inserted in the DB: "+result);
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -261,5 +321,23 @@ public abstract class PostProcess implements Runnable {
 
 	}
 
+
+
+
+	public static class CleanAfterProccessed extends PostProcess{
+
+		public CleanAfterProccessed() {
+			super();
+		}
+
+		@Override
+		protected void action(AlloyProcessedResult result) {
+
+			logger.info("["+Thread.currentThread().getName()+"] " + "The conent of the param is removed from the disk: "+ result.params);
+			result.params.removeContent();
+
+		}
+
+	}
 
 }

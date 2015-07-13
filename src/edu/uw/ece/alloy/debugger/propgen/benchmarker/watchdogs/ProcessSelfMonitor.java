@@ -1,7 +1,11 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.h2.mvstore.ConcurrentArrayList;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
@@ -15,21 +19,21 @@ public class ProcessSelfMonitor implements Runnable {
 
 	public final int monitorInterval;
 	public final int RecoveryAttemtps;
-	public final long doneRatio;
 
 	protected final static Logger logger = Logger.getLogger(ProcessSelfMonitor.class.getName()+"--"+Thread.currentThread().getName());
 
-	public final AlloyProcessRunner alloyProcessRunner;
+	List<ThreadDelayToBeMonitored> monitoredThreads = new LinkedList<>();
 
-
-	public ProcessSelfMonitor(int monitorInterval, int RecoveryAttemtps,
-			long doneRatio, AlloyProcessRunner alloyProcessRunner) {
+	public ProcessSelfMonitor(int monitorInterval, int RecoveryAttemtps
+		 ) {
 		super();
 		this.monitorInterval = monitorInterval;
 		this.RecoveryAttemtps = RecoveryAttemtps;
-		this.doneRatio = doneRatio;
-		this.alloyProcessRunner = alloyProcessRunner;
 
+	}
+
+	public void addThreadToBeMonitored(ThreadDelayToBeMonitored thread){
+		monitoredThreads.add(thread);
 	}
 
 	@Override
@@ -42,8 +46,27 @@ public class ProcessSelfMonitor implements Runnable {
 		int recoveryAttempts = 0;
 		int livenessFailed = 0;
 		while(!Thread.currentThread().isInterrupted()){
-			try {
+
+			try{
 				Thread.sleep(monitorInterval/2);
+
+				for(ThreadDelayToBeMonitored thread: monitoredThreads){
+					try{
+						if(thread.isDelayed() != 0){
+							logger.info("["+Thread.currentThread().getName()+"]"+ thread.amIStuck());
+							thread.actionOnStuck();
+						}else{
+							thread.actionOnNotStuck();
+						}
+					}catch(Throwable tr){
+						logger.severe("["+Thread.currentThread().getName()+"]"+ "Watchdog main loop is BADLY faced an exception!");					
+					}
+				}
+				/*try {
+
+
+
+
 				logger.info("["+Thread.currentThread().getName()+"]"+ "Monitor takes: processedSoFar:"+processedSoFar+" currently_processed="+alloyProcessRunner.getExecuter().processed+" isEmpty="+alloyProcessRunner.getExecuter().isEmpty());
 				//monitor the executer
 				if(processedSoFar == alloyProcessRunner.getExecuter().processed.intValue() && !alloyProcessRunner.getExecuter().isEmpty()){
@@ -106,7 +129,7 @@ public class ProcessSelfMonitor implements Runnable {
 					}
 
 					Runtime.getRuntime().halt(0);
-				}
+				}*/
 				System.gc();
 
 				Thread.sleep(monitorInterval/2);

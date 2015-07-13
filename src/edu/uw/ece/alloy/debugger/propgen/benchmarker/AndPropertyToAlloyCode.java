@@ -1,9 +1,8 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import java.io.File;
 import java.util.List;
 
-import edu.mit.csail.sdg.alloy4.Pair;
+import edu.uw.ece.alloy.Compressor;
 
 public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 
@@ -15,34 +14,34 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 	
 	protected AndPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope,
-			File tmpDirectory) {
+			String predNameB, List<Dependency> dependencies,
+			AlloyProcessingParam paramCreator, String header, String scope
+			) {
 		super(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope, tmpDirectory);
+				dependencies, paramCreator, header, scope
+				);
 	}
 
 	protected AndPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
+			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
 			byte[] headerComporessed, byte[] scopeCompressed,
-			byte[] tmpDirectoryCompressed,
-			byte[][] dependenciesFileNameCompressed,
-			byte[][] dependenciesContentCompressed, boolean isCompressed,
-			File tmpDirectory) {
+			List<Dependency> codeDependencies,
+			Compressor.STATE compressedStatus
+			) {
 		super(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
 				dependencies, paramCreator, header, scope,
 				predBodyACompressed, predBodyBCompressed,
 				predCallACompressed, predCallBCompressed,
 				predNameACompressed, predNameBCompressed,
 				headerComporessed, scopeCompressed,
-				tmpDirectoryCompressed,
-				dependenciesFileNameCompressed, dependenciesContentCompressed,
-				isCompressed, tmpDirectory);
+				codeDependencies,
+				compressedStatus
+				);
 	}
 
 	protected AndPropertyToAlloyCode(){
@@ -72,29 +71,28 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 	@Override
 	public PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
-			String predNameB, List<Pair<File, String>> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope,
-			File tmpDirectory) {
+			String predNameB, List<Dependency> dependencies,
+			AlloyProcessingParam paramCreator, String header, String scope
+			) {
 		return new AndPropertyToAlloyCode( predBodyA,  predBodyB,
 				predCallA,  predCallB,  predNameA,
 				predNameB,  dependencies,
-				paramCreator,  header,  scope, tmpDirectory);
+				paramCreator,  header,  scope
+				);
 	}
 
 	@Override
-	protected PropertyToAlloyCode createIt(String predBodyA,
-			String predBodyB, String predCallA, String predCallB,
-			String predNameA, String predNameB,
-			List<Pair<File, String>> dependencies,
+	protected PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
+			String predCallA, String predCallB, String predNameA,
+			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
-			byte[] headerComporessed, byte[] scopeCompressed,
-			byte[] tmpDirectoryCompressed,
-			byte[][] dependenciesFileNameCompressed,
-			byte[][] dependenciesContentCompressed, boolean isCompressed,
-			File tmpDirectory) {
+			byte[] headerComporessed, byte[] scopeCompressed
+			,List<Dependency> compressedDependencies
+			, Compressor.STATE compressedStatus
+			) {
 
 		return new AndPropertyToAlloyCode(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
 				dependencies, paramCreator, header, scope,
@@ -102,9 +100,9 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				predCallACompressed, predCallBCompressed,
 				predNameACompressed, predNameBCompressed,
 				headerComporessed, scopeCompressed,
-				tmpDirectoryCompressed,
-				dependenciesFileNameCompressed, dependenciesContentCompressed,
-				isCompressed, tmpDirectory);	
+				compressedDependencies,
+				compressedStatus
+				);	
 	}
 
 

@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,13 +16,11 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.util.Utils;
 
 public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, Serializable {
 
-	protected final static File EMPTY_FILE = new File( "NONE" );
-	protected final static String EMPTY_CONTENT = "";
-	protected final static int EMPTY_PRIORITY = -1;
 
 	protected final static long CREATION_TIME = System.currentTimeMillis(); 
 
@@ -35,17 +36,28 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	final public static AlloyProcessingParam EMPTY_PARAM = new AlloyProcessingParam();
 
 	public final int priority;
-	
 	public final PropertyToAlloyCode alloyCoder; 
+	public final File tmpDirectory ;//It is always initially empty.
 	
-	protected AlloyProcessingParam(final PropertyToAlloyCode alloyCoder, int priority) {
-		this.alloyCoder = alloyCoder != null ? alloyCoder.createItself() : PropertyToAlloyCode.EMPTY_CONVERTOR;
+
+	protected AlloyProcessingParam(final PropertyToAlloyCode alloyCoder, int priority, final File tmpDirectory 
+			) {
+		if (alloyCoder != null && !alloyCoder.equals(PropertyToAlloyCode.EMPTY_CONVERTOR)) {
+			this.alloyCoder = alloyCoder.createItself();
+		}else{
+			this.alloyCoder = PropertyToAlloyCode.EMPTY_CONVERTOR;
+		}
 		this.priority = priority;
+		this.tmpDirectory = new File(tmpDirectory.getPath());
+	}
+	
+	protected AlloyProcessingParam(final PropertyToAlloyCode alloyCoder, int priority
+			) {
+		this(alloyCoder ,priority, Compressor.EMPTY_FILE);
 	}
 	
 	protected AlloyProcessingParam() {
-		this.alloyCoder = PropertyToAlloyCode.EMPTY_CONVERTOR;
-		this.priority = EMPTY_PRIORITY;
+		this( PropertyToAlloyCode.EMPTY_CONVERTOR, Compressor.EMPTY_PRIORITY);
 	}
 	
 	/**
@@ -53,12 +65,17 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	 * used for composition. The subclasses also have such methods and their functionality will be composed
 	 * at runtime with the property generators.   
 	 */
+	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
+		return new AlloyProcessingParam(alloyCoder,  priority, tmpDirectory);
+	}
+
 	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority) {
 		return new AlloyProcessingParam(alloyCoder,  priority);
 	}
 
+	
 	public AlloyProcessingParam createIt(AlloyProcessingParam param) {
-		return createIt(param.alloyCoder,  param.priority);
+		return createIt(param.alloyCoder,  param.priority, param.tmpDirectory);
 	}
 	
 	public AlloyProcessingParam createItself() {
@@ -71,32 +88,42 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	}
 	
 	public File srcPath(){
-		return this.alloyCoder.srcPath();
+		return new File(tmpDirectory, this.alloyCoder.srcPath());
 	}
 
 	public File destPath(){
-		return this.alloyCoder.destPath();
+		return new File(tmpDirectory, this.alloyCoder.destPath()); 
 	}
 
 	public int priority(){
 		return priority;
 	}
 	
-	public List<Pair<File, String>> dependencies(){
-		return Collections.unmodifiableList(this.alloyCoder.dependencies);
+	public List<Dependency> dependencies(){
+		
+		//Attach to the tmpDirectory
+		final List<Dependency> result = new LinkedList<Dependency>();
+		
+		for(Dependency dependency: this.alloyCoder.dependencies ){
+			result.add(dependency.createIt(new File(tmpDirectory, dependency.path.getPath() ), dependency.content));
+		}
+		
+		return Collections.unmodifiableList(result);
 	}
 	
 	public void dumpContent(){
 		dumpFile(srcPath(), content());
 	}
 
-	public void dumpDependecies(){
-		for(Pair<File, String> pair:dependencies()){
-			dumpFile(pair.a, pair.b);
+	public void dumpDependecies() throws IOException{
+		for(Dependency dependency:dependencies()){
+			//dumpFile(dependency.path, dependency.content);
+			//A hack: Instead of copying the content, just the path is copied.
+			Files.copy(new File(dependency.content).toPath(), dependency.path.toPath(),StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
-	public AlloyProcessingParam dumpAll(){
+	public AlloyProcessingParam dumpAll() throws IOException{
 
 		dumpContent();
 		dumpDependecies();
@@ -104,7 +131,7 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 		return this;
 	}
 
-	public AlloyProcessingParam removeContent(){
+	public synchronized AlloyProcessingParam removeContent(){
 		try {
 			if(srcPath().exists())
 				Files.delete(srcPath().toPath());
@@ -116,11 +143,11 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	}
 
 
-	public AlloyProcessingParam removeDependecies(){
-		for(Pair<File, String> pair:dependencies()){
+	public synchronized AlloyProcessingParam removeDependecies(){
+		for(Dependency dependency:dependencies()){
 			try {
-				if(pair.a.exists())
-					Utils.deleteRecursivly(pair.a);
+				if(dependency.path.exists())
+					Utils.deleteRecursivly(dependency.path);
 			} catch (IOException e) {
 				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to remove the file.", e);
 				e.printStackTrace();
@@ -134,7 +161,16 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 		removeDependecies();
 		 return this;
 	}
+	
+	public AlloyProcessingParam changeTmpDirectory(final File tmpDirectory){
+		return createIt(this.alloyCoder, this.priority, tmpDirectory);
+	}
 
+	public AlloyProcessingParam resetToEmptyTmpDirectory() {
+		return createIt(this.alloyCoder, this.priority);
+	}
+
+	
 	/**
 	 * compress and decompress the content for sending over socket. 
 	 * The subClass have to override the compressions.   
@@ -208,6 +244,11 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 				return false;
 		} else if (!alloyCoder.equals(other.alloyCoder))
 			return false;
+		if (tmpDirectory == null) {
+			if (other.tmpDirectory != null)
+				return false;
+		} else if (!tmpDirectory.equals(other.tmpDirectory))
+			return false;
 		if (priority != other.priority)
 			return false;
 		return true;
@@ -219,6 +260,8 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 		int result = 1;
 		result = prime * result
 				+ ((alloyCoder == null) ? 0 : alloyCoder.hashCode());
+		result = prime * result
+				+ ((tmpDirectory == null) ? 0 : tmpDirectory.hashCode());
 		result = prime * result + priority;
 		return result;
 	}

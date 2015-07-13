@@ -1,11 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import edu.mit.csail.sdg.alloy4.Pair;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 public class AlloyProcess {
 	

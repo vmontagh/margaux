@@ -19,7 +19,7 @@ public class OrdDcrs extends Ord {
 	@Override
 	protected String genOrder() {
 		return 	"(some "+ sizeProp.orderedChange()+ " implies"+
-				" lt[relational_properties/max["+sizeProp.getGrowthOrderedDelta() +","+ sideOrdered.getNext()+"],"+
+				" relational_properties/lt[relational_properties/max["+sizeProp.getGrowthOrderedDelta() +","+ sideOrdered.getNext()+"],"+
 				"relational_properties/max["+sizeProp.orderedChange()+","+sideOrdered.getNext()+
 				"],"+sideOrdered.getNext()+"] ) )";
 		

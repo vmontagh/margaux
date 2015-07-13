@@ -71,7 +71,7 @@ public class ProcessRemoteMonitor implements Runnable {
 	}
 
 	public void addMessage(final InetSocketAddress pId, final AlloyProcessingParam e){
-		
+
 		//TODO message: All message the AlloyProcessingParam objects are compressed already. to read them, they have to be decomrepssed.
 		if( ! incompleteMessages.containsKey(pId) ){
 			incompleteMessages.put(pId,new ConcurrentHashMap<>() );
@@ -92,23 +92,40 @@ public class ProcessRemoteMonitor implements Runnable {
 
 		}
 
-		if( ! sentMessages.containsKey(e) ){
-			sentMessages.put(e,Collections.synchronizedList(new LinkedList<InetSocketAddress>()) );
-		}
+		if(Boolean.parseBoolean(System.getProperty("debug"))){
+			if( ! sentMessages.containsKey(e) ){
+				sentMessages.put(e,Collections.synchronizedList(new LinkedList<InetSocketAddress>()) );
+			}
 
-		List<InetSocketAddress> listPID = sentMessages.get(e);
-		listPID.add(pId);
+			List<InetSocketAddress> listPID = sentMessages.get(e);
+			listPID.add(pId);
+		}
 
 	}
 
 	public void removeMessage(final InetSocketAddress pId, final AlloyProcessingParam e){
+
+		InetSocketAddress bPid = null;
+		for(InetSocketAddress pid: incompleteMessages.keySet()){
+			if( incompleteMessages.get(pid).containsKey(e) ){
+				bPid = pid;
+				break;
+			}
+		}
+		if(bPid == null){
+			System.out.println("Surprisssssseeeee!!!! "+e+" does not belong to any pid and the sent pid is wrong:"+pId);
+		}else{
+			logger.warning("["+Thread.currentThread().getName()+"] "+"Correnct <"+pId+","+e+">");
+		}
+		
 		
 		if( ! incompleteMessages.containsKey(pId) ){
 			logger.severe("["+Thread.currentThread().getName()+"] "+"No message set is available for process: "+pId);
 		}else{
 
-			logger.info("["+Thread.currentThread().getName()+"] " + "The message is: "+e+"\tThe PID is: "+pId+" and message was sent to: "+sentMessages.get(e));
-
+			if(Boolean.parseBoolean(System.getProperty("debug"))){
+				logger.info("["+Thread.currentThread().getName()+"] " + "The message is: "+e+"\tThe PID is: "+pId+" and message was sent to: "+sentMessages.get(e));
+			}
 
 			synchronized (incompleteMessages) {
 				Map<AlloyProcessingParam, Integer> mapValue = incompleteMessages.get(pId);
@@ -116,18 +133,20 @@ public class ProcessRemoteMonitor implements Runnable {
 				logger.info("["+Thread.currentThread().getName()+"] " + " The map size is before: " + mapValue.size()+ " for pId:"+pId);
 
 				if(!mapValue.containsKey(e)){
-					logger.info("["+Thread.currentThread().getName()+"] " + mapValue);
+					logger.severe("["+Thread.currentThread().getName()+"] " + mapValue);
 					logger.severe("["+Thread.currentThread().getName()+"] "+"Message "+e+" is not found for process: "+pId);
 				}else{
 					mapValue.remove(e);
 					logger.info("["+Thread.currentThread().getName()+"] "+"Message "+e+" is received and removed for process: "+pId);
+
+					recordRemovedMessage(pId);
+					logger.info("["+Thread.currentThread().getName()+"] " + " The message is removed? "+incompleteMessages.get(pId).get(e) +"for pId:"+pId+" "+e);
+
 				}
-				
+
 				logger.info("["+Thread.currentThread().getName()+"] " + " The map size is after: " + mapValue.size()+ " for pId:"+pId);
 
 			}
-			logger.info("["+Thread.currentThread().getName()+"] " + " The message is removed? "+incompleteMessages.get(pId).get(e) +"for pId:"+pId+" "+e);
-			recordRemovedMessage(pId);
 		}
 	}
 
@@ -176,10 +195,10 @@ public class ProcessRemoteMonitor implements Runnable {
 
 		AsynchronousServerSocketChannel serverSocketChannel = null;
 		try {
-						
+
 			serverSocketChannel = AsynchronousServerSocketChannel
 					.open().bind(hostAddress);
-			logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"The remote monitor is tarted to monitor the process on: "+hostAddress);
+			logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"The remote monitor is started to monitor the process on: "+hostAddress);
 			while(!Thread.currentThread().isInterrupted()){
 
 				Future<AsynchronousSocketChannel> serverFuture = null;
@@ -342,20 +361,20 @@ public class ProcessRemoteMonitor implements Runnable {
 		public void run() {
 			while(!Thread.currentThread().isInterrupted()){
 				try {
-					Thread.currentThread().sleep(15 * monitorInterval / 10);
+					Thread.currentThread().sleep( monitorInterval );
 					for(AlloyProcess ap: manager.getTimedoutProcess(monitorInterval)){
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The processes is timedout and will be killed:"+ap.getPId());
+						logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"The processes is timedout and will be killed:"+ap.getPId());
 						manager.changeStatus(ap.getPId(), Status.KILLING);
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Removing undone requests:"+ap.getPId());
+						logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Removing undone requests:"+ap.getPId());
 						removeAndPushUndoneRequests(ap.getPId());
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Requests are removed for the killing process:"+ap.getPId());
+						logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Requests are removed for the killing process:"+ap.getPId());
 						manager.killAndReplaceProcess(ap.getPId());
 					}
 
 					for(InetSocketAddress pId: findOrphanProcessTasks(manager)){
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Orphan processes are to be removed from the process: "+pId);
+						logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Orphan processes are to be removed from the process: "+pId);
 						removeAndPushUndoneRequests(pId);
-						logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Orphan processes are are removed process: "+pId);
+						logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Orphan processes are are removed process: "+pId);
 					}
 
 				} catch (InterruptedException e) {
@@ -378,25 +397,25 @@ public class ProcessRemoteMonitor implements Runnable {
 		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"orphan process are: "+result);
 		return Collections.unmodifiableSet(result);
 	}
-	
+
 	/**
 	 * This method is called by AlloyProcessed, once a message is received from the process as a task is done. 
 	 * @param result
 	 */
 	public void processResponded(AlloyProcessedResult result, InetSocketAddress PID){
-		
+
 		if(manager.getAlloyProcess(PID) == null){
-			logger.severe("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" "+this);
+			logger.severe("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" and the current PIDs are:\n\t"+manager.getAllRegisteredPIDs());
 			return;
 		}
-		
+
 		if(result.isTimedout() || result.isFailed()){
 			logger.info("["+Thread.currentThread().getName()+"] " + "The process is timed out and is pushed back to be retried later: pID= "+PID +" param="+result.params);
 			removeAndPushUndoneRequest(PID, result.params);
 		}else{
 			removeMessage(PID, result.params);
 		}
-		
+
 		manager.changeStatus(PID, Status.WORKING);
 		manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
 		manager.decreaseMessageCounter(PID);

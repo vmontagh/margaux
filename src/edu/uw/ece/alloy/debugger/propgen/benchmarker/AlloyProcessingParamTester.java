@@ -91,7 +91,8 @@ public class AlloyProcessingParamTester {
 						predBodyA, predBodyB, 
 						predCallA, predCallB, 
 						predNameA, predNameB, 
-						Collections.emptyList(), AlloyProcessingParam.EMPTY_PARAM, header, scope, tmpDir);
+						Collections.emptyList(), AlloyProcessingParam.EMPTY_PARAM, header, scope//[tmpDirectory], tmpDir
+						);
 		
 		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate(); 
 		
@@ -128,7 +129,8 @@ public class AlloyProcessingParamTester {
 						predBodyA, predBodyB, 
 						predCallA, predCallB, 
 						predNameA, predNameB, 
-						Collections.emptyList(), AlloyProcessingParam.EMPTY_PARAM, header, scope,tmpDir);
+						Collections.emptyList(), AlloyProcessingParam.EMPTY_PARAM, header, scope//[tmpDirectory],tmpDir
+						);
 		
 		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate(); 		
 		
@@ -157,13 +159,13 @@ public class AlloyProcessingParamTester {
 	public void testAlloyProcessingParamLazy_prepareToUse() throws Exception {
 
 		
-		final File depFile1 = new File(tmpDir, "dep1.als");
-		final List<Pair<File, String>> dependecies = new LinkedList<Pair<File,String>>();
+		final File depFile1 = new File( "dep1.als");
+		final List<Dependency> dependecies = new LinkedList<Dependency>();
 
-		final File depFile2 = new File(tmpDir, "dep2.als");
+		final File depFile2 = new File( "dep2.als");
 		
-		dependecies.add(new Pair<File,String>(depFile1, depContent1));
-		dependecies.add(new Pair<File,String>(depFile2, depContent2));
+		dependecies.add(new Dependency(depFile1, depContent1));
+		dependecies.add(new Dependency(depFile2, depContent2));
 		
 		//A file exists
 		PropertyToAlloyCode vacPropertyToAlloyCode = 
@@ -171,31 +173,30 @@ public class AlloyProcessingParamTester {
 						predBodyA, predBodyB, 
 						predCallA, predCallB, 
 						predNameA, predNameB, 
-						dependecies, AlloyProcessingParamLazy.EMPTY_PARAM, header, scope,tmpDir);
+						dependecies, AlloyProcessingParamLazy.EMPTY_PARAM, header, scope//[tmpDirectory],tmpDir
+						);
 				
-		final Field tmpDir = vacPropertyToAlloyCode.getClass().getField("tmpDirectory");
-		Utils.setFinalStatic(tmpDir, this.tmpDir);
 		
-		final String fileContent = header+'\n'+predBodyA+'\n'+predBodyB+'\n'+"run{ some r and "+predCallA+"}"+scope+"\n";
+		final String fileContent = header+'\n'+predBodyA+'\n'+"run{ some r and "+predCallA+"}"+scope+"\n";
 		
 		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate(); 	
 		
-		aParam = aParam.prepareToUse();
+		aParam = aParam.changeTmpDirectory(tmpDir).prepareToUse();
 		
 		//The source is stored
-		final File newSrc = new File(this.tmpDir, "predNameA_VAC_predNameB.als");
+		final File newSrc = new File(this.tmpDir, "predNameA_VAC_predNameA.als");
 		assertTrue(newSrc.exists());
 		assertEquals(Util.readAll(newSrc.getAbsolutePath()), fileContent);
 
-		final File newDep1 = new File(depFile1.getAbsolutePath());
+		final File newDep1 = new File(this.tmpDir,depFile1.getPath());
 		assertTrue(newDep1.exists());
 		assertEquals(Util.readAll(newDep1.getAbsolutePath()), depContent1);
 
-		final File newDep2 = new File(depFile2.getAbsolutePath());
+		final File newDep2 = new File(this.tmpDir,depFile2.getPath());
 		assertTrue(newDep2.exists());
 		assertEquals(Util.readAll(newDep2.getAbsolutePath()), depContent2);
 		
-		final File newDestPath = new File(this.tmpDir, "predNameA_VAC_predNameB.als.out.txt");
+		final File newDestPath = new File(this.tmpDir, "predNameA_VAC_predNameA.als.out.txt");
 		assertEquals(newDestPath.getAbsolutePath(), aParam.destPath().getAbsolutePath());
 	}
 	
@@ -206,12 +207,12 @@ public class AlloyProcessingParamTester {
 		final File destPath = new File(srcPath.getAbsolutePath()+".dst"); 
 		
 		final File depFile1 = new File(tmpDir, "dep1.als");
-		final List<Pair<File, String>> dependecies = new LinkedList<Pair<File,String>>();
+		final List<Dependency> dependecies = new LinkedList<Dependency>();
 
 		final File depFile2 = new File(tmpDir, "dep2.als");
 		
-		dependecies.add(new Pair<File,String>(depFile1, depContent1));
-		dependecies.add(new Pair<File,String>(depFile2, depContent2));
+		dependecies.add(new Dependency(depFile1, depContent1));
+		dependecies.add(new Dependency(depFile2, depContent2));
 		
 		//A file exists
 		PropertyToAlloyCode vacPropertyToAlloyCode = 
@@ -219,7 +220,8 @@ public class AlloyProcessingParamTester {
 						predBodyA, predBodyB, 
 						predCallA, predCallB, 
 						predNameA, predNameB, 
-						dependecies, AlloyProcessingParamLazyCompressing.EMPTY_PARAM, header, scope,tmpDir);
+						dependecies, AlloyProcessingParamLazyCompressing.EMPTY_PARAM, header, scope//[tmpDirectory],tmpDir
+						);
 		
 		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate(); 	
 		
@@ -239,13 +241,13 @@ public class AlloyProcessingParamTester {
 	@Test
 	public void testAlloyProcessingParamLazyCompressed_hashCode() throws Exception {
 		
-		final File depFile1 = new File(tmpDir, "dep1.als");
-		final List<Pair<File, String>> dependecies = new LinkedList<Pair<File,String>>();
+		final File depFile1 = new File("dep1.als");
+		final List<Dependency> dependecies = new LinkedList<>();
 
-		final File depFile2 = new File(tmpDir, "dep2.als");
+		final File depFile2 = new File( "dep2.als");
 		
-		dependecies.add(new Pair<File,String>(depFile1, depContent1));
-		dependecies.add(new Pair<File,String>(depFile2, depContent2));
+		dependecies.add(new Dependency(depFile1, depContent1));
+		dependecies.add(new Dependency(depFile2, depContent2));
 		
 		//A file exists
 		PropertyToAlloyCode vacPropertyToAlloyCode = 
@@ -253,7 +255,8 @@ public class AlloyProcessingParamTester {
 						predBodyA, predBodyB, 
 						predCallA, predCallB, 
 						predNameA, predNameB, 
-						dependecies, AlloyProcessingParamLazyCompressing.EMPTY_PARAM, header, scope,tmpDir);
+						dependecies, AlloyProcessingParamLazyCompressing.EMPTY_PARAM, header, scope//[tmpDirectory],tmpDir
+						);
 		
 		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate(); 	
 		
@@ -290,12 +293,12 @@ public class AlloyProcessingParamTester {
 	@Test
 	public void testAlloyProcessingParam_FileStorage() throws Exception {
 		
-		final File depFile1 = new File(tmpDir, "dep1.als");
-		final File depFile2 = new File(tmpDir, "dep2.als");
+		final File depFile1 = new File( "dep1.als");
+		final File depFile2 = new File( "dep2.als");
 		
-		final List<Pair<File, String>> dependecies = new LinkedList<Pair<File,String>>();
-		dependecies.add(new Pair<File,String>(depFile1, depContent1));
-		dependecies.add(new Pair<File,String>(depFile2, depContent2));
+		final List<Dependency> dependecies = new LinkedList<>();
+		dependecies.add(new Dependency(depFile1, depContent1));
+		dependecies.add(new Dependency(depFile2, depContent2));
 		
 		
 		PropertyToAlloyCode vacPropertyToAlloyCode = 
@@ -303,12 +306,17 @@ public class AlloyProcessingParamTester {
 						predBodyA, predBodyB, 
 						predCallA, predCallB, 
 						predNameA, predNameB, 
-						dependecies, AlloyProcessingParamLazy.EMPTY_PARAM, header, scope,tmpDir);
+						dependecies, 
+						
+						AlloyProcessingParamLazy.EMPTY_PARAM, 
+						header, scope//[tmpDirectory],tmpDir
+						);
 		
 		AlloyProcessingParam aParam_1 = vacPropertyToAlloyCode.generate(); 
 				
 		
-		aParam_1.dumpAll();
+		aParam_1 = aParam_1.changeTmpDirectory(tmpDir);
+		aParam_1	.dumpAll();
 		
 		assertTrue(aParam_1.srcPath().exists());
 		

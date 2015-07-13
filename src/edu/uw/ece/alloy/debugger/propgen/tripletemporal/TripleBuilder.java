@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.CompositeOrdersIterator;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.CompositeSizesIterator;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.EmptinessIterator;
@@ -18,6 +19,8 @@ import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterator
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.SizeIterator;
 
 public class TripleBuilder {
+
+	public final static boolean IncludeCompostions = Boolean.parseBoolean(Configuration.getProp("include_compositions") );
 
 	public final String RName;
 	public final String SName, SNext, SFirst;
@@ -182,7 +185,7 @@ public class TripleBuilder {
 				RConcreteName, SConcreteName, SConcreteNext, 
 				SConcreteFirst, MConcreteName,  EConcreteName, order1, order2);
 	}
-	
+
 	public CmpstSz createCompositeSizesInstance(final Class<? extends CmpstSz> clazz, final SzPrpty size1, final SzPrpty size2) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		Constructor<?>[] constructors = clazz.getConstructors();
@@ -196,8 +199,8 @@ public class TripleBuilder {
 				SConcreteFirst, MConcreteName,  EConcreteName, size1, size2);
 	}
 
-	
-	
+
+
 	/**
 	 * 
 	 * @return output is the list of generated predicates. (predicateName->(PredicateCAll, PredicateFulBody))
@@ -217,52 +220,52 @@ public class TripleBuilder {
 					for(SzPrpty size: iterators. new SizeIterator(this, local, empty)){
 						if(!size.isConsistent()) continue;
 						preds.put(size.genPredName(), new Pair(size.genPredCall(),  size.generateProp()));
-						
+
 						for(Ord order: iterators. new OrderIterator(this, size)){
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
-							
-							//Composite structures for two size and orders
-							for(SzPrpty size2: iterators. new SizeIterator(this, local, empty)){
-								if(!size2.isConsistent()) continue;
-								
-								//record the reverse in advance
-								for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size2, size)){
-									if(!compositeSizes.isConsistent()) continue;
-									//Add to the list here
-									revComposite.add(compositeSizes.genPredName());
-								}
-								for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
-									if(!compositeSizes.isConsistent()) continue;
-									if(revComposite.contains(compositeSizes.genPredName())) break;
-									//Add to the list here
-									preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
-								}
+							if(IncludeCompostions){
+								//Composite structures for two size and orders
+								for(SzPrpty size2: iterators. new SizeIterator(this, local, empty)){
+									if(!size2.isConsistent()) continue;
 
-								for(Ord order2: iterators. new OrderIterator(this, size2)){
-									if(!order2.isConsistent()) continue;
-									
 									//record the reverse in advance
-									for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order2, order)){
-										if(!compositeOrders.isConsistent()) continue;
+									for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size2, size)){
+										if(!compositeSizes.isConsistent()) continue;
 										//Add to the list here
-										revComposite.add(compositeOrders.genPredName());
+										revComposite.add(compositeSizes.genPredName());
 									}
-									
-									for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
-										if(!compositeOrders.isConsistent()) continue;
-										if(revComposite.contains(compositeOrders.genPredName())) break;
+									for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
+										if(!compositeSizes.isConsistent()) continue;
+										if(revComposite.contains(compositeSizes.genPredName())) break;
 										//Add to the list here
-										preds.put(compositeOrders.genPredName(), new Pair(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
+										preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
 									}
-									
+
+									for(Ord order2: iterators. new OrderIterator(this, size2)){
+										if(!order2.isConsistent()) continue;
+
+										//record the reverse in advance
+										for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order2, order)){
+											if(!compositeOrders.isConsistent()) continue;
+											//Add to the list here
+											revComposite.add(compositeOrders.genPredName());
+										}
+
+										for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
+											if(!compositeOrders.isConsistent()) continue;
+											if(revComposite.contains(compositeOrders.genPredName())) break;
+											//Add to the list here
+											preds.put(compositeOrders.genPredName(), new Pair(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
+										}
+
+									}
+
 								}
-								
 							}
-							
 						}
 						//break;
-						
+
 					}
 					//break;
 				}
@@ -272,9 +275,9 @@ public class TripleBuilder {
 		}
 
 		//System.out.println(preds.size());
-		
+
 		//System.exit(-1);
-		
+
 		return Collections.unmodifiableMap(preds);
 	}
 

@@ -3,6 +3,7 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.junit.Test;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazy;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.Dependency;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.VacPropertyToAlloyCode;
@@ -235,8 +237,8 @@ public class TriplePropsTester {
 		File tempDirectory4Test = new File("tmp/testing");
 
 		
-		final List<Pair<File, String>> dependencies = new LinkedList<Pair<File,String>>(); 
-		dependencies.add(new Pair<File, String>(new File(tempDirectory4Test,TemporalPropertiesGenerator.relationalPropModuleOriginal.getName() ), 
+		final List<Dependency> dependencies = new LinkedList<Dependency>(); 
+		dependencies.add(Dependency.EMPTY_DEPENDENCY.createIt(new File(TemporalPropertiesGenerator.relationalPropModuleOriginal.getName() ), 
 				Utils.readFile(TemporalPropertiesGenerator.relationalPropModuleOriginal.getAbsolutePath())));
 		
 		final String SigDecl = "sig M,E{}\nsig S{r:M->E}";
@@ -252,11 +254,17 @@ public class TriplePropsTester {
 		PropertyToAlloyCode creator = VacPropertyToAlloyCode.EMPTY_CONVERTOR.createIt(
 				predBodyA, predBodyB, 
 				predCallA, predCallB, 
-				predNameA, predNameB, dependencies, paramCreator, header, scope, tempDirectory4Test );
+				predNameA, predNameB, dependencies, paramCreator, header, scope//[tmpDirectory], tempDirectory4Test
+				);
 		
 		AlloyProcessingParam param = creator.generate();
 		
-		param.dumpAll();
+		try {
+			param.changeTmpDirectory(tempDirectory4Test).dumpAll();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 }

@@ -44,7 +44,7 @@ public abstract class SzPrpty extends Property {
 	
 	private String genBody(final String append){
 		return empty.genBody() + "\n"+ 
-				"all "+getTemporalQuantifiedVar()+": " + SName + " - last["+SName +","+SNext+"] |"+
+				"all "+getTemporalQuantifiedVar()+": " + SName + " - relational_properties/last["+SName +","+SNext+"] |"+
 					"let " + getNextTemporalQuantifiedVar() + " = " + getTemporalQuantifiedVar()+"."+SNext +" |\n" +
 						growthLocality.genBody(getTemporalQuantifiedVar(), getNextTemporalQuantifiedVar())+ append;
 	}

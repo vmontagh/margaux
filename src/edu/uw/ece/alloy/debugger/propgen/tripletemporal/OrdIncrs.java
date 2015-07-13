@@ -16,7 +16,7 @@ public class OrdIncrs extends Ord {
 	@Override
 	protected String genOrder() {
 		
-		return " lte[relational_properties/min["+sizeProp.growthLocality.getLetVariable1()+","+
+		return " relational_properties/lte[relational_properties/min["+sizeProp.growthLocality.getLetVariable1()+","+
 					sideOrdered.getNext()+"],relational_properties/min["+sizeProp.getGrowthOrderedDelta()+","+
 						sideOrdered.getNext()+"],"+sideOrdered.getNext()+"] )";
 
