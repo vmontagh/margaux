@@ -63,10 +63,6 @@ public class ProcessesManager {
 		return watchdogAddress;
 	}
 
-
-
-
-
 	/**
 	 * The method is called by feeder to record how many message is sent so far an Alloy Process.
 	 * This method has to called whenever the message is sent to the processor. 
@@ -194,7 +190,7 @@ public class ProcessesManager {
 	public void addProcess() throws IOException{
 		InetSocketAddress port = ProcessorUtil.findEmptyLocalSocket();
 		processes.putIfAbsent( port , createProcess(port));
-		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is added to the process list "+processes);
+		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"A process:"+port+" is added to the process list "+processes);
 	}
 
 
@@ -202,7 +198,7 @@ public class ProcessesManager {
 	 * Not thread safe.
 	 */
 	public void addAllProcesses(){
-		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Starting to add processes");
+		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Starting to add processes");
 		//No other thread can add a process to the map.
 		synchronized (processes) {
 			int i = processes.size();
@@ -216,7 +212,7 @@ public class ProcessesManager {
 					++i;
 					logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"A process is added to the processes list:"+processes);
 				} catch (IOException e) {
-					logger.info("["+Thread.currentThread().getName()+"]"+"Processes cannot be created in setUpAllProcesses");			
+					logger.severe("["+Thread.currentThread().getName()+"]"+"Processes cannot be created in setUpAllProcesses");			
 				} finally{
 					--maxAttempts;
 				}
@@ -235,9 +231,9 @@ public class ProcessesManager {
 		boolean result = false;
 		synchronized (processes) {
 			if(!processes.containsKey(port) ){
-				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process is not found: "+port);
+				logger.log(Level.WARNING,"["+Thread.currentThread().getName()+"]"+ "The process is not found: "+port);
 			}else if( processes.get(port).status != AlloyProcess.Status.KILLING ){
-				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process: "+port+" is not in the killing state and cannot be killed: "+processes.get(port).status);
+				logger.log(Level.WARNING,"["+Thread.currentThread().getName()+"]"+ "The process: "+port+" is not in the killing state and cannot be killed: "+processes.get(port).status);
 			}else{
 				logger.log(Level.WARNING, "["+Thread.currentThread().getName()+"] "+"Killing a process:"+port);
 				synchronized (processes) {
@@ -322,12 +318,13 @@ public class ProcessesManager {
 
 
 	public void changeStatus(final InetSocketAddress pId, Status status){
-		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Changing the status of PID:"+pId+" to: "+ status);
+		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"Changing the status of PID:"+pId+" to: "+ status);
 		synchronized(processes){
 			if(processes.containsKey(pId)){
 				processes.replace(pId, processes.get(pId).changeStatus(status));
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The status is chanaged PID:"+pId+" to: "+ status);
+				if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The status is chanaged PID:"+pId+" to: "+ status);
 			}else{
+				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "The process is not found to be changed its status. ");
 				throw new RuntimeException("The process is not found: "+pId);
 			}
 		}
@@ -351,7 +348,7 @@ public class ProcessesManager {
 	public void IncreaseSentTasks(final InetSocketAddress pId, int sentTasks){
 		synchronized(processes){
 			if(!processes.containsKey(pId)){
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The process is deleted whiling sending a message to it. PID:"+pId);
+				if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The process is deleted whiling sending a message to it. PID:"+pId);
 
 			}else{
 				changeNumber(pId,processes.get(pId).changeSentTasks(processes.get(pId).sentTasks + sentTasks) );
@@ -397,7 +394,7 @@ public class ProcessesManager {
 	}
 
 	public AlloyProcess getAlloyProcess(final InetSocketAddress pId){
-		logger.info("["+Thread.currentThread().getName()+"] "+" The Pid: "+pId+" is in ?"+Arrays.asList(processes.keySet()));
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" The Pid: "+pId+" is in ?"+Arrays.asList(processes.keySet()));
 		return processes.get(pId);
 	}
 

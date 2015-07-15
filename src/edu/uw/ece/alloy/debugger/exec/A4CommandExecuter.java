@@ -21,6 +21,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.gen.MyReporter;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 /**
  * This class is for executing the decomposer using Alloy 4
@@ -73,11 +74,11 @@ public class A4CommandExecuter {
 	
 	public void runOverString(String content, A4Reporter rep) throws Err{
 		
-		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy content is being processed soon.");
+		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy content is being processed soon.");
 		
 		CompModule world = (CompModule) parseOneModule(  content, rep);
 		
-		logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is parsed.");
+		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is parsed.");
 		
 		A4Options options = new A4Options();
 
@@ -86,7 +87,7 @@ public class A4CommandExecuter {
 		
 		for (Command command: world.getAllCommands()) {
 			A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is executed and the result is: "+ ans);
+			if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is executed and the result is: "+ ans);
 
 		}
 		
@@ -100,7 +101,7 @@ public class A4CommandExecuter {
 
 		for(String filename:args) {
 			// Parse+typecheck the model
-			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
+			if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
 			
 			CompModule world = (CompModule) parse(  filename, rep);
 
@@ -114,7 +115,7 @@ public class A4CommandExecuter {
 
 
 				// Execute the command
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
+				if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
 				long time = System.currentTimeMillis();
 				PrintWriter out=null;
 

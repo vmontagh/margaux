@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
@@ -72,30 +73,30 @@ public abstract class RemoteCommand implements Serializable {
 	}
 
 	public void findRemoteAddress( FrontAlloyProcess front) {
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for findRemoteAddress");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for findRemoteAddress");
 	}
 
 	public void terminate(final AsynchronousSocketChannel param){
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for terminate");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for terminate");
 	}
 
 	public void process(AlloyExecuter executer) {
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");		
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");		
 	}
 
 	public void killProcess(ProcessesManager manager){
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 
 	public void updatePorcessorLiveness(final ProcessesManager manager){
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 
 	public void processDone(final ProcessRemoteMonitor monitor){
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 
 	public void activateMe(ProcessesManager manager){
-		logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 }

@@ -117,16 +117,16 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 
 	public void dumpDependecies() throws IOException{
 		for(Dependency dependency:dependencies()){
-			//dumpFile(dependency.path, dependency.content);
+			dumpFile(dependency.path, dependency.content);
 			//A hack: Instead of copying the content, just the path is copied.
-			Files.copy(new File(dependency.content).toPath(), dependency.path.toPath(),StandardCopyOption.REPLACE_EXISTING);
+			//Files.copy(new File(dependency.content).toPath(), dependency.path.toPath(),StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
 	public AlloyProcessingParam dumpAll() throws IOException{
 
-		dumpContent();
 		dumpDependecies();
+		dumpContent();
 
 		return this;
 	}
@@ -187,7 +187,7 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 
 	protected File dumpFile(final File path, final String content){
 		if(!reWrite && path.exists()) {
-			logger.info("["+Thread.currentThread().getName()+"] " + "The file is already exists and the configuration does not let to be replaced: "+path.getAbsolutePath());
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "The file is already exists and the configuration does not let to be replaced: "+path.getAbsolutePath());
 			return path;
 		}
 		try {

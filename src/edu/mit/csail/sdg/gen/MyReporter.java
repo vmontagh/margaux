@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 //TODO: This class has to be immutable.
 public class MyReporter extends A4Reporter implements Serializable{
@@ -34,7 +35,7 @@ public class MyReporter extends A4Reporter implements Serializable{
 		this.lastTime = System.currentTimeMillis();
 		this.clauses = clauses;
 		this.totalVaraibles = totalVars;
-		logger.info(String.format("The translation is apparently done in %d %n", this.trasnalationTime) );
+		if(Configuration.IsInDeubbungMode) logger.info(String.format("The translation is apparently done in %d %n", this.trasnalationTime) );
 
 
 	}
@@ -47,18 +48,18 @@ public class MyReporter extends A4Reporter implements Serializable{
 	@Override public void resultSAT (Object command, long solvingTime, Object solution) {
 		
 		this.solveTime = System.currentTimeMillis()-lastTime;
-		logger.info(String.format("resultSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime) );
+		if(Configuration.IsInDeubbungMode) logger.info(String.format("resultSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime) );
 		this.sat=1;
 	}
 	
 	public void resultUNSAT (Object command, long solvingTime, Object solution) {
 		this.solveTime = System.currentTimeMillis()-lastTime;
-		logger.info(String.format("resultUnSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime) );		
+		if(Configuration.IsInDeubbungMode) logger.info(String.format("resultUnSAT is done in %d and the passed parameter is: %d%n",this.solveTime,solvingTime) );		
 		this.sat=-1;
 	}
 	
 	public void evalute(long elauationTime, long instances) {
-		logger.info(String.format("evaluation is done in %d and the passed parameter is: %d%n",elauationTime,instances) );
+		if(Configuration.IsInDeubbungMode) logger.info(String.format("evaluation is done in %d and the passed parameter is: %d%n",elauationTime,instances) );
 		
 		this.evalTime = elauationTime;
 		this.evalInsts = instances;

@@ -2,7 +2,6 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -16,9 +15,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import com.sun.rowset.CachedRowSetImpl;
+
+import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess;
@@ -32,7 +36,9 @@ import edu.uw.ece.alloy.util.Utils;
 public class ProgressReporter {
 
 	protected final static Logger logger = Logger.getLogger(PostProcess.class.getName()+"--"+Thread.currentThread().getName());
-
+	
+	
+	
 	public static class ProgressTracker{
 		int oldC;
 		long deltaT = System.currentTimeMillis();
@@ -73,45 +79,20 @@ public class ProgressReporter {
 		}
 
 		public String progressReport(int newC){
-
-			deltaT =  System.currentTimeMillis() - deltaT;
-			if(deltaT == 0) return "";
-			rate = (newC - oldC)*1000/deltaT;
-
-			String result;
-
-			if(newC == 0 )
-				count = 0;
-			else
-				count++;
-			if(newC > 0){
-				totalRate += rate;
-			}else{
-				totalRate = 0;
-			}
-
-			result = String.format("Rate,%s,Total,%s,TotalRate,%s", rate, newC, count!=0? totalRate/count:0 );
-
-			deltaT = System.currentTimeMillis();
-			oldC = newC ;
-
-			return result;
+			int deltaC = oldC != 0 ? newC-oldC : newC;
+			oldC = newC;
+			return progressDeltaReport(deltaC);
 		}
 	}
 
 
 	final static File pathLogFiles = new File(Configuration.getProp("temporary_directory"));
 	final static File pathDBFiles = new File(Configuration.getProp("db_file_root"));
-	final static int refreshRate = Integer.valueOf(Configuration.getProp("reporter_refresh_rate"));
+	final static int refreshRate = Integer.parseInt(Configuration.getProp("reporter_refresh_rate"));
+	final static int dbCleaners = Integer.parseInt(Configuration.getProp("db_cleaners"));
 
 	final ProgressTracker fileProgressTracker = new ProgressTracker();
 	final ProgressTracker fileMergerProgressTracker = new ProgressTracker();
-	final ProgressTracker dbTotalProgressTracker = new ProgressTracker();
-
-	final ProgressTracker dbUnSATProgressTracker = new ProgressTracker();
-	final ProgressTracker dbSATProgressTracker = new ProgressTracker();
-	final ProgressTracker dbTimeoutProgressTracker = new ProgressTracker();
-	final ProgressTracker dbFailedProgressTracker = new ProgressTracker();
 
 	final protected static String  logTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
 
@@ -121,16 +102,18 @@ public class ProgressReporter {
 
 	final boolean DO_LAZY;
 
-	final BlockingQueue<File> queue = new LinkedBlockingQueue<File>();
+	final BlockingQueue<File> fileQueue = new LinkedBlockingQueue<File>();
+
 	final File mergedOutputs = new File(pathLogFiles, "merged_output_"+logTime+".log");
 	final static long FILE_MERGE_DELAY = 5000;
+	private static final String ConnectionURLHeader = "jdbc:h2:tcp://localhost/";
 
 	final private Thread fileMerger = new Thread(){
 		public void run() {
 			while(true){
 				//Wait for a file to become available
 				try{
-					final File outputFile = queue.take();
+					final File outputFile = fileQueue.take();
 					final String content = Util.readAll(outputFile.getAbsolutePath());
 					Utils.appendFile(mergedOutputs.getAbsolutePath(), content);
 					outputFile.delete();
@@ -145,12 +128,11 @@ public class ProgressReporter {
 		};
 	};
 
-
 	private File[] findAllFilesByNameAndBeforeTime(String pattern, File path, long time){
-		
+
 		File[] allFiles = Utils.filesR(pathLogFiles.getAbsolutePath(), pattern);
 		return (File[]) Arrays.asList(allFiles).stream().filter(f->f.lastModified() < time).toArray(size->new File[size]);
-		
+
 	}
 
 	private int mergeFiles(){
@@ -159,7 +141,7 @@ public class ProgressReporter {
 
 		for(File file: files){
 			try {
-				queue.put(file);
+				fileQueue.put(file);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -176,31 +158,58 @@ public class ProgressReporter {
 
 	public void startMergingThread(){
 		fileMerger.start();
+		DBMerger.start();
+		for(int i =0; i < DBCleaners.length; ++i)
+			DBCleaners[i].start();
 	}
 
 	public String fileReporter(){
 		final int merged = mergeFiles();
 		final int total = /*merged + */filesCount();
 		String result = "Merging Files:   "+fileMergerProgressTracker.progressDeltaReport(merged);
-		return result += "\nFile:            "+fileProgressTracker. progressReport(total);
+		result += "\nFile:            "+fileProgressTracker. progressReport(total);
+		result += "\nTo be merged "+fileQueue.size();
+		return result;
 	}
 
 	public ProgressReporter(final boolean doLazy) throws SQLException {
 
 		this.DO_LAZY = doLazy;
 		mergedDB = dBConnection.getConnection();
-		
+
 		if(!DO_LAZY){
 			//Create the records table
 			Statement statement = mergedDB.createStatement();
 			statement.execute(PostProcess.DBWriter.RECORDS_SCHEMA);
 			statement.close();
 		}
+
+		for(ReportVariables var:ReportVariables.values()){
+			dbTrackers.put(var, new ProgressTracker());
+		}
+		
+		DBCleaners = new Thread[10];
+		
+		for(int i=0; i < DBCleaners.length; ++i){
+			DBCleaners[i] = new Thread(){
+					public void run() {
+						while(true){
+							try {
+								cleanDatabase() ;
+							} catch (InterruptedException e) {
+								logger.severe("The cleaning loop is broken "+e);
+								break;					
+							}
+						}
+					}
+				};
+		}
+		
 	}
 
 	static{
 		try {
-			Class.forName("org.h2.Driver");
+			Class.forName(dBConnection.getDriverName());
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -214,27 +223,21 @@ public class ProgressReporter {
 
 	final Connection mergedDB;
 
-	Map<String, Connection> DBNameToConnectionsMap = new HashMap<String, Connection>();
+	Map<String, DBConnectionPool> DBNameToConnectionsMap = new HashMap<>();
 	Map<String, Long> DBNameToLastAddedMap = new HashMap<String, Long>();
 
 	private Connection getConnection(final String dbFile) throws SQLException{
 
-		//if(!DBNameToConnectionsMap.containsKey(dbFile)){
-		DBNameToConnectionsMap.put(dbFile,DriverManager.getConnection("jdbc:h2:tcp://localhost/"+dbFile));
-		//}
-		//System.out.println("Opening: "+DBNameToConnectionsMap.get(dbFile));
-		return DBNameToConnectionsMap.get(dbFile);
+		if(!DBNameToConnectionsMap.containsKey(dbFile)){
 
-	}
 
-	private void closeConnection(final String dbFile) throws SQLException{
-		//System.out.println("Closing: "+DBNameToConnectionsMap.get(dbFile));
-
-		if(DBNameToConnectionsMap.containsKey(dbFile) && !DBNameToConnectionsMap.get(dbFile).isClosed()){
-			DBNameToConnectionsMap.get(dbFile).close();
-			DBNameToConnectionsMap.remove(dbFile);
+			DBNameToConnectionsMap.put(dbFile,new H2DBConnectionPool(dbFile));
 		}
+		//System.out.println("Opening: "+DBNameToConnectionsMap.get(dbFile));
+		return DBNameToConnectionsMap.get(dbFile).getConnection();
+
 	}
+
 
 	private Long getLastRecordTime(final String dbFile){
 		if(DBNameToLastAddedMap.containsKey(dbFile)){
@@ -244,20 +247,16 @@ public class ProgressReporter {
 	}
 
 
-	private ResultSet getNewRecords(final String dbFile, String  sqlQuery) throws SQLException{
-		final Connection dbConnection = getConnection(dbFile);
-		final Statement  statement = dbConnection.createStatement();
-		try{
+	private CachedRowSetImpl getNewRecords(final String dbFile, String  sqlQuery) throws SQLException{
 
-			final String sqlStmt = sqlQuery;
-			PreparedStatement preparedSQLStmt = dbConnection.prepareStatement(sqlStmt);
-			preparedSQLStmt.setLong(1, getLastRecordTime(dbFile) );
-			return preparedSQLStmt.executeQuery();
-		}finally{
-			statement.close();
-			//dbConnection.close();
+		CachedRowSetImpl result = new CachedRowSetImpl();
+		try(final Connection dbConnection = getConnection(dbFile);){
+			try(final PreparedStatement preparedSQLStmt = dbConnection.prepareStatement(sqlQuery)){
+				preparedSQLStmt.setLong(1, getLastRecordTime(dbFile) );
+				result.populate(preparedSQLStmt.executeQuery());
+			}
 		} 
-
+		return result;
 	}
 
 	private ResultSet getAllNewRecords(final String dbFile) throws SQLException{
@@ -269,7 +268,7 @@ public class ProgressReporter {
 	}
 
 	private ResultSet getAllNewRecordsCount(final String dbFile) throws SQLException{
-		return getNewRecords(dbFile, "select count(*) from records where recordTime > ?");
+		return getNewRecords(dbFile, "select count(*) from records where recordTime > ?;");
 	}
 
 	private int exatractCount(final ResultSet rs) {
@@ -285,25 +284,150 @@ public class ProgressReporter {
 		return updatedRows;
 	}
 
-
-	private int getTimeoutNewRecordsCount(final String dbFile) throws SQLException{
-		return exatractCount(getNewRecords(dbFile, "select count(*) from records where recordTime > ? and sat = 'T'"));
+	
+	private int getSpecificNewRecordsCount(final String dbFile, final String sat) throws SQLException{
+		return exatractCount(getNewRecords(dbFile, "select count(*) from records where recordTime > ? and sat = '"+sat+"'"));
 	}
 
-	private int getFailedNewRecordsCount(final String dbFile) throws SQLException{
-		return exatractCount(getNewRecords(dbFile, "select count(*) from records where recordTime > ? and sat = 'F'"));
+	private enum ReportVariables {
+		S,//sat
+		U,//unsat
+		F,//failed
+		T,//time-out
+		A //all
 	}
 
-	private int getSATNewRecordsCount(final String dbFile) throws SQLException{
-		return exatractCount(getNewRecords(dbFile, "select count(*) from records where recordTime > ? and sat = 'S'"));
+	//[(databaseName)->(RecordID)->(Statement for deleting the records)]
+	final BlockingQueue<Pair<String, ResultSet>> dbQueue    = new LinkedBlockingQueue<>();
+	final BlockingQueue<Pair<String, Integer>>   toBeDelete = new LinkedBlockingQueue<>();
+	final ConcurrentMap<String, Map<ReportVariables, Integer>> reports = new ConcurrentHashMap<>();
+
+	final ProgressTracker dbTotalProgressTracker = new ProgressTracker();
+
+
+	Map<ReportVariables, ProgressTracker> dbTrackers = new HashMap<ProgressReporter.ReportVariables, ProgressReporter.ProgressTracker>();
+
+
+	final ProgressTracker dbUnSATProgressTracker = new ProgressTracker();
+	final ProgressTracker dbSATProgressTracker = new ProgressTracker();
+	final ProgressTracker dbTimeoutProgressTracker = new ProgressTracker();
+	final ProgressTracker dbFailedProgressTracker = new ProgressTracker();
+
+	final private Thread DBMerger = new Thread(){
+		public void run() {
+			while(true){
+				//Wait for a file to become available
+				final Pair<String, ResultSet> recordPair;
+				try{
+					recordPair = dbQueue.take();
+				}catch(InterruptedException e){
+					logger.severe("Cannot take from dbQueue "+e);
+					break;
+				}
+
+				try {
+					processEagerResult(recordPair.a, recordPair.b);
+				} catch (SQLException e) {
+					logger.severe("Cannot merge "+e);
+					e.printStackTrace();
+				}
+
+			}
+		};
+	};
+
+	final private Thread[] DBCleaners;
+	
+	
+	
+	private void cleanDatabase() throws InterruptedException{
+		Pair<String, Integer> toBeDeleted = null;
+		try {
+			toBeDeleted = toBeDelete.take();
+			try(final Connection dbConnection = /*DriverManager.getConnection("jdbc:h2:tcp://localhost/"+toBeDeleted.a)*/ getConnection(toBeDeleted.a)){
+				try(PreparedStatement preparedSQLStmt = dbConnection.prepareStatement(PostProcess.DBWriter.SQL_DELETE_STMT)){
+					preparedSQLStmt.setString(1, String.valueOf(toBeDeleted.b));
+					preparedSQLStmt.executeUpdate();
+				}
+			}
+		} catch (InterruptedException e) {
+			logger.severe("Cannot take from queue "+e);
+			throw e;
+		} catch (SQLException e) {
+			logger.severe("The record is not deleted "+e);
+			//put the record back
+			try {
+				if(toBeDeleted != null ) toBeDelete.put(toBeDeleted);
+			} catch (InterruptedException e1) {
+				logger.severe("Cannot put t toBeDelete "+e1);
+			}
+		}
 	}
 
-	private int getUnSATNewRecordsCount(final String dbFile) throws SQLException{
-		return exatractCount(getNewRecords(dbFile, "select count(*) from records where recordTime > ? and sat = 'U'"));
+	private void processEagerResult(final String dbFile,  final ResultSet records) throws SQLException{
+
+		Map<ReportVariables, Integer> report = !reports.containsKey(dbFile) ? new HashMap<>() : reports.get(dbFile);
+		boolean isFirst = true;
+
+		while(records.next()){
+
+			if(isFirst){
+				DBNameToLastAddedMap.put(dbFile, records.getLong("recordTime"));
+				isFirst = false;
+			}
+			try(PreparedStatement preparedSQLStmt = mergedDB.prepareStatement(PostProcess.DBWriter.SQL_INSERT_STMT)){
+
+				preparedSQLStmt.setString(1, Utils.ClobToString(records.getObject(2) ));
+				preparedSQLStmt.setString(2, Utils.ClobToString(records.getObject(3)) );
+				preparedSQLStmt.setInt(3, 	 records.getInt(4));
+				preparedSQLStmt.setString(4, Utils.ClobToString(records.getObject(5)) );
+				preparedSQLStmt.setString(5, Utils.ClobToString(records.getObject(6)) );
+				preparedSQLStmt.setString(6, Utils.ClobToString(records.getObject(7)) );
+				preparedSQLStmt.setString(7, Utils.ClobToString(records.getObject(8)) );
+				preparedSQLStmt.setString(8, Utils.ClobToString(records.getObject(9)) );
+				preparedSQLStmt.setInt(9,    records.getInt(10));
+				preparedSQLStmt.setString(10,Utils.ClobToString(records.getObject(11)) );
+				preparedSQLStmt.setString(11,Utils.ClobToString(records.getObject(12)) );
+
+				try{
+					preparedSQLStmt.executeUpdate();
+					try {
+						toBeDelete.put(new Pair<>( dbFile, records.getInt(1)));
+					} catch (InterruptedException e) {
+						logger.severe("Cannot put t dbQueue "+e);
+					}
+				}catch(SQLException e){
+					logger.severe("The records is not added to mergedDB"+ e);
+				}finally{
+				}
+			}
+			//Analyzing the result
+			for(ReportVariables var: ReportVariables.values()){
+				if( records.getString("sat").equals(var.toString()) )
+					report.put(var, !report.containsKey(var) ? 1: report.get(var)+1);
+			}
+
+
+			report.put(ReportVariables.A, !report.containsKey(ReportVariables.A) ? 1: report.get(ReportVariables.A)+1);
+
+		}
+		records.close();
+
+		reports.put(dbFile, report);
 	}
 
-	private int lazyReport(final String dbFile) throws SQLException{
 
+	private void processLazyResult(final String dbFile) throws SQLException{
+
+		Map<ReportVariables, Integer> report = !reports.containsKey(dbFile) ? new HashMap<>() : reports.get(dbFile);
+		
+		for(ReportVariables var: ReportVariables.values()){
+			final int count = getSpecificNewRecordsCount(dbFile, var.toString());
+			final int totalCount = !report.containsKey(var) ? count: report.get(var)+count;
+			if(totalCount  != 0)
+				report.put(var, totalCount );
+		}
+		
 		ResultSet rs = getAllNewRecordsCount(dbFile);
 		int updatedRows = 0;
 		if(rs.next()){
@@ -312,68 +436,35 @@ public class ProgressReporter {
 
 			final ResultSet latestRow = getLatestNewRecords(dbFile);
 			if(latestRow.next()){
-				DBNameToLastAddedMap.put(dbFile, latestRow.getLong("recordTime"));
+				DBNameToLastAddedMap.put(dbFile,latestRow.getLong("recordTime") );
 			}
 			latestRow.close();
 
 		}
-		return updatedRows;
+		rs.close();
+		//updating the result.
+
+
+		report.put(ReportVariables.A, !report.containsKey(ReportVariables.A) ? updatedRows: report.get(ReportVariables.A)+updatedRows);
+		
+		reports.put(dbFile, report);
 	}
 
 
-	private int mergeDBUpdated(final String dbFile, final ResultSet records) throws SQLException{
+	public void dBLazyReporter(String dbFile) throws SQLException{
+		 processLazyResult(dbFile);
+	}
 
-		//PreparedStatement preparedSQLStmt = mergedDB.prepareStatement(PostProcess.DBWriter.SQL_INSERT_STMT);
+	private void dBEagerReporter(String dbFile) throws SQLException{
 
-		int updatedRows= 0;
-
-		boolean isFirst = true;
-
-		while(records.next()){
-
-			if(isFirst){
-
-				DBNameToLastAddedMap.put(dbFile, records.getLong("recordTime"));
-
-				isFirst = false;
-			}
-
-			PreparedStatement preparedSQLStmt = mergedDB.prepareStatement(PostProcess.DBWriter.SQL_INSERT_STMT);
-
-			preparedSQLStmt.setString(1, records.getString(2));
-			preparedSQLStmt.setString(2, records.getString(3));
-			preparedSQLStmt.setInt(3, 	 records.getInt(4));
-			preparedSQLStmt.setString(4, records.getString(5));
-			preparedSQLStmt.setString(5, records.getString(6));
-			preparedSQLStmt.setString(6, records.getString(7));
-			preparedSQLStmt.setString(7, 	 records.getString(8));
-			preparedSQLStmt.setString(8, records.getString(9));
-			preparedSQLStmt.setInt(9,    records.getInt(10));
-			preparedSQLStmt.setString(10, records.getString(11));
-			preparedSQLStmt.setString(11, records.getString(12));
-			preparedSQLStmt.executeUpdate();
-			preparedSQLStmt.close();
-			++updatedRows;
+		final ResultSet records = getAllNewRecords(dbFile);
+		try {
+			if(!records.isLast())
+				dbQueue.put(new Pair<String, ResultSet>(dbFile, records));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 
-		//System.out.println(updatedRows);
-
-
-		//mergedDB.commit();
-		//mergedDB.setAutoCommit(true);
-		records.close();
-
-		return updatedRows;
-	}
-
-
-	public int dBLazyReporter(String dbFile) throws SQLException{
-		return lazyReport(dbFile);
-	}
-
-	private int dBEagerReporter(String dbFile) throws SQLException{
-		return mergeDBUpdated(dbFile,
-				getAllNewRecords(dbFile));
 	}
 
 	private int mergeGradually(final String dbFile, final int limit){
@@ -384,40 +475,41 @@ public class ProgressReporter {
 
 		String result = "";
 		final File[] dbFiles = Utils.filesR(pathDBFiles.getAbsolutePath(), "^alloy((?!trace|lock).)*"); 
-				//findAllFilesByName("alloy", pathDBFiles);
+		//findAllFilesByName("alloy", pathDBFiles);
 
-		int updatedCount = 0;
-		int sat = 0, unsat = 0, failed = 0, timeout = 0;
 		for(final File dbFile: dbFiles){
 			try {
-				
+
 				String filename = dbFile.getAbsolutePath().replace(".h2.db", "").replace(".mv.db", "");
-				logger.info("The DB file is: "+ filename);
 				
-				
-				sat += getSATNewRecordsCount(filename);
-				unsat += getUnSATNewRecordsCount(filename);
-				timeout += getTimeoutNewRecordsCount(filename);
-				failed += getFailedNewRecordsCount(filename);
+				if(Configuration.IsInDeubbungMode) logger.info("The DB file is: "+ filename);
 
-				updatedCount += DO_LAZY ? dBLazyReporter(filename) : dBEagerReporter(filename);
-
-
-
-				closeConnection(filename);
+				if(! DO_LAZY){
+					dBEagerReporter(filename);
+				}else{
+					dBLazyReporter(filename);
+				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				result = result + '\n' + e.getMessage();
-				e.printStackTrace();
+				logger.severe("There is an sql Error in "+dbFile.getName() +" as "+ e.getMessage());
+				logger.severe("There is an sql Error in "+dbFile.getName() +" as "+ e.getStackTrace());
 			}
 
 		}
 
-		result  = "DB-SAT:          "+dbSATProgressTracker.progressDeltaReport(sat);
-		result += "\nDB-UnSAT:        "+dbUnSATProgressTracker.progressDeltaReport(unsat);
-		result += "\nDB-Timeout:      "+dbTimeoutProgressTracker.progressDeltaReport(timeout);
-		result += "\nDB-Failed:       "+dbFailedProgressTracker.progressDeltaReport(failed);
-		result += "\nDB-total:        "+dbTotalProgressTracker.progressDeltaReport(updatedCount);
+		final Map<ReportVariables, Integer> aggReport = new HashMap<ProgressReporter.ReportVariables, Integer>();
+
+		for(final Map<ReportVariables, Integer> report: reports.values()){
+			for(final ReportVariables var: report.keySet()){
+				aggReport.put(var, aggReport.containsKey(var) ? report.get(var) + aggReport.get(var): report.get(var));
+			}
+		}
+
+		for(final ReportVariables var: aggReport.keySet()){
+			result  += var.toString()+":          "+dbTrackers.get(var).progressReport(aggReport.get(var))+"\n";
+		}
+
+		result += "To be merged: "+dbQueue.size() +" To be deleted: "+ toBeDelete.size() ;
 
 		return result;
 
@@ -447,8 +539,8 @@ public class ProgressReporter {
 		}
 
 	}
-	
-	
-	
+
+
+
 
 }

@@ -42,12 +42,11 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 	protected final static Logger logger = Logger.getLogger(PostProcess.class.getName()+"--"+Thread.currentThread().getName());
 	final public static boolean doCompress = Boolean.valueOf(Configuration.getProp("doCompressAlloyParams"));
 
-	Thread postProcessThread;
+	Thread postProcessThread = new Thread(this);;
 
 	public PostProcess(PostProcess nextAction) {
 		super();
 		this.nextAction = nextAction;
-		postProcessThread = new Thread(this);
 
 	}
 
@@ -62,6 +61,16 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 	public String amIStuck(){
 		return isDelayed() == 0 ? "" :  "Processing PostProess"+getClass().getSimpleName()+" is stuck after processing "+processed+" messages.";
 	}
+	
+	@Override
+	public void cancelThread() {
+		postProcessThread.interrupt();
+	}
+
+	@Override
+	public void changePriority(int newPriority) {
+		postProcessThread.setPriority(newPriority);
+	}
 
 	/**
 	 * If the delay condition is true, then it returns a message how many 
@@ -74,13 +83,13 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 	public synchronized long isDelayed(){
 		long result = 0;
 		//monitor the socket
-		if(shadowProcessed.equals(processed) && !isEmpty()){
+		if(shadowProcessed.get() == processed.get() && !isEmpty()){
 			//The executer does not proceeded.
 			result = processed.longValue(); 
 			//TODO manage to reset the socket thread
 		}else{
 			//The executer proceeded
-			shadowProcessed = processed;
+			shadowProcessed.set(processed.get());
 		}
 		return result;
 	}
@@ -90,7 +99,7 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 	}
 
 	protected void doActionOnStuck(){
-		logger.finer("["+Thread.currentThread().getName()+"] " +"");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] " +"");
 	}
 
 	public void actionOnStuck(){
@@ -102,20 +111,20 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 	}
 
 	public void actionOnNotStuck(){
-		logger.finer("["+Thread.currentThread().getName()+"] " +"");
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] " +"");
 	}
 
 
-	protected String converSATResult(AlloyProcessedResult result) {
+	protected String convertSATResult(AlloyProcessedResult result) {
 		return result.isFailed() ? "F": result.isTimedout() ? "T" : result.sat == 1 ? "S" : result.sat == -1 ? "U": "N";
 	}
 
 	public void doAction(final AlloyProcessedResult result) throws InterruptedException{
 		try {
-			logger.info("["+Thread.currentThread().getName()+"] " +"Post process: "+result);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Post process: "+result);
 			results.put(result);
 		} catch (InterruptedException e) {
-			logger.info("["+Thread.currentThread().getName()+"] " +"Processing a new result is interupted: "+result);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Processing a new result is interupted: "+result);
 			throw e;
 		}
 	}
@@ -144,14 +153,14 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 			while(!Thread.currentThread().isInterrupted()){
 
 				result = results.take();
-				logger.info("["+Thread.currentThread().getName()+"] " +"Start a Post process: "+result);
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Start a Post process: "+result);
 
 				doSerialAction(result);
 
 			}
 
 		} catch (InterruptedException e) {
-			logger.info("["+Thread.currentThread().getName()+"] " +"Processing a result is interrupted: "+ result+" after processed "+processed+" results.");
+			logger.severe("["+Thread.currentThread().getName()+"] " +"Processing a result is interrupted: "+ result+" after processed "+processed+" results.");
 		}
 	}
 
@@ -174,20 +183,19 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 		@Override
 		protected void action(AlloyProcessedResult result) {
 
-			String alloySource = result.params.getSourceFileName();
-
 			String content = result.asRecordHeader()+",propa,propb,op,sat" +"\n" + result.asRecord() + 
-					","+result.params.alloyCoder.predNameA+","+result.params.alloyCoder.predNameB+","+result.params.alloyCoder.commandOperator()+","+converSATResult(result);
+					","+result.params.alloyCoder.predNameA+","+result.params.alloyCoder.predNameB+","+result.params.alloyCoder.commandOperator()+","+convertSATResult(result);
 
-			logger.info("["+Thread.currentThread().getName()+"] " +"Start wirint on file: "+result+"   "+content);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Start wirint on file: "+result+"   "+content);
 
 			try {
 				Util.writeAll(result.params.destPath().getAbsolutePath(), content);
-				logger.info("["+Thread.currentThread().getName()+"] " +"result is written in: "+result.params.destPath().getAbsolutePath());
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"result is written in: "+result.params.destPath().getAbsolutePath());
 			} catch (Err e) {
 				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] " +"Failed on storing the result: "+result, e);
 			}
 		}
+
 
 	}
 
@@ -212,11 +220,11 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 			AlloyProcessedResult updatedResult = result;
 
 			AlloyProcessed command = new AlloyProcessed(AlloyProcessRunner.getInstance().PID, updatedResult);
-			logger.info("["+Thread.currentThread().getName()+"] " +"Start sending a done message: "+command+" as the result is:"+result+" TO: "+ remoteAddres);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Start sending a done message: "+command+" as the result is:"+result+" TO: "+ remoteAddres);
 
 			try {
 				command.send(remoteAddres);
-				logger.info("["+Thread.currentThread().getName()+"] " +"message sent: "+command);
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"message sent: "+command);
 			} catch (InterruptedException e) {
 				logger.severe("["+Thread.currentThread().getName()+"] " +"Sending the result is interrupted: "+ result+ " TO: "+ remoteAddres);
 				throw e;
@@ -236,6 +244,8 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 		final public static String RECORDS_SCHEMA = "CREATE TABLE RECORDS(id INTEGER PRIMARY KEY AUTO_INCREMENT, result TEXT, params TEXT, date NUMERIC, prop1 TEXT, prop2 TEXT, op char(20), sat char(2), recordTime NUMERIC, recordsTimeConfirm NUMERIC, srcPath TEXT, destPath TEXT)";
 		final public static String RECORDS_INDEX = "CREATE INDEX IDX_RECORDS_SAT ON RECORDS(SAT)";
 		final public static String SQL_INSERT_STMT = "INSERT INTO records(result, params, date, prop1, prop2, op, sat, recordTime, recordsTimeConfirm, srcPath, destPath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		final public static String SQL_DELETE_STMT = "DELETE FROM records WHERE ID=?";
+
 		final public static DBConnectionPool dBConnection = new H2DBConnectionPool(Configuration.getProp("db_file_root")+"/"+Configuration.getProp("db_file_name")
 				.replace("%t",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-nnnnnnnnn")))
 				.replace("%p", AlloyProcessRunner.getInstance().PID.getHostString()+"-"+AlloyProcessRunner.getInstance().PID.getPort())
@@ -255,9 +265,9 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 				connection.setAutoCommit(true);
 				try(Statement  statement = connection.createStatement()){
 					try(ResultSet rs = statement.executeQuery("SELECT * FROM information_schema.tables WHERE table_name='RECORDS'")){
-						logger.info("["+Thread.currentThread().getName()+"] " +"Trying to drop the old database");
+						if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Trying to drop the old database");
 						if(rs.next() && Boolean.valueOf(Configuration.getProp("db_renew"))){//There exists a table called records, so lets drop it first and create a new one.
-							logger.info("["+Thread.currentThread().getName()+"] " +"The old database is dropped.");
+							if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"The old database is dropped.");
 							statement.execute("drop table if exists records");
 							statement.execute(RECORDS_SCHEMA);
 							statement.execute(RECORDS_INDEX);
@@ -270,7 +280,7 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 					}
 
 				}
-				logger.info("["+Thread.currentThread().getName()+"] " +"Database is created as: "+connection);
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Database is created as: "+connection);
 				connection.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -283,12 +293,12 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 		@Override
 		protected void action(AlloyProcessedResult result)  {
 
-			logger.info("["+Thread.currentThread().getName()+"] " +"Inserting a record in the database: "+result);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Inserting a record in the database: "+result);
 			try(Connection connection  = dBConnection.getConnection()){
 				connection.setAutoCommit(true);
 				try(Statement  statement = connection.createStatement()){
 
-					String SATResult = converSATResult(result);
+					String SATResult = convertSATResult(result);
 
 					//Extract properties and operator
 					PreparedStatement preparedSQLStmt = connection.prepareStatement(SQL_INSERT_STMT);
@@ -310,7 +320,7 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 					preparedSQLStmt.executeUpdate();
 				}
 
-				logger.info("["+Thread.currentThread().getName()+"] " +"The records is inserted in the DB: "+result);
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"The records is inserted in the DB: "+result);
 			} catch (SQLException e) {
 				e.printStackTrace();
 				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] " +"Failed on storing the result in DB: "+result, e);
@@ -333,7 +343,7 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 		@Override
 		protected void action(AlloyProcessedResult result) {
 
-			logger.info("["+Thread.currentThread().getName()+"] " + "The conent of the param is removed from the disk: "+ result.params);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "The conent of the param is removed from the disk: "+ result.params);
 			result.params.removeContent();
 
 		}

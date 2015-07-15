@@ -22,7 +22,7 @@ public abstract class DBConnectionPool {
 	
 	public Connection getConnection() throws SQLException{
 		//return cpds.getConnection();
-		return DriverManager.getConnection("jdbc:"+getJDBCName()+":"+url);
+		return DriverManager.getConnection(getConnectionURL());
 	}
 	
 	protected abstract String getDriverName();
@@ -36,7 +36,7 @@ public abstract class DBConnectionPool {
 			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Cannot load the Database driver!");
 			e.printStackTrace();
 		}
-		cpds.setJdbcUrl("jdbc:"+getJDBCName()+":"+url );
+		cpds.setJdbcUrl(getConnectionURL() );
 		cpds.setAcquireIncrement(Integer.valueOf(Configuration.getProp("jdbc_max_increament_size")));
 		cpds.setMaxPoolSize(Integer.valueOf(Configuration.getProp("jdbc_max_pool_size")));
 		
@@ -46,5 +46,10 @@ public abstract class DBConnectionPool {
 		this.url = url;
 		prepareConnection();
 	}
+	
+	public String getConnectionURL(){
+		return "jdbc:"+getJDBCName()+":"+url;
+	}
+
 
 }

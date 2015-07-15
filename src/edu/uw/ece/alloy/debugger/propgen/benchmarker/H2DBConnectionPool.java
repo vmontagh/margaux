@@ -4,7 +4,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 public class H2DBConnectionPool extends DBConnectionPool {
 
 	public H2DBConnectionPool(String url) {
-		super("tcp://localhost/"+url/*+";MV_STORE=TRUE;"/*+";MVCC=FALSE;"*/);
+		super("tcp://localhost/"+url/*+";MV_STORE=TRUE;"*/+";MVCC=TRUE;");
 	}
 
 

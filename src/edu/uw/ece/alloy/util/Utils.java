@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import javax.sql.rowset.serial.SerialException;
+
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pos;
 
@@ -72,12 +74,12 @@ public class Utils {
 
 	public static void appendFile(final String path, final String content){
 		try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
-		    out.println(content);
+			out.println(content);
 		}catch (IOException e) {
 			throw new RuntimeException("CAnnot append to the file " + path);
 		}
 	}
-	
+
 	/**
 	 * Read the input file, and return the code snippet from (x,y)->(x1,y1)
 	 * @param inputFileName
@@ -313,14 +315,30 @@ public class Utils {
 	}
 
 	public static void setFinalStatic(Field field, Object newValue) throws Exception {
-	    field.setAccessible(true);
+		field.setAccessible(true);
 
-	    // remove final modifier from field
-	    Field modifiersField = Field.class.getDeclaredField("modifiers");
-	    modifiersField.setAccessible(true);
-	    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+		// remove final modifier from field
+		Field modifiersField = Field.class.getDeclaredField("modifiers");
+		modifiersField.setAccessible(true);
+		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 
-	    field.set(null, newValue);
+		field.set(null, newValue);
 	}
-	
+
+	public static String ClobToString(Object obj){
+		try {
+			
+			if(obj.getClass().getName().equals(javax.sql.rowset.serial.SerialClob.class.getName())){
+				javax.sql.rowset.serial.SerialClob clob =  (javax.sql.rowset.serial.SerialClob)obj;
+				int len;
+				len = (int)clob.length();
+				return clob.getSubString(1, len);
+			}
+		} catch (SerialException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return obj.toString();
+	}
+
 }

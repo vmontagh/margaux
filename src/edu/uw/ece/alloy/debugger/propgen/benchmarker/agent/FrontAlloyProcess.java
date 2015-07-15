@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessIt;
@@ -21,13 +22,15 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Terminate;
 
-public class FrontAlloyProcess implements Runnable {
+public class FrontAlloyProcess implements Runnable{
 
 	public final InetSocketAddress hostAddress;
 	private final InetSocketAddress remoteAddress;
 	private final AlloyExecuter executer; 
 	protected final static Logger logger = Logger.getLogger(FrontAlloyProcess.class.getName()+"--"+Thread.currentThread().getName());
 
+	final Thread front = new Thread(this);
+	
 	public FrontAlloyProcess(final int hostPort, final int remotePort, final AlloyExecuter executer) {
 		this.remoteAddress = new InetSocketAddress(remotePort);
 		this.hostAddress = new InetSocketAddress(hostPort);
@@ -51,7 +54,7 @@ public class FrontAlloyProcess implements Runnable {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				logger.info("["+Thread.currentThread().getName()+"] " +"The thread is waiting for the remote address, but interrupted.");
+				logger.severe("["+Thread.currentThread().getName()+"] " +"The thread is waiting for the remote address, but interrupted."+e);
 			}
 		}
 
@@ -64,7 +67,7 @@ public class FrontAlloyProcess implements Runnable {
 
 	private void processCommand(final RemoteCommand command){
 		//Supposed to be a registering call;
-		logger.info("["+Thread.currentThread().getName()+"] "+" Recieved message: "+command);
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Recieved message: "+command);
 		command.process(executer);
 	}
 
@@ -73,10 +76,10 @@ public class FrontAlloyProcess implements Runnable {
 		AsynchronousServerSocketChannel serverSocketChannel = null;
 
 		try {
-			logger.info("["+Thread.currentThread().getName()+"] "+" Starting listeing fornt runner for pId: "+hostAddress.getPort());
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Starting listeing fornt runner for pId: "+hostAddress.getPort());
 			serverSocketChannel = AsynchronousServerSocketChannel
 					.open().bind(hostAddress);
-			logger.info("["+Thread.currentThread().getName()+"] "+" Sending a readyness message pId: "+hostAddress.getPort());
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Sending a readyness message pId: "+hostAddress.getPort());
 			(new ProcessReady(hostAddress)).sendMe(remoteAddress);
 
 			Future<AsynchronousSocketChannel> serverFuture = null;
@@ -86,10 +89,10 @@ public class FrontAlloyProcess implements Runnable {
 
 			while(!Thread.currentThread().isInterrupted()){
 				try{
-					logger.info("["+Thread.currentThread().getName()+"] "+" waiting for a request: "+hostAddress.getPort());
+					if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" waiting for a request: "+hostAddress.getPort());
 					serverFuture = serverSocketChannel
 							.accept();
-					logger.info("["+Thread.currentThread().getName()+"] "+" a message is received: "+hostAddress.getPort());
+					if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" a message is received: "+hostAddress.getPort());
 					clientSocket = serverFuture.get();
 
 					if ((clientSocket != null) && (clientSocket.isOpen())) {
@@ -143,13 +146,9 @@ public class FrontAlloyProcess implements Runnable {
 
 	}
 
-	@Override
-	public void run() {
-		listening();
-	}
 
-	public void stop(){
-		Thread.currentThread().interrupt();
+	public void cancelThread(){
+		front.interrupt();;
 	}
 
 
@@ -159,7 +158,7 @@ public class FrontAlloyProcess implements Runnable {
 		FrontAlloyProcess f = new FrontAlloyProcess(45321, -1, executer);
 		ProcessesManager manager = null;// new ProcessesManager();
 
-		(new Thread(f)).start();
+		f.startThreads();
 
 		while(true){
 			Thread.sleep(500);
@@ -175,6 +174,15 @@ public class FrontAlloyProcess implements Runnable {
 			c3.sendMe(new InetSocketAddress(45321));
 		}
 
+	}
+
+	public void startThreads() {
+		front.start();
+	}
+
+	@Override
+	public void run() {
+		listening();
 	}
 
 }

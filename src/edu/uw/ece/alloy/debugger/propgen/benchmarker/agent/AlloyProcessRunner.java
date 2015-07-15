@@ -30,13 +30,13 @@ public class AlloyProcessRunner {
 
 	protected final static Logger logger = Logger.getLogger(AlloyProcessRunner.class.getName()+"--"+Thread.currentThread().getName());
 
-	private Thread frontThread;
+	//private Thread frontThread;
 	//private Thread executerThread;
 	//private Thread fileThread;
 	//private Thread socketThread;
 	//private Thread dbThread;
 	//private Thread cleanerThread;
-	private Thread watchdogThread; 
+	//private Thread watchdogThread; 
 
 	private FrontAlloyProcess front;
 	private AlloyExecuter executer;
@@ -90,7 +90,7 @@ public class AlloyProcessRunner {
 	public void startThreads(){
 
 
-		logger.info("["+Thread.currentThread().getName()+"] "+" Starting to create Alloy Processing objects");
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Starting to create Alloy Processing objects");
 
 		executer = AlloyExecuter.getInstance();
 		
@@ -105,11 +105,6 @@ public class AlloyProcessRunner {
 		
 		watchdog = new ProcessSelfMonitor(SelfMonitorInterval, 3);
 		//register threads to be monitored
-		watchdog.addThreadToBeMonitored(executer);
-		
-		
-				
-		watchdogThread = new Thread(watchdog);
 		
 		watchdog.addThreadToBeMonitored(executer);
 		watchdog.addThreadToBeMonitored(socketWriter);
@@ -122,8 +117,8 @@ public class AlloyProcessRunner {
 		socketWriter.startThread();
 		fileWriter.startThread();
 		dbWriter.startThread();
-		
-		watchdogThread.start();
+
+		watchdog.startThreads();
 		
 		if(RemoveSourceAfter){
 			cleanAfterProcessed = new PostProcess.CleanAfterProccessed();
@@ -134,8 +129,7 @@ public class AlloyProcessRunner {
 		
 
 		front = new FrontAlloyProcess(PID,remotePort,executer);
-		frontThread = new Thread(front);		
-		frontThread.start();
+		front.startThreads();
 	}
 
 	
@@ -143,7 +137,7 @@ public class AlloyProcessRunner {
 
 		if( tmpDirectory.exists() ){
 			try {
-				logger.info("["+Thread.currentThread().getName()+"] " +" exists and has to be recreated." +tmpDirectory.getCanonicalPath());
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +" exists and has to be recreated." +tmpDirectory.getCanonicalPath());
 				Utils.deleteRecursivly(tmpDirectory);
 			} catch (IOException e) {
 				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to delete the previous files.", e);
@@ -159,7 +153,7 @@ public class AlloyProcessRunner {
 
 	public static void main(String[] args) {
 
-		logger.info("["+Thread.currentThread().getName()+"] "+"The process is started.");
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+"The process is started.");
 
 		if(args.length < 4)
 			throw new RuntimeException("Enter the port number");
@@ -177,11 +171,11 @@ public class AlloyProcessRunner {
 		try{
 			localPort = Integer.parseInt(args[0]);
 			localIP   = InetAddress.getByName(args[1]);
-			logger.info("["+Thread.currentThread().getName()+"] "+"The port is assigned to this process: "+localPort+ " and the IP is: "+ localIP);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+"The port is assigned to this process: "+localPort+ " and the IP is: "+ localIP);
 
 			remotePort = Integer.parseInt(args[2]);
 			remoteIP   = InetAddress.getByName(args[3]);;
-			logger.info("["+Thread.currentThread().getName()+"] "+"The remote port is: "+remotePort + " and the IP is: "+ remoteIP);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+"The remote port is: "+remotePort + " and the IP is: "+ remoteIP);
 
 		}catch(NumberFormatException nfe){
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The passed port is not acceptable: ", nfe.getMessage());
@@ -206,7 +200,7 @@ public class AlloyProcessRunner {
 				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Main loop is interrupted ", e);
 				break;
 			}
-			logger.info("["+Thread.currentThread().getName()+"]" + "Main is alive.... ");
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + "Main is alive.... ");
 			Thread.currentThread().yield();
 		}
 

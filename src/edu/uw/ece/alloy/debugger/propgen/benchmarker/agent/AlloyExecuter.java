@@ -31,7 +31,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 			.synchronizedList(new LinkedList<PostProcess>());
 
 	protected volatile AtomicInteger processed = new AtomicInteger(0);
-	protected volatile AtomicInteger shadowProcessed = new AtomicInteger(0);
+	protected volatile AtomicInteger shadowProcessed = new AtomicInteger(-1);
 	protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
 	protected volatile AtomicInteger recoveryAttempts = new AtomicInteger(0);
 
@@ -66,7 +66,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 				e.doAction(result);
 
 			} catch (InterruptedException e1) {
-				logger.info("["+Thread.currentThread().getName()+"] " +"The post processing action <" + e
+				logger.severe("["+Thread.currentThread().getName()+"] " +"The post processing action <" + e
 						+ "> is interrupted on: " + result);
 				throw e1;
 			}
@@ -81,12 +81,12 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 		synchronized (lastProccessing) {
 			if(lastProccessing.equals(lastProccessing.EMPTY_PARAM) ) return;
 			try {
-				logger.info("["+Thread.currentThread().getName()+"] " +"The timeout is recorded for " + lastProccessing);
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"The timeout is recorded for " + lastProccessing);
 				runPostProcesses(new AlloyProcessedResult.TimeoutResult(
 						lastProccessing));
 				lastProccessing = lastProccessing.EMPTY_PARAM;
 			} catch (InterruptedException e) {
-				logger.info("["+Thread.currentThread().getName()+"] " +"The thread is interuupted while recording a timeout message.");
+				logger.severe("["+Thread.currentThread().getName()+"] " +"The thread is interuupted while recording a timeout message.");
 			}
 		}
 	}
@@ -114,7 +114,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 			}
 
 			long time = System.currentTimeMillis();
-			logger.info("["+Thread.currentThread().getName()+"]" + " Start processing "+lastProccessing);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " Start processing "+lastProccessing);
 
 			AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 			try {
@@ -123,7 +123,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 						new String[] { lastProccessing.srcPath().getAbsolutePath() },
 						rep);
 
-				logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);
 				runPostProcesses(rep);
 				processed.incrementAndGet();
 			} catch (Err e) {
@@ -137,7 +137,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 						lastProccessing));
 				logger.severe("["+Thread.currentThread().getName()+"] " +"The Alloy processor failed on processing: "
 						+ lastProccessing);
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " +e.getMessage(), e);
+				if(Configuration.IsInDeubbungMode) logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " +e.getMessage(), e);
 			}
 		}
 
@@ -168,7 +168,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 				runAlloy();
 				iInterrupt = 0;
 			} catch (InterruptedException e) {
-				logger.info("["+Thread.currentThread().getName()+"] " +"Processing a result is interrupted after processed "
+				logger.severe("["+Thread.currentThread().getName()+"] " +"Processing a result is interrupted after processed "
 						+ processed + " requests.");
 				recordATimeout();
 				++iInterrupt;
@@ -187,13 +187,13 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 
 		if(executerThread.isAlive()){
 			if(this.isSpilledTimeout()){
-				logger.info("["+Thread.currentThread().getName()+"]" + " The AlloyExecuter thread is interrupted again and again. Replace the thread now. ");
+				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " The AlloyExecuter thread is interrupted again and again. Replace the thread now. ");
 				this.stopMe();
 				executerThread.interrupt();
 				executerThread = new Thread(this);
 				executerThread.start();
 			}else{
-				logger.info("["+Thread.currentThread().getName()+"]" + " Interrupt the AlloyExecuter thread. ");
+				logger.severe("["+Thread.currentThread().getName()+"]" + " Interrupt the AlloyExecuter thread. ");
 				executerThread.interrupt();
 			}
 		}
@@ -210,7 +210,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 
 			iamAlive.sendMe(AlloyProcessRunner.getInstance().remotePort);
 			livenessFailed.set(0);
-			logger.info("["+Thread.currentThread().getName()+"]"+ "A live message is sent from pId: "+AlloyProcessRunner.getInstance().PID +" >"+iamAlive);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]"+ "A live message is sent from pId: "+AlloyProcessRunner.getInstance().PID +" >"+iamAlive);
 		}catch(Exception e){
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a live signal on PID: "+ AlloyProcessRunner.getInstance().PID+" this is "+livenessFailed+" attempt", e);
 			livenessFailed.incrementAndGet();
@@ -254,13 +254,13 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 	public long isDelayed() {
 		long result = 0;
 		//monitor the socket
-		if(shadowProcessed.equals(processed) && !isEmpty()){
+		if(shadowProcessed.get() == processed.get() && !isEmpty()){
 			//The executer does not proceeded.
-			result = processed.longValue(); 
+			result = processed.intValue(); 
 			//TODO manage to reset the socket thread
 		}else{
-			//The executer proceeded
-			shadowProcessed = processed;
+			//The executer proceeded 
+			shadowProcessed.set(processed.get());
 		}
 		return result;
 	}
@@ -268,9 +268,18 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 	@Override
 	public void startThread() {
 		if(!executerThread.isAlive())
-			executerThread.start();;
+			executerThread.start();
 	}
 
+	@Override
+	public void cancelThread() {
+		executerThread.interrupt();		
+	}
 
+	@Override
+	public void changePriority(int newPriority) {
+		executerThread.setPriority(newPriority);
+
+	}
 
 }

@@ -3,6 +3,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 
@@ -36,7 +37,7 @@ public class IamAlive extends RemoteCommand {
 	public void updatePorcessorLiveness(final ProcessesManager manager){
 		
 		if(manager.getAlloyProcess(PID) == null){
-			logger.info("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" "+this);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" "+this);
 			return;
 		}
 		if( manager.getAlloyProcess(PID).status == Status.KILLING){
@@ -53,7 +54,7 @@ public class IamAlive extends RemoteCommand {
 				manager.changeStatus(PID, Status.WORKING);
 			}
 		}
-		logger.info("["+Thread.currentThread().getName()+"] "+ " A live message is recieved from: "+ PID+" "+this);
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+ " A live message is recieved from: "+ PID+" "+this);
 	}
 
 }

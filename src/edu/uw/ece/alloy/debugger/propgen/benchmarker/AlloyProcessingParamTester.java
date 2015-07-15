@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
 
 public class AlloyProcessingParamTester {
@@ -60,11 +61,11 @@ public class AlloyProcessingParamTester {
 	public void setUp() throws Exception {
 		//Make a temporary folder to place the files.
 		if(tmpDir.exists()){
-			logger.info("The "+tmpDir.getAbsolutePath()+" is accidentally exists, so it has to be deleted first.");
+			if(Configuration.IsInDeubbungMode) logger.info("The "+tmpDir.getAbsolutePath()+" is accidentally exists, so it has to be deleted first.");
 			Utils.deleteRecursivly(tmpDir);
 		}
 		tmpDir.mkdirs();
-		logger.info("The "+tmpDir.getAbsolutePath()+" is created before test cases start.");
+		if(Configuration.IsInDeubbungMode) logger.info("The "+tmpDir.getAbsolutePath()+" is created before test cases start.");
 	}
 
 	@After
@@ -72,9 +73,9 @@ public class AlloyProcessingParamTester {
 		//Delete the temporary folder
 		if(tmpDir.exists()){
 			Utils.deleteRecursivly(tmpDir);
-			logger.info("The "+tmpDir.getAbsolutePath()+" is deleted at the end of unit test.");
+			if(Configuration.IsInDeubbungMode) logger.info("The "+tmpDir.getAbsolutePath()+" is deleted at the end of unit test.");
 		}else{
-			logger.info("The "+tmpDir.getAbsolutePath()+" was accidentally deleted and not cleared up in the tearDown.");
+			logger.warning("The "+tmpDir.getAbsolutePath()+" was accidentally deleted and not cleared up in the tearDown.");
 		}
 	}
 

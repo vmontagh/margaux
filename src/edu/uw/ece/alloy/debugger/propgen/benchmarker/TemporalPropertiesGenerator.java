@@ -2,7 +2,6 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,11 +15,12 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TripleBuilder;
 import edu.uw.ece.alloy.util.Utils;
 
 
-public class TemporalPropertiesGenerator {
+public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMonitored {
 
 	/*
 	 * Only the file names in the path are processed. 
@@ -53,6 +53,9 @@ public class TemporalPropertiesGenerator {
 	final public static File relationalPropModuleOriginal = new File( Configuration.getProp("relational_properties") );
 
 
+	final GeneratedStorage<AlloyProcessingParam> generatedStorage;
+
+
 	final Boolean doVAC = Boolean.valueOf( Configuration.getProp("doVAC") );
 	final Boolean doIFF = Boolean.valueOf( Configuration.getProp("doIFF") );
 	final Boolean doIMPLY = Boolean.valueOf( Configuration.getProp("doIMPLY") );
@@ -69,17 +72,18 @@ public class TemporalPropertiesGenerator {
 	final AlloyProcessingParam paramCreator;
 
 	final static List<Dependency> dependencies = new LinkedList<Dependency>(); 
-	static{
-		
-		//dependencies.add(new Dependency(new File( relationalPropModuleOriginal.getName()), Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
-		//Some sort of hacking. The content of the dependency is the path to the original file. So it just need to to copy it instead of carry the content per every request param.
-		dependencies.add(new Dependency(new File( relationalPropModuleOriginal.getName()), relationalPropModuleOriginal.getAbsolutePath()));
-	}
-	final PropertyToAlloyCodeBuilder propertyBuilder;;
 
+	final PropertyToAlloyCodeBuilder propertyBuilder;;
 	final TripleBuilder builder;
 
+	final Thread generator = new Thread(this);
+
 	public TemporalPropertiesGenerator() {
+		//A synchronized list is returned and the alloyfeeder is not called directly.
+		this(new GeneratedStorage<AlloyProcessingParam>());
+	}
+
+	public TemporalPropertiesGenerator(final GeneratedStorage<AlloyProcessingParam> generatedStorage) {
 		builder = new TripleBuilder(
 				"r", "s", "s_next", "s_first",
 				"m", "m_next", "m_first", 
@@ -104,6 +108,12 @@ public class TemporalPropertiesGenerator {
 		if(doIMPLY) propertyBuilder.registerPropertyToAlloyCode(IfPropertyToAlloyCode.EMPTY_CONVERTOR);
 		if(doAND) propertyBuilder.registerPropertyToAlloyCode(AndPropertyToAlloyCode.EMPTY_CONVERTOR);
 
+		dependencies.add(new Dependency(new File( relationalPropModuleOriginal.getName()), Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
+		//Some sort of hacking. The content of the dependency is the path to the original file. So it just need to to copy it instead of carry the content per every request param.
+		//dependencies.add(new Dependency(new File( relationalPropModuleOriginal.getName()), relationalPropModuleOriginal.getAbsolutePath()));
+
+
+		this.generatedStorage = generatedStorage;
 
 	}
 
@@ -141,20 +151,20 @@ public class TemporalPropertiesGenerator {
 		for(String pred1: tripleProps.keySet()){
 			for(String pred2: tripleProps.keySet()){
 				if(pred1.equals(pred2)) continue;
-				
+
 				for(final PropertyToAlloyCode alloyCodeGenerator: propertyBuilder.createObjects(
 						tripleProps.get(pred1).b, tripleProps.get(pred2).b, 
 						tripleProps.get(pred1).a, tripleProps.get(pred2).a, 
 						pred1, pred2//[tmpDirectory], tmpDirectory
 						) ){
-					
+
 					if(doneNames.contains(alloyCodeGenerator.srcName())) continue;
 					if(filterNames.contains(alloyCodeGenerator.srcName())) continue;
 
 					if(!isResumable /*&& Some condition has to be put here to skip the current property*/){
-						logger.info("["+Thread.currentThread().getName()+"] " +alloyCodeGenerator.srcName() +" is created.");
+						if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +alloyCodeGenerator.srcName() +" is created.");
 					}else{
-						logger.info("["+Thread.currentThread().getName()+"] " +alloyCodeGenerator.srcName() +" is resumable ans is already solved..");
+						if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +alloyCodeGenerator.srcName() +" is resumable ans is already solved..");
 					}
 
 					generatedCount++;
@@ -162,7 +172,7 @@ public class TemporalPropertiesGenerator {
 					if( generatedCount >= PropertiesMin && generatedCount < PropertiesMax ){
 						try {
 							final AlloyProcessingParam generatedParam = alloyCodeGenerator.generate();
-							
+
 							result.addGeneratedProp(generatedParam);
 						} catch (Exception e) {
 							logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Property code generation is failed:", e);
@@ -191,10 +201,10 @@ public class TemporalPropertiesGenerator {
 					" But it was expecpted to have (PropertiesMax="+PropertiesMax+
 					"-PropertiesMin="+PropertiesMin+")="+(PropertiesMax-PropertiesMin));
 		}
-		
+
 		doneNames.clear();
 
-		logger.info("["+Thread.currentThread().getName()+"] " + result.getSize()+ " properties are generated: "+ generatedCount);
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + result.getSize()+ " properties are generated: "+ generatedCount);
 
 	}
 
@@ -203,22 +213,25 @@ public class TemporalPropertiesGenerator {
 
 		if( !workingDir.exists() ){
 			workingDir.mkdir();
-			logger.info("["+Thread.currentThread().getName()+"] " + "Working directory is created: "+workingDir.getAbsolutePath());
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "Working directory is created: "+workingDir.getAbsolutePath());
 		}
 
 	}
 
+	public void generateAlloyProcessingParams() throws Err, IOException{
+		this.generateAlloyProcessingParams(this.generatedStorage );
+	}
 
 	public void generateAlloyProcessingParams(final GeneratedStorage<AlloyProcessingParam> generatedStorage) throws Err, IOException{
 
 		setUpFolders();
 
 		Map<String, Pair<String, String>> tripleProps = builder.getAllProperties();
-		logger.info("["+Thread.currentThread().getName()+"] " + tripleProps.size()+ " properties are generated.");
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + tripleProps.size()+ " properties are generated.");
 
 		try {
 			generateRelationChekers(tripleProps, generatedStorage);
-			logger.info("["+Thread.currentThread().getName()+"] " +generatedStorage.getSize()+" files are generated to be checked." );
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +generatedStorage.getSize()+" files are generated to be checked." );
 		} catch (Err e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to generate alloy files: ", e);
 			throw e;		
@@ -231,4 +244,61 @@ public class TemporalPropertiesGenerator {
 		return new File(logOutputDir,name+".out.txt");
 	}
 
+	@Override
+	public void run() {
+		//A finite thread that fill the storage with the generaed properties, then finish.
+		try {
+			generateAlloyProcessingParams();
+		} catch (Err | IOException e1) {
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to generate alloy files: ", e1);
+			throw new RuntimeException (e1);
+		}
+	}
+
+
+	public void startThread(){
+		generator.start();
+	}
+
+	public void cancelThread(){
+		generator.interrupt();
+	}
+
+	public void changePriority(final int newPriority){
+		generator.setPriority(newPriority);
+	}
+
+	@Override
+	public void actionOnNotStuck() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public int triesOnStuck() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void actionOnStuck() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public String amIStuck() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long isDelayed() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+	public String getStatus(){
+		return "Not sure what is happening in TemporalPropertiesGenerator!";
+	}
 }
