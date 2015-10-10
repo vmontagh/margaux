@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -66,7 +67,7 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 	final static String ModuleM = "open util/ordering [M] as mo";
 	final static String ModuleE = "open util/ordering [E] as eo";
 	final static String RelationProps = "open relational_properties";
-	final static String Header =  ModuleS + '\n' + ModuleM + '\n' + ModuleE + '\n' + RelationProps +'\n'+ SigDecl + '\n';
+	final public static String Header =  ModuleS + '\n' + ModuleM + '\n' + ModuleE + '\n' + RelationProps +'\n'+ SigDecl + '\n';
 	final static String Scope = " for 5";
 
 	final AlloyProcessingParam paramCreator;
@@ -117,8 +118,8 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 
 	}
 
-	private Set<String> filterFileNames(){
-		final Set<String> fileNames = new HashSet<>();
+	private /*Set<String>*/Set<Integer> filterFileNames(){
+		final Set<Integer> fileNames = new TreeSet<>();
 		final File file = new File(filterPath);
 		if(file.exists()){
 			Utils.readFile( file , new Consumer<List<String>>() {
@@ -127,7 +128,7 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 					assert t.size() == 1;
 					String name = t.get(0);
 
-					fileNames.add(name);
+					fileNames.add(name.hashCode());
 				}});
 		}
 
@@ -139,13 +140,15 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 
 		//final SimpleAsynchFileWriter safWriter = new SimpleAsynchFileWriter(); 
 
-		final Set<String> filterNames = filterFileNames();
+		final /*Set<String>*/ Set<Integer> filterNames = filterFileNames();
 
 		//List<File> result = new LinkedList<File>();
 
 		//done is kind of like result, but presumely smaller size and only compare the name.
-		Set<String> doneNames = new HashSet<>();
+		//Set<String> doneNames = new TreeSet<>();
+		Set<Integer> doneHashedNames = new TreeSet<>();
 
+		
 		int generatedCount = 0;
 		boolean breakFromAll = false;
 		for(String pred1: tripleProps.keySet()){
@@ -158,8 +161,10 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 						pred1, pred2//[tmpDirectory], tmpDirectory
 						) ){
 
-					if(doneNames.contains(alloyCodeGenerator.srcName())) continue;
-					if(filterNames.contains(alloyCodeGenerator.srcName())) continue;
+					//if(doneNames.contains(alloyCodeGenerator.srcName())) continue;
+					if(doneHashedNames.contains(alloyCodeGenerator.srcName().hashCode())) continue;
+					//if(filterNames.contains(alloyCodeGenerator.srcName())) continue;
+					if(filterNames.contains(alloyCodeGenerator.srcName().hashCode())) continue;
 
 					if(!isResumable /*&& Some condition has to be put here to skip the current property*/){
 						if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +alloyCodeGenerator.srcName() +" is created.");
@@ -185,10 +190,12 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 					}
 
 					if(alloyCodeGenerator.isSymmetric()){
-						doneNames.add(propertyBuilder.createReverse(alloyCodeGenerator).srcName());
+						//doneNames.add(propertyBuilder.createReverse(alloyCodeGenerator).srcName());
+						doneHashedNames.add(propertyBuilder.createReverse(alloyCodeGenerator).srcName().hashCode());
 					}
 
-					doneNames.add(alloyCodeGenerator.srcName());
+					//doneNames.add(alloyCodeGenerator.srcName());
+					doneHashedNames.add(alloyCodeGenerator.srcName().hashCode());
 				}
 				if(breakFromAll) break;
 			}
@@ -202,7 +209,8 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 					"-PropertiesMin="+PropertiesMin+")="+(PropertiesMax-PropertiesMin));
 		}
 
-		doneNames.clear();
+		//doneNames.clear();
+		doneHashedNames.clear();
 
 		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + result.getSize()+ " properties are generated: "+ generatedCount);
 

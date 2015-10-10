@@ -35,7 +35,7 @@ import fj.data.Stream;
 public class GraphCondenser {
 
 	final private int 	 nodeCount = 181;
-	final private String implicationCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/implies.csv";
+	final private String implicationCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/implies.new.csv";
 	/*an item in the array is either -1, itself, or other value.
 	 * -1 means the node is deleted. 
 	 * itself means it is not replaced by other node
@@ -44,13 +44,13 @@ public class GraphCondenser {
 	final private int    replacedNode[] = new int[nodeCount];
 	final private Set<Integer>   sparceMatrixImplication[] = new Set[nodeCount];
 
-	final private String inconsistentCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/incons.csv";
+	final private String inconsistentCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/incons.new.csv";
 	final private Set<Integer>   sparceMatrixInconsistency[] = new Set[nodeCount];
 
-	final private String vaccucityCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/vac.csv";
+	final private String vaccucityCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/vac.new.csv";
 	final private Set<Integer> vacuities = new HashSet<Integer>();
 
-	final private String legendsCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/legends.csv";
+	final private String legendsCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/legends.new.csv";
 	final private String legends[] = new String[nodeCount];
 
 	final private String dotOutput = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/dots/%s.java.out.dot";
@@ -67,7 +67,7 @@ public class GraphCondenser {
 	 * which has to be equal to replacedNode. 
 	 */
 	final private int confirmingReplacedNode[] = new int[nodeCount];
-	final private String iffCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/iff.csv";
+	final private String iffCSVPath = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/iff.new.csv";
 
 
 	/**
@@ -223,7 +223,9 @@ public class GraphCondenser {
 		for(int i = 1; i < implicationClasses.length; ++i){
 
 			Set<Integer> iffSet = implicationClasses[i];
-
+			
+			//System.out.println(iffSet);
+			
 			for(Integer j: iffSet){
 				if( ! implicationClasses[j].containsAll(iffSet) ){
 
@@ -364,18 +366,25 @@ public class GraphCondenser {
 
 	public final void implicationIsAcyclic(){
 		condeseByGrouping(sparceMatrixImplication);
-
-		
-		
-		
-		
 		
 		System.out.println(isCyclic(sparceMatrixImplication));
 		
+		System.out.println(  "------Sources-----"  );
 		System.out.println(  findSources(sparceMatrixImplication)  );
-		System.out.println( decodeToLegends( findSources(sparceMatrixImplication) ) );
 		
+		System.out.println(  decodeToLegends(findSources(sparceMatrixImplication)  ));
+		System.out.println(  "------------------"  );
+				
+		System.out.println(  "------Sinks-------"  );
 		System.out.println(  findSinks(sparceMatrixImplication)  );
+		System.out.println(  decodeToLegends(findSinks(sparceMatrixImplication)  ));
+		System.out.println(  "------------------"  );
+		
+		
+		System.out.println(  "------LongestPath-"  );
+		System.out.println(  findLongestPath(sparceMatrixImplication) );
+		System.out.println(  "------------------"  );
+		
 		System.out.println( decodeToLegends( findSinks(sparceMatrixImplication) ) );
 		
 		findLongestPath(sparceMatrixImplication);
@@ -580,7 +589,7 @@ public class GraphCondenser {
 
 		GraphCondenser gc = new GraphCondenser();
 		gc.confirmProcessValidity();
-		//gc.condese();
+		gc.condese();
 		Util.writeAll(String.format(gc.dotOutput, "incosnt"), gc.generateDotInconsistencies());
 		Util.writeAll(String.format(gc.dotOutput, "imply"),gc.generateDotImplication());
 		Util.writeAll(String.format(gc.dotOutput, "inconst.imply"), gc.generateDotImplicationPlusInconsistencies());

@@ -227,7 +227,7 @@ public class PropertyToAlloyCode implements Serializable {
 				);
 	}
 	
-	String generateAlloyCode(){
+	protected String generateAlloyCode(){
 		String source = "";
 		
 		source += generatePrepend();
@@ -240,12 +240,12 @@ public class PropertyToAlloyCode implements Serializable {
 	}
 	
 	
-	String generatePrepend(){
+	protected String generatePrepend(){
 
 		return header;
 	}
 	
-	String generatePredicateBody(final String preProcessedBody){
+	protected String generatePredicateBody(final String preProcessedBody){
 		//No process Now.
 		return preProcessedBody;
 	}
@@ -276,7 +276,7 @@ public class PropertyToAlloyCode implements Serializable {
 	public AlloyProcessingParam generate() {
 		
 		int priority = 0;
-		return paramCreator.createIt(this, priority); 
+		return paramCreator.createIt(this, priority, paramCreator.tmpDirectory); 
 	}
 	
 	

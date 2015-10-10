@@ -20,8 +20,14 @@ public class AlloyProcessingParamLazyCompressing extends
 	final public static AlloyProcessingParamLazyCompressing EMPTY_PARAM = new AlloyProcessingParamLazyCompressing();
 	
 	
+	
+	protected AlloyProcessingParamLazyCompressing(PropertyToAlloyCode alloyCoder,
+			int priority, File tmpDirectory, DBConnectionInfo dBConnectionInfo) {
+		super(alloyCoder, priority, tmpDirectory, dBConnectionInfo);
+	}
+
 	protected AlloyProcessingParamLazyCompressing(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory){
-		super(alloyCoder, priority, tmpDirectory);
+		super(alloyCoder, priority, tmpDirectory );
 	}
 	
 	protected AlloyProcessingParamLazyCompressing(final PropertyToAlloyCode alloyCoder, int priority){
@@ -30,6 +36,10 @@ public class AlloyProcessingParamLazyCompressing extends
 	
 	protected AlloyProcessingParamLazyCompressing(){
 		super();
+	}
+	
+	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory, DBConnectionInfo dBConnectionInfo) {
+		return new AlloyProcessingParamLazyCompressing(alloyCoder, priority, tmpDirectory, dBConnectionInfo);
 	}
 	
 	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
@@ -41,13 +51,13 @@ public class AlloyProcessingParamLazyCompressing extends
 	}
 	
 	public AlloyProcessingParam createIt(AlloyProcessingParamLazyCompressing param) {
-		return new AlloyProcessingParamLazyCompressing(param.alloyCoder, param.priority, param.tmpDirectory);
+		return new AlloyProcessingParamLazyCompressing(param.alloyCoder, param.priority, param.tmpDirectory, param. dBConnectionInfo);
 	}
 
 	
 	public AlloyProcessingParam prepareToSend(){
 		try {
-			return AlloyProcessingParamLazyDecompressing.EMPTY_PARAM.createIt(alloyCoder.compress(), this.priority, this.tmpDirectory);
+			return AlloyProcessingParamLazyDecompressing.EMPTY_PARAM.createIt(alloyCoder.compress(), this.priority, this.tmpDirectory, this. dBConnectionInfo);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to compress the object: "+ this, e);
 			e.printStackTrace();

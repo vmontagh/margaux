@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
+
 public class Compressor {
 
 	public Compressor() {
@@ -21,8 +23,10 @@ public class Compressor {
 	final public static String EMPTY_STRING = "N";
 	final public static File EMPTY_FILE = new File( EMPTY_STRING );
 	final public static int EMPTY_PRIORITY = -1;
+	final public static DBConnectionInfo EMPTY_DBCONNECTION = new DBConnectionInfo(EMPTY_STRING,EMPTY_STRING,EMPTY_STRING,EMPTY_STRING);
 	final public static List EMPTY_LIST = Collections.unmodifiableList(Collections.emptyList());
-
+	public final static DBConnectionInfo EMPTY_DBDONNECTIONINFO = new DBConnectionInfo(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING); 
+	
 	
 	public static byte[] compress(final String text) throws Exception{
 		return compress(text, ENCODING);

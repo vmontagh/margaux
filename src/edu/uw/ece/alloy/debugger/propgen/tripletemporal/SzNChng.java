@@ -15,17 +15,19 @@ public class SzNChng extends SzPrpty {
 
 	@Override
 	protected String genGrowth() {
-		return " (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +
-				") and (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" )";
+		//return " (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +
+		//		") and (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" )";
+		return " eq[#" + growthLocality.getLetVariable2() + " ,# " +growthLocality.getLetVariable1() + "]";
 	}
 	
 	@Override
 	protected String genGrowthOredred() {
-		return " let "+getGrowthOrderedDelta()+" = "+growthLocality.getLetVariable1()+
-				" - "+growthLocality.getLetVariable2() + " | "+
-				"  (" + growthLocality.getLetVariable1() + " in " +growthLocality.getLetVariable2() +" ) and "+
-				"  (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" ) and "+				
-				"  (some "+getGrowthOrderedDelta()+" implies";
+		return " let "+getGrowthOrderedDelta()+" = "+growthLocality.getLetVariable2()+
+				" - "+growthLocality.getLetVariable1() + " | "+
+				//"  (" + growthLocality.getLetVariable1() + " in " +growthLocality.getLetVariable2() +" ) and "+
+				//"  (" + growthLocality.getLetVariable2() + " in " +growthLocality.getLetVariable1() +" ) and "+
+				genGrowth() +
+				" and  (some "+getGrowthOrderedDelta()+" implies";
 	}
 
 	@Override

@@ -38,10 +38,11 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	public final int priority;
 	public final PropertyToAlloyCode alloyCoder; 
 	public final File tmpDirectory ;//It is always initially empty.
+	public final DBConnectionInfo dBConnectionInfo;
 	
 
 	protected AlloyProcessingParam(final PropertyToAlloyCode alloyCoder, int priority, final File tmpDirectory 
-			) {
+			,final DBConnectionInfo dBConnectionInfo) {
 		if (alloyCoder != null && !alloyCoder.equals(PropertyToAlloyCode.EMPTY_CONVERTOR)) {
 			this.alloyCoder = alloyCoder.createItself();
 		}else{
@@ -49,6 +50,12 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 		}
 		this.priority = priority;
 		this.tmpDirectory = new File(tmpDirectory.getPath());
+		this.dBConnectionInfo = new DBConnectionInfo(dBConnectionInfo);
+	}
+	
+	protected AlloyProcessingParam(final PropertyToAlloyCode alloyCoder, int priority, final File tmpDirectory 
+			) {
+		this(alloyCoder, priority, tmpDirectory, Compressor.EMPTY_DBCONNECTION);
 	}
 	
 	protected AlloyProcessingParam(final PropertyToAlloyCode alloyCoder, int priority
@@ -65,6 +72,9 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	 * used for composition. The subclasses also have such methods and their functionality will be composed
 	 * at runtime with the property generators.   
 	 */
+	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory, DBConnectionInfo dBConnectionInfo) {
+		return new AlloyProcessingParam(alloyCoder,  priority, tmpDirectory, dBConnectionInfo);
+	}
 	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
 		return new AlloyProcessingParam(alloyCoder,  priority, tmpDirectory);
 	}
@@ -75,7 +85,7 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 
 	
 	public AlloyProcessingParam createIt(AlloyProcessingParam param) {
-		return createIt(param.alloyCoder,  param.priority, param.tmpDirectory);
+		return createIt(param.alloyCoder,  param.priority, param.tmpDirectory,param.dBConnectionInfo);
 	}
 	
 	public AlloyProcessingParam createItself() {
@@ -163,9 +173,13 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	}
 	
 	public AlloyProcessingParam changeTmpDirectory(final File tmpDirectory){
-		return createIt(this.alloyCoder, this.priority, tmpDirectory);
+		return createIt(this.alloyCoder, this.priority, tmpDirectory,this.dBConnectionInfo);
 	}
 
+	public AlloyProcessingParam changeDBConnectionInfo(final DBConnectionInfo dBConnectionIno){
+		return createIt(this.alloyCoder, this.priority, this.tmpDirectory, dBConnectionIno);
+	}
+	
 	public AlloyProcessingParam resetToEmptyTmpDirectory() {
 		return createIt(this.alloyCoder, this.priority);
 	}
@@ -244,11 +258,19 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 				return false;
 		} else if (!alloyCoder.equals(other.alloyCoder))
 			return false;
+		
 		if (tmpDirectory == null) {
 			if (other.tmpDirectory != null)
 				return false;
 		} else if (!tmpDirectory.equals(other.tmpDirectory))
 			return false;
+
+		if (dBConnectionInfo == null) {
+			if (other.dBConnectionInfo != null)
+				return false;
+		} else if (!dBConnectionInfo.equals(other.dBConnectionInfo))
+			return false;
+		
 		if (priority != other.priority)
 			return false;
 		return true;
@@ -260,8 +282,13 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 		int result = 1;
 		result = prime * result
 				+ ((alloyCoder == null) ? 0 : alloyCoder.hashCode());
+
 		result = prime * result
 				+ ((tmpDirectory == null) ? 0 : tmpDirectory.hashCode());
+		
+		result = prime * result
+				+ ((dBConnectionInfo == null) ? 0 : dBConnectionInfo.hashCode());
+		
 		result = prime * result + priority;
 		return result;
 	}

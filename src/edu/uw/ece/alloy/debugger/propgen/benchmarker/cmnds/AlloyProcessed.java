@@ -33,6 +33,7 @@ public class AlloyProcessed extends RemoteCommand {
 		AlloyProcessingParam param = this.result.params;
 		AlloyProcessedResult result = this.result;
 		try {
+			//decode it
 			param = this.result.params.prepareToUse();
 			result = this.result.changeParams(param);
 		} catch (Exception e) {

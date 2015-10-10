@@ -16,7 +16,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionPool;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.SQLiteDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.VacPropertyToAlloyCode;
@@ -42,12 +47,31 @@ public class PostProcessTester {
 	@Test
 	public void testDBWriter() {
 		
+		//Database setup
+		DBConnectionInfo connectionInfo = new DBConnectionInfo(Configuration.getProp("db_address"), 
+																Configuration.getProp("db_user"), 
+																	Configuration.getProp("db_password"), "");
+		DBLogger db = DBLogger.createConfiguredSetuperObject(new MySQLDBConnectionPool(connectionInfo));
+		
+		try {
+			connectionInfo = db.makeNewConfiguredDatabaseLog();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		DBConnectionPool dbConnection = new MySQLDBConnectionPool( connectionInfo);
+		
+		db = DBLogger.createDatabaseOperationsObject( dbConnection );
+		
 		PostProcess.DBWriter dbWriter = new PostProcess.DBWriter();
 		
 		PropertyToAlloyCode vacPropertyToAlloyCode = VacPropertyToAlloyCode.EMPTY_CONVERTOR;
 		
 		AlloyProcessingParam params = vacPropertyToAlloyCode.generate(); 
 
+		params = params.changeDBConnectionInfo(connectionInfo);
+		
 		//make a sample result
 		//AlloyProcessingParam params = AlloyProcessingParam.EMPTY_PARAM.createItself(new File("tmp/testing/src.txt"), new File("tmp/testing/dest.txt"), 0, "I am a content");
 		AlloyProcessedResult result = new AlloyProcessedResult(params);
@@ -62,10 +86,10 @@ public class PostProcessTester {
 		dbWriter.action(result);
 		
 		//Check whether the result is stored properly.
-		try(Connection connection  = dbWriter.dBConnection.getConnection()){
+		try(Connection connection  = dbConnection.getPooledConnection()){
 			System.out.println(connection);
 			try(Statement  statement = connection.createStatement()){
-				try(ResultSet rs = statement.executeQuery("select * from records")){
+				try(ResultSet rs = statement.executeQuery("select * from "+connectionInfo.tablename )){
 					
 					if(rs.next())
 					{

@@ -108,6 +108,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 		synchronized (lastProccessing) {
 			lastProccessing = queue.take();
 
+			
 			if(lastProccessing.equals(lastProccessing.EMPTY_PARAM)){
 				logger.severe("["+Thread.currentThread().getName()+"] "+"Why null?!!!");
 				return;

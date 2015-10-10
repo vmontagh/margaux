@@ -10,6 +10,11 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam{
 	
 	final public static AlloyProcessingParamLazy EMPTY_PARAM = new AlloyProcessingParamLazy();
 
+	protected AlloyProcessingParamLazy(PropertyToAlloyCode alloyCoder,
+			int priority, File tmpDirectory, DBConnectionInfo dBConnectionInfo) {
+		super(alloyCoder, priority, tmpDirectory, dBConnectionInfo);
+	}
+
 	protected AlloyProcessingParamLazy(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
 		super(alloyCoder,priority, tmpDirectory);
 	}
@@ -27,6 +32,10 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam{
 	 * used for composition. The subclasses also have such methods and their functionality will be composed
 	 * at runtime with the property generators.   
 	 */
+	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory, DBConnectionInfo dBConnectionInfo) {
+		return new AlloyProcessingParamLazy(alloyCoder,  priority, tmpDirectory, dBConnectionInfo);
+	}
+	
 	protected AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory) {
 		return new AlloyProcessingParamLazy(alloyCoder,  priority, tmpDirectory);
 	}
@@ -36,7 +45,7 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam{
 	}
 	
 	public AlloyProcessingParam createIt(AlloyProcessingParamLazy param) {
-		return new AlloyProcessingParamLazy(param.alloyCoder,  param.priority, param.tmpDirectory);
+		return new AlloyProcessingParamLazy(param.alloyCoder,  param.priority, param.tmpDirectory, param. dBConnectionInfo);
 	}
 	
 

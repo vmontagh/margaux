@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry excluding="edu/mit/csail/sdg/alloy4compiler/ast/Attr.java|edu/mit/csail/sdg/alloy4compiler/ast/Browsable.java|edu/mit/csail/sdg/alloy4compiler/ast/Command.java|edu/mit/csail/sdg/alloy4compiler/ast/CommandScope.java|edu/mit/csail/sdg/alloy4compiler/ast/Decl.java|edu/mit/csail/sdg/alloy4compiler/ast/Expr.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprBad.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprBadCall.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprBadJoin.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprBinary.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprCall.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprChoice.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprConstant.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprCustom.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprHasName.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprITE.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprLet.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprList.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprQt.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprUnary.java|edu/mit/csail/sdg/alloy4compiler/ast/ExprVar.java|edu/mit/csail/sdg/alloy4compiler/ast/Func.java|edu/mit/csail/sdg/alloy4compiler/ast/Module.java|edu/mit/csail/sdg/alloy4compiler/ast/Sig.java|edu/mit/csail/sdg/alloy4compiler/ast/Type.java|edu/mit/csail/sdg/alloy4compiler/ast/package.html|edu/mit/csail/sdg/alloy4compiler/parser/Alloy.cup|edu/mit/csail/sdg/alloy4compiler/parser/Alloy.lex|edu/mit/csail/sdg/alloy4compiler/parser/CompFilter.java|edu/mit/csail/sdg/alloy4compiler/parser/CompLexer.java|edu/mit/csail/sdg/alloy4compiler/parser/CompModule.java|edu/mit/csail/sdg/alloy4compiler/parser/CompParser.java|edu/mit/csail/sdg/alloy4compiler/parser/CompSym.java|edu/mit/csail/sdg/alloy4compiler/parser/Macro.java|edu/mit/csail/sdg/alloy4compiler/parser/generate-lexer.sh|edu/mit/csail/sdg/alloy4compiler/parser/generate-parser.sh|edu/mit/csail/sdg/alloy4compiler/parser/generate-parsing-trace-from-log.sh|edu/mit/csail/sdg/alloy4compiler/parser/package.html|edu/mit/csail/sdg/alloy4compiler/parser/test.svg|edu/mit/csail/sdg/alloy4compiler/sim/|edu/mit/csail/sdg/alloy4compiler/translator/|edu/mit/csail/sdg/gen/alloy/AlloyDependentTuplesList.java|edu/mit/csail/sdg/gen/alloy/AlloyTuples.java|edu/mit/csail/sdg/gen/alloy/AlloyTuplesList.java|edu/mit/csail/sdg/gen/alloy/AlloyTuplesTable.java|edu/mit/csail/sdg/gen/alloy/DecreasingCounter.java|edu/mit/csail/sdg/gen/alloy/FieldDependecyGroup.java|edu/mit/csail/sdg/gen/alloy/IncreasingCounter.java|edu/mit/csail/sdg/gen/alloy/PIUtil.java|edu/mit/csail/sdg/gen/alloy/Transferer.java|edu/mit/csail/sdg/gen/alloy/UniqObjectGenerator.java|edu/mit/csail/sdg/gen/alloy/UniqObjectGeneratorUsingKK.java|edu/mit/csail/sdg/gen/alloy/UniqObjectGeneratorUsingSAT.java" including="edu/|edu/mit/csail/sdg/alloy4compiler/parser/CompUtil.java" kind="src" path="src"/>
 	<classpathentry kind="lib" path="/lib-sdg/jars-external/sat4j.jar"/>
 	<classpathentry kind="lib" path="lib/apple-osx-ui.jar"/>
@@ -8,7 +7,6 @@
 	<classpathentry kind="lib" path="/lib-sdg/jars-sdg/kodkod-int-overflow.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="/Users/vajih/Documents/workspace-git/debugger-experiment/lib/alloy4.2.jar"/>
-	<classpathentry kind="lib" path="/lib-sdg/jars-external/rt.jar"/>
 	<classpathentry kind="lib" path="/lib-sdg/jars-external/functionaljava-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
 	<classpathentry kind="lib" path="lib/reflections-0.10-SNAPSHOT-jar-with-dependencies.jar"/>
@@ -16,5 +14,7 @@
 	<classpathentry kind="lib" path="lib/mchange-commons-java-0.2.10.jar"/>
 	<classpathentry kind="lib" path="lib/sqlite-jdbc-3.8.10.1.jar"/>
 	<classpathentry kind="lib" path="lib/h2-1.4.187.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.36-bin.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/Home"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -115,6 +115,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 		try {
 			//take a request, if something is in the queue. Otherwise the thread parks here.
 			e = queue.take();
+
 		} catch (InterruptedException e1) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The command queue is interrupted.", e1);
 			throw e1;

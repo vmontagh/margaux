@@ -1,15 +1,16 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
@@ -24,15 +25,18 @@ public class TemporalAnalyzerRunner {
 	final static int AlloyFeederBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_buffer_size")); 
 	final static int AlloyFeederBackLogBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_backlog_buffer_size")); 
 
+
 	protected final static Logger logger = Logger.getLogger(TemporalAnalyzerRunner.class.getName()+"--"+Thread.currentThread().getName());
 
 	ProcessesManager manager;
+	DBConnectionInfo dbConnectionInfo;
 	ThreadDelayToBeMonitored feeder;
 	ThreadDelayToBeMonitored monitor;
 	ThreadDelayToBeMonitored propGenerator;
+	
 
 	List<ThreadDelayToBeMonitored> monitoredThreads = new LinkedList<>();
-	
+
 	//Thread feederThread;
 	//Thread monitorThread;
 	//Thread timeoutMonitorThread;
@@ -47,6 +51,11 @@ public class TemporalAnalyzerRunner {
 		return self;
 	}
 
+	public final DBConnectionInfo getDefaultConnectionInfo(){
+		return dbConnectionInfo;
+	}
+
+
 	@SuppressWarnings("unchecked")
 	public void start() throws Exception{
 		manager = new ProcessesManager(proccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);
@@ -60,9 +69,9 @@ public class TemporalAnalyzerRunner {
 		monitoredThreads.add(feeder);
 		monitoredThreads.add(monitor);
 		monitoredThreads.add(propGenerator);
-		
+
 		monitor.startThread();
-		
+
 		manager.addAllProcesses();
 		//manager.activateAllProesses();
 
@@ -70,6 +79,9 @@ public class TemporalAnalyzerRunner {
 		feeder.changePriority(Thread.MAX_PRIORITY);
 
 		propGenerator.startThread();
+		
+		dbConnectionInfo = DBLogger.createConfiguredSetuperObject(new MySQLDBConnectionPool(Compressor.EMPTY_DBCONNECTION)).makeNewConfiguredDatabaseLog();
+		
 	}
 
 
@@ -85,11 +97,11 @@ public class TemporalAnalyzerRunner {
 			Thread.sleep(20000);
 			sb.append("["+Thread.currentThread().getName()+"]" + "Main is alive....\n");
 			TemporalAnalyzerRunner.getInstance().monitoredThreads.stream().forEach(m->sb.append(m.getStatus()).append("\n"));
-			
+
 			System.out.println(sb);
 			logger.warning(sb.toString());
 			sb.delete(0, sb.length()-1);
-			
+
 			Thread.currentThread().yield();
 			System.gc();
 		}

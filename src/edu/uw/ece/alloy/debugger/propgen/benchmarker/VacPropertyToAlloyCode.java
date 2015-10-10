@@ -1,9 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import java.io.File;
 import java.util.List;
 
-import edu.mit.csail.sdg.alloy4.Pair;
 import edu.uw.ece.alloy.Compressor;
 
 public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
@@ -63,7 +61,7 @@ public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
 		return "and";
 	}
 
-	String generateAlloyCode(){
+	protected String generateAlloyCode(){
 		String source = "";
 
 		source += generatePrepend();

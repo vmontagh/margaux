@@ -5,9 +5,13 @@ import java.sql.SQLException;
 
 public class SQLiteDBConnectionPool extends DBConnectionPool {
 
-	public SQLiteDBConnectionPool(String url) {
-		super(url);
+
+
+	protected SQLiteDBConnectionPool(DBConnectionInfo dBConnectionInfo) {
+		super(dBConnectionInfo);
 	}
+
+
 
 	@Override
 	protected String getDriverName() {
@@ -20,5 +24,24 @@ public class SQLiteDBConnectionPool extends DBConnectionPool {
 	protected String getJDBCName() {
 		return "sqlite";
 	}
+
+
+
+	@Override
+	public DBConnectionPool createIt(DBConnectionInfo dBConnectionInfo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+	@Override
+	public DBConnectionPool createIt(DBConnectionInfo dBConnectionInfo,
+			int poolSizeIncrement, int maxPoolSize) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 	
 }

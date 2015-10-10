@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.After;
@@ -17,10 +18,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazy;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.Dependency;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.IffPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.VacPropertyToAlloyCode;
@@ -267,4 +271,154 @@ public class TriplePropsTester {
 		}
 		
 	}
+	
+	
+	@Test
+	public void test_generate_all_properties_csv() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, Err{
+		
+		System.out.println(builder.getAllPropertiesCSV());
+		String csvNameProps = builder.getAllPropertiesCSV().stream().collect(Collectors.joining("\n"));
+		csvNameProps = csvNameProps.replaceAll("Ord", "Order");
+		csvNameProps = csvNameProps.replaceAll("Sz", "Size");
+		csvNameProps = csvNameProps.replaceAll("Glbl", "Global");
+		csvNameProps = csvNameProps.replaceAll("Sd", "Side");
+		csvNameProps = csvNameProps.replaceAll("Empt", "Empty");
+		csvNameProps = csvNameProps.replaceAll("Shrnk", "Shrink");
+		csvNameProps = csvNameProps.replaceAll("Grwt", "Growth");
+		csvNameProps = csvNameProps.replaceAll("Lcl", "Local");
+		csvNameProps = csvNameProps.replaceAll("Mdl", "Middle");
+		csvNameProps = csvNameProps.replaceAll("Non", "None");
+		csvNameProps = csvNameProps.replaceAll("Strt", "Start");
+		csvNameProps = csvNameProps.replaceAll("Strc", "Strict");
+		csvNameProps = csvNameProps.replaceAll("Incrs", "Increase");
+		csvNameProps = csvNameProps.replaceAll("Dcrs", "Decrease");
+		csvNameProps = csvNameProps.replaceAll("NChng", "NoChange");
+		
+		
+		Util.writeAll("/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/props_detail.csv", csvNameProps);
+		
+	}
+	
+	
+	
+	//Example in the models paper
+	@Test
+	public void test_ExpandHeadOfRight_MiddleStatic() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		
+		Sd side = builder.createSideInstance(SdEnd.class);
+		Lclty local = builder.createLocalityInstance(Lcl.class, side);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
+		SzPrpty size = builder.createSizeInstance(SzGrwt.class, local, empty);
+		Ord order = builder.createOrderInstance(OrdIncrs.class, size);
+				
+		System.out.println(order.generateProp());
+		System.out.println(order.genParametesCall());
+		
+	}
+	
+	//Example in the models paper
+	@Test
+	public void test_ContracttTaillOfRight_MiddleStatic() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		
+		Sd side = builder.createSideInstance(SdEnd.class);
+		Lclty local = builder.createLocalityInstance(Lcl.class, side);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
+		SzPrpty size = builder.createSizeInstance(SzShrnkStrc.class, local, empty);
+		Ord order = builder.createOrderInstance(OrdDcrs.class, size);
+				
+		System.out.println(order.generateProp());
+		
+		System.out.println(order.genParametesCall());
+		
+	}
+	
+	//Example in the models paper
+	@Test
+	public void test_ContracttMiddle_LastLeftEmpty() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		
+		Sd side = builder.createSideInstance(SdMdl.class);
+		Lclty local = builder.createLocalityInstance(Glbl.class, side);
+		Emptnes empty = builder.createEmptinessInstance(EmptEnd.class);
+		SzPrpty size = builder.createSizeInstance(SzShrnkStrc.class, local, empty);
+				
+		System.out.println(size.generateProp());
+		System.out.println(size.genParametesCall());
+
+		
+	}
+	
+	//Example in the models paper
+	@Test
+	public void test_MutateHeadOfMiddle_RightStatic() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		//OrderDecease_SizeNoChange_Global_SideEnd_EmptyNone_
+		Sd side = builder.createSideInstance(SdEnd.class);
+		Lclty local = builder.createLocalityInstance(Glbl.class, side);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
+		SzPrpty size = builder.createSizeInstance(SzNChng.class, local, empty);
+		Ord order = builder.createOrderInstance(OrdDcrs.class, size);
+				
+		System.out.println(order.generateProp());
+		System.out.println(order.genParametesCall());
+
+		
+	}
+	
+	
+	//Example in the models paper
+	@Test
+	public void test_OrdIncrsStrc_SzNChng_Lcl_SdEnd_EmptNon_IFF_OrdDcrsStrc_SzNChng_Lcl_SdEnd_EmptNon_() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		//OrderDecease_SizeNoChange_Global_SideEnd_EmptyNone_
+		Sd side = builder.createSideInstance(SdEnd.class);
+		Lclty local = builder.createLocalityInstance(Lcl.class, side);
+		Emptnes empty = builder.createEmptinessInstance(EmptNon.class);
+		SzPrpty size = builder.createSizeInstance(SzNChng.class, local, empty);
+		Ord order1 = builder.createOrderInstance(OrdDcrsStrc.class, size);
+
+		Ord order2 = builder.createOrderInstance(OrdIncrsStrc.class, size);
+
+		
+		String predBodyA = order1.generateProp();
+		String predBodyB = order2.generateProp();
+		
+		String predCallA = order1.genPredCall();
+		String predCallB = order2.genPredCall();
+		
+		String predNameA = order1.genPredName();
+		String predNameB = order2.genPredName();
+		
+		File tempDirectory4Test = new File("tmp/testing");
+
+		
+		final List<Dependency> dependencies = new LinkedList<Dependency>(); 
+		dependencies.add(Dependency.EMPTY_DEPENDENCY.createIt(new File(TemporalPropertiesGenerator.relationalPropModuleOriginal.getName() ), 
+				Utils.readFile(TemporalPropertiesGenerator.relationalPropModuleOriginal.getAbsolutePath())));
+		
+		final String SigDecl = "sig M,E{}\nsig S{r:M->E}";
+		final String ModuleS = "open util/ordering [S] as so";
+		final String ModuleM = "open util/ordering [M] as mo";
+		final String ModuleE = "open util/ordering [E] as eo";
+		final String RelationProps = "open relational_properties";
+		final String header =  ModuleS + '\n' + ModuleM + '\n' + ModuleE + '\n' + RelationProps +'\n'+ SigDecl + '\n';
+		final String scope = " for 5";
+		
+		AlloyProcessingParam paramCreator = AlloyProcessingParamLazy.EMPTY_PARAM;		
+		
+		PropertyToAlloyCode creator = IffPropertyToAlloyCode.EMPTY_CONVERTOR.createIt(
+				predBodyA, predBodyB, 
+				predCallA, predCallB, 
+				predNameA, predNameB, dependencies, paramCreator, header, scope//[tmpDirectory], tempDirectory4Test
+				);
+		
+		AlloyProcessingParam param = creator.generate();
+		
+		try {
+			param.changeTmpDirectory(tempDirectory4Test).dumpAll();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+	}
+	
 }

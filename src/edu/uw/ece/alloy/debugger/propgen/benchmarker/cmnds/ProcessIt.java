@@ -10,6 +10,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.TemporalAnalyzerRunner;
 
 public class ProcessIt extends RemoteCommand {
 
@@ -36,6 +37,7 @@ public class ProcessIt extends RemoteCommand {
 			if(Configuration.IsInDeubbungMode) logger.fine("["+Thread.currentThread().getName()+"] " + "Received a message: "+param);
 
 			AlloyProcessingParam param = this.param.prepareToUse();
+			//tmpDirectory is sent at the client side.
 			param = param.changeTmpDirectory(AlloyProcessRunner.getInstance().tmpDirectory);
 			param = param.dumpAll();
 			//System.out.println(param.srcPath());
@@ -70,7 +72,7 @@ public class ProcessIt extends RemoteCommand {
 		try {
 			//Encoding the param.
 			if(Configuration.IsInDeubbungMode) logger.fine("["+Thread.currentThread().getName()+"] " + "Sending a message: "+param);
-			final AlloyProcessingParam param = this.param.prepareToSend();
+			final AlloyProcessingParam param = this.param.prepareToSend().changeDBConnectionInfo(TemporalAnalyzerRunner.getInstance().getDefaultConnectionInfo());
 			(new ProcessIt(param, this.processesManager) ).sendMe(remoteAddres);
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "prepared and sent: "+param);
 		} catch (Exception e) {

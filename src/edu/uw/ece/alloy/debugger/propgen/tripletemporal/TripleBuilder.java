@@ -4,9 +4,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
@@ -201,27 +204,67 @@ public class TripleBuilder {
 
 
 
+	public Map<String, Set<String>> getAllFeatureNames(){
+		
+		final Map<String, Set<String>> result = new TreeMap<>();
+		
+		getAllProperties(result);
+		
+		return Collections.unmodifiableMap(result);
+	}
+	
+	
+	
 	/**
 	 * 
 	 * @return output is the list of generated predicates. (predicateName->(PredicateCAll, PredicateFulBody))
 	 */
 	public Map<String, Pair<String,String>> getAllProperties(){
+		return getAllProperties(new TreeMap<String, Set<String>>());
+	}
+	
+	public Map<String, Pair<String,String>> getAllProperties(Map<String, Set<String>> featureNames){
 
 		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(this);
-
 
 		//A map from each call to the actual pred
 		Map<String, Pair<String, String>> preds = new TreeMap<>();
 		Set<String> revComposite = new HashSet<String>();
 
 		for(Sd side: iterators. new SideIterator(this)){
+			
+			if(!featureNames.containsKey(Sd.class.getSimpleName()))
+				featureNames.put(Sd.class.getSimpleName(), new TreeSet<String>());
+			featureNames.get(Sd.class.getSimpleName()).add(side.getClass().getSimpleName());
+			
 			for(Lclty local: iterators. new LocalityIterator(this, side)){
+				
+				if(!featureNames.containsKey(Lclty.class.getSimpleName()))
+					featureNames.put(Lclty.class.getSimpleName(), new TreeSet<String>());
+				featureNames.get(Lclty.class.getSimpleName()).add(local.getClass().getSimpleName());
+
+				
 				for(Emptnes empty: iterators. new EmptinessIterator(this)){
+					
+					if(!featureNames.containsKey(Emptnes.class.getSimpleName()))
+						featureNames.put(Emptnes.class.getSimpleName(), new TreeSet<String>());
+					featureNames.get(Emptnes.class.getSimpleName()).add(empty.getClass().getSimpleName());
+					
 					for(SzPrpty size: iterators. new SizeIterator(this, local, empty)){
+						
+						if(!featureNames.containsKey(SzPrpty.class.getSimpleName()))
+							featureNames.put(SzPrpty.class.getSimpleName(), new TreeSet<String>());
+						featureNames.get(SzPrpty.class.getSimpleName()).add(size.getClass().getSimpleName());
+						
 						if(!size.isConsistent()) continue;
 						preds.put(size.genPredName(), new Pair(size.genPredCall(),  size.generateProp()));
 
 						for(Ord order: iterators. new OrderIterator(this, size)){
+							
+							if(!featureNames.containsKey(Ord.class.getSimpleName()))
+								featureNames.put(Ord.class.getSimpleName(), new TreeSet<String>());
+							featureNames.get(Ord.class.getSimpleName()).add(order.getClass().getSimpleName());
+							
 							if(!order.isConsistent()) continue;
 							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
 							if(IncludeCompostions){
@@ -279,6 +322,99 @@ public class TripleBuilder {
 		//System.exit(-1);
 
 		return Collections.unmodifiableMap(preds);
+	}
+	
+	/**
+	 * 
+	 * @return output is the list of generated predicates. (predicateName->(PredicateCAll, PredicateFulBody))
+	 */
+	public List<String> getAllPropertiesCSV(){
+
+		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(this);
+
+
+		//A map from each call to the actual pred
+		List<String> preds = new LinkedList<>();
+		
+		
+		Set<String> revComposite = new HashSet<String>();
+
+		for(Sd side: iterators. new SideIterator(this)){
+			for(Lclty local: iterators. new LocalityIterator(this, side)){
+				for(Emptnes empty: iterators. new EmptinessIterator(this)){
+					for(SzPrpty size: iterators. new SizeIterator(this, local, empty)){
+						if(!size.isConsistent()) continue;
+						final String sizeCSV =   
+												"," +size.getClass().getSimpleName() 
+												+"," + size.growthLocality.getClass().getSimpleName()
+												+"," + size.growthLocality.side.getClass().getSimpleName()
+												+"," + size.empty.getClass().getSimpleName();
+						preds.add( sizeCSV +"," + size.genPredName());
+
+						for(Ord order: iterators. new OrderIterator(this, size)){
+							if(!order.isConsistent()) continue;
+							
+							final String orderCSV = order.getClass().getSimpleName()
+													+ sizeCSV;
+							preds.add( orderCSV + ","+ order.genPredName() );
+							
+							if(IncludeCompostions){
+								//Composite structures for two size and orders
+								for(SzPrpty size2: iterators. new SizeIterator(this, local, empty)){
+									if(!size2.isConsistent()) continue;
+
+									//record the reverse in advance
+									for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size2, size)){
+										if(!compositeSizes.isConsistent()) continue;
+										//Add to the list here
+										revComposite.add(compositeSizes.genPredName());
+									}
+									for(CmpstSz compositeSizes: iterators. new CompositeSizesIterator(this, size, size2)){
+										if(!compositeSizes.isConsistent()) continue;
+										if(revComposite.contains(compositeSizes.genPredName())) break;
+										//Add to the list here
+										//preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
+										//make the CSV call here
+									}
+
+									for(Ord order2: iterators. new OrderIterator(this, size2)){
+										if(!order2.isConsistent()) continue;
+
+										//record the reverse in advance
+										for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order2, order)){
+											if(!compositeOrders.isConsistent()) continue;
+											//Add to the list here
+											revComposite.add(compositeOrders.genPredName());
+										}
+
+										for(CmpstOrds compositeOrders: iterators. new CompositeOrdersIterator(this, order, order2)){
+											if(!compositeOrders.isConsistent()) continue;
+											if(revComposite.contains(compositeOrders.genPredName())) break;
+											//Add to the list here
+											//preds.put(compositeOrders.genPredName(), new Pair(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
+											//make the csv call here
+										}
+
+									}
+
+								}
+							}
+						}
+						//break;
+
+					}
+					//break;
+				}
+				//break;
+			}
+			//break;
+		}
+
+		//System.out.println(preds.size());
+
+		//System.exit(-1);
+
+		return Collections.unmodifiableList(preds);
 	}
 
 }

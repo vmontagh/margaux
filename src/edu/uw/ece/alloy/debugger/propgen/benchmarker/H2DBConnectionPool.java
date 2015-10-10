@@ -4,7 +4,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 public class H2DBConnectionPool extends DBConnectionPool {
 
 	public H2DBConnectionPool(String url) {
-		super("tcp://localhost/"+url/*+";MV_STORE=TRUE;"*/+";MVCC=TRUE;");
+		super( new DBConnectionInfo( "tcp://localhost/"+url/*+";MV_STORE=TRUE;"*/+";MVCC=TRUE;","",""));
 	}
 
 
@@ -19,5 +19,23 @@ public class H2DBConnectionPool extends DBConnectionPool {
 	protected String getJDBCName() {
 		return "h2";
 	}
+
+
+	@Override
+	public DBConnectionPool createIt(DBConnectionInfo dBConnectionInfo,
+			int poolSizeIncrement, int maxPoolSize) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public DBConnectionPool createIt(DBConnectionInfo dBConnectionInfo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
 
 }

@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,8 +24,11 @@ import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazyCompressing;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionPool;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.H2DBConnectionPool;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.SQLiteDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AlloyProcessed;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
@@ -114,11 +119,6 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] " +"");
 	}
 
-
-	protected String convertSATResult(AlloyProcessedResult result) {
-		return result.isFailed() ? "F": result.isTimedout() ? "T" : result.sat == 1 ? "S" : result.sat == -1 ? "U": "N";
-	}
-
 	public void doAction(final AlloyProcessedResult result) throws InterruptedException{
 		try {
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Post process: "+result);
@@ -184,7 +184,7 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 		protected void action(AlloyProcessedResult result) {
 
 			String content = result.asRecordHeader()+",propa,propb,op,sat" +"\n" + result.asRecord() + 
-					","+result.params.alloyCoder.predNameA+","+result.params.alloyCoder.predNameB+","+result.params.alloyCoder.commandOperator()+","+convertSATResult(result);
+					","+result.params.alloyCoder.predNameA+","+result.params.alloyCoder.predNameB+","+result.params.alloyCoder.commandOperator()+","+DBLogger. convertSATResult(result);
 
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Start wirint on file: "+result+"   "+content);
 
@@ -241,91 +241,28 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 
 	public static class DBWriter extends PostProcess{
 
-		final public static String RECORDS_SCHEMA = "CREATE TABLE RECORDS(id INTEGER PRIMARY KEY AUTO_INCREMENT, result TEXT, params TEXT, date NUMERIC, prop1 TEXT, prop2 TEXT, op char(20), sat char(2), recordTime NUMERIC, recordsTimeConfirm NUMERIC, srcPath TEXT, destPath TEXT)";
-		final public static String RECORDS_INDEX = "CREATE INDEX IDX_RECORDS_SAT ON RECORDS(SAT)";
-		final public static String SQL_INSERT_STMT = "INSERT INTO records(result, params, date, prop1, prop2, op, sat, recordTime, recordsTimeConfirm, srcPath, destPath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		final public static String SQL_DELETE_STMT = "DELETE FROM records WHERE ID=?";
+		//A map from url, that sent from server, to a connection pool.
+		final Map<DBConnectionInfo, DBConnectionPool> connections = new HashMap<>();
+		
+		protected DBConnectionPool getConnection(final DBConnectionInfo dBConnectionInfo) throws SQLException{
+			if( !connections.containsKey(dBConnectionInfo) ){
+				connections.put(dBConnectionInfo, new MySQLDBConnectionPool(dBConnectionInfo));
+			}
 
-		final public static DBConnectionPool dBConnection = new H2DBConnectionPool(Configuration.getProp("db_file_root")+"/"+Configuration.getProp("db_file_name")
-				.replace("%t",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-nnnnnnnnn")))
-				.replace("%p", AlloyProcessRunner.getInstance().PID.getHostString()+"-"+AlloyProcessRunner.getInstance().PID.getPort())
-				);
-
-		public DBWriter(){
-			super();
+			return connections.get(dBConnectionInfo);
 		}
-
-		public DBWriter(PostProcess nextAction){
-			super(nextAction);
-		}
-
-		static{
-			//Create an appropriate table in the database. 
-			try(Connection connection  = dBConnection.getConnection()){
-				connection.setAutoCommit(true);
-				try(Statement  statement = connection.createStatement()){
-					try(ResultSet rs = statement.executeQuery("SELECT * FROM information_schema.tables WHERE table_name='RECORDS'")){
-						if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Trying to drop the old database");
-						if(rs.next() && Boolean.valueOf(Configuration.getProp("db_renew"))){//There exists a table called records, so lets drop it first and create a new one.
-							if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"The old database is dropped.");
-							statement.execute("drop table if exists records");
-							statement.execute(RECORDS_SCHEMA);
-							statement.execute(RECORDS_INDEX);
-							statement.close();
-						}else if(!rs.next()){
-							statement.execute(RECORDS_SCHEMA);
-							statement.execute(RECORDS_INDEX);
-							statement.close();
-						}
-					}
-
-				}
-				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Database is created as: "+connection);
-				connection.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] " +"Failed on creating database:" , e);
-				//throw new RuntimeException("An exception happened while storing the result in the database: "+e.toString());
-			}		
-		}
-
 
 		@Override
 		protected void action(AlloyProcessedResult result)  {
 
-			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Inserting a record in the database: "+result);
-			try(Connection connection  = dBConnection.getConnection()){
-				connection.setAutoCommit(true);
-				try(Statement  statement = connection.createStatement()){
-
-					String SATResult = convertSATResult(result);
-
-					//Extract properties and operator
-					PreparedStatement preparedSQLStmt = connection.prepareStatement(SQL_INSERT_STMT);
-
-					preparedSQLStmt.setString(1, result.asRecord());
-					preparedSQLStmt.setString(2, result.params.content());
-					preparedSQLStmt.setInt(3, -1);
-					preparedSQLStmt.setString(4, result.params.alloyCoder.predNameA);
-					preparedSQLStmt.setString(5, result.params.alloyCoder.predNameB);
-					preparedSQLStmt.setString(6, result.params.alloyCoder.srcNameOperator());
-					preparedSQLStmt.setString(7, SATResult);
-					preparedSQLStmt.setLong(8, System.currentTimeMillis() /*LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))*/);
-					preparedSQLStmt.setInt(9, -1);
-					preparedSQLStmt.setString(10, result.params.srcPath().getName());
-					preparedSQLStmt.setString(11, result.params.destPath().getName());
-
-					//System.out.println(preparedSQLStmt);
-
-					preparedSQLStmt.executeUpdate();
-				}
-
-				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"The records is inserted in the DB: "+result);
+			try {
+				(DBLogger.createDatabaseOperationsObject(getConnection(result.params.dBConnectionInfo)) ).insertResult(result,
+						/* AlloyProcessRunner.getInstance().PID.toString()*/
+						"1");
 			} catch (SQLException e) {
-				e.printStackTrace();
-				logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"] " +"Failed on storing the result in DB: "+result, e);
-				//throw new RuntimeException("An exception happened while storing the result in the database: "+e.toString());
-			}		
+				logger.severe("["+Thread.currentThread().getName()+"] " +" Error happened in insertin the result into the database."+e);
+			}
+					
 		}
 
 
