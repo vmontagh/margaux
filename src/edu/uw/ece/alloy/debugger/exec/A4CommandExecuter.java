@@ -5,7 +5,10 @@ package edu.uw.ece.alloy.debugger.exec;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,7 +71,7 @@ public class A4CommandExecuter {
 
 	public Module  parseOneModule(final String content,final A4Reporter rep) throws Err{
 		
-		return CompUtil.parseOneModule(rep, content);
+		return CompUtil.parseOneModule(/*rep,*/ content);
 	}
 	
 	
@@ -92,16 +95,17 @@ public class A4CommandExecuter {
 		}
 		
 	}
-	
-	public void run(String[] args,A4Reporter rep) throws Err{
-
 		
+	public Map<Command,A4Solution> runThenGetAnswers(String[] args,A4Reporter rep)throws Err{
 		// Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
 
+		Map<Command, A4Solution> result = new HashMap<>();
+		
 		for(String filename:args) {
 			// Parse+typecheck the model
-			if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
+			if(Configuration.IsInDeubbungMode) 
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
 			
 			CompModule world = (CompModule) parse(  filename, rep);
 
@@ -115,19 +119,20 @@ public class A4CommandExecuter {
 
 
 				// Execute the command
-				if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
-				long time = System.currentTimeMillis();
-				PrintWriter out=null;
+				if(Configuration.IsInDeubbungMode) 
+					logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
 
-				//LoggerUtil.Detaileddebug("The world before uniqSigGenerator is: %s", world.getUniqueFieldFact(field)niqueFact(sigLabel));
-				time = System.currentTimeMillis();
-
-				A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-
+				result.put(command, TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options));
 			}
 		}
-
-
+		
+		return Collections.unmodifiableMap(result);
+	}
+	
+	
+	
+	public void run(String[] args,A4Reporter rep) throws Err{
+		runThenGetAnswers(args, rep);
 	}
 
 	private static void copyFromJAR() {

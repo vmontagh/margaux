@@ -11,11 +11,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
+import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Func;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
+import edu.uw.ece.alloy.util.Utils;
 
 public class PropertyCallBuilderTest {
 
@@ -49,8 +51,6 @@ public class PropertyCallBuilderTest {
 
 		world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, null,
 				AlloyTmpTestPath);
-		
-		
 	}
 
 	@AfterClass
@@ -86,22 +86,55 @@ public class PropertyCallBuilderTest {
 
 	@Test
 	public void testMakeAllTernaryProperties() {
-		PropertyCallBuilder pcb = new PropertyCallBuilder();
+		final PropertyCallBuilder pcb = new PropertyCallBuilder();
+		final List<Field> fields = world.getAllReachableSigs().stream()
+				.map(a -> a.getFields().makeCopy()).filter(a -> a.size() > 0)
+				.flatMap(a -> a.stream()).collect(Collectors.toList());
+
+		System.out.println(PropertyDeclaration.findOrderingName(fields.get(1), 1,
+				world.getOpens()));
+
+		for (Func func : world.getAllFunc()) {
+			try {
+				pcb.addPropertyDeclration(func);
+			} catch (IllegalArgumentException ia) {
+			}
+		}
+
+		System.out.println(fields.get(1));
+
+		System.out
+				.println(pcb.makeAllTernaryProperties(fields.get(1), world.getOpens()));
+		
+		System.out.println(Utils.readFile(AlloyTmpTestPath));
+		
+	}
+
+	@Test
+	public void testSelfTagged() throws Err {
+		final PropertyCallBuilder pcb = new PropertyCallBuilder();
+		final CompModule world_prop = CompUtil.parseEverything_fromFile(
+				A4Reporter.NOP, null,
+				"/Users/vajih/Documents/workspace-git/alloy/models/debugger/"
+						+ "selftagged/relational_properties_tagged.als");
+
+		for (Func func : world_prop.getAllFunc()) {
+			try {
+				pcb.addPropertyDeclration(func);
+			} catch (IllegalArgumentException ia) {
+			}
+		}
+		
 		final List<Field> fields = world.getAllReachableSigs().stream()
 				.map(a -> a.getFields().makeCopy()).filter(a -> a.size() > 0)
 				.flatMap(a -> a.stream()).collect(Collectors.toList());
 		
-		System.out.println( PropertyDeclaration.findOrderingName(fields.get(1), 1, world.getOpens()) );
-
-		for(Func func: world.getAllFunc())
-			try{
-				pcb.addPropertyDeclration(func);
-			}catch(IllegalArgumentException ia){}
+		System.out
+		.println(pcb.makeAllTernaryProperties(fields.get(1), world.getOpens()));
 		
-		System.out.println(fields.get(1));
-		
-		System.out.println( pcb.makeAllTernaryProperties(fields.get(1), world.getOpens()));
+		System.out
+		.println(pcb.makeAllBinaryProperties(fields.get(0)));
+				
 	}
 
-	
 }

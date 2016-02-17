@@ -1,8 +1,6 @@
 package edu.uw.ece.alloy.debugger;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -55,8 +53,6 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprList x) throws Err {
-
-
 		for(Expr arg: x.args){
 			visitThis(arg);
 		}
@@ -86,9 +82,7 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 	public Expr visit(ExprITE x) throws Err {
 
 		visitThis(x.cond);
-
 		visitThis(x.left);
-
 		visitThis(x.right);
 
 		return x;
@@ -98,7 +92,6 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 	public Expr visit(ExprLet x) throws Err {
 
 		visitThis(x.expr);
-		
 		visitThis(x.sub);
 
 		return x;
@@ -143,7 +136,6 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 		return x;
 	}
 
-	@Override
 	public Expr visit(Bounds bounds) throws Err {
 		return null;
 	}

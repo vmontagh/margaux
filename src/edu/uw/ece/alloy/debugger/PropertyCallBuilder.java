@@ -55,12 +55,13 @@ public class PropertyCallBuilder {
 
 		for (PropertyDeclaration pd : getAllBinaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
-			String params = relationName;
+			String params = relationName.replace("this/", "");
+			
 			if (pd.hasLeft()) {
-				params += leftName;
+				params += ", " +leftName.replace("this/", "");
 			}
 			if (pd.hasRight()) {
-				params += rightName;
+				params += ", " +rightName.replace("this/", "");
 			}
 			result.add(String.format(PROPERTY_CALL_FORMAT, propertyName, params));
 		}
@@ -122,7 +123,6 @@ public class PropertyCallBuilder {
 						params += "," + orderName + "/next";
 						params += "," + orderName + "/first";
 					}
-					
 				}
 			}
 			if(!notOrdered)

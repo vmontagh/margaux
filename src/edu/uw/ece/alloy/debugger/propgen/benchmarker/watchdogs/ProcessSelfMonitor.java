@@ -2,19 +2,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.h2.mvstore.ConcurrentArrayList;
-
-import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.FileWrite;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Suicided;
 
 public class ProcessSelfMonitor implements Runnable {
 
