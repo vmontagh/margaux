@@ -67,7 +67,11 @@ run notTreeInstance for 0 but exactly 3 Node
 * Node.(left+~left+right+~right) in n
 **/
 pred includeInInstance[n: set Node, right: Node->Node, left: Node->Node]{
-	Node.(left+~left+right+~right) in n
+	// Node.(left+~left+right+~right) in n
+	Node.left in n
+	left.Node in n
+	Node.right in n
+	right.Node in n
 }
 
 /** W.r.t the defnition of left and right
