@@ -109,7 +109,9 @@ pred includeInstance[	bb: set BirthdayBook,
 }
 
 pred structuralConstraint[bb: set BirthdayBook, known: BirthdayBook -> Name, date: BirthdayBook -> Name -> Date] {
-	all bb': bb |/* also need to check if bb.known is a set of Names */ #(bb'.known) >= 1 implies  one (bb'.known).(bb'.date)
+	// all bb': bb |/* also need to check if bb.known is a set of Names */ #(bb'.known) >= 1 implies  one (bb'.known).(bb'.date)
+	// all bb': bb |/* also need to check if bb.known is a set of Names */ (some n : Name | n in bb'.known) => one (bb'.known).(bb'.date)
+	all bb' : bb | bb'.date in Name set -> one Date
 }
 
 pred isInstance[	bb: set BirthdayBook, 
@@ -118,7 +120,7 @@ pred isInstance[	bb: set BirthdayBook,
 				known: BirthdayBook -> Name, 
 				date: BirthdayBook -> Name -> Date] {
 
-	includeInstance[bb, n, d, known, date]
+	// includeInstance[bb, n, d, known, date]
 	structuralConstraint[bb, known, date]
 }
 
