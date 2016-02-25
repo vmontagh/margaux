@@ -36,7 +36,7 @@ pred isListInstance[nodes: set Node, next1: Node -> Node] {
 * List2 = List1 + delta
 */
 pred isDiffInstance[n1: set Node, next1: Node -> Node, 
-				n2: set Node, next2: Node -> Node
+				n2: set Node, next2: Node -> Node,
 				diffNodes: set Node, diffNext: Node -> Node] {
 	
 	isInstance[n1, next1]
@@ -45,13 +45,6 @@ pred isDiffInstance[n1: set Node, next1: Node -> Node,
 	n1 != n2 implies ((n1 = n2 + diffNodes) or (n2 = n1 + diffNodes)) else no diffNodes
 	next1 != next2 implies ((next1 = next2 + diffNext) or (next2 = next1 + diffNext)) else no diffNext
 	
-}
-
-pred isSubSet[n1: set Node, next1: Node -> Node, 
-				n2: set Node, next2: Node -> Node] {
-
-	(n1 in n2 and n2 not in n1) and 
-	(next1 in next2 and next2 not in next1)
 }
 
 run {

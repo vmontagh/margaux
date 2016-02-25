@@ -59,7 +59,7 @@ assert DelIsUndo {
     }
 
 check AddWorks for 3 but 2 BirthdayBook expect 0
-check DelIsUndo2 for 3 but 3 BirthdayBook expect 1
+check DelIsUndo2 for 3 but 3 BirthdayBook expect 0
 
 pred BusyDay [bb: BirthdayBook, d: Date]{
     some cards: set Name | Remind [bb,d,cards] && !lone cards
@@ -108,10 +108,24 @@ pred includeInstance[	bb: set BirthdayBook,
 	(date.Date).Name in bb
 }
 
-pred structuralConstraint[bb: set BirthdayBook, known: BirthdayBook -> Name, date: BirthdayBook -> Name -> Date] {
-	// all bb': bb |/* also need to check if bb.known is a set of Names */ #(bb'.known) >= 1 implies  one (bb'.known).(bb'.date)
+pred structuralConstraint[	bb: set BirthdayBook, 
+						n: set Name, 
+						d: set Date, 
+						known: BirthdayBook -> Name, 
+						date: BirthdayBook -> Name -> Date] {
+	// all bb': bb |/* also need to  if bb.known is a set of Names */ #(bb'.known) >= 1 implies  one (bb'.known).(bb'.date)
 	// all bb': bb |/* also need to check if bb.known is a set of Names */ (some n : Name | n in bb'.known) => one (bb'.known).(bb'.date)
-	all bb' : bb | bb'.date in Name set -> one Date
+
+	// all bb' : bb | bb'.date in Name set -> one Date
+	// date in ((bb -> set Name) -> one Date)
+	// date in bb -> (Name set -> one Date)
+	
+	known in (bb -> set n)
+	// all bb': bb | bb'.known in bb'.(bb -> set Name)
+
+	// all bb': bb | bb'.date in (bb'.known -> one d)
+	date in (known -> one d)
+
 }
 
 pred isInstance[	bb: set BirthdayBook, 
@@ -120,13 +134,72 @@ pred isInstance[	bb: set BirthdayBook,
 				known: BirthdayBook -> Name, 
 				date: BirthdayBook -> Name -> Date] {
 
-	// includeInstance[bb, n, d, known, date]
-	structuralConstraint[bb, known, date]
+	includeInstance[bb, n, d, known, date]
+	structuralConstraint[bb, n, d, known, date]
+}
+
+pred deltaBirthdayBook[bb: set BirthdayBook, bb': set BirthdayBook, bb'': set BirthdayBook] {
+	bb != bb' implies (bb'' = bb' - bb and bb'' + bb = bb') else no bb''
+}
+
+pred deltaNames[n: set Name, n': set Name, n'': set Name] {
+	n != n' implies (n'' = n' - n and n'' + n = n') else no n''
+}
+
+pred deltaDates[d: set Date, d': set Date, d'': set Date] {
+	d != d' implies (d'' = d' - d and d'' + d = d') else no d''
+}
+
+pred deltaKnown[k: BirthdayBook -> Name, k': BirthdayBook -> Name, k'': BirthdayBook -> Name] {
+	k != k' implies (k'' = k' - k and k'' + k = k') else no k''
+}
+
+pred deltaDate[d: BirthdayBook -> Name -> Date, d': BirthdayBook -> Name -> Date, d'': BirthdayBook -> Name -> Date] {
+	d != d' implies (d'' = d' - d and d'' + d = d') else no d''
+}
+
+pred findMarginalInstances[] {
+	some bb, bb', bb'': set BirthdayBook, n, n', n'': set Name, d, d', d'': set Date,
+		k, k', k'': BirthdayBook -> Name, dt, dt', dt'': BirthdayBook -> Name -> Date | {
+			(isInstance[bb, n, d, k, dt]
+			and not isInstance[bb', n', d', k', dt']
+			and deltaBirthdayBook[bb, bb', bb''] 
+			and deltaNames[n, n', n''] 
+			and deltaDates[d, d', d''] 
+			and deltaKnown[k, k', k''] 
+			and deltaDate[dt, dt', dt''])
+		and
+			all bb1, bb1', bb1'': set BirthdayBook, n1, n1', n1'': set Name, d1, d1', d1'': set Date,
+			k1, k1', k1'': BirthdayBook -> Name, dt1, dt1', dt1'': BirthdayBook -> Name -> Date | {
+				(isInstance[bb1, n1, d1, k1, dt1]
+				and not isInstance[bb1', n1', d1', k1', dt1']
+				and deltaBirthdayBook[bb1, bb1', bb1''] 
+				and deltaNames[n1, n1', n1''] 
+				and deltaDates[d1, d1', d1''] 
+				and deltaKnown[k1, k1', k1''] 
+				and deltaDate[dt1, dt1', dt1''])
+			implies
+				(
+				#bb1'' >= #bb''
+				and #n1'' >= #n''
+				and #d1'' >= #d''
+				and (no dt' or #k1'' >= #k'')
+				and (no k'' or #dt1'' >= #dt'') 
+				)
+			}
+	}
 }
 
 assert instanceChecks {
 	isInstance[BirthdayBook, Name, Date, known, date]
 }
 
-check instanceChecks for 3
+run {
+	findMarginalInstances
+	no known
+	no date
+} for 0 but exactly 3 BirthdayBook, 10 Name, 10 Date, 0..400 Int
+
+check instanceChecks for 5
+run {isInstance[BirthdayBook, Name, Date, known, date]}
 
