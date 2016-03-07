@@ -95,7 +95,41 @@ public class A4CommandExecuter {
 		}
 		
 	}
+
+	public A4Solution runThenGetAnswers(String[] args,A4Reporter rep, String commandName)throws Err{
+		A4Solution result = null;
 		
+		for(String filename:args) {
+			// Parse+typecheck the model
+			if(Configuration.IsInDeubbungMode) 
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
+			
+			CompModule world = (CompModule) parse(  filename, rep);
+
+			// Choose some default options for how you want to execute the commands
+			A4Options options = new A4Options();
+
+			options.solver = A4Options.SatSolver.SAT4J;
+			options.symmetry = 0;
+
+			for (Command command: world.getAllCommands()) {
+
+				if(!command.label.equals(commandName))
+					continue;
+				// Execute the command
+				if(Configuration.IsInDeubbungMode) 
+					logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
+
+				result = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+			}
+		}
+		
+		if (null == result)
+			throw new RuntimeException("Command name '"+commandName+"' is not found");
+		
+		return result;
+	}
+	
 	public Map<Command,A4Solution> runThenGetAnswers(String[] args,A4Reporter rep)throws Err{
 		// Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
@@ -129,7 +163,9 @@ public class A4CommandExecuter {
 		return Collections.unmodifiableMap(result);
 	}
 	
-	
+	public void run(String[] args,A4Reporter rep, String commandName) throws Err{
+		runThenGetAnswers(args, rep, commandName);
+	}
 	
 	public void run(String[] args,A4Reporter rep) throws Err{
 		runThenGetAnswers(args, rep);

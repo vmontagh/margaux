@@ -19,3 +19,17 @@ pred getNextImplications[p,p': prop]{
 pred getFinalSinksImplication[p: prop]{
 	no p.imply
 }
+
+pred getAllImplied[p,p': prop]{
+	p' in p.^imply
+}
+
+pred getAllRevImplied[p,p': prop]{
+	p' in p.^~imply
+}
+
+/*pred getAllRevImplied[p: prop]{
+	closureOnImplication.imply = p.^(~imply)
+}*/
+
+

@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,7 +15,9 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazyCompressing;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.FailedResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.InferredResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.TimeoutResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Suicided;
@@ -64,7 +67,6 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 		for (PostProcess e : postProcesses) {
 			try {
 				e.doAction(result);
-
 			} catch (InterruptedException e1) {
 				logger.severe("["+Thread.currentThread().getName()+"] " +"The post processing action <" + e
 						+ "> is interrupted on: " + result);
@@ -73,6 +75,19 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 		}
 	}
 
+	private List<AlloyProcessedResult> inferProperties(AlloyProcessedResult result){
+		List<AlloyProcessedResult> ret = new ArrayList<>();
+		
+		List<PropertyToAlloyCode> coders = result.params.alloyCoder.getInferedPropertiesCoder(result.sat == 1);
+		
+		// If coders is not empty, then something is inferred.
+		for (PropertyToAlloyCode coder: coders){
+			ret.add(InferredResult.createInferredResult(result, coder, result.sat == 1));
+		}
+		
+		return Collections.unmodifiableList(ret);
+	}
+	
 	/**
 	 * This method is called by the self monitor or any external entity to send and record a timeout.
 	 */
@@ -107,7 +122,6 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 
 		synchronized (lastProccessing) {
 			lastProccessing = queue.take();
-
 			
 			if(lastProccessing.equals(lastProccessing.EMPTY_PARAM)){
 				logger.severe("["+Thread.currentThread().getName()+"] "+"Why null?!!!");
@@ -119,14 +133,20 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 
 			AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 			try {
-
 				A4CommandExecuter.getInstance().run(
 						new String[] { lastProccessing.srcPath().getAbsolutePath() },
-						rep);
+						rep, PropertyToAlloyCode.COMMAND_BLOCK_NAME);
 
 				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);
-				runPostProcesses(rep);
+				
+				runPostProcesses(rep);				
 				processed.incrementAndGet();
+				
+				// The inferred result should be added into the logs. The log goes into file, socket, and DB.
+				for (AlloyProcessedResult inferredResult: inferProperties(rep)){
+					runPostProcesses(inferredResult);
+				}
+				
 			} catch (Err e) {
 				if(lastProccessing == null){
 					logger.severe("["+Thread.currentThread().getName()+"] " +"The parameter is null and no failed message can be sent: "
@@ -175,7 +195,6 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 				++iInterrupt;
 			}
 		}
-
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 
 public class AlloyProcessedResult extends MyReporter {
 
@@ -62,9 +63,62 @@ public class AlloyProcessedResult extends MyReporter {
 		return (this instanceof FailedResult) ;
 	}
 	
+	public boolean isInferred() {
+		return (this instanceof InferredResult) ;
+	}
 	
 	public String asRecordHeader() {
 		return "trasnalationTime,trasnalationTime,totalVaraibles,clauses,solveTime,evalTime,evalInsts,sat";
+	}
+	
+	
+	public static class InferredResult extends AlloyProcessedResult{
+
+		public InferredResult(AlloyProcessingParam params) {
+			super(params);
+			this.trasnalationTime = 0;
+			this.totalVaraibles = 0;
+			this.clauses = 0;
+			this.solveTime = 0;
+			this.evalInsts = 0;
+			this.evalTime = 0;
+			this.sat = 0;
+		}
+		
+		
+
+		public InferredResult(AlloyProcessedResult result) {
+			super(result);
+			// TODO Auto-generated constructor stub
+		}
+
+		public InferredResult(AlloyProcessingParam params, long clauses,
+				long evalInsts, long trasnalationTime, long totalVaraibles,
+				long solveTime, long evalTime, int sat) {
+			super(params, clauses, evalInsts, trasnalationTime, totalVaraibles, solveTime,
+					evalTime, sat);
+			// TODO Auto-generated constructor stub
+		}
+
+
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7694649523710787654L;
+		
+		/**
+		 * Creating a an Inferred result from another result. 
+		 * If the inferring steps are not valid, then it throws exception. 
+		 * @param inferredFrom
+		 * @param coder
+		 * @return
+		 */
+		public static InferredResult createInferredResult(AlloyProcessedResult inferredFrom, PropertyToAlloyCode coder, boolean sat){
+			return new InferredResult(inferredFrom.params.createIt(coder), 0, 0, 0, 0, 0, 0, sat ? 1 : 0); 
+		}
+		
+		
 	}
 	
 	public static class FailedResult extends AlloyProcessedResult{
@@ -76,7 +130,6 @@ public class AlloyProcessedResult extends MyReporter {
 		private static final long serialVersionUID = -8538317738030842240L;
 
 		public FailedResult(AlloyProcessingParam params) {
-			
 			this(params, "?");			
 		}
 		
@@ -95,7 +148,6 @@ public class AlloyProcessedResult extends MyReporter {
 		public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
 			return new FailedResult(params, REASON);
 		}
-
 		
 	}
 	

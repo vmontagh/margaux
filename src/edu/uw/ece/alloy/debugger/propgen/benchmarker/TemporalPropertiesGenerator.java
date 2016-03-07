@@ -3,7 +3,6 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,6 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 
 	final File workingDir = new File( Configuration.getProp("working_directory") );
 	//final File tmpDirectory = new File(workingDir, Configuration.getProp("temporary_directory") );
-
 
 	//final File relationalPropModuleOriginal = new File( resourcesDir, "relational_properties.als");
 	final public static File relationalPropModuleOriginal = new File( Configuration.getProp("relational_properties") );

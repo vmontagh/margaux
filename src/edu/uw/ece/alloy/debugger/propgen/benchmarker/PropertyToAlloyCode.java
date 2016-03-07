@@ -1,11 +1,14 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 public class PropertyToAlloyCode implements Serializable {
 
@@ -15,6 +18,7 @@ public class PropertyToAlloyCode implements Serializable {
 	private static final long serialVersionUID = -7891570520910464309L;
 	
 	final public static PropertyToAlloyCode EMPTY_CONVERTOR = new PropertyToAlloyCode();
+	final public static String COMMAND_BLOCK_NAME = "check_or_run_assert_or_preicate_name"; 
 
 	final public Compressor.STATE compressedStatus;
 	
@@ -36,6 +40,8 @@ public class PropertyToAlloyCode implements Serializable {
 	
 	final AlloyProcessingParam paramCreator;
 	
+	final transient List<ImplicationLattic> implications;
+
 	protected PropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
@@ -75,6 +81,9 @@ public class PropertyToAlloyCode implements Serializable {
 		this.scopeCompressed = Arrays.copyOf(scopeCompressed, scopeCompressed.length) ;
 		
 		this.compressedStatus = compressedStatus;
+		
+		implications = new LinkedList<>();
+		implications.add(new BinaryImplicationLattic());
 		
 	}
 	
@@ -254,12 +263,23 @@ public class PropertyToAlloyCode implements Serializable {
 		throw new RuntimeException("Invalid call!");
 	}
 	
+	String commandKeyWordBody(){
+		// It could be 'assert' or 'pred'
+		throw new RuntimeException("Invalid call!");
+	}
+	
 	public String commandOperator(){
 		throw new RuntimeException("Invalid call!");
 	}
 	
 	String commandStatement(final String predCallA, final String predCallB){
-		return commandKeyword() + "{" + predCallA + " "+ commandOperator() + " "+ predCallB + "}";
+		
+		final String block = commandKeyWordBody() + " " + 
+												 COMMAND_BLOCK_NAME + " {\n" + 
+												 predCallA + " "+ commandOperator() + 
+												 " "+ predCallB + "\n}\n";
+		
+		return block + commandKeyword() + " " + COMMAND_BLOCK_NAME;
 	}
 	
 	
@@ -449,6 +469,44 @@ public class PropertyToAlloyCode implements Serializable {
 	}
 	
 	
+	/**
+	 * After checking a=>b,
+	 * if a=>b is true, means the check is unSAT (No Counter-example):
+	 * 	if a=E and b=Prop then allImpliedProperties Of b also has to be returned
+	 *  if a=prop and b=E then allRevImpliedProperties of a has to returned.
+	 *  The return type is false. Means stop any furtherAnaylsis and take the result as
+	 *  the inferred propertied
+	 */
+	public List<String> getInferedProperties(boolean sat){
+		throw new RuntimeException("Invalid call!");
+	}
 	
+	public List<PropertyToAlloyCode> getInferedPropertiesCoder(boolean sat){
+		throw new RuntimeException("Invalid call!");
+	}
 	
+	/**
+	 *  if sat, there is a counterexample
+	 * 		if a=E and b=Prop then next properties implied from Prop has to be evaluated
+	 *  	if a=Prop and b=E then next properties that implying Prop has to be evaluated
+	 * @param sat
+	 * @return
+	 */
+	public List<String> getToBeCheckedProperties(boolean sat){
+		throw new RuntimeException("Invalid call!");
+	}
+	
+	public List<String> getInitialProperties(){
+		throw new RuntimeException("Invalid call!");
+	}
+	
+	/**
+	 * return a predicated name: predA operator predB
+	 * This function is used to see whether a check is done
+	 * regardless it inferred or ran.
+	 * @return
+	 */
+	public String getPredName(){
+		return predCallA.substring(0, predCallA.indexOf("___")) + commandOperator() + predCallB.substring(0, predCallA.indexOf("___"));
+	}
 }

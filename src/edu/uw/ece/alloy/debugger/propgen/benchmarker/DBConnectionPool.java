@@ -36,7 +36,6 @@ public abstract class DBConnectionPool {
 	
 	public Connection getConnection() throws SQLException{
 		
-		
 		return DriverManager.getConnection(getConnectionURL(), connectionInfo.username, connectionInfo.password);
 	}
 	

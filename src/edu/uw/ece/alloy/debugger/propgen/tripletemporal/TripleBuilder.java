@@ -13,13 +13,6 @@ import java.util.TreeSet;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.CompositeOrdersIterator;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.CompositeSizesIterator;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.EmptinessIterator;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.LocalityIterator;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.OrderIterator;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.SideIterator;
-import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TriplePorpertiesIterators.SizeIterator;
 
 public class TripleBuilder {
 
@@ -257,7 +250,7 @@ public class TripleBuilder {
 						featureNames.get(SzPrpty.class.getSimpleName()).add(size.getClass().getSimpleName());
 						
 						if(!size.isConsistent()) continue;
-						preds.put(size.genPredName(), new Pair(size.genPredCall(),  size.generateProp()));
+						preds.put(size.genPredName(), new Pair<>(size.genPredCall(),  size.generateProp()));
 
 						for(Ord order: iterators. new OrderIterator(this, size)){
 							
@@ -266,7 +259,7 @@ public class TripleBuilder {
 							featureNames.get(Ord.class.getSimpleName()).add(order.getClass().getSimpleName());
 							
 							if(!order.isConsistent()) continue;
-							preds.put(order.genPredName(), new Pair(order.genPredCall(),  order.generateProp()));
+							preds.put(order.genPredName(), new Pair<>(order.genPredCall(),  order.generateProp()));
 							if(IncludeCompostions){
 								//Composite structures for two size and orders
 								for(SzPrpty size2: iterators. new SizeIterator(this, local, empty)){
@@ -282,7 +275,7 @@ public class TripleBuilder {
 										if(!compositeSizes.isConsistent()) continue;
 										if(revComposite.contains(compositeSizes.genPredName())) break;
 										//Add to the list here
-										preds.put(compositeSizes.genPredName(), new Pair(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
+										preds.put(compositeSizes.genPredName(), new Pair<>(compositeSizes.genPredCall(),  compositeSizes.generateProp()));
 									}
 
 									for(Ord order2: iterators. new OrderIterator(this, size2)){
@@ -299,7 +292,7 @@ public class TripleBuilder {
 											if(!compositeOrders.isConsistent()) continue;
 											if(revComposite.contains(compositeOrders.genPredName())) break;
 											//Add to the list here
-											preds.put(compositeOrders.genPredName(), new Pair(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
+											preds.put(compositeOrders.genPredName(), new Pair<>(compositeOrders.genPredCall(),  compositeOrders.generateProp()));
 										}
 
 									}

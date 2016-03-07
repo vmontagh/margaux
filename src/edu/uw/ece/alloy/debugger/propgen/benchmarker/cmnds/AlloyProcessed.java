@@ -6,8 +6,6 @@ import java.util.logging.Level;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
 public class AlloyProcessed extends RemoteCommand {
@@ -44,6 +42,7 @@ public class AlloyProcessed extends RemoteCommand {
 		if(Configuration.IsInDeubbungMode) logger.fine("["+Thread.currentThread().getName()+"] " + "Done and reported: pID= "+PID +" param="+param);
 		
 		monitor.processResponded(result, PID);
+		monitor.checkNextProperties(result);
 	}
 
 

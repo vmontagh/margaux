@@ -149,6 +149,6 @@ pred findMarginalInstances[]{
 
 run {findMarginalInstances
 no left
-no right} for 0 but exactly 5 Node, 0..50 Int//, exactly 5 Bit
+no right} for 0 but exactly 5 Node, 0..100 Int//, exactly 5 Bit
 
 

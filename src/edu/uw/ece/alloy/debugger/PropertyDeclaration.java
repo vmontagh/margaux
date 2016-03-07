@@ -207,7 +207,7 @@ public class PropertyDeclaration {
 						&& params.get(pointer).b.equals(1))) {
 			pointer = pointer + 1;
 		} else {
-			return false;
+			return pointer == params.size();
 		}
 
 		if (pointer < params.size()
@@ -218,7 +218,7 @@ public class PropertyDeclaration {
 					&& params.get(pointer + 1).b.equals(2)) {
 				pointer = pointer + 2;
 			} else {
-				return false;
+				return pointer == params.size();
 			}
 		}
 
@@ -230,7 +230,7 @@ public class PropertyDeclaration {
 					&& params.get(pointer + 1).b.equals(2)) {
 				pointer = pointer + 2;
 			} else {
-				return false;
+				return pointer == params.size();
 			}
 		}
 
@@ -242,7 +242,7 @@ public class PropertyDeclaration {
 					&& params.get(pointer + 1).b.equals(2)) {
 				pointer = pointer + 2;
 			} else {
-				return false;
+				return pointer == params.size();
 			}
 		}
 

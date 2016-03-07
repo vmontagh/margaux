@@ -1,11 +1,8 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
-import edu.mit.csail.sdg.alloy4.Pair;
 
 public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 

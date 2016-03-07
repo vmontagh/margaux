@@ -257,19 +257,13 @@ public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
 
 			try {
 				(DBLogger.createDatabaseOperationsObject(getConnection(result.params.dBConnectionInfo)) ).insertResult(result,
-						/* AlloyProcessRunner.getInstance().PID.toString()*/
-						"1");
+						 AlloyProcessRunner.getInstance().PID.toString()
+						);
 			} catch (SQLException e) {
 				logger.severe("["+Thread.currentThread().getName()+"] " +" Error happened in insertin the result into the database."+e);
 			}
-					
 		}
-
-
 	}
-
-
-
 
 	public static class CleanAfterProccessed extends PostProcess{
 

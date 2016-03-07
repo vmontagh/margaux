@@ -1,4 +1,4 @@
-module relational_properties
+module relational_properties_tagged
 
 /*
  * Utilities for some common operations and constraints

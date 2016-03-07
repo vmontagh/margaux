@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -9,13 +10,14 @@ import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyChecker;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
 
-public class TemporalAnalyzerRunner extends AnalyzerRunner {
+public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 
 	final static int  proccessNumber = Integer.parseInt(Configuration.getProp("processes_number"));
 	final static int  RemoteMonitorInterval = Integer.parseInt(Configuration.getProp("remote_monitor_interval"));
@@ -23,10 +25,11 @@ public class TemporalAnalyzerRunner extends AnalyzerRunner {
 	final static int SubMemory = Integer.parseInt(Configuration.getProp("sub_memory"));
 	final static int SubStack = Integer.parseInt(Configuration.getProp("sub_stak"));
 	final static int AlloyFeederBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_buffer_size")); 
-	final static int AlloyFeederBackLogBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_backlog_buffer_size")); 
+	final static int AlloyFeederBackLogBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_backlog_buffer_size"));
+	final public static String ToBeAnalyzedFilePath = Configuration.getProp("tobe_analyzed_file_path");
 
 
-	protected final static Logger logger = Logger.getLogger(TemporalAnalyzerRunner.class.getName()+"--"+Thread.currentThread().getName());
+	protected final static Logger logger = Logger.getLogger(ExpressionAnalyzerRunner.class.getName()+"--"+Thread.currentThread().getName());
 
 	ProcessesManager manager;
 	ThreadDelayToBeMonitored feeder;
@@ -40,17 +43,15 @@ public class TemporalAnalyzerRunner extends AnalyzerRunner {
 	//Thread monitorThread;
 	//Thread timeoutMonitorThread;
 
-	private final static TemporalAnalyzerRunner self = new TemporalAnalyzerRunner();
+	private final static ExpressionAnalyzerRunner self = new ExpressionAnalyzerRunner();
 
-	private TemporalAnalyzerRunner() {
+	private ExpressionAnalyzerRunner() {
 
 	}
 
-	public final static  TemporalAnalyzerRunner getInstance(){
+	public final static  ExpressionAnalyzerRunner getInstance(){
 		return self;
 	}
-
-
 
 
 	@SuppressWarnings("unchecked")
@@ -61,7 +62,8 @@ public class TemporalAnalyzerRunner extends AnalyzerRunner {
 
 		monitor = new ProcessRemoteMonitor(RemoteMonitorInterval, (AlloyFeeder) feeder, manager, manager.getProcessRemoteMonitorAddress());
 
-		propGenerator = new TemporalPropertiesGenerator((GeneratedStorage<AlloyProcessingParam>) feeder);
+		// Start the checking from the sources in the lattice
+		propGenerator = new ExpressionPropertyChecker((GeneratedStorage<AlloyProcessingParam>) feeder, new File(ToBeAnalyzedFilePath) );
 
 		monitoredThreads.add(feeder);
 		monitoredThreads.add(monitor);
@@ -83,7 +85,7 @@ public class TemporalAnalyzerRunner extends AnalyzerRunner {
 	public static void main(String[] args) throws Exception {
 
 
-		TemporalAnalyzerRunner.getInstance().start();		
+		ExpressionAnalyzerRunner.getInstance().start();		
 
 		//busywait
 		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
@@ -91,7 +93,7 @@ public class TemporalAnalyzerRunner extends AnalyzerRunner {
 		while(true){
 			Thread.sleep(20000);
 			sb.append("["+Thread.currentThread().getName()+"]" + "Main is alive....\n");
-			TemporalAnalyzerRunner.getInstance().monitoredThreads.stream().forEach(m->sb.append(m.getStatus()).append("\n"));
+			ExpressionAnalyzerRunner.getInstance().monitoredThreads.stream().forEach(m->sb.append(m.getStatus()).append("\n"));
 
 			System.out.println(sb);
 			logger.warning(sb.toString());

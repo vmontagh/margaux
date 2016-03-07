@@ -1,10 +1,14 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
@@ -12,7 +16,8 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	 * 
 	 */
 	private static final long serialVersionUID = -4702673131807408629L;
-	final public static IfPropertyToAlloyCode EMPTY_CONVERTOR = new IfPropertyToAlloyCode();	
+	final public static IfPropertyToAlloyCode EMPTY_CONVERTOR = new IfPropertyToAlloyCode();
+	final static Logger logger = Logger.getLogger(IfPropertyToAlloyCode.class.getName()+"--"+Thread.currentThread().getName());;
 
 	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
@@ -23,7 +28,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				dependencies, paramCreator, header, scope
 				);
 	}
-	
+
 	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
@@ -46,12 +51,12 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				);
 	}	
 
-	
+
 	protected IfPropertyToAlloyCode(){
 		super();
 	}
 
-	
+
 	@Override
 	String commandKeyword() {
 		return "check";
@@ -68,6 +73,11 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	}
 
 	@Override
+	String commandKeyWordBody(){
+		return "assert";
+	}
+	
+	@Override
 	public boolean isSymmetric() {
 		return false;
 	}
@@ -78,11 +88,11 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope
 			) {
-			return new IfPropertyToAlloyCode( predBodyA,  predBodyB,
-					 predCallA,  predCallB,  predNameA,
-					 predNameB,  dependencies,
-					 paramCreator,  header,  scope
-					 );
+		return new IfPropertyToAlloyCode( predBodyA,  predBodyB,
+				predCallA,  predCallB,  predNameA,
+				predNameB,  dependencies,
+				paramCreator,  header,  scope
+				);
 	}
 
 	@Override
@@ -97,7 +107,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 			,List<Dependency> compressedDependencies
 			, Compressor.STATE compressedStatus
 			) {
-		
+
 		return new IfPropertyToAlloyCode(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
 				dependencies, paramCreator, header, scope,
 				predBodyACompressed, predBodyBCompressed,
@@ -108,5 +118,106 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				compressedStatus
 				);
 	}
-	
+
+	/**
+	 * After checking a=>b,
+	 * if a=>b is true, means the check is unSAT (No Counter-example):
+	 * 	if a=E and b=Prop then allImpliedProperties Of b also has to be returned
+	 *  if a=prop and b=E then allRevImpliedProperties of a has to returned.
+	 *  The return type is false. Means stop any furtherAnaylsis and take the result as
+	 *  the inferred propertied
+	 * else, there is a counterexample
+	 * 	if a=E and b=Prop then next properties implied from Prop has to be evaluated
+	 *  if a=Prop and b=E then next properties that implying Prop has to be evaluated
+	 */
+	public List<String> getInferedProperties(boolean sat){
+		List<String> result = new ArrayList<>();
+		if (!sat){		
+			for(ImplicationLattic il: implications){
+				try {
+					// predNameA is supposed to be the name exists in the library. otherwise it throws an exception
+					result.addAll(il.getAllRevImpliedProperties(predNameA));
+				} catch (Err e) {
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameA, e);
+				}
+				try {
+					// predNameB is supposed to be the name exists in the library. otherwise it throws an exception
+					result.addAll(il.getAllImpliedProperties(predNameB));
+				} catch (Err e) {
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameB, e);
+				}
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+	public List<PropertyToAlloyCode> getInferedPropertiesCoder(boolean sat){
+		List<PropertyToAlloyCode> result = new ArrayList<>();
+		if (!sat){		
+			for(ImplicationLattic il: implications){
+				try {
+					// predNameA is supposed to be the name exists in the library. otherwise it throws an exception
+					for(String propName: il.getAllRevImpliedProperties(predNameA)){
+						result.add(createIt("", this.predBodyB,
+								"", this.predCallB, propName,
+								this.predNameB, new ArrayList<>(dependencies),
+								this.paramCreator, this.header, this.scope
+								));
+					}
+				} catch (Err e) {
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameA, e);
+				}
+				try {
+					// predNameB is supposed to be the name exists in the library. otherwise it throws an exception
+					for(String propName: il.getAllRevImpliedProperties(predNameB)){
+						result.add(createIt( this.predBodyA, "",
+								this.predCallA, "", this.predNameA, 
+								propName, new ArrayList<>(dependencies),
+								this.paramCreator, this.header, this.scope
+								));
+					}
+				} catch (Err e) {
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameB, e);
+				}
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+	public List<String> getToBeCheckedProperties(boolean sat){
+
+		List<String> result = new ArrayList<>();
+		if (sat){
+			for(ImplicationLattic il: implications){
+				try {
+					// predNameA is supposed to be the name exists in the library. otherwise it throws an exception
+					result.addAll(il.getNextRevImpliedProperties(predNameA));
+				} catch (Err e) {
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameA, e);
+				}
+				try {
+					// predNameB is supposed to be the name exists in the library. otherwise it throws an exception
+					result.addAll(il.getNextImpliedProperties(predNameB));
+				} catch (Err e) {
+					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameB, e);
+				}
+			}
+		}
+		return Collections.unmodifiableList(result);	
+	}
+
+	public List<String> getInitialProperties(){
+		List<String> result = new ArrayList<>();
+		for(ImplicationLattic il: implications){
+			try {
+				result.addAll(il.getAllSources());
+			} catch (Err e) {
+				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Cannot find the initial properties ", e);
+				e.printStackTrace();
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+
 }

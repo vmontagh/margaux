@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import edu.mit.csail.sdg.alloy4compiler.ast.Func;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Open;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 
 public class PropertyCallBuilder {
 
@@ -24,8 +23,11 @@ public class PropertyCallBuilder {
 
 	public void addPropertyDeclration(final Func function)
 			throws IllegalArgumentException {
-		PropertyDeclaration pd = new PropertyDeclaration(function);
 
+		System.out.println(function);
+		
+		PropertyDeclaration pd = new PropertyDeclaration(function);
+		
 		if (!pd.isAPropertyDefinition()) {
 			throw new IllegalArgumentException(
 					"The passed func/pred is not a property declration.");
@@ -53,6 +55,8 @@ public class PropertyCallBuilder {
 		final String leftName = field.type().extract(2).fold().get(0).get(0).label;
 		final String rightName = field.type().extract(2).fold().get(0).get(1).label;
 
+		System.out.println(getAllBinaryPropertyDeclrations());
+		
 		for (PropertyDeclaration pd : getAllBinaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
 			String params = relationName.replace("this/", "");

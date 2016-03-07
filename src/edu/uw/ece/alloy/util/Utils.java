@@ -147,6 +147,25 @@ public class Utils {
 		}
 	}
 
+	public static List<String> readFileLinesWithEmptyLines(final String inputFileName) {
+		try {
+
+			final BufferedReader bufferedReader = new BufferedReader(new FileReader(inputFileName));
+			final List<String> lines = new ArrayList<String>();
+
+			String line = null;
+			while ((line= bufferedReader.readLine()) != null) {
+					lines.add(line);
+			}
+			bufferedReader.close();
+
+			return Collections.unmodifiableList(lines);
+
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static File[] files(final String dirName, final String regex) {
 		final File dir = new File(dirName);
 		assert dir.isDirectory() : "not a directory: " + dir;

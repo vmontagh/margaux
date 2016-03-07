@@ -9,9 +9,18 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 public class BinaryImplicationLattic extends ImplicationLattic {
 
+	
+	final static String sourceFolderPath = Configuration.getProp("kb_folder");
+	final static String[] moduleNames = Configuration.getProp("kb_modules").split(";");
+	
+	public BinaryImplicationLattic(){
+		this(sourceFolderPath, moduleNames);
+	}
+	
 	public BinaryImplicationLattic(String tempPath, String[] moduleName) {
 		super(tempPath, moduleName);
 		// TODO Auto-generated constructor stub
@@ -34,7 +43,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 		return Collections.unmodifiableList(result); 
 	}
 	
-	public List<String> getAllImpliedProperties(String property) throws Err{
+	public List<String> getNextImpliedProperties(String property) throws Err{
 		final String alloyCode = 
 				String.format(
 				"open binary_implication\n" +
@@ -51,7 +60,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 		return Collections.unmodifiableList(result);
 	}
 	
-	public List<String> getAllReverseImpliedProperties(String property) throws Err{
+	public List<String> getNextRevImpliedProperties(String property) throws Err{
 		final String alloyCode = 
 				String.format(
 				"open binary_implication\n" +
@@ -84,4 +93,38 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 		return Collections.unmodifiableList(result);
 	}
 	
+	public List<String> getAllImpliedProperties(String property) throws Err{
+		final String alloyCode = 
+				String.format(
+				"open binary_implication\n" +
+				"pred run_getAllImplied[p: prop]{\n" +
+				"  some p': prop | getAllImplied[p,p']\n}" +
+				"run {run_getAllImplied[%s]} for 0", property);
+		final File file = new File(this.TEMPORARY_FOLDER, 
+				"allimplied_"+System.currentTimeMillis() +"_" +
+				rand.nextInt() + ".als");
+		List<String> result = new ArrayList<>();
+		for (A4Solution sol: writeAndFind(alloyCode, file)){
+				result.add(extractSkolemedValue(sol));
+		}
+		return Collections.unmodifiableList(result);
+	}
+	
+	public List<String> getAllRevImpliedProperties(String property) throws Err{
+		final String alloyCode = 
+				String.format(
+				"open binary_implication\n" +
+				"pred run_getAllRevImplied[p: prop]{\n" +
+				"  some p': prop | getAllRevImplied[p,p']\n}" +
+				"run {run_getAllRevImplied[%s]} for 0", property);
+		final File file = new File(this.TEMPORARY_FOLDER, 
+				"allimplied_"+System.currentTimeMillis() +"_" +
+				rand.nextInt() + ".als");
+		List<String> result = new ArrayList<>();
+		for (A4Solution sol: writeAndFind(alloyCode, file)){
+				result.add(extractSkolemedValue(sol));
+		}
+		System.out.println(result);
+		return Collections.unmodifiableList(result);
+	}
 }

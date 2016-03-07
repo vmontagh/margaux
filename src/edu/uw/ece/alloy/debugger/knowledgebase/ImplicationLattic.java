@@ -15,6 +15,7 @@ import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 
@@ -101,8 +102,10 @@ public abstract class ImplicationLattic {
 	}
 	
 	public abstract List<String> getAllSources() throws Err;
-	public abstract List<String> getAllImpliedProperties(String property) throws Err;
-	public abstract List<String> getAllReverseImpliedProperties(String property) throws Err;
+	public abstract List<String> getNextImpliedProperties(String property) throws Err;
+	public abstract List<String> getNextRevImpliedProperties(String property) throws Err;
 	public abstract List<String> getAllSinks() throws Err;
+	public abstract List<String> getAllImpliedProperties(String property) throws Err;
+	public abstract List<String> getAllRevImpliedProperties(String property) throws Err;
 	
 }

@@ -113,8 +113,10 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + "Queue size is: "+queue.size());
 		AlloyProcessingParam e;
 		try {
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + "Queue is: "+queue);
 			//take a request, if something is in the queue. Otherwise the thread parks here.
 			e = queue.take();
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + "Queue object: "+e);
 
 		} catch (InterruptedException e1) {
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The command queue is interrupted.", e1);

@@ -29,7 +29,7 @@ public class BinaryImplicationLatticTest {
 	final String[] moduleNames = {"binary_implication.als",
 																"property_structure.als"};
 	final String tempFolderPath = "tmp/kb";
-	BinaryImplicationLattic bil;
+	ImplicationLattic bil;
 	
 	/**
 	 * @throws java.lang.Exception
@@ -127,7 +127,7 @@ public class BinaryImplicationLatticTest {
 	@Test
 	public void testgetImply() {
 		try {
-			List<String> nexts = bil.getAllImpliedProperties("reflexive");
+			List<String> nexts = bil.getNextImpliedProperties("reflexive");
 			assertFalse(nexts.isEmpty());
 			
 			for (String source: nexts){
@@ -145,9 +145,29 @@ public class BinaryImplicationLatticTest {
 	}
 	
 	@Test
+	public void testgetAllImply() {
+		try {
+			List<String> nexts = bil.getAllImpliedProperties("totalOrder");
+			assertFalse(nexts.isEmpty());
+			
+			for (String source: nexts){
+				assertNotEquals("", source);
+			}
+						
+			assertArrayEquals(
+					nexts.toArray(new String[]{}),
+					new String[]{"complete", "preorder", "partialOrder", "rootedOne", "reflexive", "total", "weaklyConnected", "transitive", "antisymmetric"});
+			
+		} catch (Err e1) {
+			e1.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
 	public void testgetRevImply() {
 		try {
-			List<String> previouses = bil.getAllReverseImpliedProperties("reflexive");
+			List<String> previouses = bil.getNextRevImpliedProperties("reflexive");
 			assertFalse(previouses.isEmpty());
 			
 			for (String source: previouses){
@@ -168,6 +188,26 @@ public class BinaryImplicationLatticTest {
 		}
 	}
 	
+	
+	@Test
+	public void testgetAllRevImply() {
+		try {
+			List<String> nexts = bil.getAllRevImpliedProperties("irreflexive");
+			assertFalse(nexts.isEmpty());
+			
+			for (String source: nexts){
+				assertNotEquals("", source);
+			}
+						
+			assertArrayEquals(
+					nexts.toArray(new String[]{}),
+					new String[]{"acyclic", "empty"});
+			
+		} catch (Err e1) {
+			e1.printStackTrace();
+			fail();
+		}
+	}
 	
 	
 }

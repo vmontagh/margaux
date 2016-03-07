@@ -4,16 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.Compressor;
@@ -82,10 +79,13 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder, int priority) {
 		return new AlloyProcessingParam(alloyCoder,  priority);
 	}
-
 	
 	public AlloyProcessingParam createIt(AlloyProcessingParam param) {
 		return createIt(param.alloyCoder,  param.priority, param.tmpDirectory,param.dBConnectionInfo);
+	}
+	
+	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder) {
+		return createIt(alloyCoder,  this.priority, this.tmpDirectory, this.dBConnectionInfo);
 	}
 	
 	public AlloyProcessingParam createItself() {
@@ -305,5 +305,4 @@ public class AlloyProcessingParam implements Comparable<AlloyProcessingParam>, S
 		return isEqual(other);
 	}
 	
-
 }

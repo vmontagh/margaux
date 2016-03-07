@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,6 +21,10 @@ public abstract class AlloyCodeBuilder {
 	
 	public void registerPropertyToAlloyCode(PropertyToAlloyCode propertyToAlloyCode){
 		PropertyToAlloyCodeObjects.add(propertyToAlloyCode);
+	}
+	
+	public List<PropertyToAlloyCode> getAllPropertyGenerators(){
+		return Collections.unmodifiableList(PropertyToAlloyCodeObjects);
 	}
 	
 }

@@ -62,7 +62,7 @@ public abstract class BlocksExtractorByComments {
 		
 		List<Pos> allPoses = new ArrayList<>();
 		int lineNumber = 0;
-		for (String line: Utils.readFileLines(path)){
+		for (String line: Utils.readFileLinesWithEmptyLines(path)){
 			++lineNumber;
 			int foundStart = line.indexOf(START);
 			while (foundStart >= 0){

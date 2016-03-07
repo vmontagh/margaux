@@ -12,7 +12,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Func;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
 
-public class PropertyDeclrationTest {
+public class PropertyDeclarationTest {
 
 	static CompModule world;
 	

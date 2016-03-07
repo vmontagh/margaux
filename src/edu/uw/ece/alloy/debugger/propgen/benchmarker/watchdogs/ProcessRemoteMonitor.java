@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -22,12 +23,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyChecker;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.util.RetryingThread;
@@ -46,6 +51,8 @@ public class ProcessRemoteMonitor implements Runnable, ThreadDelayToBeMonitored 
 	//TODO change the key to AlloyProcessingParam from Integer
 	final private Map<InetSocketAddress, Map<AlloyProcessingParam, Integer/*The number of duplications*/>>  incompleteMessages =  new ConcurrentHashMap<InetSocketAddress, Map<AlloyProcessingParam,Integer>>();
 	final private Map<AlloyProcessingParam, List<InetSocketAddress>>  sentMessages =  new ConcurrentHashMap<>();
+	// The checks is done and no need to recreat it again.
+	final private Set<String> doneChecks = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 	final private Map<AlloyProcessingParam, Integer>  timeoutRetry =  new ConcurrentHashMap<>();
 	///Once a message is removed from incompleteMessages, its value is increased.
 	final private Map<InetSocketAddress, AtomicInteger>  receivedMessagesNumber =  new ConcurrentHashMap<>();
@@ -263,7 +270,7 @@ public class ProcessRemoteMonitor implements Runnable, ThreadDelayToBeMonitored 
 				}
 			}
 
-		} catch (Throwable t  ){
+		} catch (Throwable t){
 			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"A serious error breaks the monitoring loop: ", t);
 			monitorWorking = false;
 			throw new RuntimeException(t);
@@ -385,7 +392,6 @@ public class ProcessRemoteMonitor implements Runnable, ThreadDelayToBeMonitored 
 		}	
 	}
 
-
 	public synchronized Set<InetSocketAddress> findOrphanProcessTasks(ProcessesManager manager){
 		Set<InetSocketAddress> result = new HashSet<InetSocketAddress>( incompleteMessages.keySet());
 		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"registered incmplemete processes are: "+result);
@@ -405,19 +411,50 @@ public class ProcessRemoteMonitor implements Runnable, ThreadDelayToBeMonitored 
 			logger.severe("["+Thread.currentThread().getName()+"] "+ " No Such a PID found: "+ PID+" and the current PIDs are:\n\t"+manager.getAllRegisteredPIDs());
 			return;
 		}
+		
+		// regardless of the message status, it should not be created again.
+		if (doneChecks.contains(result.params.alloyCoder.getPredName())){
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "The check was done before: pID= "+PID +" param="+result.params);
+		}
+		doneChecks.add(result.params.alloyCoder.getPredName());
 
 		if(result.isTimedout() || result.isFailed()){
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "The process is timed out and is pushed back to be retried later: pID= "+PID +" param="+result.params);
 			removeAndPushUndoneRequest(PID, result.params);
-		}else{
+		}else if (result.isInferred()){
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "The process is inferred: pID= "+PID +" param="+result.params);
+		} else{
 			removeMessage(PID, result.params);
 		}
 
 		manager.changeStatus(PID, Status.WORKING);
 		manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
 		manager.decreaseMessageCounter(PID);
+		// Add the next level to be processed.
+
 	}
 
+	/**
+	 * The property is checked, and its result is sat or not. So, the implied
+	 * properties should be processed next.
+	 * @param result
+	 */
+	public void checkNextProperties(AlloyProcessedResult result){
+		try {
+
+			Set<String> nextProperties = new HashSet<>(result.params.alloyCoder.getToBeCheckedProperties(result.sat == 1));
+
+			if (!nextProperties.isEmpty())
+				(new ExpressionPropertyChecker((GeneratedStorage<AlloyProcessingParam>) feeder, 
+						new File(ExpressionAnalyzerRunner.ToBeAnalyzedFilePath), nextProperties, doneChecks))
+				.startThread();
+			else
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"] "+"The next properties are empty for:"+result);
+		} catch (Err | IOException e) {
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Next properties failed to be added.",e);
+			e.printStackTrace();
+		}
+	}
 
 	public void startThread(){
 		monitor.start();

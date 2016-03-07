@@ -78,10 +78,15 @@ public class PropertyCallBuilderTest {
 		final List<Field> fields = world.getAllReachableSigs().stream()
 				.map(a -> a.getFields().makeCopy()).filter(a -> a.size() > 0)
 				.flatMap(a -> a.stream()).collect(Collectors.toList());
-
-		// System.out.println(world.getAllSigs().get(5).getFields());
+		for (Func func : world.getAllFunc()) {
+			try {
+				pcb.addPropertyDeclration(func);
+			} catch (IllegalArgumentException ia) {
+			}
+		}
+		 System.out.println(world.getAllSigs().get(5).getFields());
 		// System.out.println(world());
-		pcb.makeAllBinaryProperties(fields.get(0));
+		System.out.println(pcb.makeAllBinaryProperties(fields.get(0)));
 	}
 
 	@Test
