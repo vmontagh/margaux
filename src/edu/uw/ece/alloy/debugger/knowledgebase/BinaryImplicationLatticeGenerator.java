@@ -75,7 +75,7 @@ public class BinaryImplicationLatticeGenerator {
 					File checkFile = new File(tmpDirectoryRoot, String.format("%s-%s.als", p1Name, p2Name));
 					Util.writeAll(checkFile.getAbsolutePath(), String.format(checkStatemet, p1, p2));
 					A4Solution sol = A4CommandExecuter.getInstance().runThenGetAnswers(
-							new String[] { checkFile.getAbsolutePath() },
+							checkFile.getAbsolutePath(),
 							A4Reporter.NOP, "ac");
 
 					if (!implicationMap.containsKey(p1Name))

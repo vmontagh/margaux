@@ -115,10 +115,7 @@ import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
 import edu.mit.csail.sdg.gen.LoggerUtil;
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.mit.csail.sdg.gen.alloy.PIUtil;
-import edu.mit.csail.sdg.gen.flw.AdjMatrixEdgeWeightedDigraph;
-import edu.mit.csail.sdg.gen.flw.DirectedEdge;
-import edu.mit.csail.sdg.gen.flw.FloydWarshall;
+
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.
  * It is also used as a staging area for the solver before generating the solution.
@@ -1292,5 +1289,13 @@ public final class A4Solution {
 	public void writeXML(A4Reporter rep, PrintWriter writer, Iterable<Func> macros, Map<String,String> sourceFiles) throws Err {
 		A4SolutionWriter.writeInstance(rep, this, writer, macros, sourceFiles);
 		if (writer.checkError()) throw new ErrorFatal("Error writing the solution XML file.");
+	}
+	
+	/**
+	 * return the translated KK formulas
+	 * @return
+	 */
+	public List<Formula> getKKFormulas(){
+		return Collections.unmodifiableList(formulas);
 	}
 }

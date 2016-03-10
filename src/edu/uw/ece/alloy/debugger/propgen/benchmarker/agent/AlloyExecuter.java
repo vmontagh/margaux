@@ -134,7 +134,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 			AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 			try {
 				A4CommandExecuter.getInstance().run(
-						new String[] { lastProccessing.srcPath().getAbsolutePath() },
+						lastProccessing.srcPath().getAbsolutePath(),
 						rep, PropertyToAlloyCode.COMMAND_BLOCK_NAME);
 
 				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);

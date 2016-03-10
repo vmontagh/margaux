@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
@@ -23,8 +24,10 @@ import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
+import edu.mit.csail.sdg.alloy4compiler.translator.TranslateDeclarativeConstriant2DeclarativeFormula;
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import kodkod.ast.Formula;
 
 /**
  * This class is for executing the decomposer using Alloy 4
@@ -40,14 +43,14 @@ public class A4CommandExecuter {
 	private A4CommandExecuter(){
 		setUp();
 	}
-	
+
 	public static A4CommandExecuter getInstance(){
 		if ( itself == null ){
 			itself = new A4CommandExecuter();
 		}
 		return itself;
 	}
-	
+
 	private void setUp(){
 		copyFromJAR();
 		final String binary = alloyHome() + fs + "binary";
@@ -65,82 +68,115 @@ public class A4CommandExecuter {
 	}
 
 	public Module  parse(final String fileName,final A4Reporter rep) throws Err{
-		
+
 		return CompUtil.parseEverything_fromFile(rep, null, fileName);
 	}
 
 	public Module  parseOneModule(final String content,final A4Reporter rep) throws Err{
-		
+
 		return CompUtil.parseOneModule(/*rep,*/ content);
 	}
-	
-	
+
+
 	public void runOverString(String content, A4Reporter rep) throws Err{
-		
+
 		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy content is being processed soon.");
-		
+
 		CompModule world = (CompModule) parseOneModule(  content, rep);
-		
+
 		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is parsed.");
-		
+
 		A4Options options = new A4Options();
 
 		options.solver = A4Options.SatSolver.SAT4J;
 		options.symmetry = 0;
-		
+
 		for (Command command: world.getAllCommands()) {
 			A4Solution ans = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
 			if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"An Alloy is executed and the result is: "+ ans);
 
 		}
-		
+
 	}
 
-	public A4Solution runThenGetAnswers(String[] args,A4Reporter rep, String commandName)throws Err{
-		A4Solution result = null;
+
+	public List<Formula> translateAlloy2KK(String fileName, A4Reporter rep, String commandName) throws Err{
+		List<Formula> result = null;
 		
-		for(String filename:args) {
-			// Parse+typecheck the model
+		// Parse+typecheck the model
+		if(Configuration.IsInDeubbungMode) 
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+fileName+" =============");
+
+		CompModule world = (CompModule) parse(fileName, rep);
+
+		// Choose some default options for how you want to execute the commands
+		A4Options options = new A4Options();
+
+		options.solver = A4Options.SatSolver.SAT4J;
+		options.symmetry = 0;
+
+		for (Command command: world.getAllCommands()) {
+
+			if(!command.label.equals(commandName))
+				continue;
+			// Execute the command
 			if(Configuration.IsInDeubbungMode) 
-				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
-			
-			CompModule world = (CompModule) parse(  filename, rep);
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
 
-			// Choose some default options for how you want to execute the commands
-			A4Options options = new A4Options();
-
-			options.solver = A4Options.SatSolver.SAT4J;
-			options.symmetry = 0;
-
-			for (Command command: world.getAllCommands()) {
-
-				if(!command.label.equals(commandName))
-					continue;
-				// Execute the command
-				if(Configuration.IsInDeubbungMode) 
-					logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
-
-				result = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
-			}
+			result = TranslateDeclarativeConstriant2DeclarativeFormula.translate(rep, world.getAllReachableSigs(), command, options);
 		}
 		
 		if (null == result)
 			throw new RuntimeException("Command name '"+commandName+"' is not found");
+
+		return result;
 		
+	}
+
+
+	public A4Solution runThenGetAnswers(String filename,A4Reporter rep, String commandName)throws Err{
+		A4Solution result = null;
+
+		// Parse+typecheck the model
+		if(Configuration.IsInDeubbungMode) 
+			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
+
+		CompModule world = (CompModule) parse(  filename, rep);
+
+		// Choose some default options for how you want to execute the commands
+		A4Options options = new A4Options();
+
+		options.solver = A4Options.SatSolver.SAT4J;
+		options.symmetry = 0;
+
+		for (Command command: world.getAllCommands()) {
+
+			if(!command.label.equals(commandName))
+				continue;
+			// Execute the command
+			if(Configuration.IsInDeubbungMode) 
+				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
+
+			result = TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options);
+		}
+
+		if (null == result)
+			throw new RuntimeException("Command name '"+commandName+"' is not found");
+
 		return result;
 	}
-	
+
 	public Map<Command,A4Solution> runThenGetAnswers(String[] args,A4Reporter rep)throws Err{
 		// Alloy4 sends diagnostic messages and progress reports to the A4Reporter.
 		// By default, the A4Reporter ignores all these events (but you can extend the A4Reporter to display the event for the user)
 
 		Map<Command, A4Solution> result = new HashMap<>();
-		
+
 		for(String filename:args) {
 			// Parse+typecheck the model
 			if(Configuration.IsInDeubbungMode) 
 				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
-			
+
 			CompModule world = (CompModule) parse(  filename, rep);
 
 			// Choose some default options for how you want to execute the commands
@@ -159,14 +195,14 @@ public class A4CommandExecuter {
 				result.put(command, TranslateAlloyToKodkod.execute_command(rep, world.getAllReachableSigs(), command, options));
 			}
 		}
-		
+
 		return Collections.unmodifiableMap(result);
 	}
-	
-	public void run(String[] args,A4Reporter rep, String commandName) throws Err{
-		runThenGetAnswers(args, rep, commandName);
+
+	public void run(String fileName,A4Reporter rep, String commandName) throws Err{
+		runThenGetAnswers(fileName, rep, commandName);
 	}
-	
+
 	public void run(String[] args,A4Reporter rep) throws Err{
 		runThenGetAnswers(args, rep);
 	}
@@ -289,7 +325,7 @@ public class A4CommandExecuter {
 		MyReporter rep = new MyReporter();
 		String[] files = {"models/examples/systems/file_system.als"};
 		A4CommandExecuter.getInstance().run( files,rep);
-		
+
 	}
 
 }
