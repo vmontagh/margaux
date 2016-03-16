@@ -26,7 +26,7 @@ public class GenerateOnBorderExampleAlloy {
 	 * @throws Err 
 	 */
 	public static void main(String[] args) throws Err {
-		final String pathToTmpFile = "tmp/testing_declrative_constraint.als";
+		final String pathToTmpFile = "testing_declrative_constraint.als";
 		final String alloyContent = "sig A{}\n sig B{r: set A }\n pred p[]{ } run p";
 		Util.writeAll(pathToTmpFile, alloyContent);
 		List<Formula> formulas = A4CommandExecuter.getInstance().translateAlloy2KK(pathToTmpFile,
@@ -34,7 +34,8 @@ public class GenerateOnBorderExampleAlloy {
 																															"p");
 		
 		for(Formula formula: formulas){
-					System.out.println(PrettyPrinter.dotify(formula));
+			String s = formula.toString();
+					System.out.println(s);
 		}
 		
 		
