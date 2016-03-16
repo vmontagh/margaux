@@ -25,7 +25,7 @@ module examples/toys/birthday
 
 sig Name {}
 sig Date {}
-sig BirthdayBook {known: set Name, date: known -> one Date}
+sig BirthdayBook {known: set Name, date: known -> one Date}//, date2: lone Name -> one Date}
 
 pred AddBirthday [bb, bb': BirthdayBook, n: Name, d: Date] {
     bb'.date = bb.date ++ (n->d)
@@ -112,7 +112,8 @@ pred structuralConstraint[	bb: set BirthdayBook,
 						n: set Name, 
 						d: set Date, 
 						known: BirthdayBook -> Name, 
-						date: BirthdayBook -> Name -> Date] {
+						date: BirthdayBook -> Name -> Date] {//,
+						// date2: BirthdayBook -> Name -> Date] {
 	// all bb': bb |/* also need to  if bb.known is a set of Names */ #(bb'.known) >= 1 implies  one (bb'.known).(bb'.date)
 	// all bb': bb |/* also need to check if bb.known is a set of Names */ (some n : Name | n in bb'.known) => one (bb'.known).(bb'.date)
 
@@ -125,6 +126,7 @@ pred structuralConstraint[	bb: set BirthdayBook,
 
 	// all bb': bb | bb'.date in (bb'.known -> one d)
 	date in (known -> one d)
+	// date2 in (bb -> lone n -> one d)
 
 }
 
@@ -133,9 +135,10 @@ pred isInstance[	bb: set BirthdayBook,
 				d: set Date, 
 				known: BirthdayBook -> Name, 
 				date: BirthdayBook -> Name -> Date] {
+				// date2: BirthdayBook -> Name -> Date] {
 
 	includeInstance[bb, n, d, known, date]
-	structuralConstraint[bb, n, d, known, date]
+	structuralConstraint[bb, n, d, known, date]//, date2]
 }
 
 pred deltaBirthdayBook[bb: set BirthdayBook, bb': set BirthdayBook, bb'': set BirthdayBook] {
@@ -183,7 +186,7 @@ pred findMarginalInstances[] {
 				#bb1'' >= #bb''
 				and #n1'' >= #n''
 				and #d1'' >= #d''
-				and (no dt' or #k1'' >= #k'')
+				and (no dt'' or #k1'' >= #k'')
 				and (no k'' or #dt1'' >= #dt'') 
 				)
 			}
@@ -191,15 +194,21 @@ pred findMarginalInstances[] {
 }
 
 assert instanceChecks {
-	isInstance[BirthdayBook, Name, Date, known, date]
+	isInstance[BirthdayBook, Name, Date, known, date]//, date2]
 }
 
-run {
+/*run {
 	findMarginalInstances
 	no known
 	no date
 } for 0 but exactly 3 BirthdayBook, 10 Name, 10 Date, 0..400 Int
-
+*/
 check instanceChecks for 5
-run {isInstance[BirthdayBook, Name, Date, known, date]}
+// run {isInstance[BirthdayBook, Name, Date, known, date]}
 
+/*fact {
+	isInstance[BirthdayBook, Name, Date, known, date]
+}
+
+run{}
+*/
