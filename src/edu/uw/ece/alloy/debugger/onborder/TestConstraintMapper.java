@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.onborder;
 
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,9 +25,10 @@ public class TestConstraintMapper {
 		String fileName = "linked_list_sigs.als";
 		System.out.println("Running file: " + fileName);
 
-		String[] files = { alloy4Home + "/models/debugger/min_dist/" + fileName};
-				//alloy4Home + "/models/examples/toys/birthday.als" };
-		Map<Command, A4Solution> map = A4CommandExecuter.getInstance().runThenGetAnswers(files, A4Reporter.NOP);
+		String[] files = { alloy4Home + "/models/debugger/min_dist/" + fileName };
+		// alloy4Home + "/models/examples/toys/birthday.als" };
+		Map<Command, A4Solution> map = A4CommandExecuter.getInstance()
+				.runThenGetAnswers(files, A4Reporter.NOP);
 
 		System.out.println("Listing commands and solutions:");
 
@@ -48,47 +50,69 @@ public class TestConstraintMapper {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testSigExtraction() throws Err {
 
 		String alloy4Home = "/home/fikayo/Documents/Engineering/Alloy/alloy";
-		
+
 		String fileName = "linked_list.als";
 		String directory = alloy4Home + "/models/debugger/min_dist/";
-//		fileName = "birthday.als"; 
-//		directory = alloy4Home + "/models/examples/toys/";
+//		 fileName = "birthday.als";
+//		 directory = alloy4Home + "/models/examples/toys/";
 		String file = directory + fileName;
 		System.out.println("Running file: " + fileName);
-		
+
 		String sigs = getSigString(file);
 		System.out.println(sigs);
-		String sigFile = directory + fileName.substring(0, fileName.lastIndexOf(".")) + "_sigs.als";
+		String sigFile = directory
+				+ fileName.substring(0, fileName.lastIndexOf(".")) + "_sigs.als";
 		Util.writeAll(sigFile, sigs);
 		System.out.println("Sigs writted to: " + sigFile);
-		
-		List<Formula> formulas = A4CommandExecuter.getInstance().translateAlloy2KK(sigFile, A4Reporter.NOP, "p");
-		
+
+		List<Formula> formulas = A4CommandExecuter.getInstance()
+				.translateAlloy2KK(sigFile, A4Reporter.NOP, "p");
+
 		System.out.println("\nFormulas: ");
 		String regex = "this\\/([^\\s])*\\."; // Remove all this/*.
-		for(Formula f: formulas) {
-			String structuralConstraint = f.toString().replaceAll(regex, "").replace("this/", "");
+		for (Formula f : formulas) {
+			String structuralConstraint = f.toString().replaceAll(regex, "")
+					.replace("this/", "");
 			System.out.println(structuralConstraint);
 		}
 
 	}
-	
+
+	@Test
+	public void testCodeGenerator() throws Err {
+
+		String alloy4Home = "/home/fikayo/Documents/Engineering/Alloy/alloy";
+
+		String fileName = "linked_list.als";
+		String directory = alloy4Home + "/models/debugger/min_dist/";
+		 fileName = "birthday.als";
+		 directory = alloy4Home + "/models/examples/toys/";
+		String file = directory + fileName;
+		System.out.println("Testing Code Generation on file: " + fileName);
+		Map<Command, A4Solution> map = A4CommandExecuter.getInstance()
+				.runThenGetAnswers(new String[] { file }, A4Reporter.NOP);
+		
+		A4Solution sol = map.values().iterator().next();
+		CodeGenerator generator = new CodeGenerator(sol);
+	}
+
 	private String getSigString(String file) throws Err {
 
-		Map<Command, A4Solution> map = A4CommandExecuter.getInstance().runThenGetAnswers(new String[] {file}, A4Reporter.NOP);
-		
+		Map<Command, A4Solution> map = A4CommandExecuter.getInstance()
+				.runThenGetAnswers(new String[] { file }, A4Reporter.NOP);
+
 		String run = "\npred p[] {}\nrun p";
 		for (A4Solution soln : map.values()) {
 			String sigs = Field2ConstraintMapper.getSigDeclationViaPos(soln);
 			sigs += run;
 			return sigs;
 		}
-		
+
 		return "[None]";
 	}
 }

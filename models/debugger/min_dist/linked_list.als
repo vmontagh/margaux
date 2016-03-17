@@ -1,5 +1,5 @@
 sig Date{}
-sig Node {next: lone Node, hello: one next, dt: next  some -> one Date}
+one sig Node {next: lone Node, hello: one next, dt: next  some -> one Date}
 /*
 pred isAcyclic[nodes: set Node, next1: Node -> Node] {
 	all node : nodes | node not in node.^next1
