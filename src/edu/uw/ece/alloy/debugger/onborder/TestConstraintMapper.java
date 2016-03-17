@@ -56,8 +56,8 @@ public class TestConstraintMapper {
 		
 		String fileName = "linked_list.als";
 		String directory = alloy4Home + "/models/debugger/min_dist/";
-		fileName = "birthday.als"; 
-		directory = alloy4Home + "/models/examples/toys/";
+//		fileName = "birthday.als"; 
+//		directory = alloy4Home + "/models/examples/toys/";
 		String file = directory + fileName;
 		System.out.println("Running file: " + fileName);
 		
