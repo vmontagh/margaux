@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.onborder;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
@@ -8,7 +9,7 @@ import java.util.List;
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
+import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.onborder.SigFieldWrapper.FieldInfo;
 import kodkod.ast.Formula;
@@ -19,31 +20,69 @@ public class OnBorderCodeGenerator {
 	
 	private PrintWriter out;
 	private String indent;
-	private A4Solution sol;
+	private Module module;
+	private String sigString;
 	private List<SigFieldWrapper> sigs;
 
-	public OnBorderCodeGenerator(A4Solution sol) {
+	private OnBorderCodeGenerator() {
 		this.indent = "";
 		this.out = new PrintWriter(System.out);
-		this.sol = sol;
+	}
+	
+	public OnBorderCodeGenerator(Module module) {
+		this();
+		this.module = module;
 		
 		try {
-			this.sigs = A4SolutionVisitor.getSigs(sol);
+			this.sigString = Field2ConstraintMapper.getSigDeclationViaPos(this.module);
+			this.sigs = A4SolutionVisitor.getSigs(module);
 		} catch (Err e) {
 			e.printStackTrace();
 		}		
 	}
 
-	public OnBorderCodeGenerator(A4Solution sol, PrintWriter writer) {
-		this(sol);
+	public OnBorderCodeGenerator(Module module, PrintWriter writer) {
+		this(module);
 		this.out = writer;
 	}
 	
+	public OnBorderCodeGenerator(String filepath) {
+		this();
+		
+		try {
+			this.module = A4CommandExecuter.getInstance().parse(filepath, A4Reporter.NOP);
+		} catch (Err e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			this.sigString = Field2ConstraintMapper.getSigDeclationViaPos(this.module);
+			this.sigs = A4SolutionVisitor.getSigs(module);
+		} catch (Err e) {
+			e.printStackTrace();
+		}
+		
+		File file = new File(filepath);
+		String directory = file.getParent() + "/";
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf(".")) + "_mod.als";
+		
+		try {
+			File newFile = new File(directory + name);
+			newFile.getParentFile().mkdirs();
+			this.out = new PrintWriter(newFile);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public void run() {
 		try {
+			this.generateSigs(this.out);
 			this.generateDiffs(this.out);
 			this.generateIsInstance(this.out);
-			this.generateMarginalDifferences(out);
+			this.generateFindMarginalInstances(out);
 		} catch (Err e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -52,6 +91,14 @@ public class OnBorderCodeGenerator {
 
 		
 		this.out.flush();
+	}
+	
+	private void generateSigs(PrintWriter out) throws Err {
+		this.out = out;
+		ln();
+		
+		println(this.sigString);
+		
 	}
 	
 	private void generateDiffs(PrintWriter out) {
@@ -90,8 +137,7 @@ public class OnBorderCodeGenerator {
 		
 	}
 	
-
-	private void generateMarginalDifferences(PrintWriter out) {
+	private void generateFindMarginalInstances(PrintWriter out) {
 		
 		this.out = out;
 		ln();	
@@ -170,7 +216,8 @@ public class OnBorderCodeGenerator {
 		ln();
 		indent();
 		indent();
-		println("(isInstance[%s]", isInstanceCall);
+		println("(");
+		println("isInstance[%s]", isInstanceCall);
 		println("and not isInstance[%s]", isNotInstanceCall);
 		println("%s)", deltaCalls.toString().replaceAll("\n", "\n" + indent));
 		
@@ -182,7 +229,8 @@ public class OnBorderCodeGenerator {
 		println("all %s | {", quantifier_1);
 		indent();
 		indent();
-		println("(isInstance[%s]", isInstanceCall_1);
+		println("(");
+		println("isInstance[%s]", isInstanceCall_1);
 		println("and not isInstance[%s]", isNotInstanceCall_1);
 		println("%s)", deltaCalls_1.toString().replaceAll("\n", "\n" + indent));
 		
@@ -196,9 +244,11 @@ public class OnBorderCodeGenerator {
 		
 		// Close inner quantifier
 		outdent();
+		outdent();
 		println("}");
 		
 		// Close outer quantifier
+		outdent();
 		outdent();
 		println("}");
 		
@@ -216,15 +266,13 @@ public class OnBorderCodeGenerator {
 		StringBuilder params = new StringBuilder();
 		for(SigFieldWrapper sigWrap : this.sigs) {
 			
-//			String sigName = this.getCamelCase(sigWrap.getSig());
+			String sigName = this.getCamelCase(sigWrap.getSig());
 			args.append(String.format(", %s", sigWrap.getSig()));
-//			params.append(String.format(", %s: set %s", sigName, sigWrap.getSig()));
-			params.append(String.format(", %s", sigWrap.getParamDecl()));
+			params.append(String.format(", %s: set %s", sigName, sigWrap.getSig()));
 			
 			for(FieldInfo field : sigWrap.getFields()) {
 				args.append(String.format(", %s", field.getLabel()));
-//				params.append(String.format(", %s: %s", field.getLabel(), field.getType()));
-				params.append(String.format(", %s", field.getParamDecl()));
+				params.append(String.format(", %s: %s", field.getLabel(), field.getType()));
 			}
 		}
 		
@@ -249,11 +297,12 @@ public class OnBorderCodeGenerator {
 		this.out = out;
 		ln();
 		println("pred structuralConstraints [%s] {", params);
+//		println("pred structuralConstraints [] {");
 		indent(); 
 		
 		// Create temp file for extracted signatures
 		File file = File.createTempFile("sig", ".als");
-		String sigs = getSigString();
+		String sigs = this.sigString + OnBorderCodeGenerator.RUN;
 		Util.writeAll(file.getAbsolutePath(), sigs);
 		
 		// Translate signatures to KodKod
@@ -263,6 +312,14 @@ public class OnBorderCodeGenerator {
 		String regex = "this\\/([^\\s])*\\."; // Remove all this/*.
 		for(Formula f: formulas) {
 			 String constraint = f.toString().replaceAll(regex, "").replace("this/", "");
+			 for(SigFieldWrapper sigWrap : this.sigs) {
+				 constraint = constraint.replaceAll("\\b" + sigWrap.getSig() + "\\b", this.getCamelCase(sigWrap.getSig()));
+				 
+				 for(FieldInfo field : sigWrap.getFields()) {
+					 constraint = constraint.replaceAll(field.getName(), field.getLabel());
+				 }
+			 }
+			 
 			 println(constraint);
 		}
 		
@@ -303,15 +360,6 @@ public class OnBorderCodeGenerator {
 		
 		outdent();
 		println("}");
-	}
-		
-	private String getSigString() throws Err {
-		
-		String sigs = Field2ConstraintMapper.getSigDeclationViaPos(this.sol);
-		sigs += OnBorderCodeGenerator.RUN;
-		
-		return sigs;
-		
 	}
 	
 	private String getPascalCase(String in) {

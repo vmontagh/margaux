@@ -11,6 +11,7 @@ import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
+import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
@@ -90,30 +91,27 @@ public class TestConstraintMapper {
 
 		String fileName = "linked_list.als";
 		String directory = alloy4Home + "/models/debugger/min_dist/";
-		 fileName = "birthday.als";
-		 directory = alloy4Home + "/models/examples/toys/";
+		fileName = "birthday.als";
+		fileName = "ceilingsAndFloors.als";
+		fileName = "railway.als";
+		directory = alloy4Home + "/models/examples/toys/";
+		
 		String file = directory + fileName;
 		System.out.println("Testing Code Generation on file: " + fileName);
-		Map<Command, A4Solution> map = A4CommandExecuter.getInstance()
-				.runThenGetAnswers(new String[] { file }, A4Reporter.NOP);
 		
-		A4Solution sol = map.values().iterator().next();
-		CodeGenerator generator = new CodeGenerator(sol);
+		OnBorderCodeGenerator generator = new OnBorderCodeGenerator(file);
 		generator.run();
+		
+		System.out.println("Done");
 	}
 
 	private String getSigString(String file) throws Err {
 
-		Map<Command, A4Solution> map = A4CommandExecuter.getInstance()
-				.runThenGetAnswers(new String[] { file }, A4Reporter.NOP);
+		Module module = A4CommandExecuter.getInstance().parse(file, A4Reporter.NOP);
 
 		String run = "\npred p[] {}\nrun p";
-		for (A4Solution soln : map.values()) {
-			String sigs = Field2ConstraintMapper.getSigDeclationViaPos(soln);
-			sigs += run;
-			return sigs;
-		}
-
-		return "[None]";
+		String sigs = Field2ConstraintMapper.getSigDeclationViaPos(module);
+		sigs += run;
+		return sigs;
 	}
 }

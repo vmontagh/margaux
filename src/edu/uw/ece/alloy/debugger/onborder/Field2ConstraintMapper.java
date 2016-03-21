@@ -17,6 +17,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprList;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprQt;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
+import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
@@ -29,7 +30,7 @@ import edu.uw.ece.alloy.util.Utils;
  */
 public class Field2ConstraintMapper extends VisitReturn<Object> {
 
-	public static String getSigDeclationViaPos(A4Solution sol) throws Err {
+	public static String getSigDeclationViaPos(Module sol) throws Err {
 		
 		StringBuilder allSigs = new StringBuilder();
 		for(Sig sig: sol.getAllReachableSigs()) {
@@ -41,7 +42,7 @@ public class Field2ConstraintMapper extends VisitReturn<Object> {
 		return allSigs.toString();
 	}
 	
-	public static String getSigDeclations(A4Solution sol) throws Err {
+	public static String getSigDeclations(Module sol) throws Err {
 		
 		StringBuilder allSigs = new StringBuilder();
 		for(Sig sig: sol.getAllReachableSigs()) {
@@ -49,14 +50,15 @@ public class Field2ConstraintMapper extends VisitReturn<Object> {
 			if(sig.builtin) continue;
 			
 			StringBuilder sigString = new StringBuilder();
-			sigString.append(String.format("sig %s {", sig.label));
+			String sigLabel = getCamelCase(sig.label);
+			sigString.append(String.format("sig %s {", sigLabel));
 			
 			for(Decl decl: sig.getFieldDecls()) {
 
 				Field field = (Field)decl.get();
 				Expr expr = decl.expr;
 				
-				String label = field.label;
+				String label = sigLabel + "_" + field.label;
 				
 				Field2ConstraintMapper mapper = new Field2ConstraintMapper();
 				Object str = mapper.visitThis(expr);
@@ -119,6 +121,13 @@ public class Field2ConstraintMapper extends VisitReturn<Object> {
 		return map;
 	}
 
+	private static String getCamelCase(String in) {
+		if(in == null || in.isEmpty()) return in;
+		
+		boolean lenG1 = in.length() > 1;
+		return Character.toLowerCase(in.charAt(0)) + (lenG1 ? in.substring(1) : "");
+	}
+	
 	@Override
 	public Object visit(ExprBinary x) throws Err {
 
