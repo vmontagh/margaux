@@ -13,7 +13,7 @@ import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.onborder.SigFieldWrapper.FieldInfo;
 import kodkod.ast.Formula;
 
-public class CodeGenerator {
+public class OnBorderCodeGenerator {
 
 	private static final String RUN = "\npred p[] {}\nrun p";
 	
@@ -22,7 +22,7 @@ public class CodeGenerator {
 	private A4Solution sol;
 	private List<SigFieldWrapper> sigs;
 
-	public CodeGenerator(A4Solution sol) {
+	public OnBorderCodeGenerator(A4Solution sol) {
 		this.indent = "";
 		this.out = new PrintWriter(System.out);
 		this.sol = sol;
@@ -34,7 +34,7 @@ public class CodeGenerator {
 		}		
 	}
 
-	public CodeGenerator(A4Solution sol, PrintWriter writer) {
+	public OnBorderCodeGenerator(A4Solution sol, PrintWriter writer) {
 		this(sol);
 		this.out = writer;
 	}
@@ -308,7 +308,7 @@ public class CodeGenerator {
 	private String getSigString() throws Err {
 		
 		String sigs = Field2ConstraintMapper.getSigDeclationViaPos(this.sol);
-		sigs += CodeGenerator.RUN;
+		sigs += OnBorderCodeGenerator.RUN;
 		
 		return sigs;
 		
