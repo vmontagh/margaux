@@ -20,14 +20,19 @@ public class A4SolutionVisitor {
 
 			if(sig.builtin) continue;
 			
-			SigFieldWrapper sigWrapper = new SigFieldWrapper(sig.label.replace("this/", ""));
+			String sigType = sig.label.replace("this/", "");
+			String sigName = getCamelCase(sigType);
+			String paramDecl = String.format(", %s: set %s", sigName, sigType);
+			SigFieldWrapper sigWrapper = new SigFieldWrapper(sigType, paramDecl, null);
+			
 			for (Decl decl : sig.getFieldDecls()) {
 
 				Field field = (Field) decl.get();
 				String type = field.type().toString().replaceAll("[{\\[\\]}]", "").replace("this/", "");
 				String[] typeParts = type.split("->");
+				String param = String.format("%s: %s", field.label, type);
 				
-				FieldInfo info = sigWrapper.new FieldInfo(field.label, type, typeParts);
+				FieldInfo info = sigWrapper.new FieldInfo(field.label, type, param, typeParts);
 				sigWrapper.addField(info);
 			}
 			
@@ -35,6 +40,13 @@ public class A4SolutionVisitor {
 		}
 		
 		return sigs;
+	}
+	
+	private static String getCamelCase(String in) {
+		if(in == null || in.isEmpty()) return in;
+		
+		boolean lenG1 = in.length() > 1;
+		return Character.toLowerCase(in.charAt(0)) + (lenG1 ? in.substring(1) : "");
 	}
 
 }

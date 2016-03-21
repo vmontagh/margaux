@@ -99,6 +99,7 @@ public class TestConstraintMapper {
 		
 		A4Solution sol = map.values().iterator().next();
 		CodeGenerator generator = new CodeGenerator(sol);
+		generator.run();
 	}
 
 	private String getSigString(String file) throws Err {

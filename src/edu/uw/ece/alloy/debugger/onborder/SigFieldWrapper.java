@@ -6,6 +6,7 @@ import java.util.List;
 public class SigFieldWrapper {
 
 	private String sig;
+	private String paramDecl;
 	private List<FieldInfo> fields;
 
 	public SigFieldWrapper() {
@@ -17,8 +18,9 @@ public class SigFieldWrapper {
 		this.sig = sig;
 	}
 	
-	public SigFieldWrapper(String sig, List<FieldInfo> fields) {
+	public SigFieldWrapper(String sig, String paramDecl, List<FieldInfo> fields) {
 		this(sig);
+		this.paramDecl = paramDecl;
 		if(fields != null) this.fields = fields;
 	}
 	
@@ -26,6 +28,10 @@ public class SigFieldWrapper {
 		return sig;
 	}
 
+	public String getParamDecl() {
+		return this.paramDecl;
+	}
+	
 	public List<FieldInfo> getFields() {
 		return fields;
 	}
@@ -38,11 +44,13 @@ public class SigFieldWrapper {
 		
 		private String label;
 		private String type;
+		private String paramDecl;
 		private String[] typeComponents;
 		
-		public FieldInfo(String label, String type, String[] typeComponents) {
+		public FieldInfo(String label, String type, String paramDecl, String[] typeComponents) {
 			this.label = label;
 			this.type = type;
+			this.paramDecl = paramDecl;
 			this.typeComponents = typeComponents;
 		}
 		
@@ -54,6 +62,10 @@ public class SigFieldWrapper {
 			return type;
 		}
 
+		public String getParamDecl() {
+			return this.paramDecl;
+		}
+		
 		public String[] getTypeComponents() {
 			return typeComponents;
 		}
