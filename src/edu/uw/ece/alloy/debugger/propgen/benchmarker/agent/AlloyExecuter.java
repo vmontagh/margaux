@@ -46,7 +46,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 	protected final int maxInterrupt ;  
 	protected boolean killToken = false;
 
-	private AlloyExecuter(final int maxInterrupt) {
+	protected AlloyExecuter(final int maxInterrupt) {
 		this.maxInterrupt = maxInterrupt;
 	}
 

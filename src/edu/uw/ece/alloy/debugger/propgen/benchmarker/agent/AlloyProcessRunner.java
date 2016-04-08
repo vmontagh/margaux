@@ -5,12 +5,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
 import edu.uw.ece.alloy.util.Utils;
@@ -24,7 +21,7 @@ public class AlloyProcessRunner {
 	final public static File tmpDirectoryRoot = new File( Configuration.getProp("temporary_directory") );
 	final public  File tmpDirectory;
 
-	//The PID is as the port number that the processor is listening to.
+	/** The PID is as the port number that the processor is listening to. */
 	public final InetSocketAddress PID;
 	public final InetSocketAddress remotePort;
 

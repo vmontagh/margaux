@@ -101,12 +101,17 @@ public class AlloyProcess {
 
 	@Override
 	public String toString() {
-		return "AlloyProcess [address=" + address + ", doneTasks="
+		return getProcessName() + "[address=" + address + ", doneTasks="
 				+ doneTasks + ", doingTasks=" + doingTasks + ", sentTasks="
 				+ sentTasks + ", status=" + status
 				+ ", lastLiveTimeRecieved=" + lastLiveTimeRecieved
 				+ ", lastLiveTimeReported=" + lastLiveTimeReported
 				+ ", process=" + process + "]";
+	}
+
+
+	protected String getProcessName() {
+		return "Alloy Process";
 	}
 
 
