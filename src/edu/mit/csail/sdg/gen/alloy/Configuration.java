@@ -7,7 +7,7 @@ import java.util.Properties;
 
 public class Configuration {
 
-	final private static String properties_path = "resources/debugger.expriment.config";
+	final public static String properties_path = "resources/debugger.expriment.config";
 	
 	final public static String PACE = "PACE";
 	final public static String ONE_FOUND = "oneFound";

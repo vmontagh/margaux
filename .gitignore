@@ -3,6 +3,6 @@
 ./lib/alloy4.2
 ./expr_output
 ./relational_props
-./bin
+/bin
 ./tmp
 ./dist

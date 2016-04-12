@@ -1,5 +1,6 @@
-sig Node {next: lone Node}
-
+sig Date{}
+one sig Node {next: lone Node, hello: one next, dt: next  some -> one Date}
+/*
 pred isAcyclic[nodes: set Node, next1: Node -> Node] {
 	all node : nodes | node not in node.^next1
 }
@@ -14,8 +15,13 @@ pred includeInstance[nodes: set Node, next1: Node -> Node] {
 	next1.Node in nodes
 }
 
-pred structuralConstraint[nodes: set Node, next1: Node -> Node] {
-	all node : nodes | lone node.next1
+pred structuralConstraint[nodes: set Node, next: Node -> Node] {
+	// all node : nodes | lone node.next
+	next in (Node -> lone Node)
+	//hello in (Node -> one next)
+	dt in (next -> one Date)
+
+	all n : nodes | n.dt in (n.next -> one Date)
 }
 
 pred isInstance[nodes: set Node, next1: Node -> Node] {
@@ -25,9 +31,11 @@ pred isInstance[nodes: set Node, next1: Node -> Node] {
 
 pred isListInstance[nodes: set Node, next1: Node -> Node] {
 	isInstance[nodes, next1]
-	isAcyclic[nodes, next1]
-	singleParent[nodes, next1]
+	//isAcyclic[nodes, next1]
+	//singleParent[nodes, next1]
 }
+
+*/
 
 /**
 * delta = |List1 - List2|
@@ -35,6 +43,8 @@ pred isListInstance[nodes: set Node, next1: Node -> Node] {
 * List1 = List2 + delta OR
 * List2 = List1 + delta
 */
+
+/*
 pred isDiffInstance[n1: set Node, next1: Node -> Node, 
 				n2: set Node, next2: Node -> Node,
 				diffNodes: set Node, diffNext: Node -> Node] {
@@ -47,6 +57,16 @@ pred isDiffInstance[n1: set Node, next1: Node -> Node,
 	
 }
 
-run {
+fact {
+	isAcyclic[Node, next]
+	singleParent[Node, next]
+}
+
+assert instanceCheck {
 	isListInstance[Node, next]
-} for 10
+} 
+
+check instanceCheck for 10
+*/
+run {} for 10
+

@@ -21,10 +21,11 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
+import edu.uw.ece.alloy.util.Utils;
 
 public class ProcessesManager {
 
-	protected final static Logger logger = Logger.getLogger(ProcessesManager.class.getName()+"--"+Thread.currentThread().getName());;
+	protected final static Logger logger = Logger.getLogger(ProcessesManager.class.getName()+"--"+Thread.currentThread().getName());
 
 	public final static int MaxFeedThreashold = Integer.valueOf(Configuration.getProp("max_feed_treashold"));
 
@@ -122,6 +123,46 @@ public class ProcessesManager {
 		final String debug = Boolean.parseBoolean(System.getProperty("debug")) ? "yes" : "no";
 
 		try {
+			sub = (jniPath!=null && jniPath.length()>0) ?
+					Utils.createProcess(java,
+							"-Xmx" + newmem + "m",
+							"-Xss" + newstack + "k",
+							"-Djava.util.logging.config.file=" + processLoggerConfig,
+							"-Djava.library.path=" + jniPath,
+							"-Ddebug=" + debug,
+							"-cp", classPath, AlloyProcessRunner.class.getName(),
+							""+address.getPort(),
+							""+address.getAddress().getHostAddress(),
+							""+watchdogAddress.getPort(),
+							""+watchdogAddress.getAddress().getHostAddress())
+			:
+				Utils.createProcess(java,
+						"-Xmx" + newmem + "m",
+						"-Xss" + newstack + "k",
+						"-Ddebug=" + debug,
+						"-Djava.util.logging.config.file=" + processLoggerConfig,
+						"-cp", classPath, AlloyProcessRunner.class.getName(),
+						""+address.getPort(),
+						""+address.getAddress().getHostAddress(),
+						""+watchdogAddress.getPort(),
+						""+watchdogAddress.getAddress().getHostAddress());					
+
+		} catch (IOException e) {
+			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not able to create a new process on port: "+address, e);
+			throw e;
+		}
+
+		AlloyProcess result = new AlloyProcess(address, sub);
+		return result;
+	}
+
+/*	public synchronized AlloyProcess createProcessOld(final InetSocketAddress address) throws IOException{
+
+		final Process sub;
+		final String java = "java";
+		final String debug = Boolean.parseBoolean(System.getProperty("debug")) ? "yes" : "no";
+
+		try {
 			ProcessBuilder pb = (jniPath!=null && jniPath.length()>0) ?
 					new ProcessBuilder(java,
 							"-Xmx" + newmem + "m",
@@ -161,7 +202,7 @@ public class ProcessesManager {
 
 		AlloyProcess result = new AlloyProcess(address, sub);
 		return result;
-	}
+	}*/
 
 	/*	public void activateProess(final int pId) throws InterruptedException{
 		if(! processes.containsKey(pId)){

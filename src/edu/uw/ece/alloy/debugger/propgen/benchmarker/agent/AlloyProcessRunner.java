@@ -21,7 +21,7 @@ public class AlloyProcessRunner {
 	final public static File tmpDirectoryRoot = new File( Configuration.getProp("temporary_directory") );
 	final public  File tmpDirectory;
 
-	//The PID is as the port number that the processor is listening to.
+	/** The PID is as the port number that the processor is listening to. */
 	public final InetSocketAddress PID;
 	public final InetSocketAddress remotePort;
 

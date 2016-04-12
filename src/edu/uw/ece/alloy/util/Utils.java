@@ -8,10 +8,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -29,15 +37,20 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
-
 import javax.sql.rowset.serial.SerialException;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pos;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 public class Utils {
+	
+	public final static int MaxPortNumber = Integer.valueOf(Configuration.getProp("max_port"));
+	public final static int MinPortNumber = Integer.valueOf(Configuration.getProp("min_port"));
+	public final static int MaxTryPort = 10000000;
+
+	private static int lastFoundPort = MinPortNumber;
+	
 	private Utils() {
 		throw new UnsupportedOperationException();
 	}
@@ -360,7 +373,6 @@ public class Utils {
 		return obj.toString();
 	}
 
-
 	/**
 	 * Pos a within pos b
 	 * @param a
@@ -376,4 +388,108 @@ public class Utils {
 										(b.y == a.y && b.x == a.x && a.y2 ==  b.y2 && a.x2 == b.x2);
 	}
 
+	/** This wraps the given InputStream such that the resulting object's "close()" method does nothing;
+   * if stream==null, we get an InputStream that always returns EOF. */
+  public static InputStream wrap(final InputStream stream) {
+     return new InputStream() {
+        public int read(byte b[], int off, int len) throws IOException {
+           if (len==0) return 0; else if (stream==null) return -1; else return stream.read(b, off, len);
+        }
+        public int  read()       throws IOException { if (stream==null) return -1; else return stream.read(); }
+        public long skip(long n) throws IOException { if (stream==null) return 0; else return stream.skip(n); }
+     };
+  }
+
+  /** This wraps the given OutputStream such that the resulting object's "close()" method simply calls "flush()";
+   * if stream==null, we get an OutputStream that ignores all writes. */
+  public static OutputStream wrap(final OutputStream stream) {
+     return new OutputStream() {
+        public void write(int b)                      throws IOException { if (stream!=null) stream.write(b); }
+        public void write(byte b[], int off, int len) throws IOException { if (stream!=null) stream.write(b, off, len); }
+        public void flush()                           throws IOException { if (stream!=null) stream.flush(); }
+        public void close()                           throws IOException { if (stream!=null) stream.flush(); }
+        // The close() method above INTENTIONALLY does not actually close the file
+     };
+  }
+	
+  
+  
+  
+  
+  
+  
+  
+  // TODO Move the following APIs to ProcessorUtil
+	public static Process createProcess(String... commands) throws IOException {
+		
+		ProcessBuilder pb = new ProcessBuilder(commands);
+		pb.redirectOutput(Redirect.INHERIT);
+		pb.redirectError(Redirect.INHERIT);
+		
+		return pb.start();
+	}
+	
+	public static InetAddress getLocalAddress() throws UnknownHostException {
+		return InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
+	}
+	
+	/**
+	 * This function may return already used ports. So the history in sentMessagesCounter should be cleaned.
+	 * @return
+	 */
+	public static InetSocketAddress  findEmptyLocalSocket(final InetAddress localAddress){
+		int port = lastFoundPort;
+		int tmpPort = lastFoundPort - MinPortNumber + 1;
+
+		int findPortTriesMax = 1;
+
+		while( ++findPortTriesMax < MaxTryPort){
+			tmpPort = (tmpPort + 2) % (MaxPortNumber - MinPortNumber);/*The range is an odd number so the second round it iterates the other sent of numbers.*/
+			int actualport = tmpPort + MinPortNumber;
+
+			if(available(actualport)) {
+				port = actualport;
+				break;
+			}
+
+		}
+
+		if(port == lastFoundPort){
+			throw new RuntimeException("No port available");
+		}
+		lastFoundPort = port;
+		return new InetSocketAddress(localAddress, lastFoundPort);
+	}
+	
+	public static boolean available(int port) {
+		if (port < MinPortNumber || port > MaxPortNumber) {
+			throw new IllegalArgumentException("Invalid start port: " + port);
+		}
+
+		ServerSocket ss = null;
+		DatagramSocket ds = null;
+		try {
+			ss = new ServerSocket(port);
+			ss.setReuseAddress(true);
+			ds = new DatagramSocket(port);
+			ds.setReuseAddress(true);
+			return true;
+		} catch (IOException e) {
+		} finally {
+			if (ds != null) {
+				ds.close();
+			}
+
+			if (ss != null) {
+				try {
+					ss.close();
+				} catch (IOException e) {
+					/* should not be thrown */
+				}
+			}
+		}
+
+		return false;
+	}
+	
 }
