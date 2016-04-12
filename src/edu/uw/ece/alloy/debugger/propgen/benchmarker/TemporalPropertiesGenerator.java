@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,10 +85,12 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 
 	public TemporalPropertiesGenerator(final GeneratedStorage<AlloyProcessingParam> generatedStorage) {
 		builder = new TripleBuilder(
-				"r", "s", "s_next", "s_first",
+				"r", 
+				"s", "s_next", "s_first",
 				"m", "m_next", "m_first", 
 				"e", "e_next", "e_first",
 
+				// Concretes are not required.
 				"r", "S", "so/next", "so/first", 
 				"M", 
 				"E", "eo/next", "eo/first", 
@@ -156,7 +159,7 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMon
 				for(final PropertyToAlloyCode alloyCodeGenerator: propertyBuilder.createObjects(
 						tripleProps.get(pred1).b, tripleProps.get(pred2).b, 
 						tripleProps.get(pred1).a, tripleProps.get(pred2).a, 
-						pred1, pred2//[tmpDirectory], tmpDirectory
+						pred1, pred2, "r"/*Field name*///[tmpDirectory], tmpDirectory
 						) ){
 
 					//if(doneNames.contains(alloyCodeGenerator.srcName())) continue;

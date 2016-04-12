@@ -31,7 +31,7 @@ public class PropertyCallBuilderTest {
 		final String alloyTestCode = 
 				 "open util/ordering [A] \n"
 				+ "open util/ordering [D] \n"
-				+ "open util/ordering [B] as bo \n"
+				//+ "open util/ordering [B] as bo \n"
 				+ "sig B,C{}\n"
 				+ "sig A{r:B}\n"
 				+ "sig D{s:B->C, w:A}\n" 
@@ -42,8 +42,11 @@ public class PropertyCallBuilderTest {
 				+ "pred p2[r:univ->univ->univ, left:univ]{}\n"
 				+ "pred p3[r:univ->univ, left:univ,right:univ]{}\n"
 				+ "pred p4[r:univ->univ->univ, left,middle,right:univ]{}\n"
-				+ "pred p5[r:univ->univ->univ, left,middle,right:univ, left_first:univ, left_next:univ->univ, middle_first:univ, middle_next:univ->univ]{}\n"
-				+ "pred p6[a:univ->univ->univ, left,middle,right:univ, left_first:univ, left_next:univ->univ, middle_first:univ, middle_next:univ->univ, right_first:univ, right_next:univ->univ]{}\n"
+				+ "pred p5[r:univ->univ->univ, left,middle,right:univ, left_first:univ, left_next:univ->univ, right_first:univ, right_next:univ->univ]{}\n"
+				+ "pred p6[r:univ->univ->univ, left,middle,right:univ, left_first:univ, left_next:univ->univ]{}\n"
+				+ "pred p7[r:univ->univ->univ, left,middle,right:univ, left_first:univ, left_next:univ->univ, middle_first:univ, middle_next:univ->univ]{}\n"
+				+ "pred p8[a:univ->univ->univ, left,middle,right:univ, left_first:univ, left_next:univ->univ, middle_first:univ, middle_next:univ->univ, right_first:univ, right_next:univ->univ]{}\n"
+				
 				+ "run{}";
 		// @formatter:on
 

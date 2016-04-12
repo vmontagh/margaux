@@ -1288,7 +1288,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
     /** This method changes the SAT solver to the given solver. */
     private Runner doOptSolver(SatSolver solver) {
-        if (!wrap) solver.set();
+    	//[VM] changed the solver
+    	//if (!wrap) solver.set();
         return wrapMe(solver);
     }
 

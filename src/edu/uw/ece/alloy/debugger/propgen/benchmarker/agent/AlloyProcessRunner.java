@@ -5,12 +5,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
 import edu.uw.ece.alloy.util.Utils;
@@ -111,8 +108,6 @@ public class AlloyProcessRunner {
 		watchdog.addThreadToBeMonitored(fileWriter);
 		watchdog.addThreadToBeMonitored(dbWriter);
 
-
-		
 		executer.startThread();
 		socketWriter.startThread();
 		fileWriter.startThread();
@@ -160,8 +155,6 @@ public class AlloyProcessRunner {
 
 		if(args.length > 4)
 			throw new RuntimeException("Inappropriate number of inputs. Only enter the remote port number as an interger.");
-
-
 
 		int localPort;
 		int remotePort;

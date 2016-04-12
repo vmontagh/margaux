@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.uw.ece.alloy.debugger;
+package edu.uw.ece.alloy.debugger.filters;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +27,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprVar;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.VisitReturn;
+import edu.uw.ece.alloy.util.Utils;
 
 /**
  * Given A position, find all the sub expressions that are in
@@ -59,24 +60,9 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 		return Collections.unmodifiableList(result);
 	}
 
-	/**
-	 * Pos a within pos b
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	public static boolean posWithin(Pos a, Pos b){
-		if (a==null || a==Pos.UNKNOWN || b==null || b==Pos.UNKNOWN || !a.filename.equals(b.filename)) return false;
-		return 	(b.y < a.y && a.y2 < b.y2) ||
-							(b.y == a.y && b.x <= a.x && a.y2 < b.y2) || 
-								(b.y < a.y && a.y2 == b.y2  && a.x2 <= b.x2) ||
-									(b.y == a.y && b.x <= a.x && a.y2 ==  b.y2 && a.x2 <= b.x2) ||
-										(b.y == a.y && b.x == a.x && a.y2 ==  b.y2 && a.x2 == b.x2);
-	}
-
 	@Override
 	public Expr visit(ExprBinary x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			visitThis(x.left);
@@ -87,7 +73,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprList x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			for(Expr arg: x.args){
@@ -99,7 +85,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprCall x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			for(Decl decl: x.fun.decls){
@@ -112,7 +98,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprConstant x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		}
 		return x;
@@ -120,7 +106,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprITE x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			visitThis(x.cond);
@@ -132,7 +118,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprLet x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			visitThis(x.expr);
@@ -143,7 +129,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprQt x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			for(Decl decl: x.decls){
@@ -156,7 +142,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprUnary x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} else{
 			visitThis(x.sub);
@@ -166,7 +152,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprVar x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} 
 		return x;	
@@ -174,7 +160,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(Sig x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} 
 		return x;	
@@ -182,7 +168,7 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(Field x) throws Err {
-		if (posWithin(x.pos, pos)){
+		if (Utils.posWithin(x.pos, pos)){
 			exprs.add(x);
 		} 
 		return x;	
@@ -191,5 +177,5 @@ public class ExpressionsWithinPosVisitor extends VisitReturn<Expr> {
 	public Expr visit(Bounds bounds) throws Err {
 		return bounds;
 	}
-
+	
 }

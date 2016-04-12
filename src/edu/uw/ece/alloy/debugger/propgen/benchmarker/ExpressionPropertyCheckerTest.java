@@ -9,6 +9,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -18,9 +19,11 @@ import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.uw.ece.alloy.debugger.BlocksExtractorByComments;
+import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.TemporalImplicationLatticeGenerator;
+import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 
 /**
  * @author vajih
@@ -34,8 +37,8 @@ public class ExpressionPropertyCheckerTest {
 	final String[] moduleNames = {"binary_implication.als",
 	"property_structure.als"};
 	final static String tempFolderPath = "tmp/kb";
-	ImplicationLattic bil;
-	ExpressionPropertyChecker epc;
+	ImplicationLattic bil,til;
+	ExpressionPropertyGenerator epc;
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -60,10 +63,11 @@ public class ExpressionPropertyCheckerTest {
 		final String alloyTestCode = 
 				"open util/ordering [A] \n"
 						+ "sig B{c: B}\n"
-						+ "sig A{r:B}\n"				
+						+ "sig A{r:B, s: B->C}\n"
+						+ "sig C{}\n"
 						+ "pred p1[r:univ->univ, left:univ]{one c}\n"
 						+ "fact{\n " + BlocksExtractorByComments.ExtractExpression.BEGIN 
-						+ "\n some r " + BlocksExtractorByComments.ExtractExpression.END + " \n}\n"
+						+ "\n some r and some s" + BlocksExtractorByComments.ExtractExpression.END + " \n}\n"
 						+ "fact{\n "
 						+ " p1[univ->univ, univ] and all a: A| some a.r " 
 						+ "}\n"
@@ -89,7 +93,10 @@ public class ExpressionPropertyCheckerTest {
 		}		
 
 		bil = new BinaryImplicationLattic(tempFolderPath, moduleNames);
-		epc = new ExpressionPropertyChecker(null, new File(AlloyTmpTestPath));
+		til = new TernaryImplicationLattic(TemporalImplicationLatticeGenerator.pathToLegend,
+																									TemporalImplicationLatticeGenerator.pathToImplication,
+																									TemporalImplicationLatticeGenerator.pathToIff);
+		epc = new ExpressionPropertyGenerator(null, new File(AlloyTmpTestPath), tempFolder, tempFolder, false, false, false, false);
 	}
 
 	/**
@@ -104,5 +111,11 @@ public class ExpressionPropertyCheckerTest {
 		GeneratedStorage<AlloyProcessingParam> result = new GeneratedStorage<>();
 		epc.generateRelationalChekers(new HashSet<>(bil.getAllSources()),result);
 	}
-
+	
+	@Test
+	public void testGenerateTemporalChekers() throws Err{
+		GeneratedStorage<AlloyProcessingParam> gs = new GeneratedStorage<>();
+		epc.generateTemporalChekers(new HashSet<>(til.getAllSources()), gs);
+	}
+	
 }

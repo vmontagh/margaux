@@ -1,25 +1,24 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 
 public class AlloyProcessedResult extends MyReporter {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -9097043109204297771L;
+	private static final long serialVersionUID = 650740082971241007L;
 	final public AlloyProcessingParam params;
 
 	public AlloyProcessedResult(AlloyProcessingParam params) {
 		super();
-		this.params = 
-				params!=null ? 
-						params.createItself() : 
-							AlloyProcessingParam.EMPTY_PARAM;
+		this.params = params != null ? params.createItself()
+				: AlloyProcessingParam.EMPTY_PARAM;
 	}
-	
+
 	public AlloyProcessedResult(AlloyProcessedResult result) {
 		this(result.params);
 		this.clauses = result.clauses;
@@ -30,8 +29,10 @@ public class AlloyProcessedResult extends MyReporter {
 		this.evalTime = result.evalTime;
 		this.sat = result.sat;
 	}
-	
-	public AlloyProcessedResult(AlloyProcessingParam params,long clauses, long evalInsts, long trasnalationTime, long totalVaraibles, long solveTime, long evalTime, int sat) {
+
+	public AlloyProcessedResult(AlloyProcessingParam params, long clauses,
+			long evalInsts, long trasnalationTime, long totalVaraibles,
+			long solveTime, long evalTime, int sat) {
 		this(params);
 		this.clauses = clauses;
 		this.evalInsts = evalInsts;
@@ -41,38 +42,49 @@ public class AlloyProcessedResult extends MyReporter {
 		this.evalTime = evalTime;
 		this.sat = sat;
 	}
-	
-	
-	
+
 	public String asRecord() {
-		return trasnalationTime + "," + totalVaraibles
-				+ "," + clauses + "," + solveTime
-				+ "," + evalTime + "," + evalInsts
-				+ "," + sat ;
+		return trasnalationTime + "," + totalVaraibles + "," + clauses + ","
+				+ solveTime + "," + evalTime + "," + evalInsts + "," + sat;
 	}
-	
-	public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
-		return new AlloyProcessedResult(params, clauses,  evalInsts,  trasnalationTime,  totalVaraibles,  solveTime,  evalTime,  sat);
+
+	public AlloyProcessedResult changeParams(final AlloyProcessingParam params) {
+		return new AlloyProcessedResult(params, clauses, evalInsts,
+				trasnalationTime, totalVaraibles, solveTime, evalTime, sat);
 	}
-	
-	public boolean isTimedout(){
-		return (this instanceof TimeoutResult) ;
+
+	public boolean isTimedout() {
+		return (this instanceof TimeoutResult);
 	}
-	
+
 	public boolean isFailed() {
-		return (this instanceof FailedResult) ;
+		return (this instanceof FailedResult);
 	}
-	
+
 	public boolean isInferred() {
-		return (this instanceof InferredResult) ;
+		return (this instanceof InferredResult);
 	}
-	
+
 	public String asRecordHeader() {
 		return "trasnalationTime,trasnalationTime,totalVaraibles,clauses,solveTime,evalTime,evalInsts,sat";
 	}
 	
-	
-	public static class InferredResult extends AlloyProcessedResult{
+	/**
+	 * return a copy of the result with actual property call
+	 * 
+	 * @return
+	 */
+	public AlloyProcessedResult updatePropertyCall(){
+		return this;
+	}
+
+	public static class InferredResult extends AlloyProcessedResult {
+
+		// A map from (propertyName,field/Name) to property call.
+		// Once a property is inferred, its call does not necessarily have the
+		// same parameters as the original has. So that, the property calls
+		// are cached, then used for changing the inferred properties.
+		final public static ConcurrentMap<Pair<String, String>, String> propertyCalls = new ConcurrentHashMap<>();
 
 		public InferredResult(AlloyProcessingParam params) {
 			super(params);
@@ -85,7 +97,34 @@ public class AlloyProcessedResult extends MyReporter {
 			this.sat = 0;
 		}
 		
-		
+		public AlloyProcessedResult updatePropertyCall() {
+			AlloyProcessingParam param = params;
+
+			Pair<String, String> predAField = new Pair<>(params.alloyCoder.predNameA,
+					params.alloyCoder.field);
+			Pair<String, String> predBField = new Pair<>(params.alloyCoder.predNameB,
+					params.alloyCoder.field);
+
+			if (propertyCalls.containsKey(predAField)) {
+				return new InferredResult(param.createIt(params.alloyCoder.createIt(
+						params.alloyCoder.predBodyA, params.alloyCoder.predBodyB,
+						propertyCalls.get(predAField), params.alloyCoder.predCallB,
+						params.alloyCoder.predNameA, params.alloyCoder.predNameB,
+						params.alloyCoder.getDependencies(),
+						params.alloyCoder.getParamCreator(), params.alloyCoder.header,
+						params.alloyCoder.scope, params.alloyCoder.field)));
+			} else if (propertyCalls.containsKey(predBField)) {
+				return new InferredResult(param.createIt(params.alloyCoder.createIt(
+						params.alloyCoder.predBodyA, params.alloyCoder.predBodyB,
+						params.alloyCoder.predCallA, propertyCalls.get(predBField),
+						params.alloyCoder.predNameA, params.alloyCoder.predNameB,
+						params.alloyCoder.getDependencies(),
+						params.alloyCoder.getParamCreator(), params.alloyCoder.header,
+						params.alloyCoder.scope, params.alloyCoder.field)));
+			} else {
+				return this;
+			}
+		}
 
 		public InferredResult(AlloyProcessedResult result) {
 			super(result);
@@ -95,34 +134,41 @@ public class AlloyProcessedResult extends MyReporter {
 		public InferredResult(AlloyProcessingParam params, long clauses,
 				long evalInsts, long trasnalationTime, long totalVaraibles,
 				long solveTime, long evalTime, int sat) {
-			super(params, clauses, evalInsts, trasnalationTime, totalVaraibles, solveTime,
-					evalTime, sat);
+			super(params, clauses, evalInsts, trasnalationTime, totalVaraibles,
+					solveTime, evalTime, sat);
 			// TODO Auto-generated constructor stub
 		}
-
-
 
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 7694649523710787654L;
-		
+
 		/**
-		 * Creating a an Inferred result from another result. 
-		 * If the inferring steps are not valid, then it throws exception. 
+		 * Creating a an Inferred result from another result. If the inferring steps
+		 * are not valid, then it throws exception.
+		 * 
 		 * @param inferredFrom
 		 * @param coder
 		 * @return
 		 */
-		public static InferredResult createInferredResult(AlloyProcessedResult inferredFrom, PropertyToAlloyCode coder, boolean sat){
-			return new InferredResult(inferredFrom.params.createIt(coder), 0, 0, 0, 0, 0, 0, sat ? 1 : 0); 
+		public static InferredResult createInferredResult(
+				AlloyProcessedResult inferredFrom, PropertyToAlloyCode coder,
+				boolean sat) {
+			return new InferredResult(inferredFrom.params.createIt(coder), 0, 0, 0, 0,
+					0, 0, sat ? 1 : 0);
 		}
-		
-		
+
+		public AlloyProcessedResult changeParams(
+				final AlloyProcessingParam params) {
+			return new InferredResult(params, clauses, evalInsts, trasnalationTime,
+					totalVaraibles, solveTime, evalTime, sat);
+		}
+
 	}
-	
-	public static class FailedResult extends AlloyProcessedResult{
-		
+
+	public static class FailedResult extends AlloyProcessedResult {
+
 		final public String REASON;
 		/**
 		 * 
@@ -130,10 +176,11 @@ public class AlloyProcessedResult extends MyReporter {
 		private static final long serialVersionUID = -8538317738030842240L;
 
 		public FailedResult(AlloyProcessingParam params) {
-			this(params, "?");			
+			this(params, "?");
 		}
-		
-		public FailedResult(final AlloyProcessingParam params, final String reason) {
+
+		public FailedResult(final AlloyProcessingParam params,
+				final String reason) {
 			super(params);
 			this.trasnalationTime = 0;
 			this.totalVaraibles = 0;
@@ -144,14 +191,15 @@ public class AlloyProcessedResult extends MyReporter {
 			this.sat = 0;
 			this.REASON = reason;
 		}
-		
-		public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
+
+		public AlloyProcessedResult changeParams(
+				final AlloyProcessingParam params) {
 			return new FailedResult(params, REASON);
 		}
-		
+
 	}
-	
-	public static class TimeoutResult extends AlloyProcessedResult{
+
+	public static class TimeoutResult extends AlloyProcessedResult {
 
 		/**
 		 * 
@@ -168,13 +216,12 @@ public class AlloyProcessedResult extends MyReporter {
 			this.evalTime = -1;
 			this.sat = 0;
 		}
-		
-		public AlloyProcessedResult changeParams(final AlloyProcessingParam params){
+
+		public AlloyProcessedResult changeParams(
+				final AlloyProcessingParam params) {
 			return new TimeoutResult(params);
 		}
-		
-		
-	}
 
+	}
 
 }

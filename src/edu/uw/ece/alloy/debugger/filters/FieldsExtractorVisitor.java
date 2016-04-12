@@ -1,4 +1,4 @@
-package edu.uw.ece.alloy.debugger;
+package edu.uw.ece.alloy.debugger.filters;
 
 import java.util.HashSet;
 import java.util.Set;

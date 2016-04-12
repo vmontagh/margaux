@@ -17,35 +17,35 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	 */
 	private static final long serialVersionUID = -4702673131807408629L;
 	final public static IfPropertyToAlloyCode EMPTY_CONVERTOR = new IfPropertyToAlloyCode();
-	final static Logger logger = Logger.getLogger(IfPropertyToAlloyCode.class.getName()+"--"+Thread.currentThread().getName());;
+	final static Logger logger = Logger.getLogger(IfPropertyToAlloyCode.class.getName()+"--"+Thread.currentThread().getName());
 
 	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope
+			AlloyProcessingParam paramCreator, String header, String scope, String field
 			) {
 		super(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope
+				dependencies, paramCreator, header, scope, field
 				);
 	}
 
 	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope,
+			AlloyProcessingParam paramCreator, String header, String scope, String field,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
-			byte[] headerComporessed, byte[] scopeCompressed,
+			byte[] headerComporessed, byte[] scopeCompressed, byte[] fieldCompressed,
 			List<Dependency> codeDependencies,
 			Compressor.STATE compressedStatus
 			) {
 		super(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope,
+				dependencies, paramCreator, header, scope, field,
 				predBodyACompressed, predBodyBCompressed,
 				predCallACompressed, predCallBCompressed,
 				predNameACompressed, predNameBCompressed,
-				headerComporessed, scopeCompressed,
+				headerComporessed, scopeCompressed, fieldCompressed,
 				codeDependencies,
 				compressedStatus
 				);
@@ -86,12 +86,12 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	public PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope
+			AlloyProcessingParam paramCreator, String header, String scope, String field
 			) {
 		return new IfPropertyToAlloyCode( predBodyA,  predBodyB,
 				predCallA,  predCallB,  predNameA,
 				predNameB,  dependencies,
-				paramCreator,  header,  scope
+				paramCreator,  header,  scope, field
 				);
 	}
 
@@ -99,21 +99,21 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	protected PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope,
+			AlloyProcessingParam paramCreator, String header, String scope, String field,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
-			byte[] headerComporessed, byte[] scopeCompressed
+			byte[] headerComporessed, byte[] scopeCompressed, byte[] fieldCompressed
 			,List<Dependency> compressedDependencies
 			, Compressor.STATE compressedStatus
 			) {
 
 		return new IfPropertyToAlloyCode(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope,
+				dependencies, paramCreator, header, scope, field,
 				predBodyACompressed, predBodyBCompressed,
 				predCallACompressed, predCallBCompressed,
 				predNameACompressed, predNameBCompressed,
-				headerComporessed, scopeCompressed,
+				headerComporessed, scopeCompressed, fieldCompressed,
 				compressedDependencies,
 				compressedStatus
 				);
@@ -138,13 +138,13 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 					// predNameA is supposed to be the name exists in the library. otherwise it throws an exception
 					result.addAll(il.getAllRevImpliedProperties(predNameA));
 				} catch (Err e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameA, e);
+					//logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameA, e);
 				}
 				try {
 					// predNameB is supposed to be the name exists in the library. otherwise it throws an exception
 					result.addAll(il.getAllImpliedProperties(predNameB));
 				} catch (Err e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameB, e);
+					//logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Failed to getInferedSAT for "+predNameB, e);
 				}
 			}
 		}
@@ -161,7 +161,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 						result.add(createIt("", this.predBodyB,
 								"", this.predCallB, propName,
 								this.predNameB, new ArrayList<>(dependencies),
-								this.paramCreator, this.header, this.scope
+								this.paramCreator, this.header, this.scope, this.field
 								));
 					}
 				} catch (Err e) {
@@ -169,11 +169,11 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				}
 				try {
 					// predNameB is supposed to be the name exists in the library. otherwise it throws an exception
-					for(String propName: il.getAllRevImpliedProperties(predNameB)){
+					for(String propName: il.getAllImpliedProperties(predNameB)){
 						result.add(createIt( this.predBodyA, "",
 								this.predCallA, "", this.predNameA, 
 								propName, new ArrayList<>(dependencies),
-								this.paramCreator, this.header, this.scope
+								this.paramCreator, this.header, this.scope, this.field
 								));
 					}
 				} catch (Err e) {
@@ -181,6 +181,10 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				}
 			}
 		}
+		
+		System.out.println("The inference result of " + this.predNameA +"=>" + this.predNameB  + "?" + sat+" is:" + result);
+		
+		
 		return Collections.unmodifiableList(result);
 	}
 
@@ -219,5 +223,11 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 		return Collections.unmodifiableList(result);
 	}
 
+	/**
+	 *  no counter-example should be found.
+	 */
+	public boolean desiredSAT(){
+		return false;
+	}
 
 }

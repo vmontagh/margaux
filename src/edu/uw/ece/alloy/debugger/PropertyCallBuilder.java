@@ -23,8 +23,6 @@ public class PropertyCallBuilder {
 
 	public void addPropertyDeclration(final Func function)
 			throws IllegalArgumentException {
-
-		System.out.println(function);
 		
 		PropertyDeclaration pd = new PropertyDeclaration(function);
 		
@@ -55,7 +53,7 @@ public class PropertyCallBuilder {
 		final String leftName = field.type().extract(2).fold().get(0).get(0).label;
 		final String rightName = field.type().extract(2).fold().get(0).get(1).label;
 
-		System.out.println(getAllBinaryPropertyDeclrations());
+		//System.out.println(getAllBinaryPropertyDeclrations());
 		
 		for (PropertyDeclaration pd : getAllBinaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
@@ -99,7 +97,7 @@ public class PropertyCallBuilder {
 		}
 
 		final List<String> result = new LinkedList<String>();
-
+		
 		for (PropertyDeclaration pd : getAllTernaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
 			String params = field.label.replace("this/", "");
@@ -121,11 +119,11 @@ public class PropertyCallBuilder {
 						break;
 					}
 					if (orderName.contains("$")){
-						params += ", next";
 						params += ", first";
+						params += ", next";
 					}else{
-						params += "," + orderName + "/next";
 						params += "," + orderName + "/first";
+						params += "," + orderName + "/next";
 					}
 				}
 			}

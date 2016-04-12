@@ -82,6 +82,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 		
 		// If coders is not empty, then something is inferred.
 		for (PropertyToAlloyCode coder: coders){
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " Start processing "+lastProccessing);
 			ret.add(InferredResult.createInferredResult(result, coder, result.sat == 1));
 		}
 		
@@ -133,10 +134,11 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 
 			AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 			try {
+				
 				A4CommandExecuter.getInstance().run(
 						lastProccessing.srcPath().getAbsolutePath(),
 						rep, PropertyToAlloyCode.COMMAND_BLOCK_NAME);
-
+				
 				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + " Prcessing "+lastProccessing+" took "+(System.currentTimeMillis()-time)+" sec and result is: "+rep);
 				
 				runPostProcesses(rep);				
@@ -144,20 +146,26 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
 				
 				// The inferred result should be added into the logs. The log goes into file, socket, and DB.
 				for (AlloyProcessedResult inferredResult: inferProperties(rep)){
+					
+					System.out.println("inferredResult->"+rep.params.alloyCoder.predCallA+"=>"+rep.params.alloyCoder.predCallB+"--->"+
+					inferredResult.params.alloyCoder.predCallA+"=>"+inferredResult.params.alloyCoder.predCallB + "  "+rep+" "+rep.getClass());
+					
 					runPostProcesses(inferredResult);
 				}
 				
 			} catch (Err e) {
 				if(lastProccessing == null){
-					logger.severe("["+Thread.currentThread().getName()+"] " +"The parameter is null and no failed message can be sent: "
-							+ lastProccessing);
+					logger.severe("["+Thread.currentThread().getName()+"] " +
+							" The parameter is null and no failed message can be sent: " +
+							lastProccessing);
 					return;
 				}
 
 				runPostProcesses(new AlloyProcessedResult.FailedResult(
 						lastProccessing));
-				logger.severe("["+Thread.currentThread().getName()+"] " +"The Alloy processor failed on processing: "
-						+ lastProccessing);
+				logger.severe("["+Thread.currentThread().getName()+"] " +
+						" The Alloy processor failed on processing: " +
+						lastProccessing);
 				if(Configuration.IsInDeubbungMode) logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " +e.getMessage(), e);
 			}
 		}

@@ -3,12 +3,14 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 
 public class PropertyToAlloyCode implements Serializable {
 
@@ -25,7 +27,8 @@ public class PropertyToAlloyCode implements Serializable {
 	final byte[] predBodyACompressed, predBodyBCompressed, 
 	predCallACompressed, predCallBCompressed,
 		predNameACompressed, predNameBCompressed,
-			headerComporessed, scopeCompressed
+			headerComporessed, scopeCompressed,
+			fieldCompressed
 			;
 	
 	//Sources are generated here.
@@ -33,10 +36,12 @@ public class PropertyToAlloyCode implements Serializable {
 	//template names
 	final static String Scope = "for 5";
 	
-	final public String predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB, header, scope;
+	final public String predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB, header, scope, field;
 	
 	//pair.a is the file and pair.b is the content
-	final List<Dependency> dependencies, compressedDependencies;
+	public final List<Dependency> dependencies;
+
+	final List<Dependency> compressedDependencies;
 	
 	final AlloyProcessingParam paramCreator;
 	
@@ -46,10 +51,12 @@ public class PropertyToAlloyCode implements Serializable {
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope,
+			String field,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
 			byte[] headerComporessed, byte[] scopeCompressed,
+			byte[] fieldCompressed,
 			List<Dependency> codeDependencies,
 			Compressor.STATE compressedStatus
 			) {
@@ -70,6 +77,7 @@ public class PropertyToAlloyCode implements Serializable {
 		
 		this.header = header;
 		this.scope = scope;
+		this.field = field;
 		
 		this.predBodyACompressed = Arrays.copyOf(predBodyACompressed, predBodyACompressed.length) ;
 		this.predBodyBCompressed = Arrays.copyOf(predBodyBCompressed, predBodyBCompressed.length) ;
@@ -79,23 +87,24 @@ public class PropertyToAlloyCode implements Serializable {
 		this.predNameBCompressed = Arrays.copyOf(predNameBCompressed, predNameBCompressed.length) ;
 		this.headerComporessed = Arrays.copyOf(headerComporessed, headerComporessed.length) ;
 		this.scopeCompressed = Arrays.copyOf(scopeCompressed, scopeCompressed.length) ;
+		this.fieldCompressed = Arrays.copyOf(fieldCompressed, fieldCompressed.length) ;
 		
 		this.compressedStatus = compressedStatus;
 		
 		implications = new LinkedList<>();
 		implications.add(new BinaryImplicationLattic());
-		
+		implications.add(new TernaryImplicationLattic());
 	}
 	
 	protected PropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope
+			AlloyProcessingParam paramCreator, String header, String scope, String field
 			) {
 		this(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope, 
+				dependencies, paramCreator, header, scope, field, 
 				Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
-				Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
+				Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D, Compressor.EMPTY_1D,
 				Compressor.EMPTY_LIST,
 				Compressor.STATE.DEOMPRESSED
 				);
@@ -107,7 +116,8 @@ public class PropertyToAlloyCode implements Serializable {
 				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING,
 				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING, 
 				Compressor.EMPTY_LIST ,AlloyProcessingParam.EMPTY_PARAM,
-				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING
+				Compressor.EMPTY_STRING,Compressor.EMPTY_STRING,
+				Compressor.EMPTY_STRING
 				);
 	}
 	
@@ -123,6 +133,7 @@ public class PropertyToAlloyCode implements Serializable {
 		if(predNameB == null) throw new RuntimeException("The predNameB is null and cannot be compressed.");
 		if(header == null) throw new RuntimeException("The header is null and cannot be compressed.");
 		if(scope == null) throw new RuntimeException("The scope is null and cannot be compressed.");
+		if(field == null) throw new RuntimeException("The field is null and cannot be compressed.");
 
 		if(dependencies == null) throw new RuntimeException("The dependencies is empty and cannot be compressed.");
 
@@ -138,6 +149,7 @@ public class PropertyToAlloyCode implements Serializable {
 		
 		final byte[] headerComporessed  = Compressor.compress(header);
 		final byte[] scopeCompressed  = Compressor.compress(scope);
+		final byte[] fieldCompressed  = Compressor.compress(field);
 		
 		final List<Dependency> compressedDependencies = new LinkedList<Dependency>();
 		for(Dependency dependency: this.dependencies){
@@ -148,11 +160,11 @@ public class PropertyToAlloyCode implements Serializable {
 				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 				Compressor.EMPTY_LIST, this.paramCreator, 
-						Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
+						Compressor.EMPTY_STRING, Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 						predBodyACompressed, predBodyBCompressed,
 						predCallACompressed, predCallBCompressed,
 						predNameACompressed, predNameBCompressed,
-						headerComporessed, scopeCompressed, 
+						headerComporessed, scopeCompressed, fieldCompressed, 
 						compressedDependencies,
 						Compressor.STATE.COMPRESSED
 						);
@@ -170,6 +182,7 @@ public class PropertyToAlloyCode implements Serializable {
 		if(predNameBCompressed == null) throw new RuntimeException("The predNameBCompressed is null and cannot be compressed.");
 		if(headerComporessed == null) throw new RuntimeException("The headerComporessed is null and cannot be compressed.");
 		if(scopeCompressed == null) throw new RuntimeException("The scopeCompressed is null and cannot be compressed.");
+		if(fieldCompressed == null) throw new RuntimeException("The fieldCompressed is null and cannot be compressed.");
 		if(compressedDependencies == null) throw new RuntimeException("The compressedDependencies is null and cannot be compressed.");
 
 		final String predBodyA  = Compressor.decompress(predBodyACompressed);
@@ -180,6 +193,7 @@ public class PropertyToAlloyCode implements Serializable {
 		final String predNameB = Compressor.decompress(predNameBCompressed);
 		final String header  = Compressor.decompress(headerComporessed);
 		final String scope = Compressor.decompress(scopeCompressed);
+		final String field = Compressor.decompress(fieldCompressed);
 		
 		final List<Dependency> dependencies = new LinkedList<Dependency>();
 		for(Dependency dependency: this.compressedDependencies){
@@ -190,9 +204,10 @@ public class PropertyToAlloyCode implements Serializable {
 						predCallA,predCallB,
 						predNameA, predNameB,
 						dependencies,this.paramCreator, 
-						header, scope, 
+						header, scope, field, 
 						Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
 						Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,Compressor.EMPTY_1D,
+						Compressor.EMPTY_1D,
 						Compressor.EMPTY_LIST,
 						Compressor.STATE.DEOMPRESSED
 						);
@@ -202,7 +217,7 @@ public class PropertyToAlloyCode implements Serializable {
 	public  PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
-			AlloyProcessingParam paramCreator, String header, String scope 
+			AlloyProcessingParam paramCreator, String header, String scope, String field 
 			){
 		throw new RuntimeException("Invalid call!");
 	}
@@ -211,10 +226,12 @@ public class PropertyToAlloyCode implements Serializable {
 			String predCallA, String predCallB, String predNameA,
 			String predNameB, List<Dependency> dependencies,
 			AlloyProcessingParam paramCreator, String header, String scope,
+			String field,
 			byte[] predBodyACompressed, byte[] predBodyBCompressed,
 			byte[] predCallACompressed, byte[] predCallBCompressed,
 			byte[] predNameACompressed, byte[] predNameBCompressed,
-			byte[] headerComporessed, byte[] scopeCompressed
+			byte[] headerComporessed, byte[] scopeCompressed,
+			byte[] fieldCompressed
 			,List<Dependency> compressedDependencies
 			, Compressor.STATE compressedStatus
 			){
@@ -226,11 +243,11 @@ public class PropertyToAlloyCode implements Serializable {
 		return createIt(this.predBodyA, this. predBodyB,
 				this. predCallA, this. predCallB, this. predNameA,
 				this. predNameB, this.dependencies,
-				this. paramCreator, this. header, this. scope,
+				this. paramCreator, this. header, this. scope, this. field,
 				this. predBodyACompressed, this. predBodyBCompressed,
 				this. predCallACompressed, this. predCallBCompressed,
 				this. predNameACompressed, this. predNameBCompressed,
-				this. headerComporessed, this. scopeCompressed,
+				this. headerComporessed, this. scopeCompressed, this.fieldCompressed,
 				this.compressedDependencies,
 				compressedStatus 
 				);
@@ -344,6 +361,7 @@ public class PropertyToAlloyCode implements Serializable {
 		result = prime * result
 				+ ((predNameB == null) ? 0 : predNameB.hashCode());
 		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
+		result = prime * result + ((field == null) ? 0 : field.hashCode());
 		
 		if(compressedDependencies != null){
 			for(Dependency dependency: compressedDependencies){
@@ -360,6 +378,7 @@ public class PropertyToAlloyCode implements Serializable {
 		result = prime * result + Arrays.hashCode(predNameACompressed);
 		result = prime * result + Arrays.hashCode(predNameBCompressed);
 		result = prime * result + Arrays.hashCode(scopeCompressed);
+		result = prime * result + Arrays.hashCode(fieldCompressed);
 		return result;
 	}
 
@@ -433,6 +452,11 @@ public class PropertyToAlloyCode implements Serializable {
 				return false;
 		} else if (!scope.equals(other.scope))
 			return false;
+		if (field == null) {
+			if (other.field != null)
+				return false;
+		} else if (!field.equals(other.field))
+			return false;
 
 		if (!Arrays.equals(headerComporessed, other.headerComporessed))
 			return false;
@@ -451,6 +475,8 @@ public class PropertyToAlloyCode implements Serializable {
 		if (!Arrays.equals(predNameBCompressed, other.predNameBCompressed))
 			return false;
 		if (!Arrays.equals(scopeCompressed, other.scopeCompressed))
+			return false;
+		if (!Arrays.equals(fieldCompressed, other.fieldCompressed))
 			return false;
 		
 		return true;
@@ -507,6 +533,28 @@ public class PropertyToAlloyCode implements Serializable {
 	 * @return
 	 */
 	public String getPredName(){
-		return predCallA.substring(0, predCallA.indexOf("___")) + commandOperator() + predCallB.substring(0, predCallA.indexOf("___"));
+		return (predCallA.indexOf("___") >= 0 ?
+						predCallA.substring(0, predCallA.indexOf("___")) :
+							predCallA) + 
+					 commandOperator() +
+					 (predCallB.indexOf("___") >= 0 ?
+						predCallB.substring(0, predCallB.indexOf("___")) :
+							predCallB);
+	}
+	
+	public List<Dependency> getDependencies(){
+		return Collections.unmodifiableList(dependencies);
+	}
+	
+	public AlloyProcessingParam getParamCreator(){
+		return this.paramCreator.createItself();
+	}
+	
+	/**
+	 * What would be the desired sat answer for the property to be checked.
+	 * @return
+	 */
+	public boolean desiredSAT(){
+		throw new RuntimeException("Invalid call!");
 	}
 }

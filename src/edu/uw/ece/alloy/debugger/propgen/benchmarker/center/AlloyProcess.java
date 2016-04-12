@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 
 public class AlloyProcess {
 	
-	public enum Status{
+	public static enum Status{
 		INITIATED, //Initial state is when the process is created but not get an ack from the actual process. 
 		IDLE, //Once the process gets the ack or no more process are ready to be processed. 
 		WORKING, //Working 
@@ -113,6 +113,5 @@ public class AlloyProcess {
 	public boolean isActive(){
 		return status.equals(Status.IDLE) || status.equals(Status.WORKING); 
 	}
-
-
+	
 }

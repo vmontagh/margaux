@@ -50,7 +50,7 @@ public class Compressor {
 	public static String decompress(byte[] bytes, final String encoding) throws Exception{
 		Inflater decompresser = new Inflater();
 		decompresser.setInput(bytes, 0, bytes.length);
-		byte[] result = new byte[bytes.length *10];
+		byte[] result = new byte[bytes.length *100];
 		int resultLength = decompresser.inflate(result);
 		decompresser.end();
 		// Decode the bytes into a String

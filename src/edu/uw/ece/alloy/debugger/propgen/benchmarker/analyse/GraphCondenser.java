@@ -279,7 +279,6 @@ public class GraphCondenser {
 		for(int from = 1; from < sparceMatrix.length; ++from){
 
 
-			//System.out.println("BEFORE> "+from+"->"+sparceMatrix[from]);
 			//removing the vacuite nodes
 			if( replacedNode[from] == -1 ){
 				sparceMatrix[from].clear();

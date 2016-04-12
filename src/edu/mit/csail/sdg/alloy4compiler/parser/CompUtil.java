@@ -26,6 +26,9 @@
 
 package edu.mit.csail.sdg.alloy4compiler.parser;
 
+import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.SEQIDX;
+import static edu.mit.csail.sdg.alloy4compiler.ast.Sig.SIGINT;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,9 +48,15 @@ import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprCall;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
 import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+import edu.mit.csail.sdg.alloy4compiler.ast.VisitQuery;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary.Op;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
+import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Context;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Open;
 
@@ -106,6 +115,49 @@ public final class CompUtil {
         return ""; // This shouldn't happen, since there should always be some character after '/' in the module name
     }
 
+    /** Whether or not Int appears in the relation types found in these sigs */
+    public static boolean areIntsUsed(Iterable<Sig> sigs, Command cmd) {
+        /* check for Int-typed relations */
+        for (Sig s : sigs) {
+            for (Field f : s.getFields()) {
+                for (ProductType pt : f.type()) {
+                    for (int k = 0; k < pt.arity(); k++) {
+                        if (pt.get(k) == SIGINT || pt.get(k) == SEQIDX)
+                            return true;
+                    }
+                }
+            }
+        }
+
+        if (cmd == null)
+            return false;
+
+        /* check expressions; look for CAST2SIGING (Int[]) */
+        try {
+            Object intTriggerNode;
+            intTriggerNode = cmd.formula.accept(new VisitQuery<Object>() {
+                @Override
+                public Object visit(ExprCall x) throws Err {
+                    // skip integer arithmetic functions, because their
+                    // arguments are always explicitly cast to SIGINT using Int[]
+                    if (x.fun.label.startsWith("integer/"))
+                        return null;
+                    return super.visit(x);
+                }
+
+                @Override
+                public Object visit(ExprUnary x) throws Err {
+                    if (x.op == Op.CAST2SIGINT)
+                        return x;
+                    return super.visit(x);
+                }
+            });
+            if (intTriggerNode != null) return true;
+        } catch (Err e) {}
+
+        return false;
+    }
+    
     //=============================================================================================================//
 
     /** Helper method that recursively parse a file and all its included subfiles

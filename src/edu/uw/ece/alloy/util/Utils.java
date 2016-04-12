@@ -360,4 +360,20 @@ public class Utils {
 		return obj.toString();
 	}
 
+
+	/**
+	 * Pos a within pos b
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean posWithin(Pos a, Pos b){
+		if (a==null || a==Pos.UNKNOWN || b==null || b==Pos.UNKNOWN || !a.filename.equals(b.filename)) return false;
+		return 	(b.y < a.y && a.y2 < b.y2) ||
+							(b.y == a.y && b.x <= a.x && a.y2 < b.y2) || 
+								(b.y < a.y && a.y2 == b.y2  && a.x2 <= b.x2) ||
+									(b.y == a.y && b.x <= a.x && a.y2 ==  b.y2 && a.x2 <= b.x2) ||
+										(b.y == a.y && b.x == a.x && a.y2 ==  b.y2 && a.x2 == b.x2);
+	}
+
 }

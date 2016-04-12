@@ -1,4 +1,4 @@
-package edu.uw.ece.alloy.debugger;
+package edu.uw.ece.alloy.debugger.filters;
 
 import static org.junit.Assert.*;
 
@@ -40,7 +40,14 @@ public class ExpressionExtractorByCommentsTest {
 				+ " p1[univ->univ, univ] and all a: A| some a.r " 
 				+ BlocksExtractorByComments.ExtractExpression.END
 				+ "}\n"
-				+ "run{} " +  BlocksExtractorByComments.ExtractScope.BEGIN
+				+ BlocksExtractorByComments.ExtractExpression.BEGIN + "\n"
+				+ "pred p2[]{\n" 
+				+ " some A\n"
+				+ " some B\n"
+				+ " some c\n"
+				+ "}\n"
+				+ BlocksExtractorByComments.ExtractExpression.END + "\n"
+				+ "run p2 " +  BlocksExtractorByComments.ExtractScope.BEGIN
 				+ " for 5" + BlocksExtractorByComments.ExtractScope.END;
 		// @formatter:on
 
@@ -67,7 +74,7 @@ public class ExpressionExtractorByCommentsTest {
 	}
 	
 	@Test
-	public void testGetAllExpressions() {
+	public void testGetAllBlocks() {
 		System.out.println(eebt.getAllBlocks());
 	}
 
@@ -103,4 +110,9 @@ public class ExpressionExtractorByCommentsTest {
 		assertArrayEquals(new String[]{" for 5"}, esbt.getAllBlocks().toArray(new String[]{}));
 	}
 
+	@Test
+	public void testGetAllExpressions() throws Err{
+		System.out.println(eebt.getAllExpressions());
+	}
+	
 }
