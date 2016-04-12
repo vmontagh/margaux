@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
+import java.util.Deque;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -14,7 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.mutate.PatternAnalyzerStub;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
@@ -119,5 +119,10 @@ public abstract class RemoteCommand implements Serializable {
 	
 	public void readyToUse(final Queue<AlloyProcessedResult> queue){
 		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
+	}
+	
+	public boolean processResult(final Deque<Object> queue) { 
+		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
+		return true;
 	}
 }

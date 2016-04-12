@@ -6,7 +6,8 @@ import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.BlockingDeque;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,6 +15,8 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
+import edu.uw.ece.alloy.util.ServerSocketListener;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
@@ -21,7 +24,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
  * @author Fikayo Odunayo
  *
  */
-public class OnBorderInstanceFinder {
+public class OnBorderInstanceFinder extends ServerSocketListener {
 
 	protected final static Logger logger = Logger.getLogger(OnBorderInstanceFinder.class.getName()+"--"+Thread.currentThread().getName());
 	
@@ -40,8 +43,10 @@ public class OnBorderInstanceFinder {
 	private HolaProcess subProcess;
 	private Thread subManager;
 	private HolaWatchDog watchdog;
+	private Deque<Object> results = new ArrayDeque();
 	
 	public OnBorderInstanceFinder(final InetSocketAddress localPort, final InetSocketAddress remotePort, final String filePathArgs, final String propertiesFile) {
+		super(localPort, remotePort);
 		this.PID = localPort;
 		this.remotePort = remotePort; 
 		this.filePathArgs = filePathArgs;
@@ -59,16 +64,14 @@ public class OnBorderInstanceFinder {
 		subProcess = this.createProcess(address);
 
 		if(!subProcess.isAlive()) throw new RuntimeException("Sub Process not alive");
-		
-		BlockingDeque<HolaResult> results = new LinkedBlockingDeque<>();
-		
+				
 		// Set up watchdog timer.
 		// This process must stop before the interval is finished or it will be terminated.
 		this.watchdog = new HolaWatchDog();
 		this.watchdog.setInterval(10000);
 		
 		// Set up thread for IPC between processes
-		subManager = new Thread(new Runnable() {
+		/*subManager = new Thread(new Runnable() {
 			
 				public void run() {
 	      	
@@ -125,36 +128,93 @@ public class OnBorderInstanceFinder {
 	         }
 	      }
 	   });
-			
-		// Open the IPC channel and start the timer
-//		this.subManager.start();		
-//		this.watchdog.startTimer(new Runnable() {
 //			
-//			@Override
-//			public void run() {
-//				
-//				logger.info(Utils.threadName() + "Watchdog timer terminated. Running timer callback");
-//				
-//				// Get final candidate in the deque.
-//				HolaResult finalResult = results.peekLast();
-//				
-//				if(finalResult != null) {
-//  				// Destroy the Hola JVM
-//  				subProcess.destroyProcess();
-//  								
-//  				// Send the result back to the Hola Analyzer
-//  				SocketWriter writer = new SocketWriter(remotePort);
-//  				try {
-//  					writer.doAction(finalResult);
-//  				} catch (InterruptedException e) {
-//  					logger.log(Level.SEVERE, Utils.threadName() + "Interrupted while sending final result to remote. Remote Address: " + remotePort, e);
-//  				}
-//  				
-//  				writer.startThread();
-//				}
-//			}
-//		});
+		// Open the IPC channel and start the timer
+		this.subManager.start();		
+		this.watchdog.startTimer(new Runnable() {
+			
+			@Override
+			public void run() {
+				
+				logger.info(Utils.threadName() + "Watchdog timer terminated. Running timer callback");
+				
+				// Get final candidate in the deque.
+				HolaResult finalResult = results.peekLast();
+				
+				if(finalResult != null) {
+  				// Destroy the Hola JVM
+  				subProcess.destroyProcess();
+  								
+  				// Send the result back to the Hola Analyzer
+  				SocketWriter writer = new SocketWriter(remotePort);
+  				try {
+  					writer.doAction(finalResult);
+  				} catch (InterruptedException e) {
+  					logger.log(Level.SEVERE, Utils.threadName() + "Interrupted while sending final result to remote. Remote Address: " + remotePort, e);
+  				}
+  				
+  				writer.startThread();
+				}
+			}
+		});*/
 		
+	}
+	
+	protected void processCommand(final RemoteCommand command) {
+		// Supposed to be a registering call;
+		System.out.println("Commands is received in " + OnBorderInstanceFinder.class.getSimpleName() + ": "  + command);
+		boolean last = command.processResult(this.results);
+		if(last) {
+			this.watchdog.stopTimer();
+		}
+	}
+	
+	@Override
+	public void cancelThread() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void changePriority(int newPriority) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void actionOnNotStuck() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int triesOnStuck() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void actionOnStuck() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String amIStuck() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long isDelayed() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	protected Thread getThread() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	private synchronized HolaProcess createProcess(final InetSocketAddress address) {
@@ -261,5 +321,4 @@ public class OnBorderInstanceFinder {
 			e.printStackTrace();
 		}
 	}
-
 }

@@ -43,12 +43,12 @@ public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeM
 
 	protected void processCommand(final RemoteCommand command){
 		// Supposed to be a registering call;
-		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Recieved message: "+command);
+		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName()+" Recieved message: "+command);
 
 	}
 
 	protected void onStartingListening() throws InterruptedException{
-		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Sending a readyness message pId: "+hostAddress.getPort());
+		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + " Sending a readyness message pId: "+hostAddress.getPort());
 		(new ProcessReady(hostAddress)).sendMe(remoteAddress);
 	}
 	
@@ -57,7 +57,7 @@ public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeM
 		AsynchronousServerSocketChannel serverSocketChannel = null;
 
 		try {
-			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Starting listening fornt runner for pId: "+hostAddress.getPort());
+			if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName()+" Starting listening fornt runner for pId: "+hostAddress.getPort());
 			serverSocketChannel = AsynchronousServerSocketChannel
 					.open().bind(hostAddress);
 			
@@ -70,10 +70,10 @@ public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeM
 			
 			while(!Thread.currentThread().isInterrupted()){
 				try{
-					if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" waiting for a request: "+hostAddress.getPort());
+					if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName()+" waiting for a request: "+hostAddress.getPort());
 					serverFuture = serverSocketChannel
 							.accept();
-					if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" a message is received: "+hostAddress.getPort());
+					if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName()+" a message is received: "+hostAddress.getPort());
 					clientSocket = serverFuture.get();
 
 					if ((clientSocket != null) && (clientSocket.isOpen())) {
@@ -83,45 +83,45 @@ public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeM
 						processCommand( (RemoteCommand)ois.readObject() );
 					}
 				} catch (EOFException e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while listening for request: ", e);
+					logger.log(Level.SEVERE, Utils.threadName()+"Error while listening for request: ", e);
 				} catch (IOException e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while listening for request: ", e);
+					logger.log(Level.SEVERE, Utils.threadName()+"Error while listening for request: ", e);
 				} catch (InterruptedException e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while listening for request: ", e);
+					logger.log(Level.SEVERE, Utils.threadName()+"Error while listening for request: ", e);
 				} catch (ExecutionException e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while listening for request: ", e);
+					logger.log(Level.SEVERE, Utils.threadName()+"Error while listening for request: ", e);
 				} catch (ClassNotFoundException e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while listening for request: ", e);
+					logger.log(Level.SEVERE, Utils.threadName()+"Error while listening for request: ", e);
 				}finally{
 					if(ois != null)
 						try{
 							ois.close();
 						}catch(IOException e){
-							logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while closing InputOutputstream: ", e);
+							logger.log(Level.SEVERE, Utils.threadName()+"Error while closing InputOutputstream: ", e);
 						}
 					if(connectionInputStream != null)
 						try{
 							connectionInputStream.close();
 						}catch(IOException e){
-							logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while closing Connection Inputputstream: ", e);
+							logger.log(Level.SEVERE, Utils.threadName()+"Error while closing Connection Inputputstream: ", e);
 						}
 					if(clientSocket!=null && clientSocket.isOpen())
 						try{
 							clientSocket.close();
 						}catch(IOException e){
-							logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while closing Client socket: ", e);
+							logger.log(Level.SEVERE, Utils.threadName()+"Error while closing Client socket: ", e);
 						}
 				}
 			}
 
 		} catch (Throwable t  ){
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"A serious error breaks the Front Processor listener: ", t);
+			logger.log(Level.SEVERE, Utils.threadName()+"A serious error breaks the Front Processor listener: ", t);
 		} finally{
 			if(serverSocketChannel!=null && serverSocketChannel.isOpen())
 				try {
 					serverSocketChannel.close();
 				} catch (IOException e) {
-					logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"Error while closing AsynchronousServerSocketChannel socket: ", e);
+					logger.log(Level.SEVERE, Utils.threadName()+"Error while closing AsynchronousServerSocketChannel socket: ", e);
 				}
 		}
 

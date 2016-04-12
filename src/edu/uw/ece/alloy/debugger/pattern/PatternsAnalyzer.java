@@ -68,7 +68,7 @@ public class PatternsAnalyzer extends ServerSocketListener {
 
 	protected void processCommand(final RemoteCommand command) {
 		// Supposed to be a registering call;
-		System.out.println("Commands is received in PatternsAnaluzer:" + command);
+		System.out.println("Commands is received in PatternsAnalyzer:" + command);
 		command.doAnalyze(feeder);
 	}
 

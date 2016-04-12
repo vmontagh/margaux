@@ -12,8 +12,13 @@ public class HolaResult extends AlloyProcessedResult {
 	private boolean lastResult;
 	
 	public HolaResult(Instance instance) {
+		this(instance, false);
+	}
+
+	public HolaResult(Instance instance, final boolean lastResult) {
 		super(AlloyProcessingParam.EMPTY_PARAM);
 		this.instance = instance;
+		this.lastResult = lastResult;
 	}
 	
 	public Instance getInstance() {
