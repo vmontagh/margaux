@@ -125,4 +125,5 @@ public abstract class RemoteCommand implements Serializable {
 		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 		return true;
 	}
+	
 }

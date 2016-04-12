@@ -18,6 +18,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWri
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.util.ServerSocketListener;
 import edu.uw.ece.alloy.util.Utils;
+import onborder.agent.HolaRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
 /**
@@ -228,7 +229,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 		try {
 
 //			jni = (jniPath != null && jniPath.length() > 0) ? "-Djava.library.path=" + jniPath : "";
-			String[] commands = {
+			/*String[] commands = {
 					java,
 					"-Xmx" + SubMemory + "m",
 					"-Xss" + SubStack + "k",
@@ -241,6 +242,18 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
   				"" + address.getAddress().getHostAddress(),
   				"" + this.filePathArgs,
   				"" + this.propertiesFile
+			};*/
+			
+			String[] commands = {
+				java,
+				"-jar",
+				HolaRunner.class.getName(),
+				"" + this.PID.getPort(),
+				"" + this.PID.getAddress().getHostAddress(),
+				"" + address.getPort(),
+				"" + address.getAddress().getHostAddress(),
+				"" + this.filePathArgs,
+				"" + this.propertiesFile
 			};
 			
 			sub = Utils.createProcess(commands);

@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
-public class TestOnBorderInstanceFinder {
+public class OnBorderInstanceFinderTest {
 
 	@Test
 	public void testMain() throws UnknownHostException {
