@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
@@ -229,20 +230,20 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 		try {
 
 //			jni = (jniPath != null && jniPath.length() > 0) ? "-Djava.library.path=" + jniPath : "";
-			/*String[] commands = {
-					java,
-					"-Xmx" + SubMemory + "m",
-					"-Xss" + SubStack + "k",
-//  				"-Djava.util.logging.config.file=" + ProcessLoggerConfig,
-  				"-Ddebug=" + debug,
-  				"-cp", classPath, "onborder.agent.HolaRunner",
-  				"" + this.PID.getPort(),
-  				"" + this.PID.getAddress().getHostAddress(),
-  				"" + address.getPort(),
-  				"" + address.getAddress().getHostAddress(),
-  				"" + this.filePathArgs,
-  				"" + this.propertiesFile
-			};*/
+//			String[] commands = {
+//					java,
+//					"-Xmx" + SubMemory + "m",
+//					"-Xss" + SubStack + "k",
+////  				"-Djava.util.logging.config.file=" + ProcessLoggerConfig,
+//  				"-Ddebug=" + debug,
+//  				"-cp", classPath, "onborder.agent.HolaRunner",
+//  				"" + this.PID.getPort(),
+//  				"" + this.PID.getAddress().getHostAddress(),
+//  				"" + address.getPort(),
+//  				"" + address.getAddress().getHostAddress(),
+//  				"" + this.filePathArgs,
+//  				"" + this.propertiesFile
+//			};
 			
 			String[] commands = {
 				java,
@@ -256,6 +257,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 				"" + this.propertiesFile
 			};
 			
+			System.out.println("Params: " + Arrays.toString(commands));
 			sub = Utils.createProcess(commands);
 
 		} catch (IOException e) {
