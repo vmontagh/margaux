@@ -334,9 +334,11 @@ public final class A4Solution {
 				solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), "", opt.solver.options()));
 				//solver.options().setSolver(SATFactory.externalFactory(ext, tmp.getAbsolutePath(), opt.solver.options()));
 			} catch(IOException ex) { throw new ErrorFatal("Cannot create temporary directory.", ex); }
-		} else if (opt.solver.equals(A4Options.SatSolver.ZChaffJNI)) {
+		} 
+		//[VM] change in the recent version of Alloy
+		/*else if (opt.solver.equals(A4Options.SatSolver.ZChaffJNI)) {
 			solver.options().setSolver(SATFactory.ZChaff);
-		} else if (opt.solver.equals(A4Options.SatSolver.MiniSatJNI)) {
+		} */else if (opt.solver.equals(A4Options.SatSolver.MiniSatJNI)) {
 			solver.options().setSolver(SATFactory.MiniSat);
 		} else if (opt.solver.equals(A4Options.SatSolver.MiniSatProverJNI)) {
 			sym=20;

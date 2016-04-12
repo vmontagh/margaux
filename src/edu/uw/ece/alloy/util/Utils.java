@@ -376,6 +376,21 @@ public class Utils {
 		return obj.toString();
 	}
 
+	/**
+	 * Pos a within pos b
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean posWithin(Pos a, Pos b){
+		if (a==null || a==Pos.UNKNOWN || b==null || b==Pos.UNKNOWN || !a.filename.equals(b.filename)) return false;
+		return 	(b.y < a.y && a.y2 < b.y2) ||
+							(b.y == a.y && b.x <= a.x && a.y2 < b.y2) || 
+								(b.y < a.y && a.y2 == b.y2  && a.x2 <= b.x2) ||
+									(b.y == a.y && b.x <= a.x && a.y2 ==  b.y2 && a.x2 <= b.x2) ||
+										(b.y == a.y && b.x == a.x && a.y2 ==  b.y2 && a.x2 == b.x2);
+	}
+
 	/** This wraps the given InputStream such that the resulting object's "close()" method does nothing;
    * if stream==null, we get an InputStream that always returns EOF. */
   public static InputStream wrap(final InputStream stream) {
@@ -400,6 +415,14 @@ public class Utils {
      };
   }
 	
+  
+  
+  
+  
+  
+  
+  
+  // TODO Move the following APIs to ProcessorUtil
 	public static Process createProcess(String... commands) throws IOException {
 		
 		ProcessBuilder pb = new ProcessBuilder(commands);

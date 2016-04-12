@@ -108,8 +108,6 @@ public class AlloyProcessRunner {
 		watchdog.addThreadToBeMonitored(fileWriter);
 		watchdog.addThreadToBeMonitored(dbWriter);
 
-
-		
 		executer.startThread();
 		socketWriter.startThread();
 		fileWriter.startThread();
@@ -157,8 +155,6 @@ public class AlloyProcessRunner {
 
 		if(args.length > 4)
 			throw new RuntimeException("Inappropriate number of inputs. Only enter the remote port number as an interger.");
-
-
 
 		int localPort;
 		int remotePort;

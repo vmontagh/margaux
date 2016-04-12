@@ -29,10 +29,8 @@ public class ProcessSelfMonitor implements Runnable {
 	protected void monitor() {
 
 		while(!Thread.currentThread().isInterrupted()){
-
 			try{
 				Thread.sleep(monitorInterval/2);
-
 				for(ThreadDelayToBeMonitored thread: monitoredThreads){
 					try{
 						final long isd = thread.isDelayed();

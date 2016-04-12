@@ -3,6 +3,7 @@
  */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,7 +16,7 @@ public class GeneratedStorage<T> {
 	
 	protected long size = 0;
 	
-	final protected List<T> storage = new LinkedList<>(); 
+	final protected List<T> storage = new ArrayList<>(); 
 
 	
 	public long getSize(){ return size;}

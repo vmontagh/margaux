@@ -27,6 +27,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateDeclarativeConstriant2DeclarativeFormula;
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import kodkod.ast.Formula;
 
 /**
@@ -134,25 +135,25 @@ public class A4CommandExecuter {
 	}
 
 
-	public A4Solution runThenGetAnswers(String filename,A4Reporter rep, String commandName)throws Err{
+	public A4Solution runThenGetAnswers(String filename, 
+																			A4Reporter rep,
+																			String commandName) throws Err{
+		System.out.println("filename->"+filename);
 		A4Solution result = null;
-
 		// Parse+typecheck the model
 		if(Configuration.IsInDeubbungMode) 
 			logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"=========== Parsing+Typechecking "+filename+" =============");
-
 		CompModule world = (CompModule) parse(  filename, rep);
-
 		// Choose some default options for how you want to execute the commands
 		A4Options options = new A4Options();
-
 		options.solver = A4Options.SatSolver.SAT4J;
 		options.symmetry = 0;
-
+		
 		for (Command command: world.getAllCommands()) {
-
-			if(!command.label.equals(commandName))
+			if(!command.label.equals(commandName)){
 				continue;
+			}
+			
 			// Execute the command
 			if(Configuration.IsInDeubbungMode) 
 				logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+"============ Command "+command+": ============");
@@ -323,8 +324,8 @@ public class A4CommandExecuter {
 	public static void main(String[] args) throws Err {
 
 		MyReporter rep = new MyReporter();
-		String[] files = {"models/examples/systems/file_system.als"};
-		A4CommandExecuter.getInstance().run( files,rep);
+		String file = "/Users/vajih/Documents/workspace-git/alloy/relational_props/tmp/49162/predName___1960133549_IMPLY_functional.als";
+		A4CommandExecuter.getInstance().run( file,rep,PropertyToAlloyCode.COMMAND_BLOCK_NAME);
 
 	}
 

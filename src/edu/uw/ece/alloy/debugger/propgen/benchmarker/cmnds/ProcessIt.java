@@ -73,6 +73,7 @@ public class ProcessIt extends RemoteCommand {
 		try {
 			//Encoding the param.
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "Sending a message: "+param);
+			
 			final AlloyProcessingParam param = this.param.prepareToSend().changeDBConnectionInfo(AnalyzerRunner.getDefaultConnectionInfo());
 			(new ProcessIt(param, this.processesManager) ).sendMe(remoteAddres);
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " + "prepared and sent: "+param);

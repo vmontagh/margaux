@@ -36,6 +36,11 @@ public abstract class ImplicationLattic {
 	
 	protected final static Logger logger = Logger.getLogger(ImplicationLattic.class.getName()+"--"+Thread.currentThread().getName());
 	
+	protected ImplicationLattic(){
+		this.TEMPORARY_FOLDER = "";
+		this.MODLUE_NAMES = new String[]{};
+	}
+	
 	public ImplicationLattic(String tempPath, String[] moduleName) {
 		this.TEMPORARY_FOLDER = tempPath;
 		this.MODLUE_NAMES = Arrays.copyOf(moduleName, moduleName.length);

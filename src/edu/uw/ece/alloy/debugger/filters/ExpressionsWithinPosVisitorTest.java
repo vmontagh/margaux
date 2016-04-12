@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.uw.ece.alloy.debugger;
+package edu.uw.ece.alloy.debugger.filters;
 
 import static org.junit.Assert.*;
 
@@ -35,7 +35,6 @@ public class ExpressionsWithinPosVisitorTest {
 	static CompModule world;
 	final static String AlloyTmpTestPath = "tmp/testing.als";
 
-	
 	/**
 	 * @throws java.lang.Exception
 	 */

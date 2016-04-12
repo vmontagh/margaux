@@ -7,7 +7,7 @@ import java.util.List;
 public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 
 	final List<Dependency> dependencies;
-	final String header, scope; 
+	String header, scope; 
 	final AlloyProcessingParam paramCreator;
 	
 	//[tmpDirectory]final File tmpDirectory;
@@ -29,14 +29,14 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 	public List<PropertyToAlloyCode> createObjects(final String predBodyA, final String predBodyB, 
 			final String predCallA, final String predCallB, 
 			final String predNameA, final String predNameB//[tmpDirectory], final File tmpDirectory
-			){
+			,final String field){
 		final List<PropertyToAlloyCode> result =  new LinkedList<>();
 		
 		for(final PropertyToAlloyCode propertyToAlloyCode: PropertyToAlloyCodeObjects){
 			result.add( propertyToAlloyCode.createIt(predBodyA, predBodyB, 
 					predCallA, predCallB, 
 					predNameA, predNameB, 
-					dependencies, paramCreator, header, scope
+					dependencies, paramCreator, header, scope, field
 					) );
 		}
 		
@@ -44,8 +44,16 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 	}
 	
 	public PropertyToAlloyCode createReverse(final PropertyToAlloyCode propertyToAlloyCode){
-		return propertyToAlloyCode.createIt(propertyToAlloyCode.predBodyB, propertyToAlloyCode.predBodyA, propertyToAlloyCode.predCallB, propertyToAlloyCode.predCallA, propertyToAlloyCode.predNameB, propertyToAlloyCode.predNameA, dependencies, paramCreator, header, scope//[tmpDirectory], propertyToAlloyCode.tmpDirectory
+		return propertyToAlloyCode.createIt(propertyToAlloyCode.predBodyB, propertyToAlloyCode.predBodyA, propertyToAlloyCode.predCallB, propertyToAlloyCode.predCallA, propertyToAlloyCode.predNameB, propertyToAlloyCode.predNameA, dependencies, paramCreator, header, scope, propertyToAlloyCode.field//[tmpDirectory], propertyToAlloyCode.tmpDirectory
 				);
+	}
+	
+	public void setHeader(String header){
+		this.header = header;
+	}
+	
+	public String getHeader(){
+		return this.header;
 	}
 	
 }

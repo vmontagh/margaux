@@ -40,6 +40,9 @@ public class ProcessesManager {
 	//value.b stores all the messages sent
 	final ConcurrentHashMap<InetSocketAddress, Pair<AtomicInteger, AtomicInteger>> sentMessagesCounter = new ConcurrentHashMap<>();
 
+	// Keeps the number of inferred messages
+	final ConcurrentHashMap<InetSocketAddress, AtomicInteger> inferredMessaged = new ConcurrentHashMap<>();
+	
 	final String processLoggerConfig;
 
 
@@ -53,6 +56,7 @@ public class ProcessesManager {
 		this.newmem = newMem;
 		this.newstack = newStack;
 		this.watchdogAddress = watchdogAddress;
+		System.out.println("this.watchdogAddress->"+this.watchdogAddress);
 		this.processLoggerConfig = processLogConfig;
 		if (classPath==null || classPath.length()==0) 
 			this.classPath = System.getProperty("java.class.path");
@@ -104,6 +108,14 @@ public class ProcessesManager {
 		}
 	}
 
+	public void increaseInferredMessageCounter(final InetSocketAddress pId){
+		if(!inferredMessaged.containsKey(pId)){
+			inferredMessaged.put(pId, new AtomicInteger(1));
+		}else{
+			inferredMessaged.get(pId).incrementAndGet();
+		}
+	}
+
 	public synchronized AlloyProcess createProcess(final InetSocketAddress address) throws IOException{
 
 		final Process sub;
@@ -144,7 +156,7 @@ public class ProcessesManager {
 		return result;
 	}
 
-	public synchronized AlloyProcess createProcessOld(final InetSocketAddress address) throws IOException{
+/*	public synchronized AlloyProcess createProcessOld(final InetSocketAddress address) throws IOException{
 
 		final Process sub;
 		final String java = "java";
@@ -190,7 +202,7 @@ public class ProcessesManager {
 
 		AlloyProcess result = new AlloyProcess(address, sub);
 		return result;
-	}
+	}*/
 
 	/*	public void activateProess(final int pId) throws InterruptedException{
 		if(! processes.containsKey(pId)){
@@ -268,6 +280,7 @@ public class ProcessesManager {
 	 * @param port
 	 */
 	public boolean killProcess(final InetSocketAddress port){
+		System.out.println("KillProcess->"+port);
 		boolean result = false;
 		synchronized (processes) {
 			if(!processes.containsKey(port) ){
@@ -467,8 +480,45 @@ public class ProcessesManager {
 		return Collections.unmodifiableSet(processes.keySet());
 
 	}
+	
+	public boolean allProcessesNotWorking(){
+		synchronized (processes) {
+			for (InetSocketAddress pId: processes.keySet()){
+				System.out.println("pid="+pId+","+processes.get(pId).status);
+				if (processes.get(pId).status.equals(Status.WORKING)){
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+	
+	public boolean allProcessesWorking(){
+		synchronized (processes) {
+			for (InetSocketAddress pId: processes.keySet()){
+				System.out.println("pid="+pId+","+processes.get(pId).status);
+				if (!processes.get(pId).status.equals(Status.WORKING)){
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+	
+	public boolean SomeProcessesWorking(){
+		synchronized (processes) {
+			for (InetSocketAddress pId: processes.keySet()){
+				System.out.println("pid="+pId+","+processes.get(pId).status);
+				if (processes.get(pId).status.equals(Status.WORKING)){
+					return true;
+				}
+			}
+			return false;
+		}
+	}
 
 	public String getStatus(){
+		allProcessesNotWorking();// remove it
 		final StringBuilder result = new StringBuilder();
 		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		int waiting = 0, done = 0, doneForPId = 0, waitingForPId = 0;
@@ -497,6 +547,8 @@ public class ProcessesManager {
 			waitingForPId = sentMessagesCounter.get(pId).b.intValue();
 			waiting += waitingForPId;
 			result.append("Send Meessages for PID=<"+pId+"> is:").append(waitingForPId).append("\n");
+			System.out.println("pId->"+pId+"   "+inferredMessaged);
+			result.append("Inferred Meessages for PID=<"+pId+"> is:").append(inferredMessaged.containsKey(pId) ? inferredMessaged.get(pId).get(): "{}").append("\n");
 
 		}			
 

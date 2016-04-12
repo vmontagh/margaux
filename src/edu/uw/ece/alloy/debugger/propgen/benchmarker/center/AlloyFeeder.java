@@ -92,6 +92,9 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 		}
 	}
 
+	public long getSize(){
+		return super.size;
+	}
 
 	public void addProcessTaskToBacklog(final AlloyProcessingParam p) throws InterruptedException{
 		if(Configuration.IsInDeubbungMode) logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]"+" a request is added to be merged:" + p);
@@ -116,6 +119,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + "Queue is: "+queue);
 			//take a request, if something is in the queue. Otherwise the thread parks here.
 			e = queue.take();
+
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]" + "Queue object: "+e);
 
 		} catch (InterruptedException e1) {

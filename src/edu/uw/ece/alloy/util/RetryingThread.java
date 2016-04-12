@@ -72,6 +72,7 @@ public class RetryingThread extends Thread {
 				//reset the retry counter
 				retry = 1;
 			} catch (Throwable e) {
+				e.printStackTrace();
 				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Executing command is failed for "+retry+"'th time.", e);
 				retry++;
 			}

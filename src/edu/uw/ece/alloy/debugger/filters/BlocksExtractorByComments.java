@@ -1,7 +1,7 @@
 /**
  * 
  */
-package edu.uw.ece.alloy.debugger;
+package edu.uw.ece.alloy.debugger.filters;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -123,6 +123,28 @@ public abstract class BlocksExtractorByComments {
 		public ExtractExpression(String path) {
 			super(path, BEGIN, END);
 		}
+		
+		/**
+		 * Extract expressions from a given file.
+		 * @return
+		 * @throws Err 
+		 */
+		public List<Expr> getAllExpressions() throws Err{
+			final List<Expr> result = new ArrayList<>();
+			
+			final CompModule compModule = 
+					CompUtil.parseEverything_fromFile(A4Reporter.NOP, null, path);
+			
+			for(Pos snippetPos: findAllPairs()){
+				for (Command cmd: compModule.getAllCommands()){
+					result.addAll(ExpressionsWithinPosVisitor
+							.findAllExprsWithinPos(snippetPos, cmd.formula));
+				}
+			}
+			
+			return Collections.unmodifiableList(result);
+		}
+		
 		
 		/**
 		 * Given an immutable path, getAllExpressionsAndFields extracts all
