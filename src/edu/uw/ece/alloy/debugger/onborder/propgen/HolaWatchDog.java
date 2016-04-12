@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.util.Utils;
 
 public class HolaWatchDog implements Runnable {
 
@@ -74,7 +75,7 @@ public class HolaWatchDog implements Runnable {
 				count += Math.min(interval - count, 1000);
 				
 			} catch (InterruptedException e) {
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Hola Watchdog loop is interrupted ", e);
+				logger.log(Level.SEVERE, Utils.threadName() + "Hola Watchdog loop is interrupted ", e);
 				break;
 			}
 			
@@ -82,7 +83,7 @@ public class HolaWatchDog implements Runnable {
 		
 		this.stop = true;
 		
-		if(Configuration.IsInDeubbungMode)logger.log(Level.INFO, "["+Thread.currentThread().getName()+"]" + "Watchdog exited ");
+		if(Configuration.IsInDeubbungMode)logger.info(Utils.threadName() + "Watchdog exited.");
 	}
 
 	private void callback() {

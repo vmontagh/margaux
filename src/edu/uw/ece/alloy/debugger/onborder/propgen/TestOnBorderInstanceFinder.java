@@ -1,12 +1,11 @@
 package edu.uw.ece.alloy.debugger.onborder.propgen;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 import org.junit.Test;
 
-import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
 public class TestOnBorderInstanceFinder {
 
@@ -15,9 +14,8 @@ public class TestOnBorderInstanceFinder {
 		
 		String file = "/home/fikayo/workspace/OnBorderInstanceFinder/models/binary_tree.als";
 		
-		InetAddress localAddress = InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
-		InetSocketAddress address1 = Utils.findEmptyLocalSocket(localAddress);
-		InetSocketAddress address2 = Utils.findEmptyLocalSocket(localAddress);
+		InetSocketAddress address1 = ProcessorUtil.findEmptyLocalSocket();
+		InetSocketAddress address2 = ProcessorUtil.findEmptyLocalSocket();
 		
 		String[] args = new String[6];
 		args[0] = "" + address1.getPort();

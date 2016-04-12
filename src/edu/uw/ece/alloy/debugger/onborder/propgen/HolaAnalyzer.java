@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
 public class HolaAnalyzer {
 	
@@ -33,7 +34,7 @@ protected final static Logger logger = Logger.getLogger(HolaAnalyzer.class.getNa
 	
 	public void createInstanceFinder() throws UnknownHostException {
 		
-		this.subProcess = this.createProcess(Utils.findEmptyLocalSocket(Utils.getLocalAddress()));
+		this.subProcess = this.createProcess(ProcessorUtil.findEmptyLocalSocket());
 		
 		// Set up thread for IPC
 		subManager = new Thread(new Runnable() {

@@ -54,7 +54,10 @@ public class Utils {
 	private Utils() {
 		throw new UnsupportedOperationException();
 	}
-
+	
+	public static String threadName() {
+		return "[" + Thread.currentThread().getName() + "]" + " ";
+	}
 
 	public static String appendFileName(final String folderName, final String fileName){
 		return folderName + 
@@ -404,69 +407,5 @@ public class Utils {
 		pb.redirectError(Redirect.INHERIT);
 		
 		return pb.start();
-	}
-	
-	public static InetAddress getLocalAddress() throws UnknownHostException {
-		return InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
-	}
-	
-	/**
-	 * This function may return already used ports. So the history in sentMessagesCounter should be cleaned.
-	 * @return
-	 */
-	public static InetSocketAddress  findEmptyLocalSocket(final InetAddress localAddress){
-		int port = lastFoundPort;
-		int tmpPort = lastFoundPort - MinPortNumber + 1;
-
-		int findPortTriesMax = 1;
-
-		while( ++findPortTriesMax < MaxTryPort){
-			tmpPort = (tmpPort + 2) % (MaxPortNumber - MinPortNumber);/*The range is an odd number so the second round it iterates the other sent of numbers.*/
-			int actualport = tmpPort + MinPortNumber;
-
-			if(available(actualport)) {
-				port = actualport;
-				break;
-			}
-
-		}
-
-		if(port == lastFoundPort){
-			throw new RuntimeException("No port available");
-		}
-		lastFoundPort = port;
-		return new InetSocketAddress(localAddress, lastFoundPort);
-	}
-	
-	public static boolean available(int port) {
-		if (port < MinPortNumber || port > MaxPortNumber) {
-			throw new IllegalArgumentException("Invalid start port: " + port);
-		}
-
-		ServerSocket ss = null;
-		DatagramSocket ds = null;
-		try {
-			ss = new ServerSocket(port);
-			ss.setReuseAddress(true);
-			ds = new DatagramSocket(port);
-			ds.setReuseAddress(true);
-			return true;
-		} catch (IOException e) {
-		} finally {
-			if (ds != null) {
-				ds.close();
-			}
-
-			if (ss != null) {
-				try {
-					ss.close();
-				} catch (IOException e) {
-					/* should not be thrown */
-				}
-			}
-		}
-
-		return false;
-	}
-	
+	}	
 }

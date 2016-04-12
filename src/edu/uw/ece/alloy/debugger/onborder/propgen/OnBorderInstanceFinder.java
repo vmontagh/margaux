@@ -15,7 +15,12 @@ import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
+/**
+ * @author Fikayo Odunayo
+ *
+ */
 public class OnBorderInstanceFinder {
 
 	protected final static Logger logger = Logger.getLogger(OnBorderInstanceFinder.class.getName()+"--"+Thread.currentThread().getName());
@@ -50,8 +55,7 @@ public class OnBorderInstanceFinder {
 	public void execute() throws UnknownHostException {		
 				
 		// Create Hola Process
-		InetAddress localAddress = Utils.getLocalAddress();		
-		InetSocketAddress address = Utils.findEmptyLocalSocket(localAddress);
+		InetSocketAddress address = ProcessorUtil.findEmptyLocalSocket();
 		subProcess = this.createProcess(address);
 
 		if(!subProcess.isAlive()) throw new RuntimeException("Sub Process not alive");
@@ -76,7 +80,7 @@ public class OnBorderInstanceFinder {
 	            
 	         } catch(IOException e) {
 	        	 
-	        	 	logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Error creating input stream: " + e.getMessage(), e);
+	        	 	logger.log(Level.SEVERE,Utils.threadName()+ "Error creating input stream: " + e.getMessage(), e);
 	            e.printStackTrace();
 	            
 	            watchdog.stopTimer();
@@ -91,7 +95,7 @@ public class OnBorderInstanceFinder {
               
 	            } catch(IOException | ClassNotFoundException e) {
 	            	
-	            	logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Error reading from input stream" + e.getMessage(), e);
+	            	logger.log(Level.SEVERE,Utils.threadName()+ "Error reading from input stream" + e.getMessage(), e);
 	            	
 	               watchdog.stopTimer();	               
 	               Util.close(sub2main); 
@@ -115,7 +119,7 @@ public class OnBorderInstanceFinder {
               	try {
 									results.put(result);
 								} catch (InterruptedException e) {
-									logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Interrupted while placing result in deque", e);
+									logger.log(Level.SEVERE,Utils.threadName()+ "Interrupted while placing result in deque", e);
 								}
               }
 	         }
@@ -124,32 +128,32 @@ public class OnBorderInstanceFinder {
 			
 		// Open the IPC channel and start the timer
 //		this.subManager.start();		
-		this.watchdog.startTimer(new Runnable() {
-			
-			@Override
-			public void run() {
-				
-				logger.log(Level.INFO,"["+Thread.currentThread().getName()+"]" + "Watchdog timer terminated. Running timer callback");
-				
-				// Get final candidate in the deque.
-				HolaResult finalResult = results.peekLast();
-				
-				if(finalResult != null) {
-  				// Destroy the Hola JVM
-  				subProcess.destroyProcess();
-  								
-  				// Send the result back to the Hola Analyzer
-  				SocketWriter writer = new SocketWriter(remotePort);
-  				try {
-  					writer.doAction(finalResult);
-  				} catch (InterruptedException e) {
-  					logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Interrupted while sending final result to remote. Remote Address: " + remotePort, e);
-  				}
-  				
-  				writer.startThread();
-				}
-			}
-		});
+//		this.watchdog.startTimer(new Runnable() {
+//			
+//			@Override
+//			public void run() {
+//				
+//				logger.info(Utils.threadName() + "Watchdog timer terminated. Running timer callback");
+//				
+//				// Get final candidate in the deque.
+//				HolaResult finalResult = results.peekLast();
+//				
+//				if(finalResult != null) {
+//  				// Destroy the Hola JVM
+//  				subProcess.destroyProcess();
+//  								
+//  				// Send the result back to the Hola Analyzer
+//  				SocketWriter writer = new SocketWriter(remotePort);
+//  				try {
+//  					writer.doAction(finalResult);
+//  				} catch (InterruptedException e) {
+//  					logger.log(Level.SEVERE, Utils.threadName() + "Interrupted while sending final result to remote. Remote Address: " + remotePort, e);
+//  				}
+//  				
+//  				writer.startThread();
+//				}
+//			}
+//		});
 		
 	}
 	
@@ -182,7 +186,7 @@ public class OnBorderInstanceFinder {
 			sub = Utils.createProcess(commands);
 
 		} catch (IOException e) {
-			logger.log(Level.SEVERE,"["+Thread.currentThread().getName()+"]"+ "Not able to create a new process on port: "+address, e);
+			logger.log(Level.SEVERE, Utils.threadName() + "Not able to create a new process on port: "+address, e);
 		}
 
 		HolaProcess result = new HolaProcess(address, sub);
@@ -193,10 +197,10 @@ public class OnBorderInstanceFinder {
 
 		if( this.tmpDirectory.exists() ){
 			try {
-				if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +" exists and has to be recreated." +tmpDirectory.getCanonicalPath());
+				if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + " exists and has to be recreated." +tmpDirectory.getCanonicalPath());
 				Utils.deleteRecursivly(this.tmpDirectory);
 			} catch (IOException e) {
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " + "Unable to delete the previous files.", e);
+				logger.log(Level.SEVERE, Utils.threadName() + "Unable to delete the previous files.", e);
 			}
 		}
 
@@ -208,7 +212,7 @@ public class OnBorderInstanceFinder {
 	
 	public static void main(String[] args) {
 		
-		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+"The '" + OnBorderInstanceFinder.class.getSimpleName() + "' process is started.");
+		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "The '" + OnBorderInstanceFinder.class.getSimpleName() + "' process is started.");
 
 		if(args.length < 5)
 			throw new RuntimeException("Invalid number of arguments");
@@ -224,22 +228,24 @@ public class OnBorderInstanceFinder {
 		try{
 			localPort = Integer.parseInt(args[0]);
 			localIP   = InetAddress.getByName(args[1]);
-			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+"The port is assigned to this process: " + localPort + " and the IP is: " + localIP);
+			
+			if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "The port is assigned to this process: " + localPort + " and the IP is: " + localIP);
 
 			remotePort = Integer.parseInt(args[2]);
 			remoteIP   = InetAddress.getByName(args[3]);
-			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+"The remote port is: " + remotePort + " and the IP is: " + remoteIP);
+			
+			if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "The remote port is: " + remotePort + " and the IP is: " + remoteIP);
 			
 			filePathArgs = args[4];
 			propertiesFile = args[5];
 
 		}
 		catch(NumberFormatException nfe) {
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The passed port is not acceptable: ", nfe.getMessage());
+			logger.log(Level.SEVERE, Utils.threadName() + "The passed port is not acceptable: ", nfe.getMessage());
 			throw new RuntimeException("The port number is not an integer: " + nfe);
 		}
 		catch(UnknownHostException uhe) {
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "The passed IP is not acceptable: ", uhe.getMessage());
+			logger.log(Level.SEVERE, Utils.threadName() + "The passed IP is not acceptable: ", uhe.getMessage());
 			throw new RuntimeException("The IP address is not acceptable: " + uhe);
 		}
 
@@ -251,7 +257,7 @@ public class OnBorderInstanceFinder {
 		try {
 			finder.execute();
 		} catch (UnknownHostException e) {
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Unknown Host exception", e);
+			logger.log(Level.SEVERE, Utils.threadName() + "Unknown Host exception", e);
 			e.printStackTrace();
 		}
 	}
