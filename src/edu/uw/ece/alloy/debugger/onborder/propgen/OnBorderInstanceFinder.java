@@ -2,18 +2,15 @@ package edu.uw.ece.alloy.debugger.onborder.propgen;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
@@ -45,14 +42,21 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 	private HolaProcess subProcess;
 	private Thread subManager;
 	private HolaWatchDog watchdog;
-	private Deque<Object> results = new ArrayDeque();
+	private Deque<Object> results = new ArrayDeque<>();
 	
 	public OnBorderInstanceFinder(final InetSocketAddress localPort, final InetSocketAddress remotePort, final String filePathArgs, final String propertiesFile) {
-		super(localPort, remotePort);
+		
+		// Set the port of this process as the remote port of the listener
+		// For now, set the host port of the listener to be null (it will be changed to the address of the created process after it is created).
+		super(null, localPort);
+		
 		this.PID = localPort;
-		this.remotePort = remotePort; 
+		this.remotePort = remotePort;
 		this.filePathArgs = filePathArgs;
 		this.propertiesFile = propertiesFile;
+		
+		// Set up thread for IPC between processes
+		this.subManager = new Thread(this);
 		
 		// Set the local tmpDirectory
 		this.tmpDirectory = new File(tmpDirectoryRoot,String.valueOf(PID.getPort()));
@@ -63,76 +67,24 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 				
 		// Create Hola Process
 		InetSocketAddress address = ProcessorUtil.findEmptyLocalSocket();
-		subProcess = this.createProcess(address);
 
-		if(!subProcess.isAlive()) throw new RuntimeException("Sub Process not alive");
-				
+		System.out.println("My Address: " + this.PID);
+		System.out.println("Sub Address: " + address);
+		// Change host address to be the address of the process
+		this.changeHostAddress(subProcess.address);
+		
+		subProcess = this.createProcess(address);
+		if(!subProcess.isAlive()) {
+			throw new RuntimeException("Sub Process not alive");
+		}
+		
 		// Set up watchdog timer.
 		// This process must stop before the interval is finished or it will be terminated.
 		this.watchdog = new HolaWatchDog();
 		this.watchdog.setInterval(10000);
 		
-		// Set up thread for IPC between processes
-		/*subManager = new Thread(new Runnable() {
-			
-				public void run() {
-	      	
-	         ObjectInputStream sub2main = null;
-	         
-	         try {
-	        	           
-	            sub2main = new ObjectInputStream(Utils.wrap(subProcess.getInputStream()));
-	            
-	         } catch(IOException e) {
-	        	 
-	        	 	logger.log(Level.SEVERE,Utils.threadName()+ "Error creating input stream: " + e.getMessage(), e);
-	            e.printStackTrace();
-	            
-	            watchdog.stopTimer();
-	            Util.close(sub2main);
-	         }
-	         
-	         while(true) {
-	        	 
-	            HolaResult result = null;
-	            try {	            	
-	               result = (HolaResult) sub2main.readObject();	
-              
-	            } catch(IOException | ClassNotFoundException e) {
-	            	
-	            	logger.log(Level.SEVERE,Utils.threadName()+ "Error reading from input stream" + e.getMessage(), e);
-	            	
-	               watchdog.stopTimer();	               
-	               Util.close(sub2main); 
-	               e.printStackTrace();
-	            }            
-
-	            // Add results to the deque
-              if(result.isLast()) {              	
-              	if(result.getInstance() != null) {
-              		results.add(result);
-              		
-              		System.out.println("=====================================================");
-          				System.out.println("Instance Result: \n    " + result.getInstance().toString().replace("\n", "\n" + "    ") + "");
-          				System.out.println("=====================================================");
-              		
-              	}
-              	
-            		watchdog.stopTimer();
-            		
-              } else { 
-              	try {
-									results.put(result);
-								} catch (InterruptedException e) {
-									logger.log(Level.SEVERE,Utils.threadName()+ "Interrupted while placing result in deque", e);
-								}
-              }
-	         }
-	      }
-	   });
-//			
 		// Open the IPC channel and start the timer
-		this.subManager.start();		
+		this.startThread();
 		this.watchdog.startTimer(new Runnable() {
 			
 			@Override
@@ -141,7 +93,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 				logger.info(Utils.threadName() + "Watchdog timer terminated. Running timer callback");
 				
 				// Get final candidate in the deque.
-				HolaResult finalResult = results.peekLast();
+				HolaResult finalResult = (HolaResult) results.peekLast();
 				
 				if(finalResult != null) {
   				// Destroy the Hola JVM
@@ -158,7 +110,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
   				writer.startThread();
 				}
 			}
-		});*/
+		});
 		
 	}
 	
@@ -170,11 +122,18 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 			this.watchdog.stopTimer();
 		}
 	}
+
+	@Override
+	protected Thread getThread() {
+		return this.subManager;
+	}
 	
 	@Override
 	public void cancelThread() {
-		// TODO Auto-generated method stub
+		this.subManager.interrupt();
+		this.subManager = null;
 		
+		this.stopRunning();
 	}
 
 	@Override
@@ -211,12 +170,6 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 	public long isDelayed() {
 		// TODO Auto-generated method stub
 		return 0;
-	}
-
-	@Override
-	protected Thread getThread() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 	
 	private synchronized HolaProcess createProcess(final InetSocketAddress address) {
@@ -258,8 +211,8 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 			};
 			
 			System.out.println("Params: " + Arrays.toString(commands));
-			sub = Utils.createProcess(commands);
-
+//			sub = Utils.createProcess(commands);
+			throw new IOException();
 		} catch (IOException e) {
 			logger.log(Level.SEVERE, Utils.threadName() + "Not able to create a new process on port: "+address, e);
 		}
@@ -335,5 +288,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 			logger.log(Level.SEVERE, Utils.threadName() + "Unknown Host exception", e);
 			e.printStackTrace();
 		}
+		
+		logger.info(Utils.threadName() + OnBorderInstanceFinder.class.getSimpleName() + " exiting.");
 	}
 }

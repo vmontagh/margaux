@@ -90,9 +90,9 @@ public class PatternsAnalyzer extends ServerSocketListener {
 
 	protected void sendLivenessMessage() {
 		try {
-			IamAlive iamAlive = new IamAlive(hostAddress, System.currentTimeMillis(),
+			IamAlive iamAlive = new IamAlive(this.getHostAddress(), System.currentTimeMillis(),
 					-1, -1);
-			iamAlive.sendMe(remoteAddress);
+			iamAlive.sendMe(this.getRemoteAddress());
 			livenessFailed.set(0);
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "]"

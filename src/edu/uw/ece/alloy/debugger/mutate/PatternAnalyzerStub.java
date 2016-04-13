@@ -24,7 +24,7 @@ public class PatternAnalyzerStub extends ServerSocketListener {
 	}
 
 	protected void onStartingListening() throws InterruptedException{
-		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" The process is started on port : "+hostAddress.getPort());
+		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" The process is started on port : " + this.getHostAddress().getPort());
 		System.out.println("onStartingListening");
 	}
 	

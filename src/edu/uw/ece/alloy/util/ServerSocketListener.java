@@ -23,24 +23,72 @@ public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeM
 
 	protected final static Logger logger = Logger.getLogger(ServerSocketListener.class.getName()+"--"+Thread.currentThread().getName());
 
-	public final InetSocketAddress hostAddress;
-	public final InetSocketAddress remoteAddress;
+	private InetSocketAddress hostAddress;
+	private InetSocketAddress remoteAddress;
 
+	private Object lock = new Object();
+	private boolean running;
+	
 	public ServerSocketListener(final int hostPort, final int remotePort) {
-		this.remoteAddress = new InetSocketAddress(remotePort);
-		this.hostAddress = new InetSocketAddress(hostPort);
+		this(new InetSocketAddress(hostPort), new InetSocketAddress(remotePort));
 	}
 
 	public ServerSocketListener(final String hostName, final int hostPort, final String remoteName, final int remotePort) {
-		this.hostAddress = new InetSocketAddress(hostName, hostPort);
-		this.remoteAddress = new InetSocketAddress(remoteName, remotePort);
+		this(new InetSocketAddress(hostName, hostPort), new InetSocketAddress(remoteName, remotePort));
 	}
 
 	public ServerSocketListener(final InetSocketAddress hostAddress, final InetSocketAddress remoteAddress) {
 		this.hostAddress = hostAddress;
 		this.remoteAddress = remoteAddress;
+		
+		running = false;
 	}
 
+	public InetSocketAddress getHostAddress() {
+		return this.hostAddress;
+	}
+	
+	public InetSocketAddress getRemoteAddress() {
+		return this.remoteAddress;
+	}
+
+	protected abstract Thread getThread();
+
+	protected void changeHostAddress(final InetSocketAddress address) {
+		
+		synchronized(lock) {
+			if(!running) {
+				this.hostAddress = address;
+			}
+		}
+		
+	}
+	
+	protected void changeRemoteAddress(final InetSocketAddress address) {
+		
+		synchronized(lock) {
+			if(!running) {
+				this.remoteAddress = address;
+			}
+		}
+		
+	}
+	
+	protected void changeHostAndRemoteAddress(final InetSocketAddress hostAddress, final InetSocketAddress remoteAddress) {
+		synchronized(lock) {
+			if(!running) {
+				this.hostAddress = hostAddress;
+				this.remoteAddress = remoteAddress;
+			}
+		}
+	}
+	
+	protected void stopRunning() {
+		synchronized(lock) {
+			running = false;
+		}
+	}
+	
 	protected void processCommand(final RemoteCommand command){
 		// Supposed to be a registering call;
 		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName()+" Recieved message: "+command);
@@ -127,14 +175,19 @@ public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeM
 
 	}
 	
-	protected abstract Thread getThread();
-
 	public void startThread() {
 		getThread().start();
 	}
 
 	@Override
 	public void run() {
+		
+		synchronized(lock) {
+			running = true;
+		}
+		
 		listening();
+		
+		stopRunning();
 	}
 }
