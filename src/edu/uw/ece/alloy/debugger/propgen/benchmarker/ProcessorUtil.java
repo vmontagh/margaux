@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import onborder.agent.Utils;
 
 public class ProcessorUtil {
 
@@ -46,35 +47,20 @@ public class ProcessorUtil {
 			throw new IllegalArgumentException("Invalid start port: " + port);
 		}
 
-		ServerSocket ss = null;
-		DatagramSocket ds = null;
 		AsynchronousServerSocketChannel channel = null;
 		try {
 			channel = AsynchronousServerSocketChannel
 					.open().bind(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(),port));
-			ss = new ServerSocket(port);
-			ss.setReuseAddress(true);
-			ds = new DatagramSocket(port);
-			ds.setReuseAddress(true);
 			return true;
 		} catch (IOException e) {
+			logger.info(Utils.threadName() + "Port cannot be used: " + e.getMessage());
 		} finally {
 			if (channel != null){
 				try {
 					channel.close();
 				} catch (IOException e) {
 					/* should not be thrown */
-				}
-			}
-			if (ds != null) {
-				ds.close();
-			}
-
-			if (ss != null) {
-				try {
-					ss.close();
-				} catch (IOException e) {
-					/* should not be thrown */
+					logger.severe(Utils.threadName() + "Opne port '" + port + "' cannot be closed: " + e.getMessage());
 				}
 			}
 		}
@@ -95,6 +81,7 @@ public class ProcessorUtil {
 
 		int findPortTriesMax = 1;
 
+		System.out.println("Before While");
 		while (++findPortTriesMax < MaxTryPort) {
 			tmpPort = (tmpPort + 2) % (MaxPortNumber
 					- MinPortNumber);/*
@@ -103,6 +90,7 @@ public class ProcessorUtil {
 													  */
 			int actualport = tmpPort + MinPortNumber;
 
+			System.out.println("Checking port: " + actualport);
 			if (available(actualport)) {
 				port = actualport;
 				break;
@@ -110,6 +98,7 @@ public class ProcessorUtil {
 
 		}
 
+		System.out.println("While done: " + port);
 		if (port == lastFoundPort) {
 			throw new RuntimeException("No port available");
 		}
