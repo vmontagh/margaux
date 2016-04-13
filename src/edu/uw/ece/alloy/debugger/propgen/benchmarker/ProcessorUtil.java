@@ -81,7 +81,6 @@ public class ProcessorUtil {
 
 		int findPortTriesMax = 1;
 
-		System.out.println("Before While");
 		while (++findPortTriesMax < MaxTryPort) {
 			tmpPort = (tmpPort + 2) % (MaxPortNumber
 					- MinPortNumber);/*
@@ -90,7 +89,6 @@ public class ProcessorUtil {
 													  */
 			int actualport = tmpPort + MinPortNumber;
 
-			System.out.println("Checking port: " + actualport);
 			if (available(actualport)) {
 				port = actualport;
 				break;
@@ -98,10 +96,10 @@ public class ProcessorUtil {
 
 		}
 
-		System.out.println("While done: " + port);
 		if (port == lastFoundPort) {
 			throw new RuntimeException("No port available");
 		}
+		
 		lastFoundPort = port;
 		return new InetSocketAddress(localAddress, lastFoundPort);
 	}
