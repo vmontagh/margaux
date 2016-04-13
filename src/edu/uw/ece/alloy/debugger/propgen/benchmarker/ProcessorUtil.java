@@ -1,7 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -11,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import onborder.agent.Utils;
+import edu.uw.ece.alloy.util.Utils;
 
 public class ProcessorUtil {
 
@@ -49,18 +48,21 @@ public class ProcessorUtil {
 
 		AsynchronousServerSocketChannel channel = null;
 		try {
-			channel = AsynchronousServerSocketChannel
-					.open().bind(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(),port));
+			channel = AsynchronousServerSocketChannel.open().bind(
+					new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(),
+							port));
 			return true;
 		} catch (IOException e) {
-			logger.info(Utils.threadName() + "Port cannot be used: " + e.getMessage());
+			logger
+					.info(Utils.threadName() + "Port cannot be used: " + e.getMessage());
 		} finally {
-			if (channel != null){
+			if (channel != null) {
 				try {
 					channel.close();
 				} catch (IOException e) {
 					/* should not be thrown */
-					logger.severe(Utils.threadName() + "Opne port '" + port + "' cannot be closed: " + e.getMessage());
+					logger.severe(Utils.threadName() + "Opne port '" + port
+							+ "' cannot be closed: " + e.getMessage());
 				}
 			}
 		}
@@ -81,7 +83,6 @@ public class ProcessorUtil {
 
 		int findPortTriesMax = 1;
 
-		System.out.println("Before While");
 		while (++findPortTriesMax < MaxTryPort) {
 			tmpPort = (tmpPort + 2) % (MaxPortNumber
 					- MinPortNumber);/*
@@ -90,7 +91,6 @@ public class ProcessorUtil {
 													  */
 			int actualport = tmpPort + MinPortNumber;
 
-			System.out.println("Checking port: " + actualport);
 			if (available(actualport)) {
 				port = actualport;
 				break;
@@ -98,7 +98,6 @@ public class ProcessorUtil {
 
 		}
 
-		System.out.println("While done: " + port);
 		if (port == lastFoundPort) {
 			throw new RuntimeException("No port available");
 		}
