@@ -7,8 +7,10 @@ import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,34 +21,34 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 
-public abstract class ServerSocketInterface
-		implements Runnable, ThreadToBeMonitored {
+public abstract class ServerSocketInterfaceBase	implements Runnable, ThreadToBeMonitored {
 
-	protected final static Logger logger = Logger.getLogger(ServerSocketInterface.class.getName() + "--" + Thread.currentThread().getName());
+	protected final static Logger logger = Logger.getLogger(ServerSocketInterfaceBase.class.getName() + "--" + Thread.currentThread().getName());
 
-	private InetSocketAddress hostAddress;
-	private InetSocketAddress remoteAddress;
+	public final int SelfMonitorInterval = Integer.parseInt(Configuration.getProp("self_monitor_interval"));
 
-	private Object lock = new Object();
-	private boolean running;
+	protected final Thread listeningThread;
+	protected final InetSocketAddress hostAddress;
+	protected final InetSocketAddress remoteAddress;
+	protected final BlockingQueue<RemoteCommand> queue;
+	
 	protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
 
-	public ServerSocketInterface(final int hostPort, final int remotePort) {
+	public ServerSocketInterfaceBase(final int hostPort, final int remotePort) {
 		this(new InetSocketAddress(hostPort), new InetSocketAddress(remotePort));
 	}
 
-	public ServerSocketInterface(final String hostName, final int hostPort,
+	public ServerSocketInterfaceBase(final String hostName, final int hostPort,
 			final String remoteName, final int remotePort) {
 		this(new InetSocketAddress(hostName, hostPort),
 				new InetSocketAddress(remoteName, remotePort));
 	}
 
-	public ServerSocketInterface(final InetSocketAddress hostAddress,
-			final InetSocketAddress remoteAddress) {
+	public ServerSocketInterfaceBase(final InetSocketAddress hostAddress,	final InetSocketAddress remoteAddress) {
 		this.hostAddress = hostAddress;
 		this.remoteAddress = remoteAddress;
-
-		running = false;
+		this.listeningThread = new Thread(this);
+		this.queue = new LinkedBlockingQueue<>();
 	}
 
 	public InetSocketAddress getHostAddress() {
@@ -57,20 +59,28 @@ public abstract class ServerSocketInterface
 		return this.remoteAddress;
 	}
 
-	public void openInterface() {
+	public void startThread() {
 		getThread().start();
+	}
+	
+	@Override
+	public void run() {
+		startListening();
 	}
 
 	@Override
-	public void run() {
+	public void cancelThread() {
+		this.getThread().interrupt();
+	}
 
-		synchronized (lock) {
-			running = true;
-		}
+	@Override
+	public void actionOnNotStuck() {
+		this.sendLivenessMessage();
+		this.haltIfCantProceed(/* SelfMonitorRetryAttempt */ 1);
+	}
 
-		startListening();
-
-		stopRunning();
+	protected final Thread getThread() {
+		return this.listeningThread;
 	}
 
 	private void startListening() {
@@ -85,7 +95,7 @@ public abstract class ServerSocketInterface
 			// Open socket for listening
 			serverSocketChannel = AsynchronousServerSocketChannel.open().bind(hostAddress);
 
-			this.sendReadynessMessage();
+			this.onStartListening();
 
 			Future<AsynchronousSocketChannel> serverFuture = null;
 			AsynchronousSocketChannel clientSocket = null;
@@ -111,7 +121,8 @@ public abstract class ServerSocketInterface
 						
 						connectionInputStream = Channels.newInputStream(clientSocket);
 						ois = new ObjectInputStream(connectionInputStream);
-						processCommand((RemoteCommand) ois.readObject());
+						queue.put((RemoteCommand) ois.readObject());
+//						onReceivedMessage((RemoteCommand) ois.readObject());
 					}
 					
 				} catch (IOException | InterruptedException | ExecutionException | ClassNotFoundException e) {
@@ -159,42 +170,7 @@ public abstract class ServerSocketInterface
 
 	}
 
-	protected abstract Thread getThread();
-
-	protected void stopRunning() {
-		synchronized (lock) {
-			running = false;
-		}
-	}
-
-	protected void changeHostAddress(final InetSocketAddress address) {
-
-		synchronized (lock) {
-			if (!running) {
-				this.hostAddress = address;
-			}
-		}
-
-	}
-
-	protected void changeRemoteAddress(final InetSocketAddress address) {
-
-		synchronized (lock) {
-			if (!running) {
-				this.remoteAddress = address;
-			}
-		}
-
-	}
-
-	protected void changeHostAndRemoteAddress(final InetSocketAddress hostAddress, final InetSocketAddress remoteAddress) {
-		synchronized (lock) {
-			if (!running) {
-				this.hostAddress = hostAddress;
-				this.remoteAddress = remoteAddress;
-			}
-		}
-	}
+	protected void onStartListening() {	}
 	
 	protected void sendMessage(RemoteCommand command) {
 		
@@ -238,11 +214,20 @@ public abstract class ServerSocketInterface
 		}
 	}
 
-	protected void processCommand(final RemoteCommand command) {
+	protected void onReceivedMessage(final RemoteCommand command) {
 		
 		// Supposed to be a registering call;
 		if (Configuration.IsInDeubbungMode)	logger.info(Utils.threadName() + "Recieved message: " + command);
 
+	}
+
+	protected void haltIfCantProceed(final int maxRetryAttepmpts) {
+
+		// Recovery was not enough, the whole processes has to be shut-down
+		if (livenessFailed.get() > maxRetryAttepmpts) {
+			logger.severe(Utils.threadName() + livenessFailed	+ " liveness message attempts does not prceeed, So the process is exited.");
+			Runtime.getRuntime().halt(0);
+		}
 	}
 
 }
