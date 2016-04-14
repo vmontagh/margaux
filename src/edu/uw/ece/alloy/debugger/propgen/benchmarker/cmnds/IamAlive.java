@@ -4,8 +4,8 @@ import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzerInterface;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
-import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 
@@ -55,7 +55,7 @@ public class IamAlive extends RemoteCommand {
 			manager.changeLastLiveTimeRecieved(PID, time);
 			
 			if (manager.SomeProcessesWorking()){
-				PatternsAnalyzer.analyzing = true;
+				PatternsAnalyzerInterface.analyzing = true;
 			}
 			
 			if (toBeProcessed <= 0) {
@@ -64,8 +64,8 @@ public class IamAlive extends RemoteCommand {
 				System.out.println("monitor.isAllProcessesNotWorking()->"
 						+ manager.allProcessesNotWorking());
 				
-				if (manager.allProcessesNotWorking() && PatternsAnalyzer.analyzing/*Means it was analyzing*/) {
-					PatternsAnalyzer.analyzing = false;
+				if (manager.allProcessesNotWorking() && PatternsAnalyzerInterface.analyzing/*Means it was analyzing*/) {
+					PatternsAnalyzerInterface.analyzing = false;
 					try {
 						(new AnalyzeExternalDone())
 								.sendMe(ExpressionAnalyzerRunner.getInstance().remoteSocket);

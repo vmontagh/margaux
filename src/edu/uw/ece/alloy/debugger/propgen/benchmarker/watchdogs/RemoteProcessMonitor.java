@@ -37,7 +37,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.util.RetryingThread;
 
-public class ProcessRemoteMonitor
+public class RemoteProcessMonitor
 		implements Runnable, ThreadToBeMonitored {
 
 	final static int MaxTimeoutRetry = Integer
@@ -64,7 +64,7 @@ public class ProcessRemoteMonitor
 	/// Once a message is removed from incompleteMessages, its value is increased.
 	final private Map<InetSocketAddress, AtomicInteger> receivedMessagesNumber = new ConcurrentHashMap<>();
 	protected final static Logger logger = Logger
-			.getLogger(ProcessRemoteMonitor.class.getName() + "--"
+			.getLogger(RemoteProcessMonitor.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
 	// For more threads, the can be stored in a list.
@@ -79,7 +79,7 @@ public class ProcessRemoteMonitor
 
 	volatile boolean monitorWorking = false;
 
-	public ProcessRemoteMonitor(int monitorInterval, AlloyFeeder feeder,
+	public RemoteProcessMonitor(int monitorInterval, AlloyFeeder feeder,
 			ProcessesManager manager, final InetSocketAddress hostAddress) {
 		super();
 		this.feeder = feeder;
@@ -89,13 +89,13 @@ public class ProcessRemoteMonitor
 		this.feeder.setMonitor(this);
 	}
 
-	public ProcessRemoteMonitor(final int monitorInterval,
+	public RemoteProcessMonitor(final int monitorInterval,
 			final AlloyFeeder feeder, final ProcessesManager manager,
 			final int port) {
 		this(monitorInterval, feeder, manager, new InetSocketAddress(port));
 	}
 
-	public ProcessRemoteMonitor(final int monitorInterval,
+	public RemoteProcessMonitor(final int monitorInterval,
 			final AlloyFeeder feeder, final ProcessesManager manager,
 			final String address, final int port) {
 		this(monitorInterval, feeder, manager,
@@ -622,7 +622,7 @@ public class ProcessRemoteMonitor
 				ExpressionPropertyGenerator.Builder.getInstance()
 						.create((GeneratedStorage<AlloyProcessingParam>) feeder,
 								nextProperties, doneChecks)
-						.openInterface();
+						.startThread();
 			else
 				logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
 						+ "The next properties are empty for:" + result);
@@ -633,7 +633,7 @@ public class ProcessRemoteMonitor
 		}
 	}
 
-	public void openInterface() {
+	public void startThread() {
 		monitor.start();
 		timeoutMonitor.start();
 	}

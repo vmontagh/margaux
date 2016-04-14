@@ -9,7 +9,7 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessIt;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.RemoteProcessMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.RetryingThread;
 
@@ -24,7 +24,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 	final BlockingQueue<AlloyProcessingParam> backLog;
 
 	final ProcessesManager processesManager;
-	ProcessRemoteMonitor monitor = null;
+	RemoteProcessMonitor monitor = null;
 	
 	final Thread sender = new RetryingThread(this,100);
 	
@@ -57,7 +57,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 		}
 	}
 
-	public void setMonitor(final ProcessRemoteMonitor monitor){
+	public void setMonitor(final RemoteProcessMonitor monitor){
 		if(this.monitor == null)
 			this.monitor = monitor;
 		else
@@ -166,7 +166,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 		
 	}
 	
-	public void openInterface(){
+	public void startThread(){
 		if(monitor == null){
 			throw new RuntimeException("Monitor has to be set, but it is null");
 		}

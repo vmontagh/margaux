@@ -17,7 +17,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalRequest;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketInterface;
+import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
 
 /**
  * 
@@ -33,95 +33,53 @@ import edu.uw.ece.alloy.util.ServerSocketInterface;
  * @author vajih
  *
  */
-public class PatternsAnalyzer extends ServerSocketInterface {
+public class PatternsAnalyzerInterface extends ServerSocketInterfaceBase {
 
 	// Very temporary to determine the status of the analyzer from analyzing to IDLE.
 	public static Boolean analyzing = false;
 	
 	protected final static Logger logger = Logger
-			.getLogger(PatternsAnalyzer.class.getName() + "--"
+			.getLogger(PatternsAnalyzerInterface.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
-	private Thread thread = new Thread(this);
-	protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
 	protected final GeneratedStorage<AlloyProcessingParam> feeder;
 
-	public PatternsAnalyzer(final int hostPort, final int remotePort,
+	public PatternsAnalyzerInterface(final int hostPort, final int remotePort,
 			final GeneratedStorage<AlloyProcessingParam> feeder) {
 		super(remotePort, hostPort);
 		this.feeder = feeder;
 	}
 
-	public PatternsAnalyzer(final String hostName, final int hostPort,
+	public PatternsAnalyzerInterface(final String hostName, final int hostPort,
 			final String remoteName, final int remotePort,
 			final GeneratedStorage<AlloyProcessingParam> feeder) {
 		super(hostName, hostPort, remoteName, remotePort);
 		this.feeder = feeder;
 	}
 
-	public PatternsAnalyzer(final InetSocketAddress hostAddress,
+	public PatternsAnalyzerInterface(final InetSocketAddress hostAddress,
 			final InetSocketAddress remoteAddress,
 			final GeneratedStorage<AlloyProcessingParam> feeder) {
 		super(hostAddress, remoteAddress);
 		this.feeder = feeder;
 	}
 
-	protected void processCommand(final RemoteCommand command) {
+	protected void onReceivedMessage(final RemoteCommand command) {
 		// Supposed to be a registering call;
+		super.onReceivedMessage(command);
 		System.out.println("Commands is received in PatternsAnalyzer:" + command);
 		command.doAnalyze(feeder);
-	}
-
-	protected Thread getThread() {
-		return thread;
 	}
 
 	@Override
 	public void cancelThread() {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void changePriority(int newPriority) {
 		// TODO Auto-generated method stub
 
-	}
-
-	protected void sendLivenessMessage() {
-		try {
-			IamAlive iamAlive = new IamAlive(this.getHostAddress(), System.currentTimeMillis(),
-					-1, -1);
-			iamAlive.sendMe(this.getRemoteAddress());
-			livenessFailed.set(0);
-			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]"
-						+ "A live message" + iamAlive);
-		} catch (Exception e) {
-			logger.log(Level.SEVERE,
-					"[" + Thread.currentThread().getName() + "]"
-							+ "Failed to send a live signal this is " + livenessFailed
-							+ " attempt",
-					e);
-			livenessFailed.incrementAndGet();
-		}
-	}
-
-	protected void haltIfCantProceed(final int maxRetryAttepmpts) {
-		// recovery was not enough, the whole processes has to be shut-down
-		if (livenessFailed.get() > maxRetryAttepmpts) {
-			logger.severe("[" + Thread.currentThread().getName() + "]"
-					+ livenessFailed
-					+ " liveness message, attempts does not prceeed, So the process is exited.");
-			Runtime.getRuntime().halt(0);
-		}
-	}
-
-	@Override
-	public void actionOnNotStuck() {
-		sendLivenessMessage();
-		haltIfCantProceed(
-				/* AlloyProcessRunner.getInstance().SelfMonitorRetryAttempt */ 1);
 	}
 
 	@Override

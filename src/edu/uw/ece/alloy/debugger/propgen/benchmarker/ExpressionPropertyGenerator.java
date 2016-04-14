@@ -388,7 +388,7 @@ public class ExpressionPropertyGenerator
 		// Convert the code snippet into a predicate
 	}
 
-	public void openInterface() {
+	public void startThread() {
 		generator.start();
 	}
 

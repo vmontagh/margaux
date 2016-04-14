@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketInterface;
+import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.hola.agent.HolaRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
@@ -23,7 +23,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
  * @author Fikayo Odunayo
  *
  */
-public class OnBorderInstanceFinder extends ServerSocketInterface {
+public class OnBorderInstanceFinder extends ServerSocketInterfaceBase {
 
 	protected final static Logger logger = Logger.getLogger(OnBorderInstanceFinder.class.getName()+"--"+Thread.currentThread().getName());
 	
@@ -40,7 +40,6 @@ public class OnBorderInstanceFinder extends ServerSocketInterface {
 	private final File tmpDirectory;
 	
 	private HolaProcess subProcess;
-	private Thread subManager;
 	private HolaWatchDog watchdog;
 	private Deque<Object> results = new ArrayDeque<>();
 	
@@ -56,7 +55,6 @@ public class OnBorderInstanceFinder extends ServerSocketInterface {
 		this.propertiesFile = propertiesFile;
 		
 		// Set up thread for IPC between processes
-		this.subManager = new Thread(this);
 		
 		// Set the local tmpDirectory
 		this.tmpDirectory = new File(tmpDirectoryRoot,String.valueOf(PID.getPort()));
@@ -72,7 +70,7 @@ public class OnBorderInstanceFinder extends ServerSocketInterface {
 		System.out.println("Sub Address: " + address);
 		
 		// Change remote address to be the address of the process
-		this.changeRemoteAddress(address);
+//		this.changeRemoteAddress(address);
 		
 		subProcess = this.createProcess(address);
 		if(!subProcess.isAlive()) {
@@ -85,7 +83,7 @@ public class OnBorderInstanceFinder extends ServerSocketInterface {
 		this.watchdog.setInterval(10000);
 		
 		// Open the IPC channel and start the timer
-		this.openInterface();
+		this.startThread();
 		this.watchdog.startTimer(new Runnable() {
 			
 			@Override
@@ -108,14 +106,14 @@ public class OnBorderInstanceFinder extends ServerSocketInterface {
   					logger.log(Level.SEVERE, Utils.threadName() + "Interrupted while sending final result to remote. Remote Address: " + remotePort, e);
   				}
   				
-  				writer.openInterface();
+  				writer.startThread();
 				}
 			}
 		});
 		
 	}
 	
-	protected void processCommand(final RemoteCommand command) {
+	protected void onReceivedMessage(final RemoteCommand command) {
 		// Supposed to be a registering call;
 		System.out.println("Commands is received in " + OnBorderInstanceFinder.class.getSimpleName() + ": "  + command);
 		boolean last = command.processResult(this.results);
@@ -124,25 +122,6 @@ public class OnBorderInstanceFinder extends ServerSocketInterface {
 		}
 	}
 
-	@Override
-	protected Thread getThread() {
-		return this.subManager;
-	}
-	
-	@Override
-	public void cancelThread() {
-		this.subManager.interrupt();
-		this.subManager = null;
-		
-		this.stopRunning();
-	}
-
-	@Override
-	protected void sendReadynessMessage() throws InterruptedException{
-		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + " The process is started on port : " + this.getHostAddress().getPort());
-		System.out.println("sendReadynessMessage");
-	}
-	
 	@Override
 	public void changePriority(int newPriority) {
 		// TODO Auto-generated method stub

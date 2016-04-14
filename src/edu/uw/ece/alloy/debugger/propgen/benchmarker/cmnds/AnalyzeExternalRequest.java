@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
+import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzerInterface;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
@@ -62,7 +62,7 @@ public class AnalyzeExternalRequest extends RemoteCommand {
 			ExpressionPropertyGenerator.Builder.getInstance().initiateAndCreate(
 					generatedStorage, new File(toBeAnalyzedCode),
 					new File(relationalPropModuleOriginal),
-					new File(temporalPropModuleOriginal), doVAC, doIFF, doIMPLY, doAND).openInterface();
+					new File(temporalPropModuleOriginal), doVAC, doIFF, doIMPLY, doAND).startThread();
 			
 		} catch (Err e) {
 			// TODO Auto-generated catch block

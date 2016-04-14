@@ -21,7 +21,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.RemoteProcessMonitor;
 
 public abstract class RemoteCommand implements Serializable {
 
@@ -97,7 +97,7 @@ public abstract class RemoteCommand implements Serializable {
 		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 
-	public void processDone(final ProcessRemoteMonitor monitor){
+	public void processDone(final RemoteProcessMonitor monitor){
 		if(Configuration.IsInDeubbungMode) logger.finer("["+Thread.currentThread().getName()+"] "+"Inappropriate call for process");
 	}
 

@@ -7,14 +7,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.mutate.Approximator;
-import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReady;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
+import edu.uw.ece.alloy.util.AsyncServerSocketInterface;
+import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
+import edu.uw.ece.alloy.util.events.EventListener;
 
 public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 
@@ -22,8 +22,7 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
-	// ThreadToBeMonitored propGenerator;
-	ThreadToBeMonitored analyzerFrontLinstener;
+	// ThreadToBeMonitored propGenerator
 
 	// Thread feederThread;
 	// Thread monitorThread;
@@ -67,12 +66,14 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 
 		// monitoredThreads.add(propGenerator);
 
-		analyzerFrontLinstener = new PatternsAnalyzer(this.localSocket, this.remoteSocket, (GeneratedStorage<AlloyProcessingParam>) feeder);
-
-		analyzerFrontLinstener.openInterface();
-		this.addThreadToBeMonitored(analyzerFrontLinstener);
-
-		selfMonitor.startThreads();
+		analyzerInterface.commandReceived.addListener(new EventListener<CommandReceivedEventArgs>() {
+			
+			@Override
+			public void onEvent(Object sender, CommandReceivedEventArgs e) {
+				RemoteCommand command = e.getCommand();
+				command.doAnalyze((GeneratedStorage<AlloyProcessingParam>) feeder);
+			}
+		});
 
 		// Everything looks to be set. So send a ready message to the
 		// remote listener.
@@ -81,7 +82,7 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 		}
 
 	}
-
+	
 	public static void main(String[] args) throws Exception {
 
 		if (args.length < 4)

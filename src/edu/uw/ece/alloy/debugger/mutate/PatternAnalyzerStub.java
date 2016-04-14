@@ -7,9 +7,9 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketInterface;
+import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
 
-public class PatternAnalyzerStub extends ServerSocketInterface {
+public class PatternAnalyzerStub extends ServerSocketInterfaceBase {
 
 	protected final static Logger logger = Logger.getLogger(PatternAnalyzerStub.class.getName()+"--"+Thread.currentThread().getName());
 	// Debugger waits on the queue to be locked.
@@ -22,13 +22,8 @@ public class PatternAnalyzerStub extends ServerSocketInterface {
 		super(hostAddress, remoteAddress);
 		this.queue = queue;
 	}
-
-	protected void sendReadynessMessage() throws InterruptedException{
-		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" The process is started on port : " + this.getHostAddress().getPort());
-		System.out.println("sendReadynessMessage");
-	}
 	
-	protected void processCommand(final RemoteCommand command){
+	protected void onReceivedMessage(final RemoteCommand command){
 		if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] "+" Recieved message: "+command);
 		command.patternExtractionDone(queue);
 		command.storeResult(queue);

@@ -38,9 +38,9 @@ public class ProcessRemoteMonitorTester {
 		ProcessesManager pm = new ProcessesManager(1, "", 1, 2, "", "");
 		AlloyFeeder af = new AlloyFeeder(pm, 0, 0);
 
-		ProcessRemoteMonitor pmr =  new ProcessRemoteMonitor(1000, af, pm, 4000);
+		RemoteProcessMonitor pmr =  new RemoteProcessMonitor(1000, af, pm, 4000);
 
-		pmr.openInterface();
+		pmr.startThread();
 
 		assertTrue(pmr.getStatus().contains("Monitor is working? false"));
 

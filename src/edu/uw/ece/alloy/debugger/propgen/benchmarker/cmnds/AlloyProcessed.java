@@ -4,12 +4,10 @@ import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.mutate.Approximator;
-import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.RemoteProcessMonitor;
 
 public class AlloyProcessed extends RemoteCommand {
 
@@ -28,7 +26,7 @@ public class AlloyProcessed extends RemoteCommand {
 	}
 
 	@Override
-	public void processDone(ProcessRemoteMonitor monitor) {
+	public void processDone(RemoteProcessMonitor monitor) {
 
 		if (Configuration.IsInDeubbungMode)
 			logger.fine("[" + Thread.currentThread().getName() + "] "
