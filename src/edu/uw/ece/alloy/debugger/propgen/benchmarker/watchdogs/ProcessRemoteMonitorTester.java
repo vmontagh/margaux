@@ -40,7 +40,7 @@ public class ProcessRemoteMonitorTester {
 
 		ProcessRemoteMonitor pmr =  new ProcessRemoteMonitor(1000, af, pm, 4000);
 
-		pmr.startThread();
+		pmr.openInterface();
 
 		assertTrue(pmr.getStatus().contains("Monitor is working? false"));
 

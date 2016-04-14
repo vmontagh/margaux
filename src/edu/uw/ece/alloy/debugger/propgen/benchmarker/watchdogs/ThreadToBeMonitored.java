@@ -2,7 +2,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
 public interface ThreadToBeMonitored {
 
-	public void startThread();
+	public void openInterface();
 	public void cancelThread();
 	public void changePriority(final int newPriority);
 	public void actionOnNotStuck();

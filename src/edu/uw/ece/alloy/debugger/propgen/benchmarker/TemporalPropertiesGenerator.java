@@ -265,7 +265,7 @@ public class TemporalPropertiesGenerator implements Runnable, ThreadToBeMonitore
 	}
 
 
-	public void startThread(){
+	public void openInterface(){
 		generator.start();
 	}
 

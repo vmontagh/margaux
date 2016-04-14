@@ -24,8 +24,8 @@ public abstract class AnalyzerRunner {
 	public static final int AlloyFeederBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_buffer_size"));
 	public static final int AlloyFeederBackLogBufferSize = Integer.parseInt(Configuration.getProp("alloy_feeder_backlog_buffer_size"));
 	
-	protected final InetSocketAddress localSocket;
-	protected final InetSocketAddress remoteSocket;
+	public final InetSocketAddress localSocket;
+	public final InetSocketAddress remoteSocket;
 	
 	protected ProcessesManager manager;
 	protected ThreadToBeMonitored feeder;
@@ -44,32 +44,25 @@ public abstract class AnalyzerRunner {
 	@SuppressWarnings("unchecked")
 	public void start() throws Exception {
 		
-		selfMonitor = new ThreadMonitor(/*SelfMonitorInterval*/ 1 * 1000, 0);
-		
-		manager = new ProcessesManager(ProccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);
+		this.selfMonitor = new ThreadMonitor(/*SelfMonitorInterval*/ 1 * 1000, 0);		
+		this.manager = new ProcessesManager(ProccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);	
+		this.feeder = new AlloyFeeder(this.manager, AlloyFeederBufferSize, AlloyFeederBackLogBufferSize);
+		this.monitor = new ProcessRemoteMonitor(RemoteMonitorInterval, (AlloyFeeder) this.feeder, this.manager, this.manager.getProcessRemoteMonitorAddress());	
+		this.propGenerator = new TemporalPropertiesGenerator((GeneratedStorage<AlloyProcessingParam>) this.feeder);
 	
-		feeder = new AlloyFeeder(manager, AlloyFeederBufferSize, AlloyFeederBackLogBufferSize);
+		this.addThreadToBeMonitored(this.feeder);
+		this.addThreadToBeMonitored(this.monitor);
+		this.addThreadToBeMonitored(this.propGenerator);
 	
-		monitor = new ProcessRemoteMonitor(RemoteMonitorInterval, (AlloyFeeder) feeder, manager, manager.getProcessRemoteMonitorAddress());
+		this.monitor.openInterface();	
+		this.manager.addAllProcesses();
 	
-		propGenerator = new TemporalPropertiesGenerator((GeneratedStorage<AlloyProcessingParam>) feeder);
+		this.feeder.changePriority(Thread.MAX_PRIORITY);
+		this.feeder.openInterface();
 	
-		monitoredThreads.add(feeder);
-		monitoredThreads.add(monitor);
-		monitoredThreads.add(propGenerator);
-	
-		monitor.startThread();
-	
-		manager.addAllProcesses();
-		System.out.println("manager.processes->"+manager.processes);
-		//manager.activateAllProesses();
-	
-		feeder.startThread();
-		feeder.changePriority(Thread.MAX_PRIORITY);
-	
-		propGenerator.startThread();		
+		this.propGenerator.openInterface();		
 
-		selfMonitor.startThreads();
+		this.selfMonitor.startThreads();
 	}
 	
 	protected void addThreadToBeMonitored(ThreadToBeMonitored thread) {

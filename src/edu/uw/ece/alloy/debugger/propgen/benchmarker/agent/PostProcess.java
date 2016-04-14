@@ -111,7 +111,7 @@ public abstract class PostProcess implements Runnable, ThreadToBeMonitored{
 		triesOnStuck();
 	}
 
-	public void startThread(){
+	public void openInterface(){
 		postProcessThread.start();
 	}
 

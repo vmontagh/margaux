@@ -294,7 +294,7 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored  {
 	}
 
 	@Override
-	public void startThread() {
+	public void openInterface() {
 		if(!executerThread.isAlive())
 			executerThread.start();
 	}

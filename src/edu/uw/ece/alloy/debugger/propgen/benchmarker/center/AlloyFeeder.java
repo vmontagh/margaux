@@ -166,7 +166,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
 		
 	}
 	
-	public void startThread(){
+	public void openInterface(){
 		if(monitor == null){
 			throw new RuntimeException("Monitor has to be set, but it is null");
 		}

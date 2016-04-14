@@ -67,12 +67,9 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 
 		// monitoredThreads.add(propGenerator);
 
-		analyzerFrontLinstener = new PatternsAnalyzer(this.localSocket,
-				this.remoteSocket, (GeneratedStorage<AlloyProcessingParam>) feeder);
+		analyzerFrontLinstener = new PatternsAnalyzer(this.localSocket, this.remoteSocket, (GeneratedStorage<AlloyProcessingParam>) feeder);
 
-		monitoredThreads.add(analyzerFrontLinstener);
-
-		analyzerFrontLinstener.startThread();
+		analyzerFrontLinstener.openInterface();
 		this.addThreadToBeMonitored(analyzerFrontLinstener);
 
 		selfMonitor.startThreads();

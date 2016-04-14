@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketListener;
+import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.hola.agent.HolaRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
@@ -23,7 +23,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
  * @author Fikayo Odunayo
  *
  */
-public class OnBorderInstanceFinder extends ServerSocketListener {
+public class OnBorderInstanceFinder extends ServerSocketInterface {
 
 	protected final static Logger logger = Logger.getLogger(OnBorderInstanceFinder.class.getName()+"--"+Thread.currentThread().getName());
 	
@@ -85,7 +85,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 		this.watchdog.setInterval(10000);
 		
 		// Open the IPC channel and start the timer
-		this.startThread();
+		this.openInterface();
 		this.watchdog.startTimer(new Runnable() {
 			
 			@Override
@@ -108,7 +108,7 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
   					logger.log(Level.SEVERE, Utils.threadName() + "Interrupted while sending final result to remote. Remote Address: " + remotePort, e);
   				}
   				
-  				writer.startThread();
+  				writer.openInterface();
 				}
 			}
 		});
@@ -138,9 +138,9 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 	}
 
 	@Override
-	protected void onStartingListening() throws InterruptedException{
+	protected void sendReadynessMessage() throws InterruptedException{
 		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + " The process is started on port : " + this.getHostAddress().getPort());
-		System.out.println("onStartingListening");
+		System.out.println("sendReadynessMessage");
 	}
 	
 	@Override

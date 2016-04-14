@@ -2,11 +2,6 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.util.logging.Logger;
 
-import edu.uw.ece.alloy.Compressor;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
-
 public class TemporalAnalyzerRunner extends AnalyzerRunner {
 
 	protected final static Logger logger = Logger.getLogger(TemporalAnalyzerRunner.class.getName()+"--"+Thread.currentThread().getName());
@@ -14,7 +9,7 @@ public class TemporalAnalyzerRunner extends AnalyzerRunner {
 	private final static AnalyzerRunner self = new TemporalAnalyzerRunner();
 
 	private TemporalAnalyzerRunner() {
-
+		super(null, null);
 	}
 
 	public final static AnalyzerRunner getInstance() {

@@ -108,10 +108,10 @@ public class AlloyProcessRunner {
 		watchdog.addThreadToBeMonitored(fileWriter);
 		watchdog.addThreadToBeMonitored(dbWriter);
 
-		executer.startThread();
-		socketWriter.startThread();
-		fileWriter.startThread();
-		dbWriter.startThread();
+		executer.openInterface();
+		socketWriter.openInterface();
+		fileWriter.openInterface();
+		dbWriter.openInterface();
 
 		watchdog.startThreads();
 		
@@ -119,7 +119,7 @@ public class AlloyProcessRunner {
 			cleanAfterProcessed = new PostProcess.CleanAfterProccessed();
 			executer.resgisterPostProcess(cleanAfterProcessed);
 			watchdog.addThreadToBeMonitored(cleanAfterProcessed);
-			cleanAfterProcessed.startThread();
+			cleanAfterProcessed.openInterface();
 		}
 		
 

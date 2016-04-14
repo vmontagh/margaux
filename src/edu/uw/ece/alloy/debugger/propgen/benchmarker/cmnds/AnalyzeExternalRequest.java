@@ -62,7 +62,7 @@ public class AnalyzeExternalRequest extends RemoteCommand {
 			ExpressionPropertyGenerator.Builder.getInstance().initiateAndCreate(
 					generatedStorage, new File(toBeAnalyzedCode),
 					new File(relationalPropModuleOriginal),
-					new File(temporalPropModuleOriginal), doVAC, doIFF, doIMPLY, doAND).startThread();
+					new File(temporalPropModuleOriginal), doVAC, doIFF, doIMPLY, doAND).openInterface();
 			
 		} catch (Err e) {
 			// TODO Auto-generated catch block

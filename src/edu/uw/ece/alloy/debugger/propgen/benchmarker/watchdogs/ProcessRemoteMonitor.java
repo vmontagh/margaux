@@ -622,7 +622,7 @@ public class ProcessRemoteMonitor
 				ExpressionPropertyGenerator.Builder.getInstance()
 						.create((GeneratedStorage<AlloyProcessingParam>) feeder,
 								nextProperties, doneChecks)
-						.startThread();
+						.openInterface();
 			else
 				logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
 						+ "The next properties are empty for:" + result);
@@ -633,7 +633,7 @@ public class ProcessRemoteMonitor
 		}
 	}
 
-	public void startThread() {
+	public void openInterface() {
 		monitor.start();
 		timeoutMonitor.start();
 	}
