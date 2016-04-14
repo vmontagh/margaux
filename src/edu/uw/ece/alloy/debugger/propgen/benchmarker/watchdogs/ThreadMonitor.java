@@ -4,25 +4,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class ProcessSelfMonitor implements Runnable {
+public class ThreadMonitor implements Runnable {
 
 	public final int monitorInterval;
 	public final int RecoveryAttemtps;
 
-	protected final static Logger logger = Logger.getLogger(ProcessSelfMonitor.class.getName()+"--"+Thread.currentThread().getName());
+	protected final static Logger logger = Logger.getLogger(ThreadMonitor.class.getName()+"--"+Thread.currentThread().getName());
 
-	List<ThreadDelayToBeMonitored> monitoredThreads = new LinkedList<>();
+	List<ThreadToBeMonitored> monitoredThreads = new LinkedList<>();
 
 	final Thread monitor = new Thread(this);
 	
-	public ProcessSelfMonitor(int monitorInterval, int RecoveryAttemtps ) {
+	public ThreadMonitor(int monitorInterval, int RecoveryAttemtps ) {
 		super();
 		this.monitorInterval = monitorInterval;
 		this.RecoveryAttemtps = RecoveryAttemtps;
 
 	}
 
-	public void addThreadToBeMonitored(ThreadDelayToBeMonitored thread){
+	public void addThreadToBeMonitored(ThreadToBeMonitored thread){
 		monitoredThreads.add(thread);
 	}
 
@@ -31,7 +31,7 @@ public class ProcessSelfMonitor implements Runnable {
 		while(!Thread.currentThread().isInterrupted()){
 			try{
 				Thread.sleep(monitorInterval/2);
-				for(ThreadDelayToBeMonitored thread: monitoredThreads){
+				for(ThreadToBeMonitored thread: monitoredThreads){
 					try{
 						final long isd = thread.isDelayed();
 						if(isd != 0){

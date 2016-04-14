@@ -26,12 +26,12 @@ import edu.uw.ece.alloy.debugger.PropertyCallBuilder;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments.ExtractExpression;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments.ExtractScope;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.util.Utils;
 
 public class ExpressionPropertyGenerator
-		implements Runnable, ThreadDelayToBeMonitored {
+		implements Runnable, ThreadToBeMonitored {
 
 	final static Logger logger = Logger
 			.getLogger(ExpressionPropertyGenerator.class.getName() + "--"

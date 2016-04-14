@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
 import edu.uw.ece.alloy.util.Utils;
 
 public class AlloyProcessRunner {
@@ -41,7 +41,7 @@ public class AlloyProcessRunner {
 	private PostProcess.SocketWriter socketWriter;
 	private PostProcess.DBWriter dbWriter;
 	private PostProcess.CleanAfterProccessed cleanAfterProcessed;
-	private ProcessSelfMonitor watchdog;
+	private ThreadMonitor watchdog;
 
 	private static AlloyProcessRunner self = null;
 
@@ -100,7 +100,7 @@ public class AlloyProcessRunner {
 		dbWriter = new PostProcess.DBWriter();
 		executer.resgisterPostProcess(dbWriter);
 		
-		watchdog = new ProcessSelfMonitor(SelfMonitorInterval, 3);
+		watchdog = new ThreadMonitor(SelfMonitorInterval, 3);
 		//register threads to be monitored
 		
 		watchdog.addThreadToBeMonitored(executer);

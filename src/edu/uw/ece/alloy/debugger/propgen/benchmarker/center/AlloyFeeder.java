@@ -10,10 +10,10 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessIt;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.RetryingThread;
 
-public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implements Runnable, ThreadDelayToBeMonitored{
+public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implements Runnable, ThreadToBeMonitored{
 
 	final static Logger logger = Logger.getLogger(AlloyFeeder.class.getName()+"--"+Thread.currentThread().getName());
 	

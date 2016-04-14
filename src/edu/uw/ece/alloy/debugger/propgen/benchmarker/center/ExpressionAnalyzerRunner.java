@@ -3,8 +3,6 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,68 +13,41 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
+
 public class ExpressionAnalyzerRunner extends AnalyzerRunner {
-
-	final static int proccessNumber = Integer
-			.parseInt(Configuration.getProp("processes_number"));
-	final static int RemoteMonitorInterval = Integer
-			.parseInt(Configuration.getProp("remote_monitor_interval"));
-	final public  int  SelfMonitorInterval = Integer.parseInt(Configuration.getProp("self_monitor_interval"));
-	final static String ProcessLoggerConfig = Configuration
-			.getProp("process_logger_config");
-	final static int SubMemory = Integer
-			.parseInt(Configuration.getProp("sub_memory"));
-	final static int SubStack = Integer
-			.parseInt(Configuration.getProp("sub_stak"));
-	final static int AlloyFeederBufferSize = Integer
-			.parseInt(Configuration.getProp("alloy_feeder_buffer_size"));
-	final static int AlloyFeederBackLogBufferSize = Integer
-			.parseInt(Configuration.getProp("alloy_feeder_backlog_buffer_size"));
-	// final public static String ToBeAnalyzedFilePath =
-	// Configuration.getProp("tobe_analyzed_file_path");
-
-	public final InetSocketAddress localSocket;
-	public final InetSocketAddress remoteSocket;
 
 	protected final static Logger logger = Logger
 			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
-	ProcessesManager manager;
-	ThreadDelayToBeMonitored feeder;
-	ThreadDelayToBeMonitored monitor;
-	// ThreadDelayToBeMonitored propGenerator;
-	ThreadDelayToBeMonitored analyzerFrontLinstener;
-
-	List<ThreadDelayToBeMonitored> monitoredThreads = new LinkedList<>();
-	
-	ProcessSelfMonitor selfMonitor;
+	// ThreadToBeMonitored propGenerator;
+	ThreadToBeMonitored analyzerFrontLinstener;
 
 	// Thread feederThread;
 	// Thread monitorThread;
 	// Thread timeoutMonitorThread;
 
-	private static ExpressionAnalyzerRunner self = null;
+	private static AnalyzerRunner self = null;
 
 	private ExpressionAnalyzerRunner(final InetSocketAddress localSocket,
 			final InetSocketAddress remoteSocket) {
-		this.localSocket = localSocket;
-		this.remoteSocket = remoteSocket;
+		super(localSocket, remoteSocket);
 	}
 
-	public static ExpressionAnalyzerRunner initiate(
-			final InetSocketAddress localSocket,
+	public static AnalyzerRunner initiate(final InetSocketAddress localSocket,
 			final InetSocketAddress remoteSocket) {
-		if (self != null)
+		if (self != null) {
 			throw new RuntimeException(
 					"ExpressionAnalyzerRunner cannot be initilized twice!");
+		}
+
 		self = new ExpressionAnalyzerRunner(localSocket, remoteSocket);
 		return self;
 	}
 
-	public final static ExpressionAnalyzerRunner getInstance() {
+	public final static AnalyzerRunner getInstance() {
 		if (self == null)
 			throw new RuntimeException(
 					"ExpressionAnalyzerRunner has to be initilized once!");
@@ -85,18 +56,8 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 
 	@SuppressWarnings("unchecked")
 	public void start() throws Exception {
-		
-		selfMonitor = new ProcessSelfMonitor(/*SelfMonitorInterval*/ 1 * 1000, 0);
-		
-		manager = new ProcessesManager(proccessNumber, null, SubMemory, SubStack,
-				"", ProcessLoggerConfig);
 
-		feeder = new AlloyFeeder(manager, AlloyFeederBufferSize,
-				AlloyFeederBackLogBufferSize);
-		
-		monitor = new ProcessRemoteMonitor(RemoteMonitorInterval,
-				(AlloyFeeder) feeder, manager,
-				manager.getProcessRemoteMonitorAddress());
+		super.start();
 
 		// Start the checking from the sources in the lattice
 		// propGenerator = new
@@ -104,32 +65,21 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 		// feeder, new File(ToBeAnalyzedFilePath) );
 		// property generator is starts by an asynchronous message.
 
-		monitoredThreads.add(feeder);
-		monitoredThreads.add(monitor);
 		// monitoredThreads.add(propGenerator);
 
-		monitor.startThread();
-
-		manager.addAllProcesses();
-		System.out.println("manager.processes->"+manager.processes);
-	//	 manager.activateAllProesses();
-
-		feeder.startThread();
-		feeder.changePriority(Thread.MAX_PRIORITY);
-
 		analyzerFrontLinstener = new PatternsAnalyzer(this.localSocket,
-				this.remoteSocket, (GeneratedStorage<AlloyProcessingParam>)feeder);
-		
+				this.remoteSocket, (GeneratedStorage<AlloyProcessingParam>) feeder);
+
 		monitoredThreads.add(analyzerFrontLinstener);
-		
+
 		analyzerFrontLinstener.startThread();
-		selfMonitor.addThreadToBeMonitored(analyzerFrontLinstener);
-		
+		this.addThreadToBeMonitored(analyzerFrontLinstener);
+
 		selfMonitor.startThreads();
-		
-		//  Everything looks to be set. So send a ready message to the
+
+		// Everything looks to be set. So send a ready message to the
 		// remote listener.
-		if (remoteSocket != null){
+		if (remoteSocket != null) {
 			(new AnalyzeExternalReady()).sendMe(remoteSocket);
 		}
 
@@ -180,10 +130,9 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 		final InetSocketAddress remoteSocket = new InetSocketAddress(remoteIP,
 				remotePort);
 
-		
-		System.out.println("local::"+localSocket);
-		System.out.println("remoteSocket::"+remoteSocket);
-		
+		System.out.println("local::" + localSocket);
+		System.out.println("remoteSocket::" + remoteSocket);
+
 		ExpressionAnalyzerRunner.initiate(localSocket, remoteSocket).start();
 
 		// busywait
@@ -193,20 +142,20 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
 			Thread.sleep(10000);
 			sb.append(
 					"[" + Thread.currentThread().getName() + "]" + "Main is alive....\n");
-			
-			
-			for (ThreadDelayToBeMonitored t: ExpressionAnalyzerRunner.getInstance().monitoredThreads){
-				System.out.println("t->"+t);
-				System.out.println("t.getStatus()"+t.getStatus());
+
+			for (ThreadToBeMonitored t : ExpressionAnalyzerRunner
+					.getInstance().monitoredThreads) {
+				System.out.println("t->" + t);
+				System.out.println("t.getStatus()" + t.getStatus());
 				sb.append(t.getStatus()).append("\n");
 			}
-			
-			//ExpressionAnalyzerRunner.getInstance().monitoredThreads.stream()
-			//		.forEach(m -> sb.append(m != null ?  m.getStatus(): "").append("\n"));
+
+			// ExpressionAnalyzerRunner.getInstance().monitoredThreads.stream()
+			// .forEach(m -> sb.append(m != null ? m.getStatus(): "").append("\n"));
 
 			System.out.println(sb);
-			//System.out.println("Approximation--------->"
-			//		+ Approximator.getInstance().getDirectImpliedApproximation());
+			// System.out.println("Approximation--------->"
+			// + Approximator.getInstance().getDirectImpliedApproximation());
 			logger.warning(sb.toString());
 			sb.delete(0, sb.length() - 1);
 

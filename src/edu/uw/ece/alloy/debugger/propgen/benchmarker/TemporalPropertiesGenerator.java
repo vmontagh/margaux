@@ -16,12 +16,12 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TripleBuilder;
 import edu.uw.ece.alloy.util.Utils;
 
 
-public class TemporalPropertiesGenerator implements Runnable, ThreadDelayToBeMonitored {
+public class TemporalPropertiesGenerator implements Runnable, ThreadToBeMonitored {
 
 	/*
 	 * Only the file names in the path are processed. 

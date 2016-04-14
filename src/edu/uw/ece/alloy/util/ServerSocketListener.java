@@ -17,9 +17,9 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 
-public abstract class ServerSocketListener implements Runnable, ThreadDelayToBeMonitored {
+public abstract class ServerSocketListener implements Runnable, ThreadToBeMonitored {
 
 	protected final static Logger logger = Logger.getLogger(ServerSocketListener.class.getName()+"--"+Thread.currentThread().getName());
 

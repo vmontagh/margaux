@@ -21,9 +21,9 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.TimeoutResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Suicided;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 
-public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored  {
+public class AlloyExecuter implements Runnable, ThreadToBeMonitored  {
 
 	private Thread executerThread = new Thread(this);
 

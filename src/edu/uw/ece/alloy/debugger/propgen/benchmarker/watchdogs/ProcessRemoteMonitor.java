@@ -38,7 +38,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.util.RetryingThread;
 
 public class ProcessRemoteMonitor
-		implements Runnable, ThreadDelayToBeMonitored {
+		implements Runnable, ThreadToBeMonitored {
 
 	final static int MaxTimeoutRetry = Integer
 			.valueOf(Configuration.getProp("remote_timeout_retry"));

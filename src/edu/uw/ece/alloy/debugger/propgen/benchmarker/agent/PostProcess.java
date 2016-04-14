@@ -31,10 +31,10 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.H2DBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.SQLiteDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AlloyProcessed;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 
 
-public abstract class PostProcess implements Runnable, ThreadDelayToBeMonitored{
+public abstract class PostProcess implements Runnable, ThreadToBeMonitored{
 
 	protected final BlockingQueue<AlloyProcessedResult> results = new LinkedBlockingQueue<>();
 	public final PostProcess nextAction;
