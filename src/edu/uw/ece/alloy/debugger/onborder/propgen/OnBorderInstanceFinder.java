@@ -16,7 +16,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWri
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.util.ServerSocketListener;
 import edu.uw.ece.alloy.util.Utils;
-import onborder.agent.HolaRunner;
+import edu.uw.ece.hola.agent.HolaRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
 /**
@@ -46,9 +46,9 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 	
 	public OnBorderInstanceFinder(final InetSocketAddress localPort, final InetSocketAddress remotePort, final String filePathArgs, final String propertiesFile) {
 		
-		// Set the port of this process as the remote port of the listener
-		// For now, set the host port of the listener to be null (it will be changed to the address of the created process after it is created).
-		super(null, localPort);
+		// The local port is the port we are listening to (We are listening to our own port)
+		// For now, set the remote port to be null, it will be set after the process has been created
+		super(localPort, null);
 		
 		this.PID = localPort;
 		this.remotePort = remotePort;
@@ -71,8 +71,8 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 		System.out.println("My Address: " + this.PID);
 		System.out.println("Sub Address: " + address);
 		
-		// Change host address to be the address of the process
-		this.changeHostAddress(address);
+		// Change remote address to be the address of the process
+		this.changeRemoteAddress(address);
 		
 		subProcess = this.createProcess(address);
 		if(!subProcess.isAlive()) {
@@ -138,6 +138,12 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 	}
 
 	@Override
+	protected void onStartingListening() throws InterruptedException{
+		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + " The process is started on port : " + this.getHostAddress().getPort());
+		System.out.println("onStartingListening");
+	}
+	
+	@Override
 	public void changePriority(int newPriority) {
 		// TODO Auto-generated method stub
 		
@@ -188,9 +194,8 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 			
 			String[] commands = {
 				java,
-				"-cp",
+				"-jar",
 				jarPath,
-				HolaRunner.class.getName(),
 				"" + this.PID.getPort(),
 				"" + this.PID.getAddress().getHostAddress(),
 				"" + address.getPort(),
@@ -278,19 +283,19 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 		}
 		
 		// busy wait
-		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-		while(true){
-			
-			try {
-				Thread.sleep(100000);
-			} catch (InterruptedException e) {
-				logger.log(Level.SEVERE, Utils.threadName() + "Main loop is interrupted ", e);
-				break;
-			}
-			
-			if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "Main is alive.... ");
-			Thread.yield();
-		}
+//		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+//		while(true){
+//			
+//			try {
+//				Thread.sleep(100000);
+//			} catch (InterruptedException e) {
+//				logger.log(Level.SEVERE, Utils.threadName() + "Main loop is interrupted ", e);
+//				break;
+//			}
+//			
+//			if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "Main is alive.... ");
+//			Thread.yield();
+//		}
 		
 		logger.info(Utils.threadName() + OnBorderInstanceFinder.class.getSimpleName() + " exiting.");
 	}
