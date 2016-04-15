@@ -29,13 +29,12 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
     // either limit or unlimited.
     final BlockingQueue<AlloyProcessingParam> backLog;
     
-    final ProcessesManager processesManager;
-//    RemoteProcessMonitor monitor = null;
-    private ServerSocketInterface socketInterface;
+    private final ProcessesManager processesManager;
+    private final ServerSocketInterface socketInterface;
     
-    final Thread sender = new RetryingThread(this, 100);
+    private final Thread sender = new RetryingThread(this, 100);
     
-    final Thread merger = new RetryingThread(new Runnable() {
+    private final Thread merger = new RetryingThread(new Runnable() {
         
         public void run() {
             
@@ -49,9 +48,10 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         }
     }, 100);
     
-    public AlloyFeeder(final ProcessesManager processesManager, final int bufferSize, final int backLogBufferSize) {
+    public AlloyFeeder(final ProcessesManager processesManager, final ServerSocketInterface socketInterface, final int bufferSize, final int backLogBufferSize) {
         super();
         this.processesManager = processesManager;
+        this.socketInterface = socketInterface;
         
         if (bufferSize <= 0) {
             queue = new LinkedBlockingQueue<>();
@@ -66,15 +66,6 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         else {
             backLog = new LinkedBlockingQueue<>(backLogBufferSize);
         }
-    }
-        
-    public void setSocketInterface(final ServerSocketInterface socketInterface) {
-        
-        if (this.socketInterface != null) {
-            throw new RuntimeException("Interface cannot be changed");
-        }        
-
-        this.socketInterface = socketInterface;
     }
     
     public void addProcessTask(final AlloyProcessingParam p) throws InterruptedException {
@@ -169,14 +160,11 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
             
             RemoteCommand command = new ProcessIt(e, processesManager);
             this.socketInterface.sendMessage(command, process.address);
-//            monitor.addMessage(process.address, e);
-//            (new ProcessIt(e, processesManager)).send(process.address);
             if (Configuration.IsInDeubbungMode)
                 logger.info(Utils.threadName() + "Message sent to " + process.address);
         }
         catch (Throwable t) {
             logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] " + "The command cannot be sent.", t);
-//            monitor.removeMessage(process.address, e);
             // Put it back
             // queue.put(e);
             addProcessTaskToBacklog(e);
@@ -210,11 +198,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
     }
     
     public void startThread() {
-        
-        if (socketInterface == null) {
-            throw new RuntimeException("Socket Interface has to be set, but it is null");
-        }
-        
+                
         sender.start();
         merger.start();
     }

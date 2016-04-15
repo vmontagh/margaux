@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AnalyzerRunner;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.DistributedRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
@@ -23,7 +23,7 @@ import edu.uw.ece.alloy.util.events.EventListener;
  * @author fikayo
  *        
  */
-public class OnBorderAnalyzerRunner extends AnalyzerRunner {
+public class OnBorderAnalyzerRunner extends DistributedRunner {
     
     protected final static Logger logger = Logger.getLogger(OnBorderAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
     
@@ -40,7 +40,7 @@ public class OnBorderAnalyzerRunner extends AnalyzerRunner {
         
         super.start();
         
-        this.analyzerInterface.CommandReceived.addListener(new EventListener<CommandReceivedEventArgs>() {
+        this.inputInterface.CommandReceived.addListener(new EventListener<CommandReceivedEventArgs>() {
             
             @Override
             public void onEvent(Object sender, CommandReceivedEventArgs e) {
@@ -52,10 +52,17 @@ public class OnBorderAnalyzerRunner extends AnalyzerRunner {
         
         // Everything looks to be set. So send a ready message to the
         // remote listener.
-        this.analyzerInterface.sendMessage(new AnalyzeExternalReady());
+        this.inputInterface.sendMessage(new AnalyzeExternalReady());
         
     }
     
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
+     */
+    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
+    
+    }
+
     public static void main(String[] args) throws Exception {
         
         if (args.length < 4)

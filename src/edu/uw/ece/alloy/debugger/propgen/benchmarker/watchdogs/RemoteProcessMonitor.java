@@ -39,7 +39,6 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
     private final AlloyFeeder feeder;
     private final ProcessesManager manager;
     private final int monitorInterval;
-    private final ServerSocketInterface socketInterface;
     
     // TODO change the key to AlloyProcessingParam from Integer
     private final Map<InetSocketAddress, Map<AlloyProcessingParam, Integer/*
@@ -71,13 +70,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         this.feeder.setMonitor(this);
         
         this.timeoutMonitor = new Thread(this);
-        this.socketInterface = new AsyncServerSocketInterface(manager.getProcessRemoteMonitorAddress(), null);
         this.hookEventListeners();
-    }
-    
-    public ServerSocketInterface getSocketInterface() {
-        
-        return this.socketInterface;
     }
     
     public void addMessage(final InetSocketAddress pId, final AlloyProcessingParam e) {
@@ -499,6 +492,20 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         for (AlloyProcessingParam param : itr) {
             pushUndoneRequest(pId, param);
         }
+    }
+
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
+     */
+    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
+    
+    }
+
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
+     */
+    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
+    
     }
     
 }

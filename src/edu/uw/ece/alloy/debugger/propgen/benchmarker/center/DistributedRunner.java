@@ -26,9 +26,9 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 
-public abstract class AnalyzerRunner implements EventListener<CommandReceivedEventArgs> {
+public abstract class DistributedRunner extends Runner implements EventListener<CommandReceivedEventArgs> {
     
-    private final static Logger logger = Logger.getLogger(AnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
+    private final static Logger logger = Logger.getLogger(DistributedRunner.class.getName() + "--" + Thread.currentThread().getName());
     
     public final int SelfMonitorInterval = Integer.parseInt(Configuration.getProp("self_monitor_interval"));
     
@@ -42,23 +42,18 @@ public abstract class AnalyzerRunner implements EventListener<CommandReceivedEve
     
     protected static DBConnectionInfo dbConnectionInfo = null;
     
-    public final InetSocketAddress localSocket;
-    public final InetSocketAddress remoteSocket;
+    protected final List<ThreadToBeMonitored> monitoredThreads;
     
     protected ProcessesManager manager;
     protected AlloyFeeder feeder;
     protected RemoteProcessMonitor monitor;
-    protected ThreadToBeMonitored propGenerator;
-    protected final List<ThreadToBeMonitored> monitoredThreads;
+    protected ServerSocketInterface distributedInterface;
     
-    protected ThreadMonitor selfMonitor;
-    protected ServerSocketInterface agentInterface;
-    protected ServerSocketInterface analyzerInterface;
-    
-    public AnalyzerRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
-        this.localSocket = localSocket;
-        this.remoteSocket = remoteSocket;
+    public DistributedRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
+        super(localSocket, remoteSocket);
         this.monitoredThreads = new LinkedList<>();
+        
+        this.init();
     }
     
     public static DBConnectionInfo getDefaultConnectionInfo() throws SQLException {
@@ -68,42 +63,20 @@ public abstract class AnalyzerRunner implements EventListener<CommandReceivedEve
     }
     
     public void start() throws Exception {
-                
-        this.manager = new ProcessesManager(ProccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);
-        this.feeder = new AlloyFeeder(this.manager, AlloyFeederBufferSize, AlloyFeederBackLogBufferSize);
-        this.monitor = new RemoteProcessMonitor(RemoteMonitorInterval, this.feeder, this.manager);
-        this.propGenerator = new TemporalPropertiesGenerator(this.feeder);
-        
-        // Get socket interface for remote agents from the remote monitor
-        this.agentInterface = this.monitor.getSocketInterface();
-        this.agentInterface.CommandReceived.addListener(this);
-        
-        // Set the socket interface for the feeder to be the same as that for the remote agents
-        this.feeder.setSocketInterface(this.agentInterface);
-        this.feeder.changePriority(Thread.MAX_PRIORITY);
-        
-        // Create socket interface for the analyzer that created this process
-        this.analyzerInterface = new AsyncServerSocketInterface(this.localSocket, this.remoteSocket);
-
-        // Initialize self monitor
-        this.selfMonitor = new ThreadMonitor(/* SelfMonitorInterval */ 1 * 1000, 0);
         
         // Add all threads to be monitored
         this.addThreadToBeMonitored(this.feeder);
         this.addThreadToBeMonitored(this.monitor);
-        this.addThreadToBeMonitored(this.propGenerator);
-        this.addThreadToBeMonitored(this.agentInterface);
-        this.addThreadToBeMonitored(this.analyzerInterface);
+        this.addThreadToBeMonitored(this.distributedInterface);
         
         // Start all the threads
         this.feeder.startThread();
         this.monitor.startThread();
-        this.propGenerator.startThread();
-        this.agentInterface.startThread();
-        this.analyzerInterface.startThread();
+        this.distributedInterface.startThread();
+        this.inputInterface.startThread();
         
         this.manager.addAllProcesses();
-
+        
         // Start monitoring all threads
         this.selfMonitor.startMonitoring();
     }
@@ -115,7 +88,7 @@ public abstract class AnalyzerRunner implements EventListener<CommandReceivedEve
         
         if (Configuration.IsInDeubbungMode)
             logger.info(Utils.threadName() + "processCommand Enter:" + command);
-        
+            
         command.killProcess(this.manager);
         command.updatePorcessorLiveness(this.manager);
         command.processDone(this.monitor);
@@ -125,9 +98,16 @@ public abstract class AnalyzerRunner implements EventListener<CommandReceivedEve
             logger.info(Utils.threadName() + "processCommand Exit:" + command);
     }
     
-    protected void addThreadToBeMonitored(ThreadToBeMonitored thread) {
+    private void init() {
         
-        selfMonitor.addThreadToBeMonitored(thread);
+        this.distributedInterface = new AsyncServerSocketInterface(manager.getProcessRemoteMonitorAddress(), null);
+        this.distributedInterface.CommandReceived.addListener(this);
+        
+        this.manager = new ProcessesManager(ProccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);
+        this.feeder = new AlloyFeeder(this.manager, this.distributedInterface, AlloyFeederBufferSize, AlloyFeederBackLogBufferSize);
+        this.feeder.changePriority(Thread.MAX_PRIORITY);
+        
+        this.monitor = new RemoteProcessMonitor(RemoteMonitorInterval, this.feeder, this.manager);        
     }
     
 }

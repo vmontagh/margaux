@@ -16,17 +16,17 @@ import edu.uw.ece.alloy.util.AsyncServerSocketInterface;
 import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
 
-public class ExpressionAnalyzerRunner extends AnalyzerRunner {
+public class ExpressionAnalyzerRunner extends DistributedRunner {
     
     protected final static Logger logger = Logger.getLogger(ExpressionAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
         
-    private static AnalyzerRunner self = null;
+    private static DistributedRunner self = null;
     
     private ExpressionAnalyzerRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
         super(localSocket, remoteSocket);
     }
     
-    public static AnalyzerRunner initiate(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
+    public static DistributedRunner initiate(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
         
         if (self != null) {
             throw new RuntimeException("ExpressionAnalyzerRunner cannot be initilized twice!");
@@ -36,7 +36,7 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
         return self;
     }
     
-    public final static AnalyzerRunner getInstance() {
+    public final static DistributedRunner getInstance() {
         
         if (self == null) {
             throw new RuntimeException("ExpressionAnalyzerRunner has to be initilized once!");
@@ -55,7 +55,7 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
         // feeder, new File(ToBeAnalyzedFilePath));
         // property generator is starts by an asynchronous message.
         
-        this.analyzerInterface.CommandReceived.addListener(new EventListener<CommandReceivedEventArgs>() {
+        this.inputInterface.CommandReceived.addListener(new EventListener<CommandReceivedEventArgs>() {
             
             @Override
             public void onEvent(Object sender, CommandReceivedEventArgs e) {
@@ -67,10 +67,17 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
         
         // Everything looks to be set. So send a ready message to the
         // remote listener.
-        this.analyzerInterface.sendMessage(new AnalyzeExternalReady());
+        this.inputInterface.sendMessage(new AnalyzeExternalReady());
         
     }
     
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
+     */
+    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
+    
+    }
+
     public static void main(String[] args) throws Exception {
         
         if (args.length < 4)

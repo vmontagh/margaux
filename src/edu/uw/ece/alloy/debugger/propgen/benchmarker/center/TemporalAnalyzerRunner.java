@@ -2,21 +2,37 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.util.logging.Logger;
 
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.hola.agent.Utils;
 
-public class TemporalAnalyzerRunner extends AnalyzerRunner {
+public class TemporalAnalyzerRunner extends DistributedRunner {
     
     protected final static Logger logger = Logger.getLogger(TemporalAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
     
-    private final static AnalyzerRunner self = new TemporalAnalyzerRunner();
+    private final static DistributedRunner self = new TemporalAnalyzerRunner();
+
+    private TemporalPropertiesGenerator propGenerator;
     
     private TemporalAnalyzerRunner() {
         super(null, null);
     }
     
-    public final static AnalyzerRunner getInstance() {
+    public final static DistributedRunner getInstance() {
         
         return self;
+    }
+    
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.debugger.propgen.benchmarker.center.DistributedRunner#start()
+     */
+    @Override
+    public void start() throws Exception {
+        
+        // TODO Auto-generated method stub
+        super.start();
+        this.propGenerator = new TemporalPropertiesGenerator(this.feeder);
+        this.addThreadToBeMonitored(this.propGenerator);
+        this.propGenerator.startThread();
     }
     
     public static void main(String[] args) throws Exception {
