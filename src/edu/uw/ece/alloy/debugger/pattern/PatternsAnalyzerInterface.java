@@ -17,7 +17,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalRequest;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
+import edu.uw.ece.alloy.util.ServerSocketInterface;
 
 /**
  * 
@@ -33,7 +33,7 @@ import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
  * @author vajih
  *
  */
-public class PatternsAnalyzerInterface extends ServerSocketInterfaceBase {
+public class PatternsAnalyzerInterface extends ServerSocketInterface {
 
 	// Very temporary to determine the status of the analyzer from analyzing to IDLE.
 	public static Boolean analyzing = false;

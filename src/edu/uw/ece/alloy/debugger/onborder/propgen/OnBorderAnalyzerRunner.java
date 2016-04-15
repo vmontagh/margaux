@@ -1,4 +1,7 @@
-package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
+/**
+ * 
+ */
+package edu.uw.ece.alloy.debugger.onborder.propgen;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -9,51 +12,33 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
-import edu.uw.ece.alloy.util.AsyncServerSocketInterface;
 import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
 
-public class ExpressionAnalyzerRunner extends AnalyzerRunner {
+/**
+ * @author fikayo
+ *        
+ */
+public class OnBorderAnalyzerRunner extends AnalyzerRunner {
     
-    protected final static Logger logger = Logger.getLogger(ExpressionAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
-        
-    private static AnalyzerRunner self = null;
+    protected final static Logger logger = Logger.getLogger(OnBorderAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
     
-    private ExpressionAnalyzerRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
+    /**
+     * @param localSocket
+     * @param remoteSocket
+     */
+    public OnBorderAnalyzerRunner(InetSocketAddress localSocket, InetSocketAddress remoteSocket) {
         super(localSocket, remoteSocket);
-    }
-    
-    public static AnalyzerRunner initiate(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
-        
-        if (self != null) {
-            throw new RuntimeException("ExpressionAnalyzerRunner cannot be initilized twice!");
-        }
-        
-        self = new ExpressionAnalyzerRunner(localSocket, remoteSocket);
-        return self;
-    }
-    
-    public final static AnalyzerRunner getInstance() {
-        
-        if (self == null) {
-            throw new RuntimeException("ExpressionAnalyzerRunner has to be initilized once!");
-        }
-        
-        return self;
+        // TODO Auto-generated constructor stub
     }
     
     public void start() throws Exception {
         
         super.start();
-        
-        // Start the checking from the sources in the lattice
-        // propGenerator = new
-        // ExpressionPropertyChecker((GeneratedStorage<AlloyProcessingParam>)
-        // feeder, new File(ToBeAnalyzedFilePath));
-        // property generator is starts by an asynchronous message.
         
         this.analyzerInterface.CommandReceived.addListener(new EventListener<CommandReceivedEventArgs>() {
             
@@ -113,24 +98,21 @@ public class ExpressionAnalyzerRunner extends AnalyzerRunner {
         System.out.println("local::" + localSocket);
         System.out.println("remoteSocket::" + remoteSocket);
         
-        ExpressionAnalyzerRunner.initiate(localSocket, remoteSocket).start();
+        OnBorderAnalyzerRunner runner = new OnBorderAnalyzerRunner(localSocket, remoteSocket);
+        runner.start();
         
-        // busywait
+        // busy wait
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         final StringBuilder sb = new StringBuilder();
         while (true) {
             Thread.sleep(10000);
             sb.append("[" + Thread.currentThread().getName() + "]" + "Main is alive....\n");
             
-            for (ThreadToBeMonitored t : ExpressionAnalyzerRunner.getInstance().monitoredThreads) {
+            for (ThreadToBeMonitored t : runner.monitoredThreads) {
                 System.out.println("t->" + t);
                 System.out.println("t.getStatus()" + t.getStatus());
                 sb.append(t.getStatus()).append("\n");
             }
-            
-            // ExpressionAnalyzerRunner.getInstance().monitoredThreads.stream()
-            // .forEach(m -> sb.append(m != null ? m.getStatus():
-            // "").append("\n"));
             
             System.out.println(sb);
             // System.out.println("Approximation--------->"

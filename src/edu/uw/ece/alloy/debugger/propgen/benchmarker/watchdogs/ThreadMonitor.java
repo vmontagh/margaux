@@ -61,7 +61,7 @@ public class ThreadMonitor implements Runnable {
 		monitor.interrupt();
 	}
 	
-	public void startThreads(){
+	public void startMonitoring(){
 		monitor.start();
 	}
 

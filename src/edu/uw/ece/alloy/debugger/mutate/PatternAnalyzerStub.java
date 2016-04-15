@@ -7,9 +7,9 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
+import edu.uw.ece.alloy.util.ServerSocketInterface;
 
-public class PatternAnalyzerStub extends ServerSocketInterfaceBase {
+public class PatternAnalyzerStub extends ServerSocketInterface {
 
 	protected final static Logger logger = Logger.getLogger(PatternAnalyzerStub.class.getName()+"--"+Thread.currentThread().getName());
 	// Debugger waits on the queue to be locked.

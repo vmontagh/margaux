@@ -113,7 +113,7 @@ public class AlloyProcessRunner {
 		fileWriter.startThread();
 		dbWriter.startThread();
 
-		watchdog.startThreads();
+		watchdog.startMonitoring();
 		
 		if(RemoveSourceAfter){
 			cleanAfterProcessed = new PostProcess.CleanAfterProccessed();

@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess.SocketWriter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.util.ServerSocketInterfaceBase;
+import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.hola.agent.HolaRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
@@ -23,7 +23,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
  * @author Fikayo Odunayo
  *
  */
-public class OnBorderInstanceFinder extends ServerSocketInterfaceBase {
+public class OnBorderInstanceFinder extends ServerSocketInterface {
 
 	protected final static Logger logger = Logger.getLogger(OnBorderInstanceFinder.class.getName()+"--"+Thread.currentThread().getName());
 	
