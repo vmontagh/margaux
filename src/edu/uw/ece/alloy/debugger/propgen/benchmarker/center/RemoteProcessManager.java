@@ -41,7 +41,7 @@ import edu.uw.ece.alloy.util.Utils;
 public class RemoteProcessManager<T /*
 																		 * TODO it should only run Runner objects
 																		 * "extends [Something]Runner"
-																		 */> {
+																		 */> implements RemoteProcessLogger{
 
 	protected final static Logger logger = Logger.getLogger(
 			RemoteProcessManager.class.getName() + "--" + Utils.threadName());;
@@ -111,18 +111,22 @@ public class RemoteProcessManager<T /*
 		}
 	}
 	
+	@Override
 	public void changeStatusToIDLE(final RemoteProcess process) {
 		changeStatus(process, Status.IDLE);
 	}
 	
+	@Override
 	public void changeStatusToWORKING(final RemoteProcess process) {
 		changeStatus(process, Status.WORKING);
 	}
 	
+	@Override
 	public void changeStatusToKILLING(final RemoteProcess process) {
 		changeStatus(process, Status.KILLING);
 	}
 
+	@Override
 	public void changeStatusToNOANSWER(final RemoteProcess process) {
 		changeStatus(process, Status.NOANSWER);
 	}
@@ -143,6 +147,7 @@ public class RemoteProcessManager<T /*
 		}
 	}
 
+	@Override
 	public void changeSentTasks(final RemoteProcess process, int sentTasks) {
 		synchronized (activeProcesses) {
 			changeRecord(process,
@@ -150,15 +155,19 @@ public class RemoteProcessManager<T /*
 		}
 	}
 
+	@Override
 	public void IncreaseSentTasks(final RemoteProcess process, int sentTasks) {
 		changeSentTasks(process,
 				activeProcesses.get(process).sentTasks + sentTasks);
 	}
 
+	@Override
 	public void IncreaseSentTasks(final RemoteProcess process) {
 		IncreaseSentTasks(process, 1);
 	}
 
+	
+	@Override
 	public void changeDoingTasks(final RemoteProcess process, int doingTasks) {
 		synchronized (activeProcesses) {
 			changeRecord(process,
@@ -166,24 +175,29 @@ public class RemoteProcessManager<T /*
 		}
 	}
 
+	@Override
 	public void IncreaseDoingTasks(final RemoteProcess process, int doingTasks) {
 		changeDoingTasks(process,
 				activeProcesses.get(process).doingTasks + doingTasks);
 	}
 
+	@Override
 	public void IncreaseDoingTasks(final RemoteProcess process) {
 		IncreaseDoingTasks(process, 1);
 	}
 
+	@Override
 	public void DecreaseDoingTasks(final RemoteProcess process, int doingTasks) {
 		changeDoingTasks(process,
 				activeProcesses.get(process).doingTasks - doingTasks);
 	}
 
+	@Override
 	public void DecreaseDoingTasks(final RemoteProcess process) {
 		DecreaseDoingTasks(process, 1);
 	}
 
+	@Override
 	public void changeDoneTasks(final RemoteProcess process, int doneTasks) {
 		synchronized (activeProcesses) {
 			changeRecord(process,
@@ -191,15 +205,18 @@ public class RemoteProcessManager<T /*
 		}
 	}
 
+	@Override
 	public void IncreaseDoneTasks(final RemoteProcess process, int doneTasks) {
 		changeDoneTasks(process,
 				activeProcesses.get(process).doingTasks + doneTasks);
 	}
 
+	@Override
 	public void IncreaseDoneTasks(final RemoteProcess process) {
 		IncreaseDoneTasks(process, 1);
 	}
 
+	@Override
 	public void changeLastLiveTimeReported(final RemoteProcess process,
 			long lastLiveTimeReported) {
 		synchronized (activeProcesses) {
@@ -208,10 +225,12 @@ public class RemoteProcessManager<T /*
 		}
 	}
 
+	@Override
 	public void changeLastLiveTimeReported(final RemoteProcess process) {
 		changeLastLiveTimeReported(process, System.currentTimeMillis());
 	}
 
+	@Override
 	public void changeLastLiveTimeRecieved(final RemoteProcess process,
 			long lastLiveTimeRecieved) {
 		synchronized (activeProcesses) {
@@ -220,10 +239,17 @@ public class RemoteProcessManager<T /*
 		}
 	}
 
+	@Override
 	public void changeLastLiveTimeRecieved(final RemoteProcess process) {
 		changeLastLiveTimeRecieved(process, System.currentTimeMillis());
 	}
 
+	/**
+	 * retrieve the record of a process that currently is active.
+	 * @param process
+	 * @return
+	 */
+	@Override
 	public RemoteProcessRecord getRemoteProcessRecord(
 			final RemoteProcess process) {
 		return activeProcesses.get(process);

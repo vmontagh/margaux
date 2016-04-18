@@ -4,6 +4,17 @@ import java.net.InetSocketAddress;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
 
+/**
+ * OBSOLETE
+ * @author vajih
+ *
+ */
+
+/**
+ * @deprecated
+ * @author vajih
+ *
+ */
 public class RegisterCallback extends RemoteCommand {
 
 	/**

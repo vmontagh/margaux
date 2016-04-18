@@ -3,6 +3,7 @@
  */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 
 /**
@@ -11,7 +12,9 @@ import java.net.InetSocketAddress;
  * @author vajih
  *
  */
-public class RemoteProcess {
+public class RemoteProcess implements Serializable {
+	
+	private static final long serialVersionUID = -6561692016623798872L;
 	final InetSocketAddress address;
 
 	public RemoteProcess(InetSocketAddress address){
