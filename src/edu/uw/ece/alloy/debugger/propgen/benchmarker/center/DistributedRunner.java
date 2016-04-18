@@ -30,8 +30,6 @@ public abstract class DistributedRunner extends Runner implements EventListener<
     
     private final static Logger logger = Logger.getLogger(DistributedRunner.class.getName() + "--" + Thread.currentThread().getName());
     
-    public final int SelfMonitorInterval = Integer.parseInt(Configuration.getProp("self_monitor_interval"));
-    
     public static final int ProccessNumber = Integer.parseInt(Configuration.getProp("processes_number"));
     public static final int RemoteMonitorInterval = Integer.parseInt(Configuration.getProp("remote_monitor_interval"));
     public static final String ProcessLoggerConfig = Configuration.getProp("process_logger_config");
@@ -42,18 +40,13 @@ public abstract class DistributedRunner extends Runner implements EventListener<
     
     protected static DBConnectionInfo dbConnectionInfo = null;
     
-    protected final List<ThreadToBeMonitored> monitoredThreads;
-    
     protected ProcessesManager manager;
     protected AlloyFeeder feeder;
-    protected RemoteProcessMonitor monitor;
+    protected RemoteProcessMonitor taskMonitor;
     protected ServerSocketInterface distributedInterface;
     
     public DistributedRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
         super(localSocket, remoteSocket);
-        this.monitoredThreads = new LinkedList<>();
-        
-        this.init();
     }
     
     public static DBConnectionInfo getDefaultConnectionInfo() throws SQLException {
@@ -62,16 +55,17 @@ public abstract class DistributedRunner extends Runner implements EventListener<
         return dbConnectionInfo;
     }
     
-    public void start() throws Exception {
+    @Override
+    public void start() {
         
         // Add all threads to be monitored
         this.addThreadToBeMonitored(this.feeder);
-        this.addThreadToBeMonitored(this.monitor);
+        this.addThreadToBeMonitored(this.taskMonitor);
         this.addThreadToBeMonitored(this.distributedInterface);
         
         // Start all the threads
         this.feeder.startThread();
-        this.monitor.startThread();
+        this.taskMonitor.startThread();
         this.distributedInterface.startThread();
         this.inputInterface.startThread();
         
@@ -91,14 +85,17 @@ public abstract class DistributedRunner extends Runner implements EventListener<
             
         command.killProcess(this.manager);
         command.updatePorcessorLiveness(this.manager);
-        command.processDone(this.monitor);
+        command.processDone(this.taskMonitor);
         command.activateMe(this.manager);
         
         if (Configuration.IsInDeubbungMode)
             logger.info(Utils.threadName() + "processCommand Exit:" + command);
     }
     
-    private void init() {
+    @Override
+    protected void init() {
+        
+        super.init();
         
         this.distributedInterface = new AsyncServerSocketInterface(manager.getProcessRemoteMonitorAddress(), null);
         this.distributedInterface.CommandReceived.addListener(this);
@@ -107,7 +104,7 @@ public abstract class DistributedRunner extends Runner implements EventListener<
         this.feeder = new AlloyFeeder(this.manager, this.distributedInterface, AlloyFeederBufferSize, AlloyFeederBackLogBufferSize);
         this.feeder.changePriority(Thread.MAX_PRIORITY);
         
-        this.monitor = new RemoteProcessMonitor(RemoteMonitorInterval, this.feeder, this.manager);        
+        this.taskMonitor = new RemoteProcessMonitor(RemoteMonitorInterval, this.feeder, this.manager);        
     }
     
 }

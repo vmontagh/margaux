@@ -21,22 +21,23 @@ import edu.uw.ece.alloy.util.events.EventListener;
 
 /**
  * @author fikayo
- *        
+ *         
  */
-public class OnBorderAnalyzerRunner extends DistributedRunner {
+public class OnBorderRunner extends DistributedRunner {
     
-    protected final static Logger logger = Logger.getLogger(OnBorderAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
+    protected final static Logger logger = Logger.getLogger(OnBorderRunner.class.getName() + "--" + Thread.currentThread().getName());
     
     /**
      * @param localSocket
      * @param remoteSocket
      */
-    public OnBorderAnalyzerRunner(InetSocketAddress localSocket, InetSocketAddress remoteSocket) {
+    public OnBorderRunner(InetSocketAddress localSocket, InetSocketAddress remoteSocket) {
         super(localSocket, remoteSocket);
         // TODO Auto-generated constructor stub
     }
     
-    public void start() throws Exception {
+    @Override
+    public void start() {
         
         super.start();
         
@@ -46,7 +47,7 @@ public class OnBorderAnalyzerRunner extends DistributedRunner {
             public void onEvent(Object sender, CommandReceivedEventArgs e) {
                 
                 RemoteCommand command = e.getCommand();
-                command.doAnalyze((GeneratedStorage<AlloyProcessingParam>) feeder);
+                command.doAnalyze(feeder);
             }
         });
         
@@ -56,13 +57,6 @@ public class OnBorderAnalyzerRunner extends DistributedRunner {
         
     }
     
-    /* (non-Javadoc)
-     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
-     */
-    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
-    
-    }
-
     public static void main(String[] args) throws Exception {
         
         if (args.length < 4)
@@ -105,23 +99,25 @@ public class OnBorderAnalyzerRunner extends DistributedRunner {
         System.out.println("local::" + localSocket);
         System.out.println("remoteSocket::" + remoteSocket);
         
-        OnBorderAnalyzerRunner runner = new OnBorderAnalyzerRunner(localSocket, remoteSocket);
+        OnBorderRunner runner = new OnBorderRunner(localSocket, remoteSocket);
         runner.start();
         
         // busy wait
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         final StringBuilder sb = new StringBuilder();
         while (true) {
+            
             Thread.sleep(10000);
             sb.append("[" + Thread.currentThread().getName() + "]" + "Main is alive....\n");
             
-            for (ThreadToBeMonitored t : runner.monitoredThreads) {
+            for (ThreadToBeMonitored t : runner.getMonitoredThreads()) {
                 System.out.println("t->" + t);
                 System.out.println("t.getStatus()" + t.getStatus());
                 sb.append(t.getStatus()).append("\n");
             }
             
             System.out.println(sb);
+            
             // System.out.println("Approximation--------->"
             // + Approximator.getInstance().getDirectImpliedApproximation());
             logger.warning(sb.toString());

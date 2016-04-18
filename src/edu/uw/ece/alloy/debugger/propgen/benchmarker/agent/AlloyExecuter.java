@@ -233,14 +233,14 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored  {
 		recoveryAttempts.set(0);
 		try{
 
-			IamAlive iamAlive =  new IamAlive(AlloyProcessRunner.getInstance().PID, System.currentTimeMillis(), 
+			IamAlive iamAlive =  new IamAlive(AlloyProcessRunner.getInstance().localPort, System.currentTimeMillis(), 
 					processed.get(), size());
 
 			iamAlive.sendMe(AlloyProcessRunner.getInstance().remotePort);
 			livenessFailed.set(0);
-			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]"+ "A live message is sent from pId: "+AlloyProcessRunner.getInstance().PID +" >"+iamAlive);
+			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"]"+ "A live message is sent from pId: "+AlloyProcessRunner.getInstance().localPort +" >"+iamAlive);
 		}catch(Exception e){
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a live signal on PID: "+ AlloyProcessRunner.getInstance().PID+" this is "+livenessFailed+" attempt", e);
+			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a live signal on PID: "+ AlloyProcessRunner.getInstance().localPort+" this is "+livenessFailed+" attempt", e);
 			livenessFailed.incrementAndGet();
 
 		}
@@ -253,13 +253,13 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored  {
 		if(recoveryAttempts.get() > maxRetryAttepmpts || 
 				livenessFailed.get() > maxRetryAttepmpts ){
 			logger.severe("["+Thread.currentThread().getName()+"]"+ "After recovery "+ recoveryAttempts+ " times or " + livenessFailed +" liveness message, attempts, the executer in PID:"+ 
-					AlloyProcessRunner.getInstance().PID +" does not prceeed, So the process is exited.");
+					AlloyProcessRunner.getInstance().localPort +" does not prceeed, So the process is exited.");
 
 			try{
-				new Suicided(AlloyProcessRunner.getInstance().PID, System.currentTimeMillis()).
+				new Suicided(AlloyProcessRunner.getInstance().localPort, System.currentTimeMillis()).
 				sendMe(AlloyProcessRunner.getInstance().remotePort);
 			}catch(Exception e){
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a Suicide signal on PID: "+ AlloyProcessRunner.getInstance().PID, e);
+				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]"+ "Failed to send a Suicide signal on PID: "+ AlloyProcessRunner.getInstance().localPort, e);
 			}
 
 			Runtime.getRuntime().halt(0);

@@ -28,7 +28,7 @@ public final class Event<T extends EventArgs> {
 	 * 
 	 * @return
 	 */
-	public synchronized boolean hasHandlers() {
+	public synchronized boolean hasListeners() {
 		return this.listeners.size() > 0;
 	}
 

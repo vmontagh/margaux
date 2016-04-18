@@ -219,7 +219,7 @@ public abstract class PostProcess implements Runnable, ThreadToBeMonitored{
 
 			AlloyProcessedResult updatedResult = result;
 
-			AlloyProcessed command = new AlloyProcessed(AlloyProcessRunner.getInstance().PID, updatedResult);
+			AlloyProcessed command = new AlloyProcessed(AlloyProcessRunner.getInstance().localPort, updatedResult);
 			if(Configuration.IsInDeubbungMode) logger.info("["+Thread.currentThread().getName()+"] " +"Start sending a done message: "+command+" as the result is:"+result+" TO: "+ remoteAddres);
 
 			try {
@@ -257,7 +257,7 @@ public abstract class PostProcess implements Runnable, ThreadToBeMonitored{
 
 			try {
 				(DBLogger.createDatabaseOperationsObject(getConnection(result.params.dBConnectionInfo)) ).insertResult(result,
-						 AlloyProcessRunner.getInstance().PID.toString()
+						 AlloyProcessRunner.getInstance().localPort.toString()
 						);
 			} catch (SQLException e) {
 				logger.severe("["+Thread.currentThread().getName()+"] " +" Error happened in insertin the result into the database."+e);

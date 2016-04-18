@@ -50,12 +50,14 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         this.listeningThread = new Thread(this);
         this.queue = new LinkedBlockingQueue<>();
         
+        this.ListeningStarted = new Event<>();
         this.CommandSent = new Event<>();
         this.CommandAttempt = new Event<>();
         this.CommandFailed = new Event<>();
         this.CommandReceived = new Event<>();
     }
-
+    
+    public final Event<EventArgs> ListeningStarted;
     public final Event<CommandSentEventArgs> CommandSent;
     public final Event<CommandSentEventArgs> CommandAttempt;
     public final Event<CommandSentEventArgs> CommandFailed;
@@ -94,10 +96,10 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         this.sendLivenessMessage();
         this.haltIfCantProceed(/* SelfMonitorRetryAttempt */ 1);
     }
-
+    
     public void sendMessage(RemoteCommand command) {
         
-        this.sendMessage(command, this.getRemoteAddress());        
+        this.sendMessage(command, this.getRemoteAddress());
     }
     
     public void sendMessage(RemoteCommand command, InetSocketAddress address) {
@@ -112,7 +114,7 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
             
             this.onCommandAttempt(eventArgs);
             command.sendMe(address);
-
+            
             this.onCommandSent(eventArgs);
         }
         catch (InterruptedException e) {
@@ -158,10 +160,6 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         return this.listeningThread;
     }
     
-    protected void onStartListening() {
-    
-    }
-
     protected final void startListening() {
         
         AsynchronousServerSocketChannel serverSocketChannel = null;
@@ -174,7 +172,7 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
             // Open socket for listening
             serverSocketChannel = AsynchronousServerSocketChannel.open().bind(hostAddress);
             
-            this.onStartListening();
+            this.onListeningStarted();
             
             Future<AsynchronousSocketChannel> serverFuture = null;
             AsynchronousSocketChannel clientSocket = null;
@@ -260,7 +258,7 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         
         // Supposed to be a registering call;
         if (Configuration.IsInDeubbungMode)
-            logger.info(Utils.threadName() + "Recieved message: " + command);   
+            logger.info(Utils.threadName() + "Recieved message: " + command);
             
     }
     
@@ -273,10 +271,18 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         }
     }
 
+    protected void onListeningStarted() {
+        
+        Event<EventArgs> event = this.ListeningStarted;
+        if (event.hasListeners()) {
+            event.invokeListeners(this, EventArgs.empty());
+        }
+    }
+    
     protected void onCommandSent(CommandSentEventArgs e) {
         
         Event<CommandSentEventArgs> event = this.CommandSent;
-        if(event.hasHandlers()) {
+        if (event.hasListeners()) {
             event.invokeListeners(this, e);
         }
     }
@@ -284,23 +290,23 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
     protected void onCommandAttempt(CommandSentEventArgs e) {
         
         Event<CommandSentEventArgs> event = this.CommandAttempt;
-        if(event.hasHandlers()) {
+        if (event.hasListeners()) {
             event.invokeListeners(this, e);
         }
     }
-
+    
     protected void onCommandFailed(CommandSentEventArgs e) {
         
         Event<CommandSentEventArgs> event = this.CommandFailed;
-        if(event.hasHandlers()) {
+        if (event.hasListeners()) {
             event.invokeListeners(this, e);
         }
     }
-
+    
     protected void onCommandReceived(CommandReceivedEventArgs e) {
         
         Event<CommandReceivedEventArgs> event = this.CommandReceived;
-        if(event.hasHandlers()) {
+        if (event.hasListeners()) {
             event.invokeListeners(this, e);
         }
     }

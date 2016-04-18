@@ -15,11 +15,12 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitor
 import edu.uw.ece.alloy.util.AsyncServerSocketInterface;
 import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
+import edu.uw.ece.hola.agent.Utils;
 
 public class ExpressionAnalyzerRunner extends DistributedRunner {
     
     protected final static Logger logger = Logger.getLogger(ExpressionAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
-        
+    
     private static DistributedRunner self = null;
     
     private ExpressionAnalyzerRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket) {
@@ -45,7 +46,8 @@ public class ExpressionAnalyzerRunner extends DistributedRunner {
         return self;
     }
     
-    public void start() throws Exception {
+    @Override
+    public void start() {
         
         super.start();
         
@@ -61,7 +63,7 @@ public class ExpressionAnalyzerRunner extends DistributedRunner {
             public void onEvent(Object sender, CommandReceivedEventArgs e) {
                 
                 RemoteCommand command = e.getCommand();
-                command.doAnalyze((GeneratedStorage<AlloyProcessingParam>) feeder);
+                command.doAnalyze(feeder);
             }
         });
         
@@ -71,13 +73,6 @@ public class ExpressionAnalyzerRunner extends DistributedRunner {
         
     }
     
-    /* (non-Javadoc)
-     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
-     */
-    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
-    
-    }
-
     public static void main(String[] args) throws Exception {
         
         if (args.length < 4)
@@ -120,16 +115,18 @@ public class ExpressionAnalyzerRunner extends DistributedRunner {
         System.out.println("local::" + localSocket);
         System.out.println("remoteSocket::" + remoteSocket);
         
-        ExpressionAnalyzerRunner.initiate(localSocket, remoteSocket).start();
+        Runner runner = ExpressionAnalyzerRunner.initiate(localSocket, remoteSocket);
+        runner.start();
         
-        // busywait
+        // busy wait
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         final StringBuilder sb = new StringBuilder();
         while (true) {
-            Thread.sleep(10000);
-            sb.append("[" + Thread.currentThread().getName() + "]" + "Main is alive....\n");
             
-            for (ThreadToBeMonitored t : ExpressionAnalyzerRunner.getInstance().monitoredThreads) {
+            Thread.sleep(10000);
+            sb.append(Utils.threadName() + "Main is alive....\n");
+            
+            for (ThreadToBeMonitored t : runner.getMonitoredThreads()) {
                 System.out.println("t->" + t);
                 System.out.println("t.getStatus()" + t.getStatus());
                 sb.append(t.getStatus()).append("\n");
@@ -140,6 +137,7 @@ public class ExpressionAnalyzerRunner extends DistributedRunner {
             // "").append("\n"));
             
             System.out.println(sb);
+            
             // System.out.println("Approximation--------->"
             // + Approximator.getInstance().getDirectImpliedApproximation());
             logger.warning(sb.toString());
