@@ -26,7 +26,7 @@ public class Approximator {
 	final static Logger logger = Logger.getLogger(
 			Approximator.class.getName() + "--" + Thread.currentThread().getName());
 	// Map from an expression to analysis results.
-	final private Map<String, Set<IfPropertyToAlloyCode>> impliedProperties = new ConcurrentHashMap<String, Set<IfPropertyToAlloyCode>>();
+	final private Map<String, Set<String>> impliedProperties = new ConcurrentHashMap<String, Set<String>>();
 
 	final static Approximator self = new Approximator();
 
@@ -51,9 +51,13 @@ public class Approximator {
 				+ (result.params.alloyCoder instanceof IfPropertyToAlloyCode));
 		System.out.println("The condition is3:" + result.getClass().getName());
 		System.out.println("The condition is4:" + result.params.alloyCoder);
-		
-		if ((result.getClass().getName().equals(AlloyProcessedResult.class.getName()) ||
-				result.getClass().getName().equals(AlloyProcessedResult.InferredResult.class.getName()) )
+
+		if ((result.getClass().getName()
+				.equals(AlloyProcessedResult.class
+						.getName()) /*
+												 * || result.getClass().getName().equals(
+												 * AlloyProcessedResult.InferredResult.class.getName())
+												 */ )
 				&& result.params.alloyCoder instanceof IfPropertyToAlloyCode)
 			addImplication(result.params.alloyCoder.predCallA,
 					(IfPropertyToAlloyCode) result.params.alloyCoder);
@@ -65,31 +69,30 @@ public class Approximator {
 	public void addImplication(String expression,
 			IfPropertyToAlloyCode property) {
 		if (!impliedProperties.containsKey(expression))
-			impliedProperties.put(expression, Collections.newSetFromMap(
-					new ConcurrentHashMap<IfPropertyToAlloyCode, Boolean>()));
+			impliedProperties.put(expression,
+					Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>()));
 		System.out.println("addImplication1->" + expression + "<  " + property);
-		impliedProperties.get(expression).add(property);
+		impliedProperties.get(expression).add(property.predCallB);
 		System.out.println("implication->" + impliedProperties);
 	}
 
 	public List<String> getDirectImpliedPropertyCalls(String expression) {
 		List<String> result = new ArrayList<>();
 
-		for (IfPropertyToAlloyCode imply : impliedProperties.get(expression)) {
-			System.out.println(imply.predNameB);
-			System.out.println(imply.predCallB);
-			result.add(imply.predCallB);
+		for (String imply : impliedProperties.get(expression)) {
+			result.add(imply);
 		}
 
 		return Collections.unmodifiableList(result);
 	}
 
 	public String getDirectImpliedApproximation(String expression) {
-		System.out.println("getDirectImpliedPropertyCalls(expression)->"+getDirectImpliedPropertyCalls(expression));
+		System.out.println("getDirectImpliedPropertyCalls(expression)->"
+				+ getDirectImpliedPropertyCalls(expression));
 		return String.join(" and ", getDirectImpliedPropertyCalls(expression));
 	}
 
-	// TODO remove it and delte it
+	// TODO remove it and delta it
 	public String getDirectImpliedApproximation() {
 		System.out
 				.println("impliedProperties.keySet()>" + impliedProperties.keySet());

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,8 +25,8 @@ import edu.uw.ece.alloy.debugger.PropertyCallBuilder;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments.ExtractExpression;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments.ExtractScope;
+import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.util.Utils;
 
 public class ExpressionPropertyGenerator
@@ -74,6 +73,7 @@ public class ExpressionPropertyGenerator
 	final static List<Dependency> dependencies = new LinkedList<Dependency>();
 
 	final PropertyToAlloyCodeBuilder propertyBuilder;
+	final public PatternToProperty patternToProperty;
 
 	final protected Thread generator;
 
@@ -222,38 +222,10 @@ public class ExpressionPropertyGenerator
 		this.toBeCheckProperties = Collections.unmodifiableSet(toBeCheckProperties);
 		this.excludedChecks = Collections.unmodifiableSet(excludedChecks);
 
-		generateRelationalPropertyCalls();
-		generateTemporalPropertyCalls();
-		System.out.println("AlloyProcessedResult.InferredResult.propertyCalls:\n\t"
-				+ AlloyProcessedResult.InferredResult.propertyCalls);
-	}
+		// This is initialized here
+		patternToProperty = new PatternToProperty(relationalPropModuleOriginal,
+				temporalPropModuleOriginal, toBeAnalyzedCode);
 
-	void generateTemporalPropertyCalls(
-			Map<Pair<String, String>, String> propertyCalls) throws Err {
-		CompModule world = (CompModule) A4CommandExecuter.getInstance()
-				.parse(temporalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
-		for (Func func : world.getAllFunc()) {
-			String funcName = func.label.replace("this/", "");
-			final PropertyCallBuilder pcb = new PropertyCallBuilder();
-			try {
-				pcb.addPropertyDeclration(func);
-			} catch (IllegalArgumentException ia) {
-				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "] "
-						+ "Failling to add a property declaration:", ia);
-			}
-			for (Field field : fields.stream().filter(f -> f.type().arity() == 3)
-					.collect(Collectors.toList())) {
-				for (String PropertyCall : pcb.makeAllTernaryProperties(field, opens)) {
-					propertyCalls.put(new Pair<>(funcName, field.label), PropertyCall);
-				}
-			}
-
-		}
-	}
-
-	void generateTemporalPropertyCalls() throws Err {
-		generateTemporalPropertyCalls(
-				AlloyProcessedResult.InferredResult.propertyCalls);
 	}
 
 	void generateTemporalChekers(Set<String> propertyNames,
@@ -327,11 +299,6 @@ public class ExpressionPropertyGenerator
 				}
 			}
 		}
-	}
-
-	void generateRelationalPropertyCalls() throws Err {
-		generateRelationalPropertyCalls(
-				AlloyProcessedResult.InferredResult.propertyCalls);
 	}
 
 	void generateRelationalChekers(Set<String> propertyNames,
@@ -476,13 +443,13 @@ public class ExpressionPropertyGenerator
 		File relationalPropModuleOriginal;
 		File temporalPropModuleOriginal;
 		File toBeAnalyzedCode;
-		boolean initialized = false;
 		/**
 		 * The method provides singleton, but it is not the only way to create and
 		 * object. There might be a case that cache becomes invalid and a new object
 		 * is needed.
 		 */
 		final private static Builder self = new Builder();
+		private ExpressionPropertyGenerator lastCreated = null;
 
 		public static Builder getInstance() {
 			return self;
@@ -505,25 +472,43 @@ public class ExpressionPropertyGenerator
 			this.temporalPropModuleOriginal = temporalPropModuleOriginal;
 			this.toBeAnalyzedCode = toBeAnalyzedCode;
 
-			this.initialized = true;
+			if (lastCreated == null) {
+				this.lastCreated = new ExpressionPropertyGenerator(generatedStorage,
+						toBeAnalyzedCode, relationalPropModuleOriginal,
+						temporalPropModuleOriginal, doVAC, doIFF, doIMPLY, doAND);
+			} else {
+				synchronized (lastCreated) {
+					this.lastCreated = new ExpressionPropertyGenerator(generatedStorage,
+							toBeAnalyzedCode, relationalPropModuleOriginal,
+							temporalPropModuleOriginal, doVAC, doIFF, doIMPLY, doAND);
+				}
+			}
 
-			return new ExpressionPropertyGenerator(generatedStorage, toBeAnalyzedCode,
-					relationalPropModuleOriginal, temporalPropModuleOriginal, doVAC,
-					doIFF, doIMPLY, doAND);
+			return this.lastCreated;
 		}
 
 		public ExpressionPropertyGenerator create(
 				final GeneratedStorage<AlloyProcessingParam> generatedStorage,
 				final Set<String> toBeCheckProperties, Set<String> excludedChecks)
 						throws Err, IOException {
-
-			if (!initialized)
+			if (null == this.lastCreated)
 				throw new RuntimeException("Objects are not initilized yet.");
 
-			return new ExpressionPropertyGenerator(generatedStorage,
-					this.toBeAnalyzedCode, toBeCheckProperties, excludedChecks,
-					this.relationalPropModuleOriginal, this.temporalPropModuleOriginal,
-					this.doVAC, this.doIFF, this.doIMPLY, this.doAND);
+			synchronized (lastCreated) {
+				this.lastCreated = new ExpressionPropertyGenerator(generatedStorage,
+						this.toBeAnalyzedCode, toBeCheckProperties, excludedChecks,
+						this.relationalPropModuleOriginal, this.temporalPropModuleOriginal,
+						this.doVAC, this.doIFF, this.doIMPLY, this.doAND);
+			}
+
+			return this.lastCreated;
+		}
+
+		public ExpressionPropertyGenerator lastCreated() {
+			if (null == this.lastCreated)
+				throw new RuntimeException("Objects are not initilized yet.");
+
+			return lastCreated;
 		}
 	}
 

@@ -92,8 +92,8 @@ public class IffPropertyToAlloyCode extends PropertyToAlloyCode {
 	/**
 	 * no counter-example should be found.
 	 */
-	public boolean desiredSAT() {
-		return false;
+	public boolean isDesiredSAT(int sat){
+		return sat == -1;
 	}
 
 }

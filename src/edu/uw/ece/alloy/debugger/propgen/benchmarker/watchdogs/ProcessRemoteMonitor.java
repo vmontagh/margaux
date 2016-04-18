@@ -36,6 +36,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRu
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.util.RetryingThread;
+import edu.uw.ece.alloy.util.Utils;
 
 public class ProcessRemoteMonitor
 		implements Runnable, ThreadDelayToBeMonitored {
@@ -59,6 +60,8 @@ public class ProcessRemoteMonitor
 	final private Map<AlloyProcessingParam, List<InetSocketAddress>> sentMessages = new ConcurrentHashMap<>();
 	// The checks is done and no need to recreate it again.
 	final private Set<String> doneChecks = Collections
+			.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+	final private Set<String> toBedoneChecks = Collections
 			.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 	final private Map<AlloyProcessingParam, Integer> timeoutRetry = new ConcurrentHashMap<>();
 	/// Once a message is removed from incompleteMessages, its value is increased.
@@ -103,11 +106,21 @@ public class ProcessRemoteMonitor
 
 	}
 
+	public boolean isDone(AlloyProcessingParam param){
+		System.out.println("doneChecks:"+param.alloyCoder.getPredName() + "?" + doneChecks.contains(param.alloyCoder.getPredName()) );
+		return (doneChecks.contains(param.alloyCoder.getPredName()));
+	}
+	
+	public boolean isTobeDone(AlloyProcessingParam param){
+		System.out.println("isTobeDone:"+param.alloyCoder.getPredName() + "?" + toBedoneChecks.contains(param.alloyCoder.getPredName()) );
+		return (toBedoneChecks.contains(param.alloyCoder.getPredName()));
+	}
+	
 	public void addMessage(final InetSocketAddress pId,
 			final AlloyProcessingParam e) {
 
 		// TODO message: All message the AlloyProcessingParam objects are compressed
-		// already. to read them, they have to be decomrepssed.
+		// already. to read them, they have to be decompressed.
 		if (!incompleteMessages.containsKey(pId)) {
 			incompleteMessages.put(pId, new ConcurrentHashMap<>());
 		}
@@ -140,16 +153,15 @@ public class ProcessRemoteMonitor
 
 		}
 
-		if (Boolean.parseBoolean(System.getProperty("debug"))) {
-			if (!sentMessages.containsKey(e)) {
-				sentMessages.put(e,
-						Collections.synchronizedList(new LinkedList<InetSocketAddress>()));
-			}
-
-			List<InetSocketAddress> listPID = sentMessages.get(e);
-			listPID.add(pId);
+		if (!sentMessages.containsKey(e)) {
+			sentMessages.put(e,
+					Collections.synchronizedList(new LinkedList<InetSocketAddress>()));			
 		}
 
+		List<InetSocketAddress> listPID = sentMessages.get(e);
+		listPID.add(pId);
+
+		toBedoneChecks.add(e.alloyCoder.getPredName());
 	}
 
 	public void removeMessage(final InetSocketAddress pId,
@@ -174,12 +186,10 @@ public class ProcessRemoteMonitor
 					+ "No message set is available for process: " + pId);
 		} else {
 
-			if (Boolean.parseBoolean(System.getProperty("debug"))) {
 				if (Configuration.IsInDeubbungMode)
 					logger.info("[" + Thread.currentThread().getName() + "] "
 							+ "The message is: " + e + "\tThe PID is: " + pId
 							+ " and message was sent to: " + sentMessages.get(e));
-			}
 
 			synchronized (incompleteMessages) {
 				Map<AlloyProcessingParam, Integer> mapValue = incompleteMessages
@@ -211,6 +221,19 @@ public class ProcessRemoteMonitor
 
 				}
 
+				if (!toBedoneChecks.contains(e.alloyCoder.getPredName())){
+					if (Configuration.IsInDeubbungMode){
+						logger.warning(Utils.threadName() + "The property checking does not exit:"+e.alloyCoder.getPredName());
+					}					
+				}else{
+					toBedoneChecks.remove(e.alloyCoder.getPredName());
+				}
+
+				if (!doneChecks.contains(e.alloyCoder.getPredName()) && Configuration.IsInDeubbungMode){
+						logger.warning(Utils.threadName() + "The property is already done:"+e.alloyCoder.getPredName());
+					}	
+				doneChecks.add(e.alloyCoder.getPredName());
+				
 				if (Configuration.IsInDeubbungMode)
 					logger.info("[" + Thread.currentThread().getName() + "] "
 							+ " The map size is after: " + mapValue.size() + " for pId:"
@@ -576,7 +599,7 @@ public class ProcessRemoteMonitor
 		// regardless of the message status, it should not be created again.
 		if (doneChecks.contains(result.params.alloyCoder.getPredName())) {
 			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "] "
+				logger.warning("[" + Thread.currentThread().getName() + "] "
 						+ "The check was done before: pID= " + PID + " param="
 						+ result.params);
 		}
@@ -616,7 +639,7 @@ public class ProcessRemoteMonitor
 		try {
 
 			Set<String> nextProperties = new HashSet<>(
-					result.params.alloyCoder.getToBeCheckedProperties(result.sat == 1));
+					result.params.alloyCoder.getToBeCheckedProperties(result.sat));
 
 			if (!nextProperties.isEmpty())
 				ExpressionPropertyGenerator.Builder.getInstance()
