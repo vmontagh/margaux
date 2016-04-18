@@ -70,8 +70,9 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 
 		System.out.println("My Address: " + this.PID);
 		System.out.println("Sub Address: " + address);
+		
 		// Change host address to be the address of the process
-		this.changeHostAddress(subProcess.address);
+		this.changeHostAddress(address);
 		
 		subProcess = this.createProcess(address);
 		if(!subProcess.isAlive()) {
@@ -176,31 +177,19 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 
 		Process sub = null;
 		final String java = "java";
-		final String holaJar = "/home/fikayo/workspace/OnBorderInstanceFinder/lib/hola-0.2.jar";
-		final String classPath = /*System.getProperty("java.class.path");*/ holaJar + ":" + "/home/fikayo/workspace/OnBorderInstanceFinder/bin/";
+		final String jarPath = new java.io.File(HolaRunner.class.getProtectionDomain()
+                              			  .getCodeSource()
+                              			  .getLocation()
+                              			  .getPath())
+                              			.getAbsolutePath();
 		final String debug = Boolean.parseBoolean(System.getProperty("debug")) ? "yes" : "no";
 
 		try {
-
-//			jni = (jniPath != null && jniPath.length() > 0) ? "-Djava.library.path=" + jniPath : "";
-//			String[] commands = {
-//					java,
-//					"-Xmx" + SubMemory + "m",
-//					"-Xss" + SubStack + "k",
-////  				"-Djava.util.logging.config.file=" + ProcessLoggerConfig,
-//  				"-Ddebug=" + debug,
-//  				"-cp", classPath, "onborder.agent.HolaRunner",
-//  				"" + this.PID.getPort(),
-//  				"" + this.PID.getAddress().getHostAddress(),
-//  				"" + address.getPort(),
-//  				"" + address.getAddress().getHostAddress(),
-//  				"" + this.filePathArgs,
-//  				"" + this.propertiesFile
-//			};
 			
 			String[] commands = {
 				java,
-				"-jar",
+				"-cp",
+				jarPath,
 				HolaRunner.class.getName(),
 				"" + this.PID.getPort(),
 				"" + this.PID.getAddress().getHostAddress(),
@@ -210,9 +199,8 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 				"" + this.propertiesFile
 			};
 			
-			System.out.println("Params: " + Arrays.toString(commands));
-//			sub = Utils.createProcess(commands);
-			throw new IOException();
+			sub = Utils.createProcess(commands);
+			
 		} catch (IOException e) {
 			logger.log(Level.SEVERE, Utils.threadName() + "Not able to create a new process on port: "+address, e);
 		}
@@ -240,11 +228,11 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 	
 	public static void main(String[] args) {
 		
-		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "The '" + OnBorderInstanceFinder.class.getSimpleName() + "' process is started.");
+		if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "The '" + OnBorderInstanceFinder.class.getSimpleName() + "' process has started.");
 
 		if(args.length < 5)
 			throw new RuntimeException("Invalid number of arguments");
-
+		
 		int localPort;
 		int remotePort;
 		InetAddress localIP;
@@ -287,6 +275,21 @@ public class OnBorderInstanceFinder extends ServerSocketListener {
 		} catch (UnknownHostException e) {
 			logger.log(Level.SEVERE, Utils.threadName() + "Unknown Host exception", e);
 			e.printStackTrace();
+		}
+		
+		// busy wait
+		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+		while(true){
+			
+			try {
+				Thread.sleep(100000);
+			} catch (InterruptedException e) {
+				logger.log(Level.SEVERE, Utils.threadName() + "Main loop is interrupted ", e);
+				break;
+			}
+			
+			if(Configuration.IsInDeubbungMode) logger.info(Utils.threadName() + "Main is alive.... ");
+			Thread.yield();
 		}
 		
 		logger.info(Utils.threadName() + OnBorderInstanceFinder.class.getSimpleName() + " exiting.");

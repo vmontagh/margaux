@@ -102,6 +102,7 @@ public class ProcessorUtil {
 		if (port == lastFoundPort) {
 			throw new RuntimeException("No port available");
 		}
+		
 		lastFoundPort = port;
 		return new InetSocketAddress(localAddress, lastFoundPort);
 	}
