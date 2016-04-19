@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessIt;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.RemoteProcessMonitor;
@@ -16,21 +17,21 @@ import edu.uw.ece.alloy.util.RetryingThread;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
 
-public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implements Runnable, ThreadToBeMonitored {
+public class AlloyFeeder extends GeneratedStorage<ProcessingParam> implements Runnable, ThreadToBeMonitored {
     
     final static Logger logger = Logger.getLogger(AlloyFeeder.class.getName() + "--" + Thread.currentThread().getName());
     
-    final BlockingQueue<AlloyProcessingParam> queue;
+    final BlockingQueue<ProcessingParam> queue;
     // This buffer stores as a second buffer. The content is eventually merged
     // into the main 'queue'.
     // In case of any fault happening and the request is going to be restocked,
     // the request is
     // added to 'backLog' then merged into 'queue'. The 'backLog' could be
     // either limit or unlimited.
-    final BlockingQueue<AlloyProcessingParam> backLog;
+    final BlockingQueue<ProcessingParam> backLog;
     
     private final ProcessesManager processesManager;
-    private final ServerSocketInterface socketInterface;
+    private final ServerSocketInterface distributedInterface;
     
     private final Thread sender = new RetryingThread(this, 100);
     
@@ -48,10 +49,12 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         }
     }, 100);
     
-    public AlloyFeeder(final ProcessesManager processesManager, final ServerSocketInterface socketInterface, final int bufferSize, final int backLogBufferSize) {
+    public AlloyFeeder(final ProcessesManager processesManager, final ServerSocketInterface distributedInterface, final int bufferSize, final int backLogBufferSize) {
+        
         super();
+        
         this.processesManager = processesManager;
-        this.socketInterface = socketInterface;
+        this.distributedInterface = distributedInterface;
         
         if (bufferSize <= 0) {
             queue = new LinkedBlockingQueue<>();
@@ -68,7 +71,12 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         }
     }
     
-    public void addProcessTask(final AlloyProcessingParam p) throws InterruptedException {
+    public ServerSocketInterface getSocketInterface() {
+        
+        return this.distributedInterface;
+    }
+    
+    public void addProcessTask(final ProcessingParam p) throws InterruptedException {
         
         if (Configuration.IsInDeubbungMode)
             logger.log(Level.INFO, Utils.threadName() + " a request is added to be sent:" + p);
@@ -90,7 +98,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         queue.clear();
     }
     
-    public void addGeneratedProp(final AlloyProcessingParam item) {
+    public void addGeneratedProp(final ProcessingParam item) {
         
         try {
             super.size++;
@@ -108,7 +116,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         return super.size;
     }
     
-    public void addProcessTaskToBacklog(final AlloyProcessingParam p) throws InterruptedException {
+    public void addProcessTaskToBacklog(final ProcessingParam p) throws InterruptedException {
         
         if (Configuration.IsInDeubbungMode)
             logger.log(Level.INFO, Utils.threadName() + " a request is added to be merged:" + p);
@@ -132,7 +140,8 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         
         if (Configuration.IsInDeubbungMode)
             logger.info(Utils.threadName() + "Queue size is: " + queue.size());
-        AlloyProcessingParam e;
+            
+        ProcessingParam e;
         try {
             if (Configuration.IsInDeubbungMode)
                 logger.info(Utils.threadName() + "Queue is: " + queue);
@@ -159,7 +168,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         try {
             
             RemoteCommand command = new ProcessIt(e, processesManager);
-            this.socketInterface.sendMessage(command, process.address);
+            this.distributedInterface.sendMessage(command, process.address);
             if (Configuration.IsInDeubbungMode)
                 logger.info(Utils.threadName() + "Message sent to " + process.address);
         }
@@ -177,7 +186,8 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
         
         if (Configuration.IsInDeubbungMode)
             logger.info(Utils.threadName() + "Backlog Queue size is: " + backLog.size());
-        AlloyProcessingParam e;
+            
+        ProcessingParam e;
         try {
             // take a request, if something is in the queue. Otherwise the
             // thread parks here.
@@ -198,7 +208,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam> implemen
     }
     
     public void startThread() {
-                
+        
         sender.start();
         merger.start();
     }

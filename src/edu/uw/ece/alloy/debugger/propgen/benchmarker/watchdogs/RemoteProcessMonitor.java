@@ -18,7 +18,10 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.HolaProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.ProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
@@ -41,39 +44,36 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
     private final int monitorInterval;
     
     // TODO change the key to AlloyProcessingParam from Integer
-    private final Map<InetSocketAddress, Map<AlloyProcessingParam, Integer/*
-                                                                           * The
-                                                                           * number
-                                                                           * of
-                                                                           * duplications
-                                                                           */>> incompleteMessages = new ConcurrentHashMap<InetSocketAddress, Map<AlloyProcessingParam, Integer>>();
+    private final Map<InetSocketAddress, Map<ProcessingParam, Integer/*
+                                                                      * The
+                                                                      * number
+                                                                      * of
+                                                                      * duplications
+                                                                      */>> incompleteMessages = new ConcurrentHashMap<InetSocketAddress, Map<ProcessingParam, Integer>>();
     
-    private final Map<AlloyProcessingParam, List<InetSocketAddress>> sentMessages = new ConcurrentHashMap<>();
+    private final Map<ProcessingParam, List<InetSocketAddress>> sentMessages = new ConcurrentHashMap<>();
     
     // The checks is done and no need to recreate it again.
     private final Set<String> doneChecks = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-    private final Map<AlloyProcessingParam, Integer> timeoutRetry = new ConcurrentHashMap<>();
+    private final Map<ProcessingParam, Integer> timeoutRetry = new ConcurrentHashMap<>();
     
     /// Once a message is removed from incompleteMessages, its value is
     /// increased.
     private final Map<InetSocketAddress, AtomicInteger> receivedMessagesNumber = new ConcurrentHashMap<>();
-    
     private final Thread timeoutMonitor;
     
-    volatile boolean monitorWorking = false;
+    private volatile boolean monitorWorking = false;
     
     public RemoteProcessMonitor(int monitorInterval, AlloyFeeder feeder, ProcessesManager manager) {
         super();
         this.feeder = feeder;
         this.manager = manager;
         this.monitorInterval = monitorInterval;
-        this.feeder.setMonitor(this);
         
         this.timeoutMonitor = new Thread(this);
-        this.hookEventListeners();
     }
     
-    public void addMessage(final InetSocketAddress pId, final AlloyProcessingParam e) {
+    public void addMessage(final InetSocketAddress pId, final ProcessingParam e) {
         
         // TODO message: All message the AlloyProcessingParam objects are
         // compressed
@@ -83,7 +83,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         }
         
         synchronized (incompleteMessages) {
-            Map<AlloyProcessingParam, Integer> mapValue = incompleteMessages.get(pId);
+            Map<ProcessingParam, Integer> mapValue = incompleteMessages.get(pId);
             
             if (mapValue.containsKey(e)) {
                 logger.severe(Utils.threadName() + "Message duplication for " + e + " of process: " + pId);
@@ -113,7 +113,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         
     }
     
-    public void removeMessage(final InetSocketAddress pId, final AlloyProcessingParam e) {
+    public void removeMessage(final InetSocketAddress pId, final ProcessingParam e) {
         
         // Safety checking
         InetSocketAddress bPid = null;
@@ -139,7 +139,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
             }
             
             synchronized (incompleteMessages) {
-                Map<AlloyProcessingParam, Integer> mapValue = incompleteMessages.get(pId);
+                Map<ProcessingParam, Integer> mapValue = incompleteMessages.get(pId);
                 
                 if (Configuration.IsInDeubbungMode)
                     logger.info(Utils.threadName() + " The map size is before: " + mapValue.size() + " for pId:" + pId);
@@ -198,7 +198,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
      * @param pId
      * @param param
      */
-    public void removeAndPushUndoneRequest(final InetSocketAddress pId, final AlloyProcessingParam param) {
+    public void removeAndPushUndoneRequest(final InetSocketAddress pId, final ProcessingParam param) {
         
         removeMessage(pId, param);
         
@@ -241,13 +241,13 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
             logger.log(Level.SEVERE, Utils.threadName() + "The request is not in the map, pId: " + pId);
         }
         else {
-            Map<AlloyProcessingParam, Integer> map = incompleteMessages.get(pId);
+            Map<ProcessingParam, Integer> map = incompleteMessages.get(pId);
             if (Configuration.IsInDeubbungMode)
                 logger.log(Level.INFO, Utils.threadName() + "Removing " + map.size() + " undone messages from PID:" + pId);
             synchronized (map) {
                 if (Configuration.IsInDeubbungMode)
                     logger.log(Level.INFO, Utils.threadName() + "Starting to remove " + map.size() + " messages from PID:" + pId);
-                Iterable<AlloyProcessingParam> itr = incompleteMessages.get(pId).keySet();
+                Iterable<ProcessingParam> itr = incompleteMessages.get(pId).keySet();
                 if (Configuration.IsInDeubbungMode)
                     logger.log(Level.INFO, Utils.threadName() + "Starting to push back " + incompleteMessages.get(pId).keySet().size() + " messages from PID:" + pId);
                 pushUndoneRequests(pId, itr);
@@ -287,13 +287,16 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
             logger.severe(Utils.threadName() + " No Such a PID found: " + PID + " and the current PIDs are:\n\t" + manager.getAllRegisteredPIDs());
             return;
         }
+
+        AlloyProcessingParam params = (AlloyProcessingParam) result.params;
         
         // regardless of the message status, it should not be created again.
-        if (doneChecks.contains(result.params.alloyCoder.getPredName())) {
+        if (doneChecks.contains(params.alloyCoder.getPredName())) {
             if (Configuration.IsInDeubbungMode)
                 logger.info(Utils.threadName() + "The check was done before: pID= " + PID + " param=" + result.params);
         }
-        doneChecks.add(result.params.alloyCoder.getPredName());
+        
+        doneChecks.add(params.alloyCoder.getPredName());
         
         if (result.isTimedout() || result.isFailed()) {
             if (Configuration.IsInDeubbungMode)
@@ -317,6 +320,11 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         
     }
     
+    public void holaProcessResponded(ProcessedResult result, InetSocketAddress PID) {
+        
+        removeMessage(PID, result.params);
+    }
+    
     /**
      * The property is checked, and its result is sat or not. So, the implied
      * properties should be processed next.
@@ -327,10 +335,11 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         
         try {
             
-            Set<String> nextProperties = new HashSet<>(result.params.alloyCoder.getToBeCheckedProperties(result.sat == 1));
+            AlloyProcessingParam params = (AlloyProcessingParam) result.params;
+            Set<String> nextProperties = new HashSet<>(params.alloyCoder.getToBeCheckedProperties(result.sat == 1));
             
             if (!nextProperties.isEmpty())
-                ExpressionPropertyGenerator.Builder.getInstance().create((GeneratedStorage<AlloyProcessingParam>) feeder, nextProperties, doneChecks).startThread();
+                ExpressionPropertyGenerator.Builder.getInstance().create((GeneratedStorage<ProcessingParam>) feeder, nextProperties, doneChecks).startThread();
             else
                 logger.log(Level.INFO, Utils.threadName() + "The next properties are empty for:" + result);
         }
@@ -393,7 +402,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         // TODO Auto-generated method stub
         return 0;
     }
-
+    
     protected int getAllWaitings() {
         
         int waiting = 0;
@@ -404,7 +413,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         
         return waiting;
     }
-
+    
     protected void monitorTimeouts() {
         
         while (!Thread.currentThread().isInterrupted()) {
@@ -438,35 +447,6 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         }
     }
     
-    private void hookEventListeners() {
-        
-        this.socketInterface.CommandAttempt.addListener(new EventListener<CommandSentEventArgs>() {
-            
-            @Override
-            public void onEvent(Object sender, CommandSentEventArgs e) {
-                
-                RemoteCommand command = e.getCommand();
-                if (command instanceof ProcessIt) {
-                    ProcessIt cmd = (ProcessIt) command;
-                    addMessage(e.getAddress(), cmd.param);
-                }
-            }
-        });
-        
-        this.socketInterface.CommandFailed.addListener(new EventListener<CommandSentEventArgs>() {
-            
-            @Override
-            public void onEvent(Object sender, CommandSentEventArgs e) {
-                
-                RemoteCommand command = e.getCommand();
-                if (command instanceof ProcessIt) {
-                    ProcessIt cmd = (ProcessIt) command;
-                    removeMessage(e.getAddress(), cmd.param);
-                }
-            }
-        });
-    }
-
     private void recordRemovedMessage(final InetSocketAddress pId) {
         
         if (!receivedMessagesNumber.containsKey(pId)) {
@@ -476,8 +456,8 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
             receivedMessagesNumber.get(pId).incrementAndGet();
         }
     }
-        
-    private void pushUndoneRequest(final InetSocketAddress pId, AlloyProcessingParam param) {
+    
+    private void pushUndoneRequest(final InetSocketAddress pId, ProcessingParam param) {
         
         try {
             feeder.addProcessTaskToBacklog(param);
@@ -487,25 +467,11 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
         }
     }
     
-    private void pushUndoneRequests(final InetSocketAddress pId, Iterable<AlloyProcessingParam> itr) {
+    private void pushUndoneRequests(final InetSocketAddress pId, Iterable<ProcessingParam> itr) {
         
-        for (AlloyProcessingParam param : itr) {
+        for (ProcessingParam param : itr) {
             pushUndoneRequest(pId, param);
         }
-    }
-
-    /* (non-Javadoc)
-     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
-     */
-    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
-    
-    }
-
-    /* (non-Javadoc)
-     * @see edu.uw.ece.alloy.util.events.EventListener#addThreadToBeMonitored(edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored)
-     */
-    void addThreadToBeMonitored(ThreadToBeMonitored thread) {
-    
     }
     
 }

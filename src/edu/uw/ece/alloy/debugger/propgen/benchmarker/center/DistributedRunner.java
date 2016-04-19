@@ -10,6 +10,7 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessIt;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.RemoteProcessMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
@@ -17,6 +18,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitor
 import edu.uw.ece.alloy.util.AsyncServerSocketInterface;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
+import edu.uw.ece.alloy.util.events.CommandSentEventArgs;
 import edu.uw.ece.alloy.util.events.EventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
 import edu.uw.ece.hola.agent.Program;
@@ -76,21 +78,20 @@ public abstract class DistributedRunner extends Runner implements EventListener<
     }
     
     @Override
-    public void onEvent(Object sender, CommandReceivedEventArgs e) {
+    public final void onEvent(Object sender, CommandReceivedEventArgs e) {
         
         RemoteCommand command = e.getCommand();
         
         if (Configuration.IsInDeubbungMode)
             logger.info(Utils.threadName() + "processCommand Enter:" + command);
             
-        command.killProcess(this.manager);
-        command.updatePorcessorLiveness(this.manager);
-        command.processDone(this.taskMonitor);
-        command.activateMe(this.manager);
+        this.processAgentCommand(command);
         
         if (Configuration.IsInDeubbungMode)
             logger.info(Utils.threadName() + "processCommand Exit:" + command);
     }
+    
+    protected abstract void processAgentCommand(RemoteCommand command);
     
     @Override
     protected void init() {
@@ -98,7 +99,31 @@ public abstract class DistributedRunner extends Runner implements EventListener<
         super.init();
         
         this.distributedInterface = new AsyncServerSocketInterface(manager.getProcessRemoteMonitorAddress(), null);
-        this.distributedInterface.CommandReceived.addListener(this);
+        this.distributedInterface.CommandReceived.addListener(this);        
+        this.distributedInterface.CommandAttempt.addListener(new EventListener<CommandSentEventArgs>() {
+            
+            @Override
+            public void onEvent(Object sender, CommandSentEventArgs e) {
+                
+                RemoteCommand command = e.getCommand();
+                if (command instanceof ProcessIt) {
+                    ProcessIt cmd = (ProcessIt) command;
+                    taskMonitor.addMessage(e.getAddress(), cmd.param);
+                }
+            }
+        });        
+        this.distributedInterface.CommandFailed.addListener(new EventListener<CommandSentEventArgs>() {
+            
+            @Override
+            public void onEvent(Object sender, CommandSentEventArgs e) {
+                
+                RemoteCommand command = e.getCommand();
+                if (command instanceof ProcessIt) {
+                    ProcessIt cmd = (ProcessIt) command;
+                    taskMonitor.removeMessage(e.getAddress(), cmd.param);
+                }
+            }
+        });
         
         this.manager = new ProcessesManager(ProccessNumber, null, SubMemory, SubStack, "", ProcessLoggerConfig);
         this.feeder = new AlloyFeeder(this.manager, this.distributedInterface, AlloyFeederBufferSize, AlloyFeederBackLogBufferSize);

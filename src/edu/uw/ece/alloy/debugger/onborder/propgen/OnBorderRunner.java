@@ -6,18 +6,19 @@ package edu.uw.ece.alloy.debugger.onborder.propgen;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.DistributedRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
+import edu.uw.ece.alloy.util.Utils;
 
 /**
  * @author fikayo
@@ -27,13 +28,14 @@ public class OnBorderRunner extends DistributedRunner {
     
     protected final static Logger logger = Logger.getLogger(OnBorderRunner.class.getName() + "--" + Thread.currentThread().getName());
     
+    private Deque<Object> results = new ArrayDeque<>();
+    
     /**
      * @param localSocket
      * @param remoteSocket
      */
     public OnBorderRunner(InetSocketAddress localSocket, InetSocketAddress remoteSocket) {
         super(localSocket, remoteSocket);
-        // TODO Auto-generated constructor stub
     }
     
     @Override
@@ -47,7 +49,7 @@ public class OnBorderRunner extends DistributedRunner {
             public void onEvent(Object sender, CommandReceivedEventArgs e) {
                 
                 RemoteCommand command = e.getCommand();
-                command.doAnalyze(feeder);
+                command.doAnalyze(feeder); // OnBorderRequest Command
             }
         });
         
@@ -55,6 +57,29 @@ public class OnBorderRunner extends DistributedRunner {
         // remote listener.
         this.inputInterface.sendMessage(new AnalyzeExternalReady());
         
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * edu.uw.ece.alloy.debugger.propgen.benchmarker.center.DistributedRunner#
+     * processAgentCommand(edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.
+     * RemoteCommand)
+     */
+    @Override
+    protected void processAgentCommand(RemoteCommand command) {
+        
+        boolean last = command.processResult(this.results); // HolaCompleteCommand
+                                                            // Command
+        if (last) {
+            // Remove command from remote task monitor
+            command.holaProcessDone(this.taskMonitor, this.results);
+            
+            // Get final candidate in the deque.
+            HolaProcessedResult finalResult = (HolaProcessedResult) results.peekLast();
+            // TODO: Send done command back to debugger
+        }
     }
     
     public static void main(String[] args) throws Exception {
@@ -75,21 +100,21 @@ public class OnBorderRunner extends DistributedRunner {
             localIP = InetAddress.getByName(args[1]);
             
             if (Configuration.IsInDeubbungMode)
-                logger.info("[" + Thread.currentThread().getName() + "] " + "The port is assigned to this process: " + localPort + " and the IP is: " + localIP);
+                logger.info(Utils.threadName() + "The port is assigned to this process: " + localPort + " and the IP is: " + localIP);
                 
             remotePort = Integer.parseInt(args[2]);
             remoteIP = InetAddress.getByName(args[3]);
             
             if (Configuration.IsInDeubbungMode)
-                logger.info("[" + Thread.currentThread().getName() + "] " + "The remote port is: " + remotePort + " and the IP is: " + remoteIP);
+                logger.info(Utils.threadName() + "The remote port is: " + remotePort + " and the IP is: " + remoteIP);
                 
         }
         catch (NumberFormatException nfe) {
-            logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]" + "The passed port is not acceptable: ", nfe.getMessage());
+            logger.log(Level.SEVERE, Utils.threadName() + "The passed port is not acceptable: ", nfe.getMessage());
             throw new RuntimeException("The port number is not an integer: " + nfe);
         }
         catch (UnknownHostException uhe) {
-            logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]" + "The passed IP is not acceptable: ", uhe.getMessage());
+            logger.log(Level.SEVERE, Utils.threadName() + "The passed IP is not acceptable: ", uhe.getMessage());
             throw new RuntimeException("The IP address is not acceptable: " + uhe);
         }
         
@@ -108,7 +133,7 @@ public class OnBorderRunner extends DistributedRunner {
         while (true) {
             
             Thread.sleep(10000);
-            sb.append("[" + Thread.currentThread().getName() + "]" + "Main is alive....\n");
+            sb.append(Utils.threadName() + "Main is alive....\n");
             
             for (ThreadToBeMonitored t : runner.getMonitoredThreads()) {
                 System.out.println("t->" + t);
@@ -123,7 +148,7 @@ public class OnBorderRunner extends DistributedRunner {
             logger.warning(sb.toString());
             sb.delete(0, sb.length() - 1);
             
-            Thread.currentThread().yield();
+            Thread.yield();
             System.gc();
         }
     }

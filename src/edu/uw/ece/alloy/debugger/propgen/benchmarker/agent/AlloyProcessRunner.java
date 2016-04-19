@@ -18,18 +18,18 @@ import edu.uw.ece.alloy.util.events.EventListener;
 
 public class AlloyProcessRunner extends Runner {
     
-    final public boolean RemoveSourceAfter = Boolean.parseBoolean(Configuration.getProp("do_clean_source_after_computation"));
-    final public int SelfMonitorRetryAttempt = Integer.valueOf(Configuration.getProp("self_monitor_retry_attempt"));
+    public final boolean RemoveSourceAfter = Boolean.parseBoolean(Configuration.getProp("do_clean_source_after_computation"));
+    public final int SelfMonitorRetryAttempt = Integer.valueOf(Configuration.getProp("self_monitor_retry_attempt"));
     // final static int SelfMonitorDoneRatio =
     // Integer.valueOf(Configuration.getProp("self_monitor_done_ratio"));
     
-    final public static File tmpDirectoryRoot = new File(Configuration.getProp("temporary_directory"));
-    final public File tmpDirectory;
+    public final static File tmpDirectoryRoot = new File(Configuration.getProp("temporary_directory"));
+    public final File tmpDirectory;
     
     protected final static Logger logger = Logger.getLogger(AlloyProcessRunner.class.getName() + "--" + Thread.currentThread().getName());
     
     private AlloyExecuter executer;
-    private PostProcess.FileWrite fileWriter;
+    private PostProcess.FileWriter fileWriter;
     private PostProcess.SocketWriter socketWriter;
     private PostProcess.DBWriter dbWriter;
     private PostProcess.CleanAfterProccessed cleanAfterProcessed;
@@ -37,17 +37,18 @@ public class AlloyProcessRunner extends Runner {
     private static AlloyProcessRunner self = null;
     
     private AlloyProcessRunner(final InetSocketAddress localPort, final InetSocketAddress remotePort) {
+        
         super(localPort, remotePort);
         
         // Set the local tmpDirectory
         this.tmpDirectory = new File(tmpDirectoryRoot, String.valueOf(localPort.getPort()));
         this.setUpFolders();
     }
-
+    
     public static AlloyProcessRunner getInstance(final InetSocketAddress localPort, final InetSocketAddress remotePort) {
         
         if (self != null) {
-            throw new RuntimeException("Alloy Processoer cannot be changed.");
+            throw new RuntimeException("Alloy Processor cannot be changed.");
         }
         
         self = new AlloyProcessRunner(localPort, remotePort);
@@ -82,9 +83,9 @@ public class AlloyProcessRunner extends Runner {
     public void start() {
         
         if (Configuration.IsInDeubbungMode)
-            logger.info("[" + Thread.currentThread().getName() + "] " + " Starting to create Alloy Processing objects");
-            
-        // Register threads to be monitored        
+            logger.info(Utils.threadName() + " Starting to create Alloy Processing objects");
+                    
+        // Register threads to be monitored
         this.addThreadToBeMonitored(this.executer);
         this.addThreadToBeMonitored(this.socketWriter);
         this.addThreadToBeMonitored(this.fileWriter);
@@ -99,8 +100,8 @@ public class AlloyProcessRunner extends Runner {
         
         if (RemoveSourceAfter) {
             this.cleanAfterProcessed = new PostProcess.CleanAfterProccessed();
-            this.executer.resgisterPostProcess(this.cleanAfterProcessed);
-            this.addThreadToBeMonitored(this.cleanAfterProcessed);            
+            this.executer.registerPostProcess(this.cleanAfterProcessed);
+            this.addThreadToBeMonitored(this.cleanAfterProcessed);
             this.cleanAfterProcessed.startThread();
         }
         
@@ -110,7 +111,7 @@ public class AlloyProcessRunner extends Runner {
             public void onEvent(Object sender, CommandReceivedEventArgs e) {
                 
                 RemoteCommand command = e.getCommand();
-                command.process(executer);
+                command.process(executer, tmpDirectory); // AnalyzeExternalRequest Command
             }
         });
         
@@ -122,33 +123,33 @@ public class AlloyProcessRunner extends Runner {
     protected ThreadMonitor getSelfMonitor() {
         
         return new ThreadMonitor(SelfMonitorInterval, 3);
-    }    
+    }
     
     @Override
     protected void init() {
         
         super.init();
         
-        this.executer = AlloyExecuter.getInstance();
-        this.fileWriter = new PostProcess.FileWrite();
-        this.socketWriter = new PostProcess.SocketWriter(this.remoteSocket);
-        this.dbWriter = new PostProcess.DBWriter();
+        this.executer = AlloyExecuter.instantiate(this.inputInterface);
+        this.fileWriter = new PostProcess.FileWriter();
+        this.socketWriter = new PostProcess.SocketWriter(this.localSocket, this.remoteSocket);
+        this.dbWriter = new PostProcess.DBWriter(this.localSocket);
         
-        this.executer.resgisterPostProcess(this.fileWriter);
-        this.executer.resgisterPostProcess(this.socketWriter);
-        this.executer.resgisterPostProcess(this.dbWriter);
-    }    
-
+        this.executer.registerPostProcess(this.fileWriter);
+        this.executer.registerPostProcess(this.socketWriter);
+        this.executer.registerPostProcess(this.dbWriter);
+    }
+    
     private void setUpFolders() {
         
         if (tmpDirectory.exists()) {
             try {
                 if (Configuration.IsInDeubbungMode)
-                    logger.info("[" + Thread.currentThread().getName() + "] " + " exists and has to be recreated." + tmpDirectory.getCanonicalPath());
+                    logger.info(Utils.threadName() + " exists and has to be recreated." + tmpDirectory.getCanonicalPath());
                 Utils.deleteRecursivly(tmpDirectory);
             }
             catch (IOException e) {
-                logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] " + "Unable to delete the previous files.", e);
+                logger.log(Level.SEVERE, Utils.threadName() + "Unable to delete the previous files.", e);
             }
         }
         
@@ -161,7 +162,7 @@ public class AlloyProcessRunner extends Runner {
     public static void main(String[] args) {
         
         if (Configuration.IsInDeubbungMode)
-            logger.info("[" + Thread.currentThread().getName() + "] " + "The process is started.");
+            logger.info(Utils.threadName() + "The alloy process agent has started.");
             
         if (args.length < 4)
             throw new RuntimeException("Enter the port number");
@@ -178,20 +179,20 @@ public class AlloyProcessRunner extends Runner {
             localPort = Integer.parseInt(args[0]);
             localIP = InetAddress.getByName(args[1]);
             if (Configuration.IsInDeubbungMode)
-                logger.info("[" + Thread.currentThread().getName() + "] " + "The port is assigned to this process: " + localPort + " and the IP is: " + localIP);
+                logger.info(Utils.threadName() + "The port is assigned to this process: " + localPort + " and the IP is: " + localIP);
                 
             remotePort = Integer.parseInt(args[2]);
             remoteIP = InetAddress.getByName(args[3]);;
             if (Configuration.IsInDeubbungMode)
-                logger.info("[" + Thread.currentThread().getName() + "] " + "The remote port is: " + remotePort + " and the IP is: " + remoteIP);
+                logger.info(Utils.threadName() + "The remote port is: " + remotePort + " and the IP is: " + remoteIP);
                 
         }
         catch (NumberFormatException nfe) {
-            logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]" + "The passed port is not acceptable: ", nfe.getMessage());
+            logger.log(Level.SEVERE, Utils.threadName() + "The passed port is not acceptable: ", nfe.getMessage());
             throw new RuntimeException("The port number is not an integer: " + nfe);
         }
         catch (UnknownHostException uhe) {
-            logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]" + "The passed IP is not acceptable: ", uhe.getMessage());
+            logger.log(Level.SEVERE, Utils.threadName() + "The passed IP is not acceptable: ", uhe.getMessage());
             throw new RuntimeException("The IP address is not acceptable: " + uhe);
         }
         
@@ -200,19 +201,21 @@ public class AlloyProcessRunner extends Runner {
         
         AlloyProcessRunner.getInstance(localSocket, remoteSocket).start();
         
-        // busywait
+        // busy wait
         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
         while (true) {
             try {
                 Thread.sleep(100000);
             }
             catch (InterruptedException e) {
-                logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]" + "Main loop is interrupted ", e);
+                logger.log(Level.SEVERE, Utils.threadName() + "Main loop is interrupted ", e);
                 break;
             }
+            
             if (Configuration.IsInDeubbungMode)
-                logger.info("[" + Thread.currentThread().getName() + "]" + "Main is alive.... ");
-            Thread.currentThread().yield();
+                logger.info(Utils.threadName() + "Main is alive.... ");
+            
+            Thread.yield();
         }
         
     }

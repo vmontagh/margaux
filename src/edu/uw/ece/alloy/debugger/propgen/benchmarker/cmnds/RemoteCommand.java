@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -17,6 +18,8 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AgentExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
@@ -95,7 +98,7 @@ public abstract class RemoteCommand implements Serializable {
             logger.finer(Utils.threadName() + "Inappropriate call for terminate");
     }
     
-    public void process(AlloyExecuter executer) {
+    public void process(AgentExecuter executer, File tmpDirectory) {
         
         if (Configuration.IsInDeubbungMode)
             logger.finer(Utils.threadName() + "Inappropriate call for process");
@@ -119,13 +122,19 @@ public abstract class RemoteCommand implements Serializable {
             logger.finer(Utils.threadName() + "Inappropriate call for process");
     }
     
+    public void holaProcessDone(RemoteProcessMonitor monitor, final Deque<Object> queue) {
+        
+        if (Configuration.IsInDeubbungMode)
+            logger.finer(Utils.threadName() + "Inappropriate call for process");
+    }
+    
     public void activateMe(ProcessesManager manager) {
         
         if (Configuration.IsInDeubbungMode)
             logger.finer(Utils.threadName() + "Inappropriate call for process");
     }
     
-    public void doAnalyze(final GeneratedStorage<AlloyProcessingParam> generatedStorage) {
+    public void doAnalyze(final GeneratedStorage<ProcessingParam> generatedStorage) {
         
         if (Configuration.IsInDeubbungMode)
             logger.finer(Utils.threadName() + "Inappropriate call for process");
@@ -155,5 +164,4 @@ public abstract class RemoteCommand implements Serializable {
             logger.finer(Utils.threadName() + "Inappropriate call for process");
         return true;
     }
-    
 }

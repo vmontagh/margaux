@@ -4,7 +4,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.net.InetSocketAddress;
-import java.util.LinkedList;
 import java.util.List;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;

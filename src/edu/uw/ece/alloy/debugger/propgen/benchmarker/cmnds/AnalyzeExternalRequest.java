@@ -11,13 +11,14 @@ import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzerInterface;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 
 /**
  * The command initiates a series of actions to analyze an expression. It should
  * be created in the Debugger and performs actions in the server
  * 
  * @author vajih
- *        
+ *         
  */
 public class AnalyzeExternalRequest extends RemoteCommand {
     
@@ -50,11 +51,11 @@ public class AnalyzeExternalRequest extends RemoteCommand {
         return "AnalyzeAlloy [doVAC=" + doVAC + ", doIFF=" + doIFF + ", doIMPLY=" + doIMPLY + ", doAND=" + doAND + ", relationalPropModuleOriginal=" + relationalPropModuleOriginal + ", temporalPropModuleOriginal=" + temporalPropModuleOriginal + ", toBeAnalyzedCode=" + toBeAnalyzedCode + "]";
     }
     
-    public void doAnalyze(final GeneratedStorage<AlloyProcessingParam> generatedStorage) {
+    @Override
+    public void doAnalyze(final GeneratedStorage<ProcessingParam> generatedStorage) {
         
         try {
-            ExpressionPropertyGenerator.Builder.getInstance().initiateAndCreate(generatedStorage, new File(toBeAnalyzedCode), new File(relationalPropModuleOriginal), new File(temporalPropModuleOriginal), doVAC, doIFF, doIMPLY, doAND).startThread();
-            
+            ExpressionPropertyGenerator.Builder.getInstance().initiateAndCreate(generatedStorage, new File(toBeAnalyzedCode), new File(relationalPropModuleOriginal), new File(temporalPropModuleOriginal), doVAC, doIFF, doIMPLY, doAND).startThread();            
         }
         catch (Err e) {
             // TODO Auto-generated catch block

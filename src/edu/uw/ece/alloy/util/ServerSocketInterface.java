@@ -27,14 +27,14 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
     
     protected final static Logger logger = Logger.getLogger(ServerSocketInterface.class.getName() + "--" + Thread.currentThread().getName());
     
-    public final int SelfMonitorInterval = Integer.parseInt(Configuration.getProp("self_monitor_interval"));
-    
     protected final Thread listeningThread;
     protected final InetSocketAddress hostAddress;
     protected final InetSocketAddress remoteAddress;
     protected final BlockingQueue<RemoteCommand> queue;
     
     protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
+    
+    private int maxRetryAttempts;
     
     public ServerSocketInterface(final int hostPort, final int remotePort) {
         this(new InetSocketAddress(hostPort), new InetSocketAddress(remotePort));
@@ -49,6 +49,7 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         this.remoteAddress = remoteAddress;
         this.listeningThread = new Thread(this);
         this.queue = new LinkedBlockingQueue<>();
+        this.maxRetryAttempts = 1;
         
         this.ListeningStarted = new Event<>();
         this.CommandSent = new Event<>();
@@ -73,6 +74,16 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
         return this.remoteAddress;
     }
     
+    public int getLivenessFailed() {
+        
+        return this.livenessFailed.get();
+    }
+    
+    public void setMaxRetryAttempts(int maxRetryAttempts) {
+        
+        this.maxRetryAttempts = maxRetryAttempts;
+    }
+    
     public void startThread() {
         
         getThread().start();
@@ -94,7 +105,16 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
     public void actionOnNotStuck() {
         
         this.sendLivenessMessage();
-        this.haltIfCantProceed(/* SelfMonitorRetryAttempt */ 1);
+        this.haltIfCantProceed(this.maxRetryAttempts);
+    }
+    
+    public void haltIfCantProceed(final int maxRetryAttepmpts) {
+        
+        // Recovery was not enough, the whole processes has to be shut-down
+        if (livenessFailed.get() > maxRetryAttepmpts) {
+            logger.severe(Utils.threadName() + livenessFailed + " liveness message attempts does not prceeed, So the process is exited.");
+            Runtime.getRuntime().halt(0);
+        }
     }
     
     public void sendMessage(RemoteCommand command) {
@@ -126,9 +146,14 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
     
     public void sendLivenessMessage() {
         
+        this.sendLivenessMessage(-1, -1);
+    }
+    
+    public void sendLivenessMessage(int processed, int toBeProcessed) {
+        
         try {
             
-            IamAlive iamAlive = new IamAlive(this.getHostAddress(), System.currentTimeMillis(), -1, -1);
+            IamAlive iamAlive = new IamAlive(this.getHostAddress(), System.currentTimeMillis(), processed, toBeProcessed);
             iamAlive.sendMe(this.getRemoteAddress());
             livenessFailed.set(0);
             
@@ -262,15 +287,6 @@ public abstract class ServerSocketInterface implements Runnable, ThreadToBeMonit
             
     }
     
-    protected void haltIfCantProceed(final int maxRetryAttepmpts) {
-        
-        // Recovery was not enough, the whole processes has to be shut-down
-        if (livenessFailed.get() > maxRetryAttepmpts) {
-            logger.severe(Utils.threadName() + livenessFailed + " liveness message attempts does not prceeed, So the process is exited.");
-            Runtime.getRuntime().halt(0);
-        }
-    }
-
     protected void onListeningStarted() {
         
         Event<EventArgs> event = this.ListeningStarted;

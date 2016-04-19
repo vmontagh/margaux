@@ -18,22 +18,22 @@ public class IamAlive extends RemoteCommand {
 
 	public final InetSocketAddress PID;
 	public long time;
-	public int porcessed;
+	public int processed;
 	public int toBeProcessed;
 
-	public IamAlive(final InetSocketAddress pID, long time, int porcessed,
+	public IamAlive(final InetSocketAddress pID, long time, int processed,
 			int toBeProcessed) {
 		super();
 		PID = pID;
 		this.time = time;
-		this.porcessed = porcessed;
+		this.processed = processed;
 		this.toBeProcessed = toBeProcessed;
 	}
 
 	@Override
 	public String toString() {
 		return "IamAlive [PID=" + PID + ", time=" + time + ", porcessed="
-				+ porcessed + ", toBeProcessed=" + toBeProcessed + "]";
+				+ processed + ", toBeProcessed=" + toBeProcessed + "]";
 	}
 
 	public void updatePorcessorLiveness(final ProcessesManager manager) {
@@ -50,7 +50,7 @@ public class IamAlive extends RemoteCommand {
 		} else {
 			// Does not need to be done atomically.
 			manager.changeDoingTasks(PID, toBeProcessed);
-			manager.changeDoneTasks(PID, porcessed);
+			manager.changeDoneTasks(PID, processed);
 			manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
 			manager.changeLastLiveTimeRecieved(PID, time);
 			

@@ -3,6 +3,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.hola.agent.Utils;
 
 public class TemporalAnalyzerRunner extends DistributedRunner {
@@ -33,6 +34,18 @@ public class TemporalAnalyzerRunner extends DistributedRunner {
         this.propGenerator = new TemporalPropertiesGenerator(this.feeder);
         this.addThreadToBeMonitored(this.propGenerator);
         this.propGenerator.startThread();
+    }
+    
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.debugger.propgen.benchmarker.center.DistributedRunner#processAgentCommand(edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand)
+     */
+    @Override
+    protected void processAgentCommand(RemoteCommand command) {
+        
+        command.killProcess(this.manager);
+        command.updatePorcessorLiveness(this.manager);
+        command.processDone(this.taskMonitor);
+        command.activateMe(this.manager);
     }
     
     public static void main(String[] args) throws Exception {

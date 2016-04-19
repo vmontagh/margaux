@@ -73,6 +73,18 @@ public class ExpressionAnalyzerRunner extends DistributedRunner {
         
     }
     
+    /* (non-Javadoc)
+     * @see edu.uw.ece.alloy.debugger.propgen.benchmarker.center.DistributedRunner#processAgentCommand(edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand)
+     */
+    @Override
+    protected void processAgentCommand(RemoteCommand command) {
+        
+        command.killProcess(this.manager); // Suicided
+        command.updatePorcessorLiveness(this.manager); // IAmAlive
+        command.processDone(this.taskMonitor); // AlloyProcessed
+        command.activateMe(this.manager); // ProcessReady
+    }
+    
     public static void main(String[] args) throws Exception {
         
         if (args.length < 4)

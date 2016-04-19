@@ -56,7 +56,7 @@ public class ExpressionPropertyGenerator
 																							  * "temporal_properties_tagged"))
 																							  * ;
 																							  */
-	final GeneratedStorage<AlloyProcessingParam> generatedStorage;
+	final GeneratedStorage<ProcessingParam> generatedStorage;
 
 	final List<Sig.Field> fields;
 	final List<Open> opens;
@@ -110,7 +110,7 @@ public class ExpressionPropertyGenerator
 	 * Boolean.valueOf(Configuration.getProp("doAND"))); }
 	 */
 	public ExpressionPropertyGenerator(
-			final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+			final GeneratedStorage<ProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, boolean doVAC, boolean doIFF,
 			boolean doIMPLY, boolean doAND) throws Err, IOException {
@@ -123,7 +123,7 @@ public class ExpressionPropertyGenerator
 	}
 
 	public ExpressionPropertyGenerator(
-			final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+			final GeneratedStorage<ProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, final Set<String> toBeCheckProperties,
 			Set<String> excludedChecks, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, boolean doVAC, boolean doIFF,
@@ -257,7 +257,7 @@ public class ExpressionPropertyGenerator
 	}
 
 	void generateTemporalChekers(Set<String> propertyNames,
-			GeneratedStorage<AlloyProcessingParam> result) throws Err {
+			GeneratedStorage<ProcessingParam> result) throws Err {
 
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(temporalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
@@ -335,7 +335,7 @@ public class ExpressionPropertyGenerator
 	}
 
 	void generateRelationalChekers(Set<String> propertyNames,
-			GeneratedStorage<AlloyProcessingParam> result) throws Err {
+			GeneratedStorage<ProcessingParam> result) throws Err {
 		// Read the tagged relational properties library.
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(relationalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
@@ -492,7 +492,7 @@ public class ExpressionPropertyGenerator
 		};
 
 		public ExpressionPropertyGenerator initiateAndCreate(
-				final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+				final GeneratedStorage<ProcessingParam> generatedStorage,
 				File toBeAnalyzedCode, File relationalPropModuleOriginal,
 				File temporalPropModuleOriginal, boolean doVAC, boolean doIFF,
 				boolean doIMPLY, boolean doAND) throws Err, IOException {
@@ -513,7 +513,7 @@ public class ExpressionPropertyGenerator
 		}
 
 		public ExpressionPropertyGenerator create(
-				final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+				final GeneratedStorage<ProcessingParam> generatedStorage,
 				final Set<String> toBeCheckProperties, Set<String> excludedChecks)
 						throws Err, IOException {
 
