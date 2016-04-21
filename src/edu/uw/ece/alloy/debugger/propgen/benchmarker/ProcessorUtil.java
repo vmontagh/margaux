@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -119,6 +120,54 @@ public class ProcessorUtil {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
+	 * Create a process on another JVM.
+	 * 
+	 * @param SubMemory
+	 * @param SubStack
+	 * @param ProcessLoggerConfig
+	 * @param remoteSocket
+	 *          The port that clazz on the new JVM is listening to.
+	 * @param localSocket
+	 *          The port that current JVM is listening to.
+	 * @param clazz
+	 *          The class contains main on another JVM
+	 * @return
+	 * @throws IOException
+	 */
+	public static <T> Process createNewJVM(int SubMemory, int SubStack,
+			String ProcessLoggerConfig, InetSocketAddress remoteSocket,
+			InetSocketAddress localSocket, Class<T> clazz) throws IOException {
+
+		final String java = "java";
+		final String debug = Boolean.parseBoolean(System.getProperty("debug"))
+				? "yes" : "no";
+
+		try {
+			ProcessBuilder pb = new ProcessBuilder(java, "-Xmx" + SubMemory + "m",
+					"-Xss" + SubStack + "k", "-Ddebug=" + debug,
+					"-Djava.util.logging.config.file=" + ProcessLoggerConfig, "-cp",
+					System.getProperty("java.class.path"), clazz.getName(),
+					"" + remoteSocket.getPort(),
+					"" + remoteSocket.getAddress().getHostAddress(),
+					"" + localSocket.getPort(),
+					"" + localSocket.getAddress().getHostAddress());
+
+			pb.redirectOutput(Redirect.INHERIT);
+			pb.redirectError(Redirect.INHERIT);
+			return pb.start();
+		
+		} catch (IOException e) {
+			logger
+					.log(Level.SEVERE,
+							"[" + Thread.currentThread().getName() + "]"
+									+ "Not able to create a new process on port: " + remoteSocket,
+							e);
+			throw e;
 		}
 	}
 

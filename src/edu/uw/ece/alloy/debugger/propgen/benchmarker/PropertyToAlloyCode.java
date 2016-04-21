@@ -503,11 +503,11 @@ public class PropertyToAlloyCode implements Serializable {
 	 *  The return type is false. Means stop any furtherAnaylsis and take the result as
 	 *  the inferred propertied
 	 */
-	public List<String> getInferedProperties(boolean sat){
+	public List<String> getInferedProperties(int sat){
 		throw new RuntimeException("Invalid call!");
 	}
 	
-	public List<PropertyToAlloyCode> getInferedPropertiesCoder(boolean sat){
+	public List<PropertyToAlloyCode> getInferedPropertiesCoder(int sat){
 		throw new RuntimeException("Invalid call!");
 	}
 	
@@ -518,7 +518,7 @@ public class PropertyToAlloyCode implements Serializable {
 	 * @param sat
 	 * @return
 	 */
-	public List<String> getToBeCheckedProperties(boolean sat){
+	public List<String> getToBeCheckedProperties(int sat){
 		throw new RuntimeException("Invalid call!");
 	}
 	
@@ -552,9 +552,12 @@ public class PropertyToAlloyCode implements Serializable {
 	
 	/**
 	 * What would be the desired sat answer for the property to be checked.
+	 * sat == 1 SAT
+	 * sat == -1 UnSAT
+	 * sat == 0 Unknown
 	 * @return
 	 */
-	public boolean desiredSAT(){
+	public boolean isDesiredSAT(int sat){
 		throw new RuntimeException("Invalid call!");
 	}
 }

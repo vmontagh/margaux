@@ -67,7 +67,7 @@ public class AlloyProcessed extends RemoteCommand {
 		System.out.println("Result is:" +result.sat +"-------" + result.params.alloyCoder.predBodyA + result.params.alloyCoder.srcNameOperator() + result.params.alloyCoder.predNameB + "   "+result.getClass());
 		
 		// Send correct result. i.e. no counter-example or sat == 0
-		if ((result.sat == 1) == result.params.alloyCoder.desiredSAT()) {
+		if (result.params.alloyCoder.isDesiredSAT(result.sat)) {
 			System.out.println("result on the server is:"+result);
 			try {
 				(new AnalyzeExternalResult(result))

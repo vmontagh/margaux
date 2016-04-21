@@ -28,6 +28,7 @@ import edu.mit.csail.sdg.alloy4compiler.translator.TranslateDeclarativeConstrian
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import kodkod.ast.Formula;
 
 /**
@@ -324,6 +325,7 @@ public class A4CommandExecuter {
 	public static void main(String[] args) throws Err {
 
 		MyReporter rep = new MyReporter();
+		//AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
 		String file = "/Users/vajih/Documents/workspace-git/alloy/relational_props/tmp/49162/predName___1960133549_IMPLY_functional.als";
 		A4CommandExecuter.getInstance().run( file,rep,PropertyToAlloyCode.COMMAND_BLOCK_NAME);
 

@@ -40,7 +40,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReques
 public class Debugger {
 
 	protected final static Logger logger = Logger.getLogger(
-			Debugger.class.getName() + "--" + Thread.currentThread().getName());;
+			Debugger.class.getName() + "--" + Thread.currentThread().getName());
 
 	public final File inputSource;
 

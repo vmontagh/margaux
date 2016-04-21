@@ -13,6 +13,12 @@ import edu.mit.csail.sdg.alloy4.Err;
  */
 public class DebuggerRunner {
 
+	
+	
+	public void start() throws Exception {
+		
+	}
+	
 	/**
 	 * @param args
 	 * @throws InterruptedException 

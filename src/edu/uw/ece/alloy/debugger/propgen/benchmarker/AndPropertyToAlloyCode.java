@@ -93,8 +93,8 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 	/**
 	 * an example should be found.
 	 */
-	public boolean desiredSAT() {
-		return true;
+	public boolean isDesiredSAT(int sat){
+		return sat == 1;
 	}
 
 }

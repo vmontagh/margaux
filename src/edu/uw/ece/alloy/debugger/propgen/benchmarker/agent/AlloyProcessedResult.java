@@ -6,7 +6,9 @@ import java.util.concurrent.ConcurrentMap;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.MyReporter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 
 public class AlloyProcessedResult extends MyReporter {
 
@@ -68,23 +70,17 @@ public class AlloyProcessedResult extends MyReporter {
 	public String asRecordHeader() {
 		return "trasnalationTime,trasnalationTime,totalVaraibles,clauses,solveTime,evalTime,evalInsts,sat";
 	}
-	
+
 	/**
 	 * return a copy of the result with actual property call
 	 * 
 	 * @return
 	 */
-	public AlloyProcessedResult updatePropertyCall(){
+	public AlloyProcessedResult updatePropertyCall() {
 		return this;
 	}
 
 	public static class InferredResult extends AlloyProcessedResult {
-
-		// A map from (propertyName,field/Name) to property call.
-		// Once a property is inferred, its call does not necessarily have the
-		// same parameters as the original has. So that, the property calls
-		// are cached, then used for changing the inferred properties.
-		final public static ConcurrentMap<Pair<String, String>, String> propertyCalls = new ConcurrentHashMap<>();
 
 		public InferredResult(AlloyProcessingParam params) {
 			super(params);
@@ -96,7 +92,7 @@ public class AlloyProcessedResult extends MyReporter {
 			this.evalTime = 0;
 			this.sat = 0;
 		}
-		
+
 		public AlloyProcessedResult updatePropertyCall() {
 			AlloyProcessingParam param = params;
 
@@ -104,23 +100,28 @@ public class AlloyProcessedResult extends MyReporter {
 					params.alloyCoder.field);
 			Pair<String, String> predBField = new Pair<>(params.alloyCoder.predNameB,
 					params.alloyCoder.field);
-
-			if (propertyCalls.containsKey(predAField)) {
+			;
+			if (ExpressionPropertyGenerator.Builder.getInstance()
+					.lastCreated().patternToProperty.hasProperty(predAField)) {
 				return new InferredResult(param.createIt(params.alloyCoder.createIt(
 						params.alloyCoder.predBodyA, params.alloyCoder.predBodyB,
-						propertyCalls.get(predAField), params.alloyCoder.predCallB,
-						params.alloyCoder.predNameA, params.alloyCoder.predNameB,
-						params.alloyCoder.getDependencies(),
+						ExpressionPropertyGenerator.Builder.getInstance()
+								.lastCreated().patternToProperty.getProperty(predAField),
+						params.alloyCoder.predCallB, params.alloyCoder.predNameA,
+						params.alloyCoder.predNameB, params.alloyCoder.getDependencies(),
 						params.alloyCoder.getParamCreator(), params.alloyCoder.header,
 						params.alloyCoder.scope, params.alloyCoder.field)));
-			} else if (propertyCalls.containsKey(predBField)) {
-				return new InferredResult(param.createIt(params.alloyCoder.createIt(
-						params.alloyCoder.predBodyA, params.alloyCoder.predBodyB,
-						params.alloyCoder.predCallA, propertyCalls.get(predBField),
-						params.alloyCoder.predNameA, params.alloyCoder.predNameB,
-						params.alloyCoder.getDependencies(),
-						params.alloyCoder.getParamCreator(), params.alloyCoder.header,
-						params.alloyCoder.scope, params.alloyCoder.field)));
+			} else if (ExpressionPropertyGenerator.Builder.getInstance()
+					.lastCreated().patternToProperty.hasProperty(predBField)) {
+				return new InferredResult(param
+						.createIt(params.alloyCoder.createIt(params.alloyCoder.predBodyA,
+								params.alloyCoder.predBodyB, params.alloyCoder.predCallA,
+								ExpressionPropertyGenerator.Builder.getInstance()
+										.lastCreated().patternToProperty.getProperty(predBField),
+								params.alloyCoder.predNameA, params.alloyCoder.predNameB,
+								params.alloyCoder.getDependencies(),
+								params.alloyCoder.getParamCreator(), params.alloyCoder.header,
+								params.alloyCoder.scope, params.alloyCoder.field)));
 			} else {
 				return this;
 			}
@@ -153,10 +154,9 @@ public class AlloyProcessedResult extends MyReporter {
 		 * @return
 		 */
 		public static InferredResult createInferredResult(
-				AlloyProcessedResult inferredFrom, PropertyToAlloyCode coder,
-				boolean sat) {
+				AlloyProcessedResult inferredFrom, PropertyToAlloyCode coder, int sat) {
 			return new InferredResult(inferredFrom.params.createIt(coder), 0, 0, 0, 0,
-					0, 0, sat ? 1 : 0);
+					0, 0, sat);
 		}
 
 		public AlloyProcessedResult changeParams(
