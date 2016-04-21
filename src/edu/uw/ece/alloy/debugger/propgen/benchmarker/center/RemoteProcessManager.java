@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,6 +57,8 @@ public class RemoteProcessManager<T /*
 	final public InetSocketAddress localSocket;
 	final public int maxActiveProcessNumbers;
 	final public int maxDoingTasks;
+	
+	final public Optional<Class<T>> remoteRunnerClass;
 	/*
 	 * How many message are sent to a remote process and waiting for the response
 	 */
@@ -69,11 +72,26 @@ public class RemoteProcessManager<T /*
 	final ConcurrentMap<RemoteProcess, RemoteProcessRecord> deadProcesses = new ConcurrentHashMap<>();
 
 	public RemoteProcessManager(InetSocketAddress localSocket,
-			int maxActiveProcessNumbers, int maxDoingTasks) {
+			int maxActiveProcessNumbers, int maxDoingTasks, Class<T> remoteRunnerClass) {
 		// InetSocketAddress is immutable.
 		this.localSocket = localSocket;
 		this.maxActiveProcessNumbers = maxActiveProcessNumbers;
 		this.maxDoingTasks = maxDoingTasks;
+		this.remoteRunnerClass = Optional.ofNullable(remoteRunnerClass);
+	}
+	
+	public RemoteProcessManager(InetSocketAddress localSocket,
+			int maxActiveProcessNumbers, int maxDoingTasks, Optional<Class<T>> remoteRunnerClass) {
+		// InetSocketAddress is immutable.
+		this.localSocket = localSocket;
+		this.maxActiveProcessNumbers = maxActiveProcessNumbers;
+		this.maxDoingTasks = maxDoingTasks;
+		this.remoteRunnerClass = remoteRunnerClass;
+	}
+	
+	public RemoteProcessManager(InetSocketAddress localSocket,
+			int maxActiveProcessNumbers, int maxDoingTasks) {
+		this(localSocket, maxActiveProcessNumbers, maxDoingTasks, Optional.empty());
 	}
 
 	final Process bootProcess(RemoteProcess remoteSocket, Class<T> clazz)
@@ -83,6 +101,9 @@ public class RemoteProcessManager<T /*
 	}
 
 	final Process bootProcess(RemoteProcess remoteSocket) throws IOException {
+		if (this.remoteRunnerClass.isPresent()){
+			return bootProcess(remoteSocket, remoteRunnerClass.get() );
+		}
 		return bootProcess(remoteSocket, getGenericTypeAsClass());
 	}
 
