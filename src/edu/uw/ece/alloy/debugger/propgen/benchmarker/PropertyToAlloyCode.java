@@ -533,13 +533,17 @@ public class PropertyToAlloyCode implements Serializable {
 	 * @return
 	 */
 	public String getPredName(){
-		return (predCallA.indexOf("___") >= 0 ?
+		return 
+				predCallA + commandOperator() + predCallB;
+				
+				
+				/*(predCallA.indexOf("___") >= 0 ?
 						predCallA.substring(0, predCallA.indexOf("___")) :
 							predCallA) + 
 					 commandOperator() +
 					 (predCallB.indexOf("___") >= 0 ?
 						predCallB.substring(0, predCallB.indexOf("___")) :
-							predCallB);
+							predCallB);*/
 	}
 	
 	public List<Dependency> getDependencies(){

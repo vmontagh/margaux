@@ -1,9 +1,5 @@
 package edu.uw.ece.alloy.util.events;
 
-import java.net.InetSocketAddress;
-
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
-
 /**
  * Represents a listener which is fired when an event is invoked.
  * 

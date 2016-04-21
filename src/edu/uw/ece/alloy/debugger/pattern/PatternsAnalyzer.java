@@ -14,9 +14,11 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalLiveness;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalRequest;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
+import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.ServerSocketListener;
 
 /**
@@ -33,7 +35,7 @@ import edu.uw.ece.alloy.util.ServerSocketListener;
  * @author vajih
  *
  */
-public class PatternsAnalyzer extends ServerSocketListener {
+public class PatternsAnalyzer extends ServerSocketInterface {
 
 	// Very temporary to determine the status of the analyzer from analyzing to IDLE.
 	public static Boolean analyzing = false;
@@ -86,42 +88,6 @@ public class PatternsAnalyzer extends ServerSocketListener {
 	public void changePriority(int newPriority) {
 		// TODO Auto-generated method stub
 
-	}
-
-	protected void sendLivenessMessage() {
-		try {
-			IamAlive iamAlive = new IamAlive(this.getHostAddress(), System.currentTimeMillis(),
-					-1, -1);
-			iamAlive.sendMe(this.getRemoteAddress());
-			livenessFailed.set(0);
-			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]"
-						+ "A live message" + iamAlive);
-		} catch (Exception e) {
-			logger.log(Level.SEVERE,
-					"[" + Thread.currentThread().getName() + "]"
-							+ "Failed to send a live signal this is " + livenessFailed
-							+ " attempt",
-					e);
-			livenessFailed.incrementAndGet();
-		}
-	}
-
-	protected void haltIfCantProceed(final int maxRetryAttepmpts) {
-		// recovery was not enough, the whole processes has to be shut-down
-		if (livenessFailed.get() > maxRetryAttepmpts) {
-			logger.severe("[" + Thread.currentThread().getName() + "]"
-					+ livenessFailed
-					+ " liveness message, attempts does not prceeed, So the process is exited.");
-			Runtime.getRuntime().halt(0);
-		}
-	}
-
-	@Override
-	public void actionOnNotStuck() {
-		sendLivenessMessage();
-		haltIfCantProceed(
-				/* AlloyProcessRunner.getInstance().SelfMonitorRetryAttempt */ 1);
 	}
 
 	@Override

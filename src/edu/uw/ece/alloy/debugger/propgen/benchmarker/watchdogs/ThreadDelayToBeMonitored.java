@@ -1,5 +1,10 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
+/**
+ * @deprecated
+ * @author vajih
+ *
+ */
 public interface ThreadDelayToBeMonitored {
 
 	public void startThread();

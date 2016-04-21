@@ -5,8 +5,10 @@ package edu.uw.ece.alloy.debugger.knowledgebase;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,25 +41,41 @@ public class PatternToProperty {
 	final public File relationalPropModuleOriginal;
 	final public File temporalPropModuleOriginal;
 
-	/* Map the filed name to its actual */
-	final Map<String, Field> nameToField;
 	/*
-	 * A map from (propertyName,field/Name) to property call. Once a property is
-	 * inferred, its call does not necessarily have the same parameters as the
-	 * original has. So that, the property calls are cached, then used for
-	 * changing the inferred properties.
+	 * A map from (patternName,field/Name) to property(i.e. property call). Once a
+	 * property is inferred, its call does not necessarily have the same
+	 * parameters as the original has. So that, the property calls are cached,
+	 * then used for changing the inferred properties.
 	 */
-	final Map<Pair<String, String>, String> propertyCalls;
+	final public Map<Pair<String, String>, String> propertyCalls;
+	/*
+	 * all fields exist in the fields. No matter what field is passed to be
+	 * processed.
+	 */
+	final List<Field> fields;
 
 	protected static PatternToProperty self = null;
 
 	public PatternToProperty(File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, File tobeAnalyzedCode) throws Err {
+		this(relationalPropModuleOriginal, temporalPropModuleOriginal,
+				tobeAnalyzedCode, Optional.empty());
+	}
+
+	public PatternToProperty(File relationalPropModuleOriginal,
+			File temporalPropModuleOriginal, File tobeAnalyzedCode, String fieldName)
+					throws Err {
+		this(relationalPropModuleOriginal, temporalPropModuleOriginal,
+				tobeAnalyzedCode, Optional.ofNullable(fieldName));
+	}
+
+	public PatternToProperty(File relationalPropModuleOriginal,
+			File temporalPropModuleOriginal, File tobeAnalyzedCode,
+			Optional<String> fieldName) throws Err {
 		this.relationalPropModuleOriginal = relationalPropModuleOriginal;
 		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
 
-		this.nameToField = new ConcurrentHashMap<>();
-		this.propertyCalls = new ConcurrentHashMap<>();
+		Map<Pair<String, String>, String> propertyCalls = new ConcurrentHashMap<>();
 
 		// try make all all the properties from the patterns stored in the
 		// the filed and fields in the
@@ -67,25 +85,46 @@ public class PatternToProperty {
 					.parse(tobeAnalyzedCode.getAbsolutePath(), A4Reporter.NOP));
 
 			List<Field> fields = new ArrayList<>();
+			// just for making a log.
+			List<Field> allfields = new ArrayList<>();
 			for (Sig sig : world.getAllSigs()) {
-				for (Field field : sig.getFields())
-					fields.add(field);
+				for (Field field : sig.getFields()) {
+					if (fieldName.isPresent() && fieldName.equals(field.label))
+						fields.add(field);
+					allfields.add(field);
+				}
 			}
+
+			if (fieldName.isPresent()) {
+				if (fields.isEmpty()) {
+					logger.severe(Utils.threadName() + "Field:" + fieldName
+							+ " not found in:" + allfields);
+					throw new RuntimeException(
+							"Field:" + fieldName + " not found in:" + allfields);
+				}
+			} else {
+				fields.addAll(allfields);
+			}
+
+			this.fields = Collections.unmodifiableList(allfields);
+
 			generateRelationalPropertyCalls(propertyCalls, fields);
 
 			List<Open> opens = world.getOpens();
 			generateTemporalPropertyCalls(propertyCalls, fields, opens);
 
+			this.propertyCalls = Collections.unmodifiableMap(propertyCalls);
+			
 		} catch (Err e) {
 			logger.log(Level.WARNING,
 					Utils.threadName() + "Failling to add make properties", e);
 			throw e;
 		}
-
 	}
 
 	/**
 	 * Within each JVM one instance is enough
+	 * 
 	 * @param relationalPropModuleOriginal
 	 * @param temporalPropModuleOriginal
 	 * @param tobeAnalyzedCode
@@ -188,13 +227,23 @@ public class PatternToProperty {
 
 		return propertyCalls.get(patternNamefieldName);
 	}
-	
-	public boolean hasProperty(Pair<String, String> patternNamefieldName){
+
+	public boolean hasProperty(Pair<String, String> patternNamefieldName) {
 		return propertyCalls.containsKey(patternNamefieldName);
 	}
-	
-	public boolean hasProperty(String patternName, String fieldName){
+
+	public boolean hasProperty(String patternName, String fieldName) {
 		return hasProperty(new Pair<String, String>(patternName, fieldName));
 	}
-	
+
+	/**
+	 * Given a field name, a field object with the same label is returned.
+	 * 
+	 * @param fieldName
+	 * @return
+	 */
+	public Optional<Field> getField(String fieldName) {
+		return fields.stream().filter(f -> f.label.equals(fieldName)).findAny();
+	}
+
 }
