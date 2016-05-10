@@ -200,7 +200,6 @@ public class Utils {
 
 	public static void moveFiles(final File[] files, final File dest) {
 		assert dest.isDirectory();
-		System.out.println(files.length);
 		for (final File file : files) {
 
 			try {
@@ -469,4 +468,5 @@ public class Utils {
 
 		return pb.start();
 	}
+	
 }

@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+@Deprecated
 public class ProcessSelfMonitor implements Runnable {
 
 	public final int monitorInterval;

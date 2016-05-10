@@ -39,10 +39,11 @@ import edu.uw.ece.alloy.util.Utils;
  * @author vajih
  *
  */
-public class RemoteProcessManager<T /*
+public class RemoteProcessManager /*
 																		 * TODO it should only run Runner objects
 																		 * "extends [Something]Runner"
-																		 */> implements RemoteProcessLogger{
+																		 */
+		implements RemoteProcessLogger, ProcessDistributer {
 
 	protected final static Logger logger = Logger.getLogger(
 			RemoteProcessManager.class.getName() + "--" + Utils.threadName());;
@@ -54,57 +55,81 @@ public class RemoteProcessManager<T /*
 	final static String ProcessLoggerConfig = Configuration
 			.getProp("process_logger_config");
 
+	public final static int MaxFeedThreashold = Integer
+			.valueOf(Configuration.getProp("max_feed_treashold"));
+	final static int ProccessNumber = Integer
+			.parseInt(Configuration.getProp("processes_number"));
+
 	final public InetSocketAddress localSocket;
 	final public int maxActiveProcessNumbers;
 	final public int maxDoingTasks;
-	
-	final public Optional<Class<T>> remoteRunnerClass;
+
+	/**
+	 * All access to remoteRunnerClass has to be done through getRemoteRunnerClass.
+	 * This property might be null.
+	 */
+	final protected Class remoteRunnerClass;
 	/*
 	 * How many message are sent to a remote process and waiting for the response
 	 */
-	final ConcurrentMap<RemoteProcess, AtomicLong> waitingMaessgesCount = new ConcurrentHashMap<>();
+	// final ConcurrentMap<RemoteProcess, AtomicLong> waitingMaessgesCount = new
+	// ConcurrentHashMap<>();
 	/* How many messages are sent and responded */
-	final ConcurrentMap<RemoteProcess, AtomicLong> allMaessgesCount = new ConcurrentHashMap<>();
+	// final ConcurrentMap<RemoteProcess, AtomicLong> allMaessgesCount = new
+	// ConcurrentHashMap<>();
 
 	/* Active process */
 	final ConcurrentMap<RemoteProcess, RemoteProcessRecord> activeProcesses = new ConcurrentHashMap<>();
 	/* Process that */
 	final ConcurrentMap<RemoteProcess, RemoteProcessRecord> deadProcesses = new ConcurrentHashMap<>();
 
+	
 	public RemoteProcessManager(InetSocketAddress localSocket,
-			int maxActiveProcessNumbers, int maxDoingTasks, Class<T> remoteRunnerClass) {
+			Class remoteRunnerClass) {
 		// InetSocketAddress is immutable.
-		this.localSocket = localSocket;
-		this.maxActiveProcessNumbers = maxActiveProcessNumbers;
-		this.maxDoingTasks = maxDoingTasks;
-		this.remoteRunnerClass = Optional.ofNullable(remoteRunnerClass);
+		this(localSocket, ProccessNumber, MaxFeedThreashold,
+				remoteRunnerClass);
+	}
+	
+	public RemoteProcessManager(Class remoteRunnerClass) {
+		this(ProcessorUtil.findEmptyLocalSocket(),ProccessNumber, MaxFeedThreashold, remoteRunnerClass);
+	}
+	
+	public RemoteProcessManager() {
+		this(ProcessorUtil.findEmptyLocalSocket(),ProccessNumber, MaxFeedThreashold, null);
+	}
+	
+	public RemoteProcessManager(InetSocketAddress localSocket) {
+		this(localSocket,ProccessNumber, MaxFeedThreashold, null);
 	}
 	
 	public RemoteProcessManager(InetSocketAddress localSocket,
-			int maxActiveProcessNumbers, int maxDoingTasks, Optional<Class<T>> remoteRunnerClass) {
+			int maxActiveProcessNumbers, int maxDoingTasks) {
+		this(localSocket, maxActiveProcessNumbers, maxDoingTasks, null);
+	}
+
+	public RemoteProcessManager(InetSocketAddress localSocket,
+			int maxActiveProcessNumbers, int maxDoingTasks,
+			Class remoteRunnerClass) {
 		// InetSocketAddress is immutable.
 		this.localSocket = localSocket;
 		this.maxActiveProcessNumbers = maxActiveProcessNumbers;
 		this.maxDoingTasks = maxDoingTasks;
 		this.remoteRunnerClass = remoteRunnerClass;
 	}
-	
-	public RemoteProcessManager(InetSocketAddress localSocket,
-			int maxActiveProcessNumbers, int maxDoingTasks) {
-		this(localSocket, maxActiveProcessNumbers, maxDoingTasks, Optional.empty());
-	}
 
-	final Process bootProcess(RemoteProcess remoteSocket, Class<T> clazz)
+	final Process bootProcess(RemoteProcess remoteSocket, Class clazz)
 			throws IOException {
-		return ProcessorUtil.<T> createNewJVM(SubMemory, SubStack,
+		return ProcessorUtil.createNewJVM(SubMemory, SubStack,
 				ProcessLoggerConfig, remoteSocket.address, localSocket, clazz);
 	}
 
+	protected Optional<Class> getRemoteRunnerClass(){
+		return Optional.ofNullable(remoteRunnerClass);
+	}
+	
 	final Process bootProcess(RemoteProcess remoteSocket) throws IOException {
-		if (this.remoteRunnerClass.isPresent()){
-			return bootProcess(remoteSocket, remoteRunnerClass.get() );
-		}
-		return bootProcess(remoteSocket, getGenericTypeAsClass());
+			return bootProcess(remoteSocket, getRemoteRunnerClass().orElseThrow(()-> new RuntimeException("The remote runner class is not given")));
 	}
 
 	/**
@@ -118,6 +143,7 @@ public class RemoteProcessManager<T /*
 			logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
 					+ "Changing the status of PID:" + process + " to: " + status);
 		synchronized (activeProcesses) {
+			System.out.println("activeProcesses->"+activeProcesses);
 			if (activeProcesses.containsKey(process)) {
 				activeProcesses.replace(process,
 						activeProcesses.get(process).changeStatus(status));
@@ -131,17 +157,17 @@ public class RemoteProcessManager<T /*
 			}
 		}
 	}
-	
+
 	@Override
 	public void changeStatusToIDLE(final RemoteProcess process) {
 		changeStatus(process, Status.IDLE);
 	}
-	
+
 	@Override
 	public void changeStatusToWORKING(final RemoteProcess process) {
 		changeStatus(process, Status.WORKING);
 	}
-	
+
 	@Override
 	public void changeStatusToKILLING(final RemoteProcess process) {
 		changeStatus(process, Status.KILLING);
@@ -151,7 +177,7 @@ public class RemoteProcessManager<T /*
 	public void changeStatusToNOANSWER(final RemoteProcess process) {
 		changeStatus(process, Status.NOANSWER);
 	}
-	
+
 	/**
 	 * Give a process, the record is replaced. RemoteProcessRecord is immutable.
 	 * 
@@ -187,7 +213,6 @@ public class RemoteProcessManager<T /*
 		IncreaseSentTasks(process, 1);
 	}
 
-	
 	@Override
 	public void changeDoingTasks(final RemoteProcess process, int doingTasks) {
 		synchronized (activeProcesses) {
@@ -267,6 +292,7 @@ public class RemoteProcessManager<T /*
 
 	/**
 	 * retrieve the record of a process that currently is active.
+	 * 
 	 * @param process
 	 * @return
 	 */
@@ -276,7 +302,8 @@ public class RemoteProcessManager<T /*
 		return activeProcesses.get(process);
 	}
 
-	public Set<RemoteProcess> getAllRegisteredRemoteProcesses() {
+	@Override
+	public Set<RemoteProcess> getAllRegisteredProcesses() {
 		return activeProcesses.keySet();
 	}
 
@@ -397,24 +424,33 @@ public class RemoteProcessManager<T /*
 	 * @return
 	 */
 	protected Class getGenericTypeAsClass() {
-		return (Class<?>)((ParameterizedType) getClass().getGenericSuperclass())
+		System.out.println("getClass()->"+getClass());
+		System.out.println("getClass().getGenericSuperclass()->"+getClass().getGenericSuperclass());
+		System.out.println("((ParameterizedType) getClass().getGenericSuperclass())->"+((ParameterizedType) getClass().getGenericInterfaces()[0]));
+		System.out.println("((ParameterizedType) getClass().getGenericSuperclass())"+
+				".getActualTypeArguments()[0]->"+((ParameterizedType) getClass().getGenericSuperclass())
+				.getActualTypeArguments()[0]);
+		
+		return (Class<?>) ((ParameterizedType) getClass().getGenericSuperclass())
 				.getActualTypeArguments()[0];
 	}
 
 	public void addProcess(RemoteProcess remoteProcess) throws IOException {
-		RemoteProcessRecord record = new RemoteProcessRecord(remoteProcess, bootProcess(remoteProcess));
+		RemoteProcessRecord record = new RemoteProcessRecord(remoteProcess,
+				bootProcess(remoteProcess));
 		activeProcesses.putIfAbsent(remoteProcess, record);
 		if (Configuration.IsInDeubbungMode)
 			logger.log(Level.INFO, Utils.threadName() + "A process:" + remoteProcess
 					+ " is added to the process list " + activeProcesses);
 	}
-	
+
 	/**
 	 * Add a random process to the activeProcess list
+	 * 
 	 * @throws IOException
 	 */
 	public void addProcess() throws IOException {
-		addProcess( new RemoteProcess(ProcessorUtil.findEmptyLocalSocket()));
+		addProcess(new RemoteProcess(ProcessorUtil.findEmptyLocalSocket()));
 	}
 
 	/**
@@ -509,6 +545,14 @@ public class RemoteProcessManager<T /*
 		// }
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer#
+	 * getRandomProcess()
+	 */
+	@Override
 	public RemoteProcess getRandomProcess() {
 		synchronized (activeProcesses) {
 			@SuppressWarnings("rawtypes")
@@ -564,6 +608,7 @@ public class RemoteProcessManager<T /*
 				throw new RuntimeException("Not working process was found.");
 			}
 			result = getRandomProcess();
+			System.out.println("The found port on <"+localSocket +">->"+result+"<-"+isAccepting(result));
 			++retry;
 			try {
 				Thread.sleep(retry);

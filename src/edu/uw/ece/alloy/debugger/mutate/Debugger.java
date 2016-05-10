@@ -28,7 +28,7 @@ import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalRequest;
 
 /**
@@ -127,7 +127,7 @@ public class Debugger {
 					"-Xss" + SubStack + "k", "-Ddebug=" + debug,
 					"-Djava.util.logging.config.file=" + ProcessLoggerConfig, "-cp",
 					System.getProperty("java.class.path"),
-					ExpressionAnalyzerRunner.class.getName(), "" + remoteSocket.getPort(),
+					ExpressionAnalyzerRunner_.class.getName(), "" + remoteSocket.getPort(),
 					"" + remoteSocket.getAddress().getHostAddress(),
 					"" + localSocket.getPort(),
 					"" + localSocket.getAddress().getHostAddress());

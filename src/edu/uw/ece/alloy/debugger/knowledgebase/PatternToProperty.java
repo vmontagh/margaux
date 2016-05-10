@@ -89,7 +89,7 @@ public class PatternToProperty {
 			List<Field> allfields = new ArrayList<>();
 			for (Sig sig : world.getAllSigs()) {
 				for (Field field : sig.getFields()) {
-					if (fieldName.isPresent() && fieldName.equals(field.label))
+					if (fieldName.isPresent() && fieldName.get().equals(field.label))
 						fields.add(field);
 					allfields.add(field);
 				}

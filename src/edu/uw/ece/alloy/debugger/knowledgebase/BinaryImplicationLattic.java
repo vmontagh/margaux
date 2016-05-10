@@ -46,7 +46,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getNextImpliedProperties(String property) throws Err{
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(ExpressionPropertyGenerator.predNamePrefix)){
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)){
 			final String alloyCode = 
 					String.format(
 							"open binary_implication\n" +
@@ -65,7 +65,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getNextRevImpliedProperties(String property) throws Err{
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(ExpressionPropertyGenerator.predNamePrefix)){
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)){
 			final String alloyCode = 
 					String.format(
 							"open binary_implication\n" +
@@ -100,7 +100,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getAllImpliedProperties(String property) throws Err{
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(ExpressionPropertyGenerator.predNamePrefix)){
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)){
 
 			final String alloyCode = 
 					String.format(
@@ -120,7 +120,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getAllRevImpliedProperties(String property) throws Err{
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(ExpressionPropertyGenerator.predNamePrefix)){
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)){
 			final String alloyCode = 
 					String.format(
 							"open binary_implication\n" +

@@ -13,6 +13,11 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMoni
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
 import edu.uw.ece.alloy.util.RetryingThread;
 
+/**
+ * @deprecated
+ * @author vajih
+ *
+ */
 public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam>
 		implements Runnable, ThreadDelayToBeMonitored {
 

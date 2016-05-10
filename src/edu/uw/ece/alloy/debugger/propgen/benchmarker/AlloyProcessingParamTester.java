@@ -183,7 +183,7 @@ public class AlloyProcessingParamTester {
 
 		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate();
 
-		aParam = aParam.changeTmpDirectory(tmpDir).prepareToUse();
+		aParam = aParam.changeTmpLocalDirectory(tmpDir).prepareToUse();
 
 		// The source is stored
 		final File newSrc = new File(this.tmpDir, "predNameA_VAC_predNameA.als");
@@ -311,7 +311,7 @@ public class AlloyProcessingParamTester {
 
 		AlloyProcessingParam aParam_1 = vacPropertyToAlloyCode.generate();
 
-		aParam_1 = aParam_1.changeTmpDirectory(tmpDir);
+		aParam_1 = aParam_1.changeTmpLocalDirectory(tmpDir);
 		aParam_1.dumpAll();
 
 		assertTrue(aParam_1.srcPath().exists());

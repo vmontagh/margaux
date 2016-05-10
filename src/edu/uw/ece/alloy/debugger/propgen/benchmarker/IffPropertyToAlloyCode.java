@@ -96,4 +96,15 @@ public class IffPropertyToAlloyCode extends PropertyToAlloyCode {
 		return sat == -1;
 	}
 
+	@Override
+	public String toString() {
+		return "IffPropertyToAlloyCode [predBodyA=" + predBodyA + ", predBodyB="
+				+ predBodyB + ", predCallA=" + predCallA + ", predCallB=" + predCallB
+				+ ", predNameA=" + predNameA + ", predNameB=" + predNameB + ", header="
+				+ header + ", scope=" + scope + ", field=" + field + ", dependencies="
+				+ dependencies + ", getPredName()=" + getPredName() + "]";
+	}
+
+	
+	
 }

@@ -202,6 +202,7 @@ public class A4CommandExecuter {
 	}
 
 	public void run(String fileName,A4Reporter rep, String commandName) throws Err{
+		System.out.println("A4CommandExecuter->"+fileName + "----commandName->"+commandName);
 		runThenGetAnswers(fileName, rep, commandName);
 	}
 

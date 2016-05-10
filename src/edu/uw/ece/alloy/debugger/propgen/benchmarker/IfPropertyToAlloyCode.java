@@ -116,7 +116,9 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	public List<String> getInferedProperties(int sat) {
 		List<String> result = new ArrayList<>();
 		if (isDesiredSAT(sat)) {
-			for (ImplicationLattic il : implications) {
+			for (ImplicationLattic il : getImplicationLattices()
+					.orElseThrow(() -> new RuntimeException(
+							"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {
 				try {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
@@ -141,7 +143,9 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	public List<PropertyToAlloyCode> getInferedPropertiesCoder(int sat) {
 		List<PropertyToAlloyCode> result = new ArrayList<>();
 		if (isDesiredSAT(sat)) {
-			for (ImplicationLattic il : implications) {
+			for (ImplicationLattic il : getImplicationLattices()
+					.orElseThrow(() -> new RuntimeException(
+							"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {
 				try {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
@@ -179,7 +183,9 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
 		List<String> result = new ArrayList<>();
 		if (!isDesiredSAT(sat)) {
-			for (ImplicationLattic il : implications) {
+			for (ImplicationLattic il : getImplicationLattices()
+					.orElseThrow(() -> new RuntimeException(
+							"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {
 				try {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
@@ -203,7 +209,12 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	public List<String> getInitialProperties() {
 		List<String> result = new ArrayList<>();
-		for (ImplicationLattic il : implications) {
+		System.out.println(getImplicationLattices()
+				.orElseThrow(() -> new RuntimeException(
+						"Implication List is null.Since it is a trinsient property, recreating the object might be effective")));
+		for (ImplicationLattic il : getImplicationLattices()
+				.orElseThrow(() -> new RuntimeException(
+						"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {
 			try {
 				result.addAll(il.getAllSources());
 			} catch (Err e) {
@@ -221,5 +232,16 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	public boolean isDesiredSAT(int sat) {
 		return sat == -1;
 	}
+
+	@Override
+	public String toString() {
+		return "IfPropertyToAlloyCode [predBodyA=" + predBodyA + ", predBodyB="
+				+ predBodyB + ", predCallA=" + predCallA + ", predCallB=" + predCallB
+				+ ", predNameA=" + predNameA + ", predNameB=" + predNameB + ", header="
+				+ header + ", scope=" + scope + ", field=" + field + ", dependencies="
+				+ dependencies + ", getPredName()=" + getPredName() + "]";
+	}
+	
+	
 
 }

@@ -272,4 +272,11 @@ public class PropertyDeclaration {
 		return "";
 	}
 
+	@Override
+	public String toString() {
+		return "PropertyDeclaration [function=" + function + "]";
+	}
+
+	
+	
 }

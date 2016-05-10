@@ -12,7 +12,7 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 /**
  * @author vajih
- *
+ * @deprecated 
  */
 public class GeneratedStorage<T> {
 

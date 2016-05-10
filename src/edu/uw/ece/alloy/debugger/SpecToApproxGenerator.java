@@ -1,22 +1,12 @@
 package edu.uw.ece.alloy.debugger;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Pair;
@@ -25,8 +15,6 @@ import edu.uw.ece.alloy.debugger.PropertySet.Operator;
 import edu.uw.ece.alloy.debugger.PropertySet.Property;
 import edu.uw.ece.alloy.debugger.PropertySet.PropertyRelation;
 import edu.uw.ece.alloy.debugger.PropertySet.Statement;
-import edu.uw.ece.alloy.util.SymmetricPair;
-import edu.uw.ece.alloy.util.Utils;
 
 
 public class SpecToApproxGenerator extends PropertyCheckingSource {

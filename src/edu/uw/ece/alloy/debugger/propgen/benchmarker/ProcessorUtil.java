@@ -139,9 +139,9 @@ public class ProcessorUtil {
 	 * @return
 	 * @throws IOException
 	 */
-	public static <T> Process createNewJVM(int SubMemory, int SubStack,
+	public static Process createNewJVM(int SubMemory, int SubStack,
 			String ProcessLoggerConfig, InetSocketAddress remoteSocket,
-			InetSocketAddress localSocket, Class<T> clazz) throws IOException {
+			InetSocketAddress localSocket, Class clazz) throws IOException {
 
 		final String java = "java";
 		final String debug = Boolean.parseBoolean(System.getProperty("debug"))

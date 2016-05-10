@@ -23,6 +23,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.util.Utils;
 
+@Deprecated
 public class ProcessesManager {
 
 	protected final static Logger logger = Logger.getLogger(ProcessesManager.class.getName()+"--"+Thread.currentThread().getName());

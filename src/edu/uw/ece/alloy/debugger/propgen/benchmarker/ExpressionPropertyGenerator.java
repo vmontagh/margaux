@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,7 +17,9 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Publisher;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.Utils;
 
@@ -30,7 +33,9 @@ public class ExpressionPropertyGenerator
 	final public File relationalPropModuleOriginal;
 	final public File temporalPropModuleOriginal;
 	final public File toBeAnalyzedCode;
-	final GeneratedStorage<AlloyProcessingParam> generatedStorage;
+	final Publisher<AlloyProcessingParam> generatedStorage;
+
+	final public UUID sessionID;
 
 	/* The field that is going to be transformed to property */
 	final Sig.Field field;
@@ -58,7 +63,7 @@ public class ExpressionPropertyGenerator
 	 * @author vajih
 	 *
 	 */
-	final public class ExpressionPredicate {
+	final public static class ExpressionPredicate {
 
 		// predNamePrefix matters. It is used for finding the implied properties
 		final public static String predNamePrefix = "predName___";
@@ -74,7 +79,7 @@ public class ExpressionPropertyGenerator
 					+ Math.abs(this.expression.hashCode());
 			this.predicateBody = String.format("pred %s[]{\n%s}", predicateName,
 					this.expression);
-			this.predicateCall = String.format("pred %s[]", predicateName);
+			this.predicateCall = String.format("%s[]", predicateName);
 		}
 
 		@Override
@@ -86,16 +91,17 @@ public class ExpressionPropertyGenerator
 
 	}
 
-	public ExpressionPropertyGenerator(
-			final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+	public ExpressionPropertyGenerator(final UUID sessionID,
+			final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, String fieldName,
-			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope)
+			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope, List<File> dependecyFiles)
 					throws Err, IOException {
 
-		this(generatedStorage, toBeAnalyzedCode, relationalPropModuleOriginal,
-				temporalPropModuleOriginal, fieldName, propertyToAlloyCode, expression,
-				scope, Collections.emptySet(), Optional.empty());
+		this(sessionID, generatedStorage, toBeAnalyzedCode,
+				relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
+				propertyToAlloyCode, expression, scope, Collections.emptySet(),
+				Optional.empty(), dependecyFiles);
 	}
 
 	/**
@@ -104,43 +110,64 @@ public class ExpressionPropertyGenerator
 	 * @param expression
 	 * @return A pair of Predicate body and its call.
 	 */
-	public ExpressionPropertyGenerator(
-			final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+	public ExpressionPropertyGenerator(final UUID sessionID,
+			final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, String fieldName,
 			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
-			Set<String> excludedChecks) throws Err, IOException {
+			Set<String> excludedChecks, List<File> dependecyFiles) throws Err, IOException {
 
-		this(generatedStorage, toBeAnalyzedCode, relationalPropModuleOriginal,
-				temporalPropModuleOriginal, fieldName, propertyToAlloyCode, expression,
-				scope, excludedChecks, Optional.empty());
+		this(sessionID, generatedStorage, toBeAnalyzedCode,
+				relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
+				propertyToAlloyCode, expression, scope, excludedChecks,
+				Optional.empty(), dependecyFiles);
 	}
 
-	public ExpressionPropertyGenerator(
-			final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+	public ExpressionPropertyGenerator(final UUID sessionID,
+			final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal,
 
 			String fieldName, PropertyToAlloyCode propertyToAlloyCode,
 			String expression, String scope,
 
-			Set<String> excludedChecks, Set<String> toBeCheckProperties)
+			Set<String> excludedChecks, Set<String> toBeCheckProperties, List<File> dependecyFiles)
 					throws Err, IOException {
-		this(generatedStorage, toBeAnalyzedCode, relationalPropModuleOriginal,
-				temporalPropModuleOriginal, fieldName, propertyToAlloyCode, expression,
-				scope, excludedChecks, Optional.ofNullable(toBeCheckProperties));
+		this(sessionID, generatedStorage, toBeAnalyzedCode,
+				relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
+				propertyToAlloyCode, expression, scope, excludedChecks,
+				Optional.ofNullable(toBeCheckProperties), dependecyFiles);
 	}
 
-	public ExpressionPropertyGenerator(
-			final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+	/**
+	 * 
+	 * @param sessionID
+	 * @param generatedStorage
+	 * @param toBeAnalyzedCode
+	 * @param relationalPropModuleOriginal It is used to generate Relational properties
+	 * @param temporalPropModuleOriginal It is used to generate Temporal properties.
+	 * @param fieldName
+	 * @param propertyToAlloyCode
+	 * @param expression
+	 * @param scope
+	 * @param excludedChecks
+	 * @param toBeCheckProperties
+	 * @param dependecyFiles Dependency files including relationalPropModuleOriginal, temporalPropModuleOriginal, and any other related files.
+	 * @throws Err
+	 * @throws IOException
+	 */
+	public ExpressionPropertyGenerator(final UUID sessionID,
+			final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal,
 
 			String fieldName, PropertyToAlloyCode propertyToAlloyCode,
 			String expression, String scope,
 
-			Set<String> excludedChecks, Optional<Set<String>> toBeCheckProperties)
+			Set<String> excludedChecks, Optional<Set<String>> toBeCheckProperties, List<File> dependecyFiles)
 					throws Err, IOException {
+
+		this.sessionID = sessionID;
 
 		this.relationalPropModuleOriginal = relationalPropModuleOriginal;
 		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
@@ -152,15 +179,17 @@ public class ExpressionPropertyGenerator
 
 		final AlloyProcessingParam paramCreator = AlloyProcessingParam.EMPTY_PARAM;
 
-		dependencies
-				.add(new Dependency(new File(relationalPropModuleOriginal.getName()),
-						Utils.readFile(relationalPropModuleOriginal.getAbsolutePath())));
-		dependencies
-				.add(new Dependency(new File(temporalPropModuleOriginal.getName()),
-						Utils.readFile(temporalPropModuleOriginal.getAbsolutePath())));
+		
+		for (File file: dependecyFiles){
+			dependencies
+			.add(new Dependency(new File(file.getName()), Utils.readFile(file.getAbsolutePath()) ));
+		}
+		
 
 		propertyBuilder = new PropertyToAlloyCodeBuilder(dependencies, header,
 				scope, paramCreator);
+		
+		System.out.println("propertyToAlloyCode->"+propertyToAlloyCode);
 		propertyBuilder.registerPropertyToAlloyCode(propertyToAlloyCode);
 
 		// Some sort of hacking. The content of the dependency is the path to the
@@ -228,13 +257,17 @@ public class ExpressionPropertyGenerator
 	 * @param result:
 	 *          The result that should the params be stored there.
 	 */
-	void generatePatternCheckers(Map<Pair<String, String>, String> propertyCalls,
-			Set<String> patternNames, GeneratedStorage<AlloyProcessingParam> result) {
+	int generatePatternCheckers(Map<Pair<String, String>, String> propertyCalls,
+			Set<String> patternNames, Publisher<AlloyProcessingParam> result) {
+		int numberOfGeneratedParams = 0;
 		for (Pair<String, String> key : propertyCalls.keySet()) {
 			final String pattern = key.a;
 			final String property = propertyCalls.get(key);
-			if (!patternNames.contains(pattern))
+			if (!patternNames.contains(pattern)){
+				if (Configuration.IsInDeubbungMode)
+					logger.warning(Utils.threadName()+" The pattern:" + pattern +" is not in the pattern list: "+patternNames);
 				continue;
+			}
 
 			for (final PropertyToAlloyCode alloyCodeGenerator : propertyBuilder
 					.createObjects("", "", expressionPredicate.predicateCall, property,
@@ -248,10 +281,9 @@ public class ExpressionPropertyGenerator
 				}
 				try {
 					final AlloyProcessingParam generatedParam = alloyCodeGenerator
-							.generate();
-					System.out.println("result.addGeneratedProp->" + generatedParam
-							+ "\n\t" + generatedParam.alloyCoder.predBodyA);
-					result.addGeneratedProp(generatedParam);
+							.generate(sessionID);
+					result.put(generatedParam);
+					++numberOfGeneratedParams;
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
 							+ "Property code generation is failed:", e);
@@ -260,7 +292,18 @@ public class ExpressionPropertyGenerator
 				}
 			}
 		}
+		return numberOfGeneratedParams;
 	}
+
+	/**
+	 * Generating the properties and feed into the feeder's queue. It is a synchronized
+	 * version. and internal thread won't be triggered to run.
+	 * @return
+	 */
+	public int generatePatternCheckers(){
+		return generatePatternCheckers(this.toBeCheckProperties, this.generatedStorage);
+	}
+	
 
 	/**
 	 * generate AlloyProcessingParam for relational patterns
@@ -270,11 +313,11 @@ public class ExpressionPropertyGenerator
 	 * @param result
 	 *          The result that should the params be stored there.
 	 */
-	void generatePatternCheckers(Set<String> patternNames,
-			GeneratedStorage<AlloyProcessingParam> result) {
+	int  generatePatternCheckers(Set<String> patternNames,
+			Publisher<AlloyProcessingParam> result) {
 		// The property calls are ready to use. (pattern,field)->property. E.g.
 		// <acyclic,next>->acyclic[next]
-		generatePatternCheckers(patternToProperty.propertyCalls, patternNames,
+		return generatePatternCheckers(patternToProperty.propertyCalls, patternNames,
 				result);
 	}
 
@@ -323,17 +366,17 @@ public class ExpressionPropertyGenerator
 	@Override
 	public void run() {
 		// Initiating the properties to be processed.
-		generatePatternCheckers(this.toBeCheckProperties, this.generatedStorage);
-		System.out.println("----this.generatedStorage1------:"
-				+ this.generatedStorage.getGeneratedProps());
+		generatePatternCheckers();
 	}
 
 	Set<String> generateInitialProperties() throws Err {
 		Set<String> result = new HashSet<>();
+		
 		for (PropertyToAlloyCode ptac : propertyBuilder
 				.getAllPropertyGenerators()) {
 			result.addAll(ptac.getInitialProperties());
 		}
+		
 		return Collections.unmodifiableSet(result);
 	}
 
@@ -353,29 +396,22 @@ public class ExpressionPropertyGenerator
 		PropertyToAlloyCode propertyToAlloyCode;
 		String expression;
 		String scope;
+		UUID sessionID;
+		List<File> dependecyFiles;
 
 		/**
 		 * The method provides singleton, but it is not the only way to create and
 		 * object. There might be a case that cache becomes invalid and a new object
 		 * is needed.
 		 */
-		final private static Builder self = new Builder();
-		private ExpressionPropertyGenerator lastCreated = null;
 
-		public static Builder getInstance() {
-			return self;
-		}
-
-		public Builder() {
-		};
-
-		public ExpressionPropertyGenerator initiateAndCreate(
-				final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+		public Builder(final UUID sessionID,
+				
 				File toBeAnalyzedCode, File relationalPropModuleOriginal,
 				File temporalPropModuleOriginal,
 
 				String fieldName, PropertyToAlloyCode propertyToAlloyCode,
-				String expression, String scope) throws Err, IOException {
+				String expression, String scope, List<File> dependecyFiles) {
 
 			this.relationalPropModuleOriginal = relationalPropModuleOriginal;
 			this.temporalPropModuleOriginal = temporalPropModuleOriginal;
@@ -384,47 +420,32 @@ public class ExpressionPropertyGenerator
 			this.propertyToAlloyCode = propertyToAlloyCode;
 			this.expression = expression;
 			this.scope = scope;
+			this.sessionID = sessionID;
+			this.dependecyFiles = dependecyFiles;
 
-			if (lastCreated == null) {
-				this.lastCreated = new ExpressionPropertyGenerator(generatedStorage,
-						toBeAnalyzedCode, relationalPropModuleOriginal,
-						temporalPropModuleOriginal, fieldName, propertyToAlloyCode,
-						expression, scope);
-			} else {
-				synchronized (lastCreated) {
-					this.lastCreated = new ExpressionPropertyGenerator(generatedStorage,
-							toBeAnalyzedCode, relationalPropModuleOriginal,
-							temporalPropModuleOriginal, fieldName, propertyToAlloyCode,
-							expression, scope);
-				}
-			}
-
-			return this.lastCreated;
-		}
+		};
 
 		public ExpressionPropertyGenerator create(
-				final GeneratedStorage<AlloyProcessingParam> generatedStorage,
+				final Publisher<AlloyProcessingParam> generatedStorage)
+						throws Err, IOException {
+			return new ExpressionPropertyGenerator(sessionID, generatedStorage,
+					toBeAnalyzedCode, relationalPropModuleOriginal,
+					temporalPropModuleOriginal, fieldName, propertyToAlloyCode.createItself()/*some fields are transient, so the object should be recreated.*/,
+					expression, scope, dependecyFiles);
+		}
+
+		public ExpressionPropertyGenerator createWithHistory(
+				final Publisher<AlloyProcessingParam> generatedStorage,
 				final Set<String> toBeCheckProperties, Set<String> excludedChecks)
 						throws Err, IOException {
-			if (null == this.lastCreated)
-				throw new RuntimeException("Objects are not initilized yet.");
 
-			synchronized (lastCreated) {
-				this.lastCreated = new ExpressionPropertyGenerator(generatedStorage,
-						toBeAnalyzedCode, relationalPropModuleOriginal,
-						temporalPropModuleOriginal, fieldName, propertyToAlloyCode,
-						expression, scope, excludedChecks, toBeCheckProperties);
-			}
+			return new ExpressionPropertyGenerator(sessionID, generatedStorage,
+					toBeAnalyzedCode, relationalPropModuleOriginal,
+					temporalPropModuleOriginal, fieldName, propertyToAlloyCode.createItself(),
+					expression, scope, excludedChecks, toBeCheckProperties, dependecyFiles);
 
-			return this.lastCreated;
 		}
 
-		public ExpressionPropertyGenerator lastCreated() {
-			if (null == this.lastCreated)
-				throw new RuntimeException("Objects are not initilized yet.");
-
-			return lastCreated;
-		}
 	}
 
 }

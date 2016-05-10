@@ -1,11 +1,11 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,21 +15,32 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult.InferredResult;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Suicided;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.ProcessedResult.Status;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.UpdateLivenessStatus;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Subscriber;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyDiedMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
+import edu.uw.ece.alloy.util.SendOnServerSocketInterface;
+import edu.uw.ece.hola.agent.Utils;
 
-public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
+public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
+
+	// Configurations
+	final static public int MaxInterrupt = Integer
+			.parseInt(Configuration.getProp("max_alloy_executer_intterupts"));
+	final static public int MaxRetryOnFail = Integer
+			.parseInt(Configuration.getProp("self_monitor_retry_attempt"));
 
 	private Thread executerThread = new Thread(this);
 
-	private final static AlloyExecuter self = new AlloyExecuter(
-			Integer.valueOf(Configuration.getProp("max_alloy_executer_intterupts")));
-
-	private final BlockingQueue<AlloyProcessingParam> queue = new LinkedBlockingQueue<>();
+	// private final BlockingQueue<AlloyProcessingParam> queue = new
+	// LinkedBlockingQueue<>();
+	protected Subscriber<AlloyProcessingParam> queue;
 	private final List<PostProcess> postProcesses = Collections
 			.synchronizedList(new LinkedList<PostProcess>());
+
+	protected final UpdateLivenessStatus livenessStatus;
+	protected final SendOnServerSocketInterface interfacE;
 
 	protected volatile AtomicInteger processed = new AtomicInteger(0);
 	protected volatile AtomicInteger shadowProcessed = new AtomicInteger(-1);
@@ -42,19 +53,45 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 			AlloyExecuter.class.getName() + "--" + Thread.currentThread().getName());
 
 	protected int iInterrupt = 0;
-	protected final int maxInterrupt;
+	protected final int maxInterrupt, maxRetryAttempt;
 	protected boolean killToken = false;
 
-	protected AlloyExecuter(final int maxInterrupt) {
+	protected final File tmpLocalDirectory;
+
+	public AlloyExecuter(final int maxInterrupt, final int maxRetryAttempt,
+			Subscriber<AlloyProcessingParam> queue,
+			final UpdateLivenessStatus livenessStatus,
+			final SendOnServerSocketInterface interfacE, File tmpLocalDirectory) {
 		this.maxInterrupt = maxInterrupt;
+		this.queue = queue;
+		this.livenessStatus = livenessStatus;
+		this.maxRetryAttempt = maxRetryAttempt;
+		this.interfacE = interfacE;
+		this.tmpLocalDirectory = tmpLocalDirectory;
 	}
 
-	public static AlloyExecuter getInstance() {
-		return self;
+	public AlloyExecuter(final Subscriber<AlloyProcessingParam> queue,
+			final UpdateLivenessStatus livenessStatus,
+			final SendOnServerSocketInterface interfacE, File tmpLocalDirectory) {
+		this(MaxInterrupt, MaxRetryOnFail, queue, livenessStatus, interfacE,
+				tmpLocalDirectory);
 	}
 
-	public void process(final AlloyProcessingParam p) {
-		queue.add(p);
+	public AlloyExecuter(final Subscriber<AlloyProcessingParam> queue,
+			final SendOnServerSocketInterface interfacE, File tmpLocalDirectory) {
+		this(MaxInterrupt, MaxRetryOnFail, queue, new UpdateLivenessStatus() {
+			long processed, tobeProcessed;
+
+			@Override
+			public void setTobeProcessed(int tobeProcessed) {
+				this.tobeProcessed = tobeProcessed;
+			}
+
+			@Override
+			public void setProcessed(int processed) {
+				this.processed = processed;
+			}
+		}, interfacE, tmpLocalDirectory);
 	}
 
 	public void resgisterPostProcess(PostProcess e) {
@@ -79,16 +116,14 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 			AlloyProcessedResult result) {
 		List<AlloyProcessedResult> ret = new ArrayList<>();
 
-		List<PropertyToAlloyCode> coders = result.params.alloyCoder
-				.getInferedPropertiesCoder( result.sat);
-
 		// If coders is not empty, then something is inferred.
-		for (PropertyToAlloyCode coder : coders) {
+		for (PropertyToAlloyCode inferedCoder : result.getParam().getAlloyCoder()
+				.get().createItself().getInferedPropertiesCoder(result.sat)) {
 			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]"
-						+ " Start processing " + lastProccessing);
-			ret.add(
-					InferredResult.createInferredResult(result, coder, result.sat));
+				logger
+						.info(Utils.threadName() + " Start processing " + lastProccessing);
+			ret.add(new AlloyProcessedResult(result.getParam().createIt(inferedCoder),
+					Status.INFERRED));
 		}
 
 		return Collections.unmodifiableList(ret);
@@ -108,7 +143,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 					logger.info("[" + Thread.currentThread().getName() + "] "
 							+ "The timeout is recorded for " + lastProccessing);
 				runPostProcesses(
-						new AlloyProcessedResult.TimeoutResult(lastProccessing));
+						new AlloyProcessedResult(lastProccessing, Status.TIMEOUT));
 				lastProccessing = lastProccessing.EMPTY_PARAM;
 			} catch (InterruptedException e) {
 				logger.severe("[" + Thread.currentThread().getName() + "] "
@@ -135,10 +170,18 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 
 		synchronized (lastProccessing) {
 			lastProccessing = queue.take();
-
+			AlloyProcessingParam originalLastProcessing = lastProccessing;
+			try {
+				lastProccessing = originalLastProcessing
+						.changeTmpLocalDirectory(tmpLocalDirectory).prepareToUse();
+			} catch (Exception e1) {
+				logger.severe(Utils.threadName() + " The param: " + lastProccessing
+						+ " cannot be localized");
+				e1.printStackTrace();
+			}
+			
 			if (lastProccessing.equals(lastProccessing.EMPTY_PARAM)) {
-				logger.severe(
-						"[" + Thread.currentThread().getName() + "] " + "Why null?!!!");
+				logger.severe(Utils.threadName() + "Why empty?!!!");
 				return;
 			}
 
@@ -147,12 +190,16 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 				logger.info("[" + Thread.currentThread().getName() + "]"
 						+ " Start processing " + lastProccessing);
 
-			AlloyProcessedResult rep = new AlloyProcessedResult(lastProccessing);
+			AlloyProcessedResult rep = new AlloyProcessedResult(
+					originalLastProcessing);
 			try {
 
+				System.out.println("lastProccessing->" + lastProccessing);
+
 				A4CommandExecuter.getInstance().run(
-						lastProccessing.srcPath().getAbsolutePath(), rep,
-						PropertyToAlloyCode.COMMAND_BLOCK_NAME);
+						lastProccessing.getSrcPath().orElseThrow(RuntimeException::new)
+								.getAbsolutePath(),
+						rep, PropertyToAlloyCode.COMMAND_BLOCK_NAME);
 
 				if (Configuration.IsInDeubbungMode)
 					logger.info("[" + Thread.currentThread().getName() + "]"
@@ -162,22 +209,16 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 
 				runPostProcesses(rep);
 				processed.incrementAndGet();
-
+				livenessStatus.setProcessed(processed.get());
+				livenessStatus.setTobeProcessed(queue.size());
 				// The inferred result should be added into the logs. The log goes into
 				// file, socket, and DB.
 				for (AlloyProcessedResult inferredResult : inferProperties(rep)) {
-
-					System.out
-							.println("inferredResult->" + rep.params.alloyCoder.predCallA
-									+ "=>" + rep.params.alloyCoder.predCallB + "--->"
-									+ inferredResult.params.alloyCoder.predCallA + "=>"
-									+ inferredResult.params.alloyCoder.predCallB + "  " + rep
-									+ " " + rep.getClass());
-
 					runPostProcesses(inferredResult);
 				}
 
 			} catch (Err e) {
+				e.printStackTrace();
 				if (lastProccessing == null) {
 					logger.severe("[" + Thread.currentThread().getName() + "] "
 							+ " The parameter is null and no failed message can be sent: "
@@ -186,7 +227,7 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 				}
 
 				runPostProcesses(
-						new AlloyProcessedResult.FailedResult(lastProccessing));
+						new AlloyProcessedResult(lastProccessing, Status.FAILED));
 				logger.severe("[" + Thread.currentThread().getName() + "] "
 						+ " The Alloy processor failed on processing: " + lastProccessing);
 				if (Configuration.IsInDeubbungMode)
@@ -260,65 +301,32 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 
 	}
 
-	protected void sendLivenessMessage() {
-		// The executer starts to processing, so no need to recover or kill itself.
-		// Reset the countr.
-		recoveryAttempts.set(0);
-		try {
-
-			IamAlive iamAlive = new IamAlive(AlloyProcessRunner.getInstance().PID,
-					System.currentTimeMillis(), processed.get(), size());
-
-			iamAlive.sendMe(AlloyProcessRunner.getInstance().remotePort);
-			livenessFailed.set(0);
-			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]"
-						+ "A live message is sent from pId: "
-						+ AlloyProcessRunner.getInstance().PID + " >" + iamAlive);
-		} catch (Exception e) {
-			logger.log(Level.SEVERE,
-					"[" + Thread.currentThread().getName() + "]"
-							+ "Failed to send a live signal on PID: "
-							+ AlloyProcessRunner.getInstance().PID + " this is "
-							+ livenessFailed + " attempt",
-					e);
-			livenessFailed.incrementAndGet();
-
-		}
-
-	}
-
-	protected void haltIfCantProceed(final int maxRetryAttepmpts) {
-		AlloyProcessRunner.getInstance();
+	protected void haltIfCantProceed() {
 		// recovery was not enough, the whole processes has to be shut-down
-		if (recoveryAttempts.get() > maxRetryAttepmpts
-				|| livenessFailed.get() > maxRetryAttepmpts) {
+		if (recoveryAttempts.get() > maxRetryAttempt) {
 			logger.severe("[" + Thread.currentThread().getName() + "]"
-					+ "After recovery " + recoveryAttempts + " times or " + livenessFailed
-					+ " liveness message, attempts, the executer in PID:"
-					+ AlloyProcessRunner.getInstance().PID
+					+ "After recovery " + recoveryAttempts + " times "
+					+ " attempts, the executer in PID:" + interfacE.getHostProcess()
 					+ " does not prceeed, So the process is exited.");
 
 			try {
-				new Suicided(AlloyProcessRunner.getInstance().PID,
-						System.currentTimeMillis())
-								.sendMe(AlloyProcessRunner.getInstance().remotePort);
+				AlloyDiedMessage message = new AlloyDiedMessage(
+						interfacE.getHostProcess());
+				interfacE.sendMessage(message);
 			} catch (Exception e) {
 				logger.log(Level.SEVERE,
 						"[" + Thread.currentThread().getName() + "]"
 								+ "Failed to send a Suicide signal on PID: "
-								+ AlloyProcessRunner.getInstance().PID,
+								+ interfacE.getHostProcess(),
 						e);
 			}
-
 			Runtime.getRuntime().halt(0);
 		}
 	}
 
 	@Override
 	public void actionOnNotStuck() {
-		sendLivenessMessage();
-		haltIfCantProceed(AlloyProcessRunner.getInstance().SelfMonitorRetryAttempt);
+		haltIfCantProceed();
 	}
 
 	@Override
@@ -357,7 +365,6 @@ public class AlloyExecuter implements Runnable, ThreadDelayToBeMonitored {
 	@Override
 	public void changePriority(int newPriority) {
 		executerThread.setPriority(newPriority);
-
 	}
 
 }

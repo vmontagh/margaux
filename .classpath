@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="lib/args4j-2.32.jar"/>
 	<classpathentry kind="lib" path="lib/c3p0-0.9.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/mchange-commons-java-0.2.10.jar"/>
-	<classpathentry kind="lib" path="/home/fikayo/Documents/Engineering/Alloy/alloy/lib/alloy4.2.jar"/>
+	<classpathentry kind="lib" path="/Users/vajih/Documents/workspace-git/alloy/lib/alloy4.2_2014-05-16.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="lib/hola-uw.jar"/>
 	<classpathentry kind="output" path="bin"/>

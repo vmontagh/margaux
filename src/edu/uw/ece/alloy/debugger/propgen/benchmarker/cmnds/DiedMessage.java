@@ -3,11 +3,8 @@
  */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
-import java.util.Map;
-
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
+import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
 /**
  * A remote process suicides and send a message to notify.
@@ -27,25 +24,9 @@ public abstract class DiedMessage extends RemoteMessage {
 		super(process, creationTime);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage#onAction(
-	 * java.util.Map)
-	 */
 	@Override
-	public void onAction(Map<Class, Object> context)
-			throws InvalidParameterException {
-		RemoteProcessLogger manager = retrieveRemoteProcessLoggerFromContext(
-				context);
-		if (Configuration.IsInDeubbungMode)
-			logger.info("[" + Thread.currentThread().getName() + "] "
-					+ " A proces asked to be killed: " + process);
-		manager.changeStatusToKILLING(process);
-		if (Configuration.IsInDeubbungMode)
-			logger.info("[" + Thread.currentThread().getName() + "] "
-					+ " A proces asked to be killed: " + process);
+	public void onEvent(MessageListenerAction listener, MessageEventArgs args) {
+		listener.actionOn(this, args);
 	}
 
 }

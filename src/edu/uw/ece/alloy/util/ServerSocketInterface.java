@@ -7,24 +7,23 @@ import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
-import java.util.concurrent.BlockingQueue;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalLiveness;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
-import edu.uw.ece.alloy.util.events.*;
+import edu.uw.ece.alloy.util.events.Event;
+import edu.uw.ece.alloy.util.events.EventArgs;
+import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
+import edu.uw.ece.alloy.util.events.MessageSentEventArgs;
 
-public abstract class ServerSocketInterface
-		implements Runnable, ThreadToBeMonitored {
+public class ServerSocketInterface
+		implements Runnable, ThreadToBeMonitored, SendOnServerSocketInterface {
 
 	protected final static Logger logger = Logger
 			.getLogger(ServerSocketInterface.class.getName() + "--"
@@ -32,18 +31,13 @@ public abstract class ServerSocketInterface
 
 	protected final Thread listeningThread;
 	protected final RemoteProcess hostProcess;
-	protected final RemoteProcess remoteProcess;
-	protected final BlockingQueue<RemoteMessage> queue;
+	protected final Optional<RemoteProcess> remoteProcess;
 
 	public final Event<EventArgs> ListeningStarted;
 	public final Event<MessageSentEventArgs> MessageSent;
 	public final Event<MessageSentEventArgs> MessageAttempt;
 	public final Event<MessageSentEventArgs> MessageFailed;
 	public final Event<MessageReceivedEventArgs> MessageReceived;
-
-	protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
-
-	private int maxRetryAttempts;
 
 	public ServerSocketInterface(final int hostPort, final int remotePort) {
 		this(new InetSocketAddress(hostPort), new InetSocketAddress(remotePort));
@@ -57,16 +51,19 @@ public abstract class ServerSocketInterface
 
 	public ServerSocketInterface(final InetSocketAddress hostAddress,
 			final InetSocketAddress remoteAddress) {
-		this(new RemoteProcess(hostAddress), new RemoteProcess(remoteAddress));
+		this(new RemoteProcess(hostAddress),
+				Optional.ofNullable(new RemoteProcess(remoteAddress)));
+	}
+
+	public ServerSocketInterface(final InetSocketAddress hostAddress) {
+		this(new RemoteProcess(hostAddress), Optional.empty());
 	}
 
 	public ServerSocketInterface(final RemoteProcess hostProcess,
-			final RemoteProcess remoteProcess) {
+			final Optional<RemoteProcess> remoteProcess) {
 		this.hostProcess = hostProcess;
 		this.remoteProcess = remoteProcess;
 		this.listeningThread = new Thread(this);
-		this.queue = new LinkedBlockingQueue<>();
-		this.maxRetryAttempts = 1;
 
 		this.ListeningStarted = new Event<>();
 		this.MessageSent = new Event<>();
@@ -79,55 +76,31 @@ public abstract class ServerSocketInterface
 		return this.hostProcess;
 	}
 
-	public RemoteProcess getRemoteProcess() {
+	public Optional<RemoteProcess> getRemoteProcess() {
 		return this.remoteProcess;
 	}
 
-	public int getLivenessFailed() {
-
-		return this.livenessFailed.get();
-	}
-
-	public void setMaxRetryAttempts(int maxRetryAttempts) {
-
-		this.maxRetryAttempts = maxRetryAttempts;
-	}
-
 	public void startThread() {
-
 		getThread().start();
 	}
 
 	@Override
 	public void run() {
-
 		startListening();
 	}
 
 	@Override
 	public void cancelThread() {
-
 		this.getThread().interrupt();
 	}
 
 	@Override
 	public void actionOnNotStuck() {
-		this.sendLivenessMessage();
-		this.haltIfCantProceed(this.maxRetryAttempts);
-	}
-
-	public void haltIfCantProceed(final int maxRetryAttepmpts) {
-
-		// Recovery was not enough, the whole processes has to be shut-down
-		if (livenessFailed.get() > maxRetryAttepmpts) {
-			logger.severe(Utils.threadName() + livenessFailed
-					+ " liveness message attempts does not prceeed, So the process is exited.");
-			Runtime.getRuntime().halt(0);
-		}
 	}
 
 	public void sendMessage(RemoteMessage message) {
-		this.sendMessage(message, this.getRemoteProcess());
+		this.sendMessage(message, this.getRemoteProcess().orElseThrow(
+				() -> new RuntimeException("Remote address should be set.")));
 	}
 
 	/**
@@ -149,52 +122,13 @@ public abstract class ServerSocketInterface
 		MessageSentEventArgs eventArgs = new MessageSentEventArgs(message,
 				remoteProcess);
 		try {
-			this.onCommandAttempt(eventArgs);
+			this.onMessageAttempt(eventArgs);
 			message.sendMe(remoteProcess);
-			this.onCommandSent(eventArgs);
-		} catch (InterruptedException e) {
-			logger.log(Level.SEVERE,
-					Utils.threadName() + "Failed to send command: " + message, e);
-			this.onCommandFailed(eventArgs);
-		}
-	}
-
-	public void sendLivenessMessage() {
-		this.sendLivenessMessage(-1, -1);
-	}
-
-	public void sendLivenessMessage(int processed, int toBeProcessed) {
-
-		try {
-			AnalyzeExternalLiveness iamAlive = new AnalyzeExternalLiveness(
-					this.getHostProcess(), 0, 0);
-			iamAlive.sendMe(this.getRemoteProcess());
-			livenessFailed.set(0);
-			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]"
-						+ "A live message" + iamAlive);
+			this.onMessageSent(eventArgs);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE,
-					"[" + Thread.currentThread().getName() + "]"
-							+ "Failed to send a live signal this is " + livenessFailed
-							+ " attempt",
-					e);
-			livenessFailed.incrementAndGet();
-		}
-
-	}
-
-	public void sendReadynessMessage() {
-		if (Configuration.IsInDeubbungMode)
-			logger.info(Utils.threadName() + "Sending a readyness message pId: "
-					+ hostProcess);
-
-		ReadyMessage message = new ReadyMessage(hostProcess);
-		try {
-			message.sendMe(remoteProcess);
-		} catch (InterruptedException e) {
-			logger.log(Level.SEVERE,
-					Utils.threadName() + "Failed to send Ready signal.", e);
+					Utils.threadName() + "Failed to send command: " + message, e);
+			this.onMessageFailed(eventArgs);
 		}
 	}
 
@@ -207,9 +141,8 @@ public abstract class ServerSocketInterface
 		AsynchronousServerSocketChannel serverSocketChannel = null;
 		try {
 			if (Configuration.IsInDeubbungMode) {
-				logger.info(
-						Utils.threadName() + "Starting listening fornt runner for pId: "
-								+ hostProcess);
+				logger.info(Utils.threadName()
+						+ "Starting listening fornt runner for pId: " + hostProcess);
 			}
 
 			// Open socket for listening
@@ -226,8 +159,8 @@ public abstract class ServerSocketInterface
 			while (!Thread.currentThread().isInterrupted()) {
 				try {
 					if (Configuration.IsInDeubbungMode) {
-						logger.info(Utils.threadName() + "waiting for a request: "
-								+ hostProcess);
+						logger.info(
+								Utils.threadName() + "waiting for a request: " + hostProcess);
 					}
 
 					serverFuture = serverSocketChannel.accept();
@@ -240,7 +173,9 @@ public abstract class ServerSocketInterface
 					if ((clientSocket != null) && (clientSocket.isOpen())) {
 						connectionInputStream = Channels.newInputStream(clientSocket);
 						ois = new ObjectInputStream(connectionInputStream);
-						onReceivedMessage((RemoteMessage) ois.readObject());
+						this.onMessageReceived(new MessageReceivedEventArgs(
+								(RemoteMessage) ois.readObject(), new RemoteProcess(
+										(InetSocketAddress) clientSocket.getRemoteAddress())));
 					}
 
 				} catch (IOException | InterruptedException | ExecutionException
@@ -285,6 +220,8 @@ public abstract class ServerSocketInterface
 		} catch (Throwable t) {
 			logger.log(Level.SEVERE, Utils.threadName()
 					+ "A serious error breaks the Front Processor listener: ", t);
+			throw new RuntimeException(t);
+
 		} finally {
 
 			if (serverSocketChannel != null && serverSocketChannel.isOpen()) {
@@ -301,8 +238,7 @@ public abstract class ServerSocketInterface
 
 	}
 
-	
-	protected abstract void onReceivedMessage(final RemoteMessage message);
+	// protected abstract void onReceivedMessage(final RemoteMessage message);
 
 	protected void onListeningStarted() {
 		Event<EventArgs> event = this.ListeningStarted;
@@ -311,31 +247,55 @@ public abstract class ServerSocketInterface
 		}
 	}
 
-	protected void onCommandSent(MessageSentEventArgs e) {
+	protected void onMessageSent(MessageSentEventArgs e) {
 		Event<MessageSentEventArgs> event = this.MessageSent;
 		if (event.hasListeners()) {
 			event.invokeListeners(this, e);
 		}
 	}
 
-	protected void onCommandAttempt(MessageSentEventArgs e) {
+	protected void onMessageAttempt(MessageSentEventArgs e) {
 		Event<MessageSentEventArgs> event = this.MessageAttempt;
 		if (event.hasListeners()) {
 			event.invokeListeners(this, e);
 		}
 	}
 
-	protected void onCommandFailed(MessageSentEventArgs e) {
+	protected void onMessageFailed(MessageSentEventArgs e) {
 		Event<MessageSentEventArgs> event = this.MessageFailed;
 		if (event.hasListeners()) {
 			event.invokeListeners(this, e);
 		}
 	}
 
-	protected void onCommandReceived(MessageReceivedEventArgs e) {
+	protected void onMessageReceived(MessageReceivedEventArgs e) {
 		Event<MessageReceivedEventArgs> event = this.MessageReceived;
 		if (event.hasListeners()) {
 			event.invokeListeners(this, e);
 		}
+	}
+
+	@Override
+	public int triesOnStuck() {
+		return 0;
+	}
+
+	@Override
+	public long isDelayed() {
+		return 0;
+	}
+
+	@Override
+	public void changePriority(int newPriority) {
+
+	}
+
+	@Override
+	public String amIStuck() {
+		return "NONE";
+	}
+
+	@Override
+	public void actionOnStuck() {
 	}
 }

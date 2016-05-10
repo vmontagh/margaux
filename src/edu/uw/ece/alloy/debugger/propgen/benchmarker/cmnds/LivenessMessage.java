@@ -12,6 +12,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord.Status;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
 /**
  * Every time the runner is booted, it has to periodically sends a liveness
@@ -42,18 +43,10 @@ public abstract class LivenessMessage extends RemoteMessage {
 		this.toBeProcessed = toBeProcessed;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage#onAction(
-	 * java.util.Map)
-	 */
 	@Override
-	public void onAction(Map<Class, Object> context)
+	public void onAction(Map<String, Object> context)
 			throws InvalidParameterException {
-		RemoteProcessLogger manager = retrieveRemoteProcessLoggerFromContext(
-				context);
+		RemoteProcessLogger manager = (RemoteProcessLogger) context.get("RemoteProcessLogger");
 		RemoteProcessRecord record = manager.getRemoteProcessRecord(process);
 
 		if (record == null) {

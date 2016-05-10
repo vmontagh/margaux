@@ -1,57 +1,80 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
-import java.util.Map;
-
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
+import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
 public abstract class RequestMessage extends RemoteMessage {
 
 	private static final long serialVersionUID = -9179129766458690826L;
-	public transient final RemoteProcessLogger processesLogger;
-	// TODO replace AlloyProcessingParam with the refactored one
-	// public final AlloyProcessingParam param;
-
-	public RequestMessage(RemoteProcess process,
-			RemoteProcessLogger processesLogger) {
-		super(process);
-		this.processesLogger = processesLogger;
-	}
+	protected final ProcessingParam param;
+	/* A session is a sequence of requests and response */
 
 	public RequestMessage(RemoteProcess process, long creationTime,
-			RemoteProcessLogger processesLogger) {
+			final ProcessingParam param) {
 		super(process, creationTime);
-		this.processesLogger = processesLogger;
+		this.param = param;
+	}
+
+	public RequestMessage(RemoteProcess process, final ProcessingParam param) {
+		super(process);
+		this.param = param;
+	}
+
+	public void prepareBeforeUse() throws InterruptedException {
+	}
+
+	/**
+	 * Given a param, a copy of the Request is returned. The subclass implements
+	 * it, to return the actual type.
+	 * 
+	 * @param param
+	 * @return
+	 */
+	protected abstract RequestMessage changeParam(final ProcessingParam param);
+
+	public void prepareThenSend(final RemoteProcess remoteProcess)
+			throws Exception {
+		changeParam(param.prepareToSend()).sendMe(remoteProcess);
 	}
 
 	@Override
-	public abstract void onAction(Map<Class, Object> context)
-			throws InvalidParameterException;
-
-	protected void afterSend(RemoteProcess process) {
-		processesLogger.IncreaseSentTasks(process);
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((param == null) ? 0 : param.hashCode());
+		return result;
 	}
 
-	public void prepareThenSend(RemoteProcess process) {
-		try {
-			// Encoding the param.
-			// if(Configuration.IsInDeubbungMode)
-			// logger.info("["+Thread.currentThread().getName()+"] " + "Sending a
-			// message: "+param);
-
-			// final AlloyProcessingParam param =
-			// this.param.prepareToSend().changeDBConnectionInfo(AnalyzerRunner.getDefaultConnectionInfo());
-			// (new RequestMessage(param, this.processesManager)
-			// ).sendMe(remoteAddres);
-			// if(Configuration.IsInDeubbungMode)
-			// logger.info("["+Thread.currentThread().getName()+"] " + "prepared and
-			// sent: "+param);
-		} catch (Exception e) {
-			// logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] " +
-			// "Failed on prepare or send the message: "+ this.param, e);
-			e.printStackTrace();
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
 		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		RequestMessage other = (RequestMessage) obj;
+		if (param == null) {
+			if (other.param != null) {
+				return false;
+			}
+		} else if (!param.equals(other.param)) {
+			return false;
+		}
+		return true;
+	}
 
+	public ProcessingParam getProcessingParam() {
+		return this.param;
+	}
+
+	@Override
+	public void onEvent(MessageListenerAction listener, MessageEventArgs args) {
+		listener.actionOn(this, args);
 	}
 
 }

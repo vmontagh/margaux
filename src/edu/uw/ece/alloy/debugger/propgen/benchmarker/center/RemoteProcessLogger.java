@@ -3,6 +3,9 @@
  */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
+import java.util.List;
+import java.util.Set;
+
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord.Status;
 
 /**
@@ -51,5 +54,17 @@ public interface RemoteProcessLogger {
 	void changeStatusToWORKING(final RemoteProcess process);
 
 	void changeStatusToIDLE(final RemoteProcess process);
+
+	String getStatus();
+
+	boolean allProcessesNotWorking();
+
+	Set<RemoteProcess> getLiveProcessIDs();
+
+	Set<RemoteProcess> getAllRegisteredProcesses();
 	
+	List<RemoteProcess> getTimedoutProcess(int threshold);
+	 
+	void killAndReplaceProcess(final RemoteProcess process);
+
 }

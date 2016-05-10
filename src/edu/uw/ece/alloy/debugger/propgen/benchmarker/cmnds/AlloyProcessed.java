@@ -8,7 +8,7 @@ import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
 public class AlloyProcessed extends RemoteCommand {
@@ -71,7 +71,7 @@ public class AlloyProcessed extends RemoteCommand {
 			System.out.println("result on the server is:"+result);
 			try {
 				(new AnalyzeExternalResult(result))
-						.sendMe(ExpressionAnalyzerRunner.getInstance().remoteSocket);
+						.sendMe(ExpressionAnalyzerRunner_.getInstance().remoteSocket);
 			} catch (InterruptedException e) {
 				logger.log(Level.SEVERE,
 						"[" + Thread.currentThread().getName() + "] "
@@ -97,7 +97,7 @@ public class AlloyProcessed extends RemoteCommand {
 		// super.sendMe(remoteAddres);
 		try {
 			AlloyProcessingParam param = this.result.params.prepareToSend();
-			param = param.resetToEmptyTmpDirectory();
+			param = param.resetToEmptyTmpLocalDirectory();
 			// System.out.println("The file stored in?
 			// "+this.result.params.srcPath.exists());
 			(new AlloyProcessed(PID, this.result.changeParams(param)))

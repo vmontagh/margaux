@@ -4,22 +4,14 @@
 package edu.uw.ece.alloy.debugger.pattern;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalLiveness;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalRequest;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.IamAlive;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
-import edu.uw.ece.alloy.util.ServerSocketListener;
 
 /**
  * 
@@ -74,10 +66,6 @@ public class PatternsAnalyzer extends ServerSocketInterface {
 		command.doAnalyze(feeder);
 	}
 
-	protected Thread getThread() {
-		return thread;
-	}
-
 	@Override
 	public void cancelThread() {
 		// TODO Auto-generated method stub
@@ -112,6 +100,12 @@ public class PatternsAnalyzer extends ServerSocketInterface {
 	public long isDelayed() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	protected void onReceivedMessage(RemoteMessage message) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

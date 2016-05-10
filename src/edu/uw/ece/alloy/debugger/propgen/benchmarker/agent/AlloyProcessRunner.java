@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessSelfMonitor;
 import edu.uw.ece.alloy.util.Utils;
-
+@Deprecated
 public class AlloyProcessRunner {
 
 	final public  int  SelfMonitorInterval = Integer.parseInt(Configuration.getProp("self_monitor_interval"));

@@ -20,6 +20,9 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.util.events.EventArgs;
+import edu.uw.ece.alloy.util.events.EventListener;
+import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
 /**
  * The abstract class defining the general structure of the messages are sent to
@@ -101,12 +104,20 @@ public abstract class RemoteMessage implements Serializable {
 	}
 
 	/**
+	 * Prepares the data before the request is done on the client. 
+	 * @throws InterruptedException
+	 */
+	public void prepareBeforeUse() throws InterruptedException{
+	}
+	
+	/**
 	 * Prepares a message before sending a messing.
 	 * Request and Response Messages overwrites this API 
 	 * @param remoteProcess
 	 * @throws InterruptedException 
+	 * @throws Exception 
 	 */
-	public void prepareThenSend(final RemoteProcess remoteProcess) throws InterruptedException{
+	public void prepareThenSend(final RemoteProcess remoteProcess) throws InterruptedException, Exception{
 		sendMe(remoteProcess);
 	}
 	
@@ -120,44 +131,6 @@ public abstract class RemoteMessage implements Serializable {
 	
 	protected void beforeSend(RemoteProcess process){}
 	protected void afterSend(RemoteProcess process){}
-	
-
-	/**
-	 * helper function to retrieve the process manager from a passed context.
-	 * 
-	 * @param context
-	 * @return
-	 * @throws InvalidParameterException
-	 */
-	protected RemoteProcessLogger retrieveRemoteProcessLoggerFromContext(
-			Map<Class, Object> context) throws InvalidParameterException {
-		RemoteProcessLogger manager = null;
-		// check whether the context has the required objects
-		for (Class clazz : context.keySet()) {
-			if (RemoteProcessManager.class.isAssignableFrom(clazz)) {
-				manager = (RemoteProcessLogger) clazz.cast(context.get(clazz));
-			}
-		}
-		if (manager == null) {
-			throw new InvalidParameterException("invlid manager:" + process);
-		}
-		return manager;
-	}
-	
-	protected ProcessRemoteMonitor retrieveProcessRemoteMonitorFromContext(
-			Map<Class, Object> context) throws InvalidParameterException {
-		ProcessRemoteMonitor monitor = null;
-		// check whether the context has the required objects
-		for (Class clazz : context.keySet()) {
-			if (ProcessRemoteMonitor.class.isAssignableFrom(clazz)) {
-				monitor = (ProcessRemoteMonitor) clazz.cast(context.get(clazz));
-			}
-		}
-		if (monitor == null) {
-			throw new InvalidParameterException("invlid manager:" + process);
-		}
-		return monitor;
-	}
 
 	/**
 	 * The action happens once a message is processed on the callee side. A caller
@@ -168,7 +141,48 @@ public abstract class RemoteMessage implements Serializable {
 	 * @param context
 	 * @throws InvalidParameterException
 	 */
-	public abstract void onAction(final Map<Class, Object> context)
+	public abstract void onAction(final Map<String, Object> context)
 			throws InvalidParameterException;
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (creationTime ^ (creationTime >>> 32));
+		result = prime * result + ((process == null) ? 0 : process.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		RemoteMessage other = (RemoteMessage) obj;
+		if (creationTime != other.creationTime) {
+			return false;
+		}
+		if (process == null) {
+			if (other.process != null) {
+				return false;
+			}
+		} else if (!process.equals(other.process)) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Once an event happens, this method is called and an implementation
+	 * of a listener is passed in.
+	 * @param listener
+	 */
+	public abstract void onEvent(MessageListenerAction listener, MessageEventArgs args);
+	
 }

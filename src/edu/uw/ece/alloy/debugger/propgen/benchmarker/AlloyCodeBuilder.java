@@ -12,19 +12,24 @@ public abstract class AlloyCodeBuilder {
 		PropertyToAlloyCodeObjects = new LinkedList<PropertyToAlloyCode>();
 	}
 
-	public AlloyCodeBuilder(final List<PropertyToAlloyCode> PropertyToAlloyCodeObjects) {
+	public AlloyCodeBuilder(
+			final List<PropertyToAlloyCode> PropertyToAlloyCodeObjects) {
 		this();
-		for(final PropertyToAlloyCode prop: PropertyToAlloyCodeObjects){
+		for (final PropertyToAlloyCode prop : PropertyToAlloyCodeObjects) {
 			this.PropertyToAlloyCodeObjects.add(prop.createItself());
 		}
 	}
-	
-	public void registerPropertyToAlloyCode(PropertyToAlloyCode propertyToAlloyCode){
+
+	public void registerPropertyToAlloyCode(
+			PropertyToAlloyCode propertyToAlloyCode) {
+		System.out.println("registerPropertyToAlloyCode,propertyToAlloyCode->"+PropertyToAlloyCodeObjects);
 		PropertyToAlloyCodeObjects.add(propertyToAlloyCode);
+		System.out.println("registerPropertyToAlloyCode,propertyToAlloyCode,after->"+PropertyToAlloyCodeObjects);
 	}
-	
-	public List<PropertyToAlloyCode> getAllPropertyGenerators(){
+
+	public List<PropertyToAlloyCode> getAllPropertyGenerators() {
+		System.out.println("getAllPropertyGenerators,PropertyToAlloyCodeObjects->"+PropertyToAlloyCodeObjects);
 		return Collections.unmodifiableList(PropertyToAlloyCodeObjects);
 	}
-	
+
 }

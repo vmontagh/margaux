@@ -8,9 +8,16 @@ package edu.uw.ece.alloy.util.events;
  */
 public class EventArgs {
 
+	public final long creationTime;
+	
 	private static EventArgs empty = new EventArgs();
 
 	protected EventArgs() {
+		this.creationTime = System.currentTimeMillis();
+	}
+	
+	protected EventArgs(final long creationTime) {
+		this.creationTime = creationTime;
 	}
 
 	/**

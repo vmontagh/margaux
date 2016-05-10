@@ -286,7 +286,7 @@ public class TriplePropsTester {
 		AlloyProcessingParam param = creator.generate();
 
 		try {
-			param.changeTmpDirectory(tempDirectory4Test).dumpAll();
+			param.changeTmpLocalDirectory(tempDirectory4Test).dumpAll();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -445,7 +445,7 @@ public class TriplePropsTester {
 		AlloyProcessingParam param = creator.generate();
 
 		try {
-			param.changeTmpDirectory(tempDirectory4Test).dumpAll();
+			param.changeTmpLocalDirectory(tempDirectory4Test).dumpAll();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

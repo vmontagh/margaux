@@ -28,7 +28,7 @@ public class PropertyCallBuilder {
 		
 		if (!pd.isAPropertyDefinition()) {
 			throw new IllegalArgumentException(
-					"The passed func/pred is not a property declration.");
+					"The passed func/pred is not a property declration: "+pd);
 		} else {
 			properties.add(pd);
 		}

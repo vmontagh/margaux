@@ -6,7 +6,7 @@ import java.util.logging.Level;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 
 public class IamAlive extends RemoteCommand {
@@ -68,7 +68,7 @@ public class IamAlive extends RemoteCommand {
 					PatternsAnalyzer.analyzing = false;
 					try {
 						(new AnalyzeExternalDone())
-								.sendMe(ExpressionAnalyzerRunner.getInstance().remoteSocket);
+								.sendMe(ExpressionAnalyzerRunner_.getInstance().remoteSocket);
 					} catch (InterruptedException e) {
 						logger.log(Level.SEVERE,
 								"[" + Thread.currentThread().getName() + "] "

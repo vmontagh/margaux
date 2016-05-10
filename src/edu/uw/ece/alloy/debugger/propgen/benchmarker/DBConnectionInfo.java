@@ -2,32 +2,30 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
 import java.io.Serializable;
 
+import com.google.common.base.Optional;
+
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.Compressor;
 
 public class DBConnectionInfo implements Serializable {
 
-	
+	private static final long serialVersionUID = 2837758635787489270L;
+	protected final String address;
+	protected final String username;
+	protected final String password;
+	protected final String database;
+	protected final String tablename;
+
 	public final static DBConnectionInfo CONFIGURED_DBConnectionInfo = new DBConnectionInfo(
-			Configuration.getProp("db_address"), 
-			Configuration.getProp("db_user"), 
+			Configuration.getProp("db_address"), Configuration.getProp("db_user"),
 			Configuration.getProp("db_password"),
 			Configuration.getProp("db_file_name_candidate"),
-			Configuration.getProp("db_table_name_candidate")
-			);
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 2837758635787489270L;
-	public final String address;
-	public final String username;
-	public final String password;
-	public final String database;
-	
-	public final String tablename;
-	
-	
+			Configuration.getProp("db_table_name_candidate"));
+
+	final static public DBConnectionInfo EMPTY_DBCONNECTIONINFO = new DBConnectionInfo(
+			Compressor.EMPTY_STRING, Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
+			Compressor.EMPTY_STRING, Compressor.EMPTY_STRING);
+
 	public DBConnectionInfo(String address, String username, String password,
 			String database, String tablename) {
 		super();
@@ -37,38 +35,36 @@ public class DBConnectionInfo implements Serializable {
 		this.database = database;
 		this.tablename = tablename;
 	}
-	
+
 	public DBConnectionInfo(String address, String username, String password,
 			String database) {
 		this(address, username, password, database, Compressor.EMPTY_STRING);
 	}
 
 	public DBConnectionInfo(String address, String username, String password) {
-		this(address, username, password, Compressor.EMPTY_STRING, Compressor.EMPTY_STRING);
+		this(address, username, password, Compressor.EMPTY_STRING,
+				Compressor.EMPTY_STRING);
 	}
-	
-	public DBConnectionInfo(DBConnectionInfo dBConnectionInfo){
-		this(dBConnectionInfo.address, dBConnectionInfo.username, dBConnectionInfo.password, dBConnectionInfo.database, dBConnectionInfo.tablename);
+
+	public DBConnectionInfo(DBConnectionInfo dBConnectionInfo) {
+		this(dBConnectionInfo.address, dBConnectionInfo.username,
+				dBConnectionInfo.password, dBConnectionInfo.database,
+				dBConnectionInfo.tablename);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((address == null) ? 0 : address.hashCode());
-		result = prime * result
-				+ ((database == null) ? 0 : database.hashCode());
-		result = prime * result
-				+ ((password == null) ? 0 : password.hashCode());
-		result = prime * result
-				+ ((username == null) ? 0 : username.hashCode());
-		result = prime * result
-				+ ((tablename == null) ? 0 : tablename.hashCode());		
+		result = prime * result + ((database == null) ? 0 : database.hashCode());
+		result = prime * result + ((password == null) ? 0 : password.hashCode());
+		result = prime * result + ((username == null) ? 0 : username.hashCode());
+		result = prime * result + ((tablename == null) ? 0 : tablename.hashCode());
 		return result;
 	}
-	
-	
-	protected boolean isEqual(DBConnectionInfo other){
+
+	protected boolean isEqual(DBConnectionInfo other) {
 		if (address == null) {
 			if (other.address != null)
 				return false;
@@ -93,7 +89,7 @@ public class DBConnectionInfo implements Serializable {
 			if (other.tablename != null)
 				return false;
 		} else if (!tablename.equals(other.tablename))
-			return false;		
+			return false;
 		return true;
 	}
 
@@ -106,16 +102,34 @@ public class DBConnectionInfo implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		DBConnectionInfo other = (DBConnectionInfo) obj;
-		return( isEqual(other) );
+		return (isEqual(other));
 	}
 
 	@Override
 	public String toString() {
-		return "DBConnectionInfo [address=" + address + ", username="
-				+ username + ", password=" + password + ", database="
-				+ database + ", tablename=" + tablename + "]";
+		return "DBConnectionInfo [address=" + address + ", username=" + username
+				+ ", password=" + password + ", database=" + database + ", tablename="
+				+ tablename + "]";
 	}
-	
-	
+
+	public Optional<String> getAddress() {
+		return Optional.fromNullable(address);
+	}
+
+	public Optional<String> getUsername() {
+		return Optional.fromNullable(username);
+	}
+
+	public Optional<String> getPassword() {
+		return Optional.fromNullable(password);
+	}
+
+	public Optional<String> getDatabase() {
+		return Optional.fromNullable(database);
+	}
+
+	public Optional<String> getTablename() {
+		return Optional.fromNullable(tablename);
+	}
 
 }

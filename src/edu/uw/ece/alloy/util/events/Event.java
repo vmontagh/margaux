@@ -1,8 +1,6 @@
 package edu.uw.ece.alloy.util.events;
 
-import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**

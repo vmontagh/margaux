@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 import edu.uw.ece.alloy.Compressor;
-import edu.uw.ece.alloy.util.Utils;
 
 public class Dependency implements Serializable {
 
