@@ -5,12 +5,6 @@ package edu.uw.ece.alloy.util;
 
 import java.io.File;
 import java.net.URI;
-import java.nio.file.Path;
-import java.util.Optional;
-
-import javax.management.RuntimeErrorException;
-
-import com.mysql.jdbc.Util;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.Compressor;
@@ -22,14 +16,14 @@ import edu.uw.ece.alloy.Compressor;
 public class LazyFile extends File {
 
 	private static final long serialVersionUID = -889771543337404216L;
-	
+
 	public final String content;
-	
+
 	protected LazyFile(String parent, StringBuilder sb) {
 		super(parent);
 		content = sb.toString();
 	}
-	
+
 	protected LazyFile(URI uri, String content) {
 		super(uri);
 		this.content = content;
@@ -44,9 +38,9 @@ public class LazyFile extends File {
 		super(parent, child);
 		this.content = content;
 	}
-	
+
 	public LazyFile(String pathname) {
-		this(pathname, new StringBuilder(Compressor.EMPTY_STRING) );
+		this(pathname, new StringBuilder(Compressor.EMPTY_STRING));
 	}
 
 	public LazyFile(URI uri) {
@@ -56,27 +50,30 @@ public class LazyFile extends File {
 	public LazyFile(String parent, String child) {
 		this(parent, child, Compressor.EMPTY_STRING);
 	}
-	
+
 	public LazyFile(File parent, String child) {
 		this(parent, child, Compressor.EMPTY_STRING);
 	}
-	
+
 	/**
 	 * Load the file mentioned in path to the content
+	 * 
 	 * @return
 	 */
-	public LazyFile load(){
+	public LazyFile load() {
 		final String content = Utils.readFile(getAbsolutePath());
-		return new LazyFile(getAbsolutePath(), new StringBuilder(content) );
+		return new LazyFile(getAbsolutePath(), new StringBuilder(content));
 	}
-	
+
 	/**
 	 * Unload the content into a file path.
+	 * 
 	 * @param parentDirectory
 	 * @return
 	 */
-	public LazyFile unload(File parentDirectory){
-		String pathname = (new File(parentDirectory.getAbsolutePath() , getName())).getAbsolutePath();
+	public LazyFile unload(File parentDirectory) {
+		String pathname = (new File(parentDirectory.getAbsolutePath(), getName()))
+				.getAbsolutePath();
 		try {
 			edu.mit.csail.sdg.alloy4.Util.writeAll(pathname, content);
 		} catch (Err e) {
@@ -86,8 +83,8 @@ public class LazyFile extends File {
 		return new LazyFile(pathname);
 	}
 
-	public boolean isLoaded(){
+	public boolean isLoaded() {
 		return !content.equals(Compressor.EMPTY_STRING);
 	}
-	
+
 }

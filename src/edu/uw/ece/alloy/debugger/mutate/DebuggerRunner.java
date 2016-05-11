@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
@@ -43,7 +40,7 @@ public class DebuggerRunner extends Runner {
 	protected final InetSocketAddress distributorSocket;
 
 	protected ServerSocketInterface distributerInterface;
-	protected RemoteProcessManager AnalyzerProcessManager;
+	protected RemoteProcessManager analyzerProcessManager;
 	protected Approximator approximator;
 	protected DebuggerAlgorithm debuggerAlgorithm;
 
@@ -66,7 +63,7 @@ public class DebuggerRunner extends Runner {
 	protected void initiate() {
 
 		distributerInterface = new ServerSocketInterface(distributorSocket);
-		AnalyzerProcessManager = new RemoteProcessManager(distributorSocket,
+		analyzerProcessManager = new RemoteProcessManager(distributorSocket,
 				ExpressionAnalyzerRunner.class);
 		// Livensess or readyness message message is received from a remote process.
 		distributerInterface.MessageReceived
@@ -75,7 +72,7 @@ public class DebuggerRunner extends Runner {
 					public void actionOn(LivenessMessage livenessMessage,
 							MessageReceivedEventArgs event) {
 						final Map<String, Object> context = new HashMap<>();
-						context.put("RemoteProcessLogger", AnalyzerProcessManager);
+						context.put("RemoteProcessLogger", analyzerProcessManager);
 						try {
 							livenessMessage.onAction(context);
 						} catch (InvalidParameterException e) {
@@ -87,9 +84,9 @@ public class DebuggerRunner extends Runner {
 					public void actionOn(ReadyMessage readyMessage,
 							MessageReceivedEventArgs event) {
 						final Map<String, Object> context = new HashMap<>();
-						context.put("RemoteProcessLogger", AnalyzerProcessManager);
+						context.put("RemoteProcessLogger", analyzerProcessManager);
 						try {
-							System.out.println("DebuggerRunner actionOn "+readyMessage);
+							System.out.println("DebuggerRunner actionOn " + readyMessage);
 							readyMessage.onAction(context);
 						} catch (InvalidParameterException e) {
 							e.printStackTrace();
@@ -97,18 +94,19 @@ public class DebuggerRunner extends Runner {
 					}
 				});
 
-		approximator = new Approximator(distributerInterface, AnalyzerProcessManager,
-				tmpLocalDirectory, toBeAnalyzedCode, dependentFiles);
+		approximator = new Approximator(distributerInterface,
+				analyzerProcessManager, tmpLocalDirectory, toBeAnalyzedCode,
+				dependentFiles);
 
 		debuggerAlgorithm = new DebuggerAlgorithm(toBeAnalyzedCode, approximator) {
 		};
-		
+
 	}
 
 	@Override
 	public void start() {
 		distributerInterface.startThread();
-		AnalyzerProcessManager.addAllProcesses();
+		analyzerProcessManager.addAllProcesses();
 	}
 
 	/**

@@ -23,7 +23,7 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam>
 
 	final static Logger logger = Logger.getLogger(
 			AlloyFeeder.class.getName() + "--" + Thread.currentThread().getName());
-	
+
 	final public static boolean PREVENT_DUPLICATION = Boolean
 			.parseBoolean(Configuration.getProp("prevent_generation_duplication"));
 
@@ -106,7 +106,8 @@ public class AlloyFeeder extends GeneratedStorage<AlloyProcessingParam>
 	}
 
 	public void addGeneratedProp(final AlloyProcessingParam item) {
-		if (!PREVENT_DUPLICATION || !(monitor.isDone(item) || monitor.isTobeDone(item)))
+		if (!PREVENT_DUPLICATION
+				|| !(monitor.isDone(item) || monitor.isTobeDone(item)))
 			try {
 				super.size++;
 				this.addProcessTask(item);

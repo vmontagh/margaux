@@ -116,8 +116,8 @@ public abstract class DebuggerAlgorithm {
 				List<Pair<String, String>> approximations = approximator
 						.strongestApproximation(modelPart, field, scope);
 
-				System.out.println("approximations->"+approximations);
-				
+				System.out.println("approximations->" + approximations);
+
 				String approximationProperty = "";
 				for (Pair<String, String> approximation : approximations) {
 					List<String> strongerApprox = approximator
@@ -140,7 +140,8 @@ public abstract class DebuggerAlgorithm {
 						+ (!restModel.trim().isEmpty() ? " and " + restModel : "");
 
 				// Make a new Model
-				String predName = "approximate_" + Math.abs( ModelPartialApproximation.hashCode());
+				String predName = "approximate_"
+						+ Math.abs(ModelPartialApproximation.hashCode());
 				String pred = String.format("pred %s[]{%s}\n", predName,
 						ModelPartialApproximation);
 				String newHeader = "open " + approximator.relationalPropModuleOriginal
@@ -150,9 +151,10 @@ public abstract class DebuggerAlgorithm {
 				String newCommandName = "run " + predName + " " + scope;
 				String newCode = newHeader + "\n" + sourceCode + "\n" + pred + "\n"
 						+ newCommandName;
-				File newCodeFile = new File(sourceFile.getParentFile(), predName+".als");
+				File newCodeFile = new File(sourceFile.getParentFile(),
+						predName + ".als");
 				try {
-					System.out.println("newCodeFile->"+newCodeFile);
+					System.out.println("newCodeFile->" + newCodeFile);
 					Util.writeAll(newCodeFile.getAbsolutePath(), newCode);
 				} catch (Err e) {
 					e.printStackTrace();

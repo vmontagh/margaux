@@ -4,15 +4,16 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 /**
- * The parameters passed into the messages on an action is 
- * invalid, i.e. missed or cannot be retrieved.
+ * The parameters passed into the messages on an action is invalid, i.e. missed
+ * or cannot be retrieved.
+ * 
  * @author vajih
  *
  */
 public class InvalidParameterException extends Exception {
 
 	private static final long serialVersionUID = 2877132515508130736L;
-	
+
 	public InvalidParameterException() {
 		// TODO Auto-generated constructor stub
 	}
@@ -37,6 +38,5 @@ public class InvalidParameterException extends Exception {
 		super(message, cause, enableSuppression, writableStackTrace);
 		// TODO Auto-generated constructor stub
 	}
-	
-	
+
 }

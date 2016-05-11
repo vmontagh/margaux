@@ -1,8 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public class SdEnd extends Sd {
-	
-
 
 	public SdEnd(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
@@ -28,8 +26,6 @@ public class SdEnd extends Sd {
 		return MiddleName;
 	}
 
-	
-	
 	@Override
 	public String getFirst() {
 		return this.EndFirst;
@@ -39,11 +35,13 @@ public class SdEnd extends Sd {
 	public String getNext() {
 		return this.EndNext;
 	}
-	
+
 	@Override
-	public String genLetforLocality(String letVar, String quantifiedVar, final String quanitifiedOrderedVar) {
+	public String genLetforLocality(String letVar, String quantifiedVar,
+			final String quanitifiedOrderedVar) {
 		final String letExpression = "let %1$s = %2$s(%3$s.%4$s) |";
-		return String.format(letExpression, letVar, quantifiedVar+".", quanitifiedOrderedVar, RName );
+		return String.format(letExpression, letVar, quantifiedVar + ".",
+				quanitifiedOrderedVar, RName);
 	}
 
 	@Override
@@ -55,6 +53,5 @@ public class SdEnd extends Sd {
 	public String getConcreteNext() {
 		return this.EndConcreteNext;
 	}
-	
 
 }

@@ -22,13 +22,10 @@ public abstract class AlloyCodeBuilder {
 
 	public void registerPropertyToAlloyCode(
 			PropertyToAlloyCode propertyToAlloyCode) {
-		System.out.println("registerPropertyToAlloyCode,propertyToAlloyCode->"+PropertyToAlloyCodeObjects);
 		PropertyToAlloyCodeObjects.add(propertyToAlloyCode);
-		System.out.println("registerPropertyToAlloyCode,propertyToAlloyCode,after->"+PropertyToAlloyCodeObjects);
 	}
 
 	public List<PropertyToAlloyCode> getAllPropertyGenerators() {
-		System.out.println("getAllPropertyGenerators,PropertyToAlloyCodeObjects->"+PropertyToAlloyCodeObjects);
 		return Collections.unmodifiableList(PropertyToAlloyCodeObjects);
 	}
 

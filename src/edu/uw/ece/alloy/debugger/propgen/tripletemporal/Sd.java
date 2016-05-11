@@ -1,14 +1,12 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
-public abstract  class Sd extends Property implements SdOrd  {
+public abstract class Sd extends Property implements SdOrd {
 
-	public final String EndNext, EndFirst;  
-	public final String MiddleNext, MiddleFirst; 
+	public final String EndNext, EndFirst;
+	public final String MiddleNext, MiddleFirst;
 
-	public final String EndConcreteNext, EndConcreteFirst;  
-	public final String MiddleConcreteNext, MiddleConcreteFirst; 
-	
-
+	public final String EndConcreteNext, EndConcreteFirst;
+	public final String MiddleConcreteNext, MiddleConcreteFirst;
 
 	public Sd(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
@@ -32,25 +30,21 @@ public abstract  class Sd extends Property implements SdOrd  {
 
 	@Override
 	protected String getPredecessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected String getSuccessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
-	protected abstract String getOther() ;
-
+	protected abstract String getOther();
 
 	@Override
 	protected boolean isConsistent() {
 		return true;
 	}
-	
+
 	@Override
 	public String getOtherFirst() {
 		throw new RuntimeException("Invalid Procedure call");
@@ -60,7 +54,7 @@ public abstract  class Sd extends Property implements SdOrd  {
 	public String getOtherNext() {
 		throw new RuntimeException("Invalid Procedure call");
 	}
-	
+
 	@Override
 	public String getConcreteOtherFirst() {
 		throw new RuntimeException("Invalid Procedure call");
@@ -71,82 +65,103 @@ public abstract  class Sd extends Property implements SdOrd  {
 		throw new RuntimeException("Invalid Procedure call");
 	}
 
-	
 	final protected String letExpression = "let %1$s = %2$s(%3$s.%4$s) |";
 
-	public abstract String genLetforLocality(final String letVar, final String quantifiedVar, final String quanitifiedOrderedVar);
-	
+	public abstract String genLetforLocality(final String letVar,
+			final String quantifiedVar, final String quanitifiedOrderedVar);
+
 	@Override
 	public String getOderedParameters() {
 		StringBuilder result = new StringBuilder();
-		
-		try{ result.append( getFirst()).append(": univ, ").append(getNext()).append(": univ->univ");}catch(RuntimeException e){}
-		try{ result.append( getOtherFirst()).append(": univ, ").append(getOtherNext()).append(": univ->univ");}catch(RuntimeException e){}
-		
-		return result.length() > 0 ?  ", "+result.toString() : "";
+
+		try {
+			result.append(getFirst()).append(": univ, ").append(getNext())
+					.append(": univ->univ");
+		} catch (RuntimeException e) {
+		}
+		try {
+			result.append(getOtherFirst()).append(": univ, ").append(getOtherNext())
+					.append(": univ->univ");
+		} catch (RuntimeException e) {
+		}
+
+		return result.length() > 0 ? ", " + result.toString() : "";
 	}
-	
+
 	@Override
 	public String getConcreteOrderedParameters() {
 		StringBuilder result = new StringBuilder();
-		
-		try{ result.append( getConcreteFirst()).append(", ").append(getConcreteNext());}catch(RuntimeException e){}
-		try{ result.append( getConcreteOtherFirst()).append(", ").append(getConcreteOtherNext());}catch(RuntimeException e){}
-		
-		return result.length() > 0 ?  result.toString() : "";
+
+		try {
+			result.append(getConcreteFirst()).append(", ").append(getConcreteNext());
+		} catch (RuntimeException e) {
+		}
+		try {
+			result.append(getConcreteOtherFirst()).append(", ")
+					.append(getConcreteOtherNext());
+		} catch (RuntimeException e) {
+		}
+
+		return result.length() > 0 ? result.toString() : "";
 	}
-	
+
 	@Override
 	public boolean isConsistentOrdered() {
-		if( !isConsistent() ) return false;
-		
-		if( getFirst() == null ) return false;
-		if( getFirst().equals("") ) return false;
+		if (!isConsistent())
+			return false;
 
-		if( getNext() == null ) return false;
-		if( getNext().equals("") ) return false;
-		
+		if (getFirst() == null)
+			return false;
+		if (getFirst().equals(""))
+			return false;
+
+		if (getNext() == null)
+			return false;
+		if (getNext().equals(""))
+			return false;
+
 		return true;
-		
+
 	}
-	
+
 	@Override
 	public boolean isConsistentConcreteOrdered() {
-		if( !isConsistent() ) return false;
-		
-		if( getConcreteFirst() == null ) return false;
-		if( getConcreteFirst().equals("") ) return false;
+		if (!isConsistent())
+			return false;
 
-		if( getConcreteNext() == null ) return false;
-		if( getConcreteNext().equals("") ) return false;
-		
+		if (getConcreteFirst() == null)
+			return false;
+		if (getConcreteFirst().equals(""))
+			return false;
+
+		if (getConcreteNext() == null)
+			return false;
+		if (getConcreteNext().equals(""))
+			return false;
+
 		return true;
-		
+
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime
-				* result
+		result = prime * result
 				+ ((EndConcreteFirst == null) ? 0 : EndConcreteFirst.hashCode());
 		result = prime * result
 				+ ((EndConcreteNext == null) ? 0 : EndConcreteNext.hashCode());
-		result = prime * result
-				+ ((EndFirst == null) ? 0 : EndFirst.hashCode());
+		result = prime * result + ((EndFirst == null) ? 0 : EndFirst.hashCode());
 		result = prime * result + ((EndNext == null) ? 0 : EndNext.hashCode());
-		result = prime
-				* result
-				+ ((MiddleConcreteFirst == null) ? 0 : MiddleConcreteFirst
-						.hashCode());
-		result = prime
-				* result
-				+ ((MiddleConcreteNext == null) ? 0 : MiddleConcreteNext
-						.hashCode());
+		result = prime * result
+				+ ((MiddleConcreteFirst == null) ? 0 : MiddleConcreteFirst.hashCode());
+		result = prime * result
+				+ ((MiddleConcreteNext == null) ? 0 : MiddleConcreteNext.hashCode());
 		result = prime * result
 				+ ((MiddleFirst == null) ? 0 : MiddleFirst.hashCode());
 		result = prime * result
@@ -156,7 +171,9 @@ public abstract  class Sd extends Property implements SdOrd  {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -236,7 +253,5 @@ public abstract  class Sd extends Property implements SdOrd  {
 		}
 		return true;
 	}
-	
-	
-	
+
 }

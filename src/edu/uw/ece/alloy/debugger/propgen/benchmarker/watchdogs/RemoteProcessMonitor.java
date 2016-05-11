@@ -171,8 +171,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 
 	public void removeMessage(final RemoteProcess process,
 			final ProcessingParam param) {
-		
-		
+
 		// Safety checking
 		RemoteProcess bProcess = null;
 		for (RemoteProcess rp : incompleteMessages.keySet()) {
@@ -202,9 +201,9 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 					Map<ProcessingParam, Integer> mapValue = incompleteMessages
 							.get(process);
 
-					System.out.println("mapValue->"+mapValue);
-					System.out.println("param->"+param);
-					
+					System.out.println("mapValue->" + mapValue);
+					System.out.println("param->" + param);
+
 					if (Configuration.IsInDeubbungMode)
 						logger.info(Utils.threadName() + " The map size is before: "
 								+ mapValue.size() + " for pId:" + process);

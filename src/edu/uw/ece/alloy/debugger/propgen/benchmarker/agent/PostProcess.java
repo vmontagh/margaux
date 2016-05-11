@@ -18,6 +18,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.ServerSocketInterface;

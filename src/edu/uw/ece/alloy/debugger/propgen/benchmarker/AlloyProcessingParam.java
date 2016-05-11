@@ -47,6 +47,13 @@ public class AlloyProcessingParam extends ProcessingParam {
 	}
 
 	protected AlloyProcessingParam(UUID analyzingSessionID, int priority,
+			File tmpLocalDirectory, PropertyToAlloyCode alloyCoder) {
+		this(analyzingSessionID, priority, tmpLocalDirectory,
+				PropertyToAlloyCode.EMPTY_CONVERTOR,
+				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
+	}
+
+	protected AlloyProcessingParam(UUID analyzingSessionID, int priority,
 			PropertyToAlloyCode alloyCoder) {
 		this(analyzingSessionID, priority, Compressor.EMPTY_FILE,
 				PropertyToAlloyCode.EMPTY_CONVERTOR,

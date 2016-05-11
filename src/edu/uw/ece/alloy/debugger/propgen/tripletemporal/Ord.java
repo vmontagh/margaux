@@ -3,8 +3,8 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 public abstract class Ord extends Property {
 
 	final SzPrpty sizeProp;
-	final SdOrd sideOrdered;  
-	
+	final SdOrd sideOrdered;
+
 	public Ord(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
 			String sConcreteName, String sConcreteNext, String sConcreteFirst,
@@ -13,34 +13,35 @@ public abstract class Ord extends Property {
 				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
 				eConcreteName);
 		this.sizeProp = sizeProp;
-		sideOrdered = (SdOrd)sizeProp.growthLocality.side;
+		sideOrdered = (SdOrd) sizeProp.growthLocality.side;
 
 	}
 
 	@Override
 	protected String getPredecessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected String getSuccessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected boolean isConsistent() {
-		if( ! sizeProp.isConsistent() ) return false;
+		if (!sizeProp.isConsistent())
+			return false;
 
-		if( ! (sizeProp.growthLocality.side instanceof  SdOrd) ) return false;
-		if( ! sideOrdered.isConsistentOrdered() ) return false;
+		if (!(sizeProp.growthLocality.side instanceof SdOrd))
+			return false;
+		if (!sideOrdered.isConsistentOrdered())
+			return false;
 		return true;
 	}
 
 	@Override
 	public String genPredName() {
-		return super.genPredName()+sizeProp.genPredName();
+		return super.genPredName() + sizeProp.genPredName();
 	}
 
 	@Override
@@ -52,26 +53,30 @@ public abstract class Ord extends Property {
 	protected String genBody() {
 		return sizeProp.genBodyOrdered() + genOrder();
 	}
-	
+
 	protected abstract String genOrder();
-	
-	public String genParametesCall(){
-		return super.genParametesCall()+","+sideOrdered.getConcreteOrderedParameters() ;
+
+	public String genParametesCall() {
+		return super.genParametesCall() + ","
+				+ sideOrdered.getConcreteOrderedParameters();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result
-				+ ((sizeProp == null) ? 0 : sizeProp.hashCode());
+		result = prime * result + ((sizeProp == null) ? 0 : sizeProp.hashCode());
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -96,5 +101,4 @@ public abstract class Ord extends Property {
 		return true;
 	}
 
-	
 }

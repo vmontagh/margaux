@@ -71,6 +71,7 @@ public class Utils {
 				final BufferedReader br = new BufferedReader(fr);
 				final char[] c = new char[(int) length];
 				br.read(c);
+				br.close();
 				return new String(c);
 			} else {
 				throw new RuntimeException("File is too big! " + inputFileName);
@@ -468,5 +469,5 @@ public class Utils {
 
 		return pb.start();
 	}
-	
+
 }

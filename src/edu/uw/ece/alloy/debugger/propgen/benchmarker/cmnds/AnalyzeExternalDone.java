@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
+@Deprecated
 public class AnalyzeExternalDone extends RemoteCommand {
 
 	/**

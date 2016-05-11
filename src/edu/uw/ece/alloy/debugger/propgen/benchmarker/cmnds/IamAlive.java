@@ -4,11 +4,12 @@ import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 
+@Deprecated
 public class IamAlive extends RemoteCommand {
 
 	/**
@@ -53,18 +54,19 @@ public class IamAlive extends RemoteCommand {
 			manager.changeDoneTasks(PID, porcessed);
 			manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
 			manager.changeLastLiveTimeRecieved(PID, time);
-			
-			if (manager.SomeProcessesWorking()){
+
+			if (manager.SomeProcessesWorking()) {
 				PatternsAnalyzer.analyzing = true;
 			}
-			
+
 			if (toBeProcessed <= 0) {
 				manager.changeStatus(PID, Status.IDLE);
 
 				System.out.println("monitor.isAllProcessesNotWorking()->"
 						+ manager.allProcessesNotWorking());
-				
-				if (manager.allProcessesNotWorking() && PatternsAnalyzer.analyzing/*Means it was analyzing*/) {
+
+				if (manager.allProcessesNotWorking()
+						&& PatternsAnalyzer.analyzing/* Means it was analyzing */) {
 					PatternsAnalyzer.analyzing = false;
 					try {
 						(new AnalyzeExternalDone())

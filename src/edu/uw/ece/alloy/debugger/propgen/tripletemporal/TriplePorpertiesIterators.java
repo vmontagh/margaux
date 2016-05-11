@@ -4,9 +4,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Iterator;
-import java.util.Set;
 
-import org.reflections.*;
+import org.reflections.Reflections;
 
 public class TriplePorpertiesIterators {
 
@@ -15,16 +14,16 @@ public class TriplePorpertiesIterators {
 	public final TripleBuilder tripleBuilder;
 
 	public TriplePorpertiesIterators(final TripleBuilder tripleBuilder) {
-		this.tripleBuilder =  tripleBuilder;
+		this.tripleBuilder = tripleBuilder;
 	}
 
-
-	public class SizeIterator extends PropertyIterator<SzPrpty, SizeIterator>{
+	public class SizeIterator extends PropertyIterator<SzPrpty, SizeIterator> {
 
 		final Lclty local;
 		final Emptnes empty;
 
-		public SizeIterator(final TripleBuilder builder, final Lclty local, final Emptnes empty) {
+		public SizeIterator(final TripleBuilder builder, final Lclty local,
+				final Emptnes empty) {
 			super(builder);
 			this.local = local;
 			this.empty = empty;
@@ -33,23 +32,22 @@ public class TriplePorpertiesIterators {
 		@Override
 		protected SzPrpty convertNext(Class t) {
 			try {
-				return builder.createSizeInstance(t,local, empty);
+				return builder.createSizeInstance(t, local, empty);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
 		protected SizeIterator makeSelf() {
-			return new SizeIterator(builder,local, empty);
+			return new SizeIterator(builder, local, empty);
 		}
 
 	}
 
-
-	public class LocalityIterator extends PropertyIterator<Lclty, LocalityIterator>{
-
+	public class LocalityIterator
+			extends PropertyIterator<Lclty, LocalityIterator> {
 
 		final Sd side;
 
@@ -61,22 +59,21 @@ public class TriplePorpertiesIterators {
 		@Override
 		protected Lclty convertNext(Class t) {
 			try {
-				return builder.createLocalityInstance(t,side);
+				return builder.createLocalityInstance(t, side);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
 		protected LocalityIterator makeSelf() {
-			return new LocalityIterator(builder,side);
+			return new LocalityIterator(builder, side);
 		}
 
 	}
 
-
-	public class SideIterator extends PropertyIterator<Sd, SideIterator>{
+	public class SideIterator extends PropertyIterator<Sd, SideIterator> {
 
 		public SideIterator(final TripleBuilder builder) {
 			super(builder);
@@ -89,7 +86,7 @@ public class TriplePorpertiesIterators {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
@@ -99,7 +96,8 @@ public class TriplePorpertiesIterators {
 
 	}
 
-	public class EmptinessIterator extends PropertyIterator<Emptnes, EmptinessIterator>{
+	public class EmptinessIterator
+			extends PropertyIterator<Emptnes, EmptinessIterator> {
 
 		public EmptinessIterator(final TripleBuilder builder) {
 			super(builder);
@@ -112,7 +110,7 @@ public class TriplePorpertiesIterators {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
@@ -121,9 +119,9 @@ public class TriplePorpertiesIterators {
 		}
 
 	}
-	
-	public class OrderIterator extends PropertyIterator<Ord, OrderIterator>{
-		
+
+	public class OrderIterator extends PropertyIterator<Ord, OrderIterator> {
+
 		final SzPrpty size;
 
 		public OrderIterator(final TripleBuilder builder, final SzPrpty size) {
@@ -138,7 +136,7 @@ public class TriplePorpertiesIterators {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
@@ -147,13 +145,14 @@ public class TriplePorpertiesIterators {
 		}
 
 	}
-	
-	
-	public class CompositeOrdersIterator extends PropertyIterator<CmpstOrds, CompositeOrdersIterator>{
-		
+
+	public class CompositeOrdersIterator
+			extends PropertyIterator<CmpstOrds, CompositeOrdersIterator> {
+
 		final Ord order1, order2;
 
-		public CompositeOrdersIterator(final TripleBuilder builder, final Ord order1, final Ord order2) {
+		public CompositeOrdersIterator(final TripleBuilder builder,
+				final Ord order1, final Ord order2) {
 			super(builder);
 			this.order1 = order1;
 			this.order2 = order2;
@@ -166,7 +165,7 @@ public class TriplePorpertiesIterators {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
@@ -175,12 +174,14 @@ public class TriplePorpertiesIterators {
 		}
 
 	}
-	
-	public class CompositeSizesIterator extends PropertyIterator<CmpstSz, CompositeSizesIterator>{
-		
+
+	public class CompositeSizesIterator
+			extends PropertyIterator<CmpstSz, CompositeSizesIterator> {
+
 		final SzPrpty size1, size2;
 
-		public CompositeSizesIterator(final TripleBuilder builder, final SzPrpty size1, final SzPrpty size2) {
+		public CompositeSizesIterator(final TripleBuilder builder,
+				final SzPrpty size1, final SzPrpty size2) {
 			super(builder);
 			this.size1 = size1;
 			this.size2 = size2;
@@ -193,7 +194,7 @@ public class TriplePorpertiesIterators {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot be created");
-			}		
+			}
 		}
 
 		@Override
@@ -202,9 +203,9 @@ public class TriplePorpertiesIterators {
 		}
 
 	}
-	
 
-	public abstract class PropertyIterator<T,S extends Iterable<T>> implements Iterator<T>, Iterable<T>{
+	public abstract class PropertyIterator<T, S extends Iterable<T>>
+			implements Iterator<T>, Iterable<T> {
 
 		final TripleBuilder builder;
 
@@ -213,11 +214,17 @@ public class TriplePorpertiesIterators {
 		public PropertyIterator(final TripleBuilder builder) {
 			this.builder = builder;
 			Type sooper = getClass().getGenericSuperclass();
-			Type t = ((ParameterizedType)sooper).getActualTypeArguments()[ 0 ];
+			Type t = ((ParameterizedType) sooper).getActualTypeArguments()[0];
 
 			try {
-				iterator =(new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).stream().filter(a->!Modifier.isAbstract(a.getModifiers() )).sorted((Class c1, Class c2)->c1.getName().compareTo(c2.getName())).iterator();
-				//iterator = (new Reflections(packageName).getSubTypesOf(Class.forName( t.getTypeName() ))).iterator();
+				iterator = (new Reflections(packageName)
+						.getSubTypesOf(Class.forName(t.getTypeName()))).stream()
+								.filter(a -> !Modifier.isAbstract(a.getModifiers()))
+								.sorted((Class c1, Class c2) -> c1.getName()
+										.compareTo(c2.getName()))
+								.iterator();
+				// iterator = (new Reflections(packageName).getSubTypesOf(Class.forName(
+				// t.getTypeName() ))).iterator();
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -232,8 +239,8 @@ public class TriplePorpertiesIterators {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public T next(){
-			return convertNext((Class<T>)iterator.next());
+		public T next() {
+			return convertNext((Class<T>) iterator.next());
 		}
 
 		protected abstract T convertNext(Class<? extends T> t);
@@ -244,27 +251,21 @@ public class TriplePorpertiesIterators {
 		}
 
 		protected abstract S makeSelf();
-		
+
 	}
 
-
-	/*public  Set<Class<? extends Side>> getAllSizeSide(){
-		return new Reflections(packageName).getSubTypesOf(Side.class);
-	}
-
-	public  Set<Class<? extends Order>> getAllOrder(){
-		return new Reflections(packageName).getSubTypesOf(Order.class);
-	}
-
-	public  Set<Class<? extends Emptiness>> getAllEmpty(){
-		return new Reflections(packageName).getSubTypesOf(Emptiness.class);
-	}
-
-	public  Set<Class<? extends Locality>> getAllLocality(){
-		return new Reflections(packageName).getSubTypesOf(Locality.class);
-	}*/
-
-
-
+	/*
+	 * public Set<Class<? extends Side>> getAllSizeSide(){ return new
+	 * Reflections(packageName).getSubTypesOf(Side.class); }
+	 * 
+	 * public Set<Class<? extends Order>> getAllOrder(){ return new
+	 * Reflections(packageName).getSubTypesOf(Order.class); }
+	 * 
+	 * public Set<Class<? extends Emptiness>> getAllEmpty(){ return new
+	 * Reflections(packageName).getSubTypesOf(Emptiness.class); }
+	 * 
+	 * public Set<Class<? extends Locality>> getAllLocality(){ return new
+	 * Reflections(packageName).getSubTypesOf(Locality.class); }
+	 */
 
 }

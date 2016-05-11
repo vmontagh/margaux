@@ -4,13 +4,12 @@ import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.mutate.Approximator;
-import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
+@Deprecated
 public class AlloyProcessed extends RemoteCommand {
 
 	/**
@@ -33,13 +32,13 @@ public class AlloyProcessed extends RemoteCommand {
 		if (Configuration.IsInDeubbungMode)
 			logger.fine("[" + Thread.currentThread().getName() + "] "
 					+ "Processeing the response: pID= " + PID + " param="
-					+ this.result.params);
+					+ this.result.getParam());
 
-		AlloyProcessingParam param = this.result.params;
+		AlloyProcessingParam param = this.result.getParam();
 		AlloyProcessedResult result = this.result;
 		try {
 			// decode it
-			param = this.result.params.prepareToUse();
+			param = this.result.getParam().prepareToUse();
 			result = this.result.changeParams(param);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE,
@@ -55,20 +54,16 @@ public class AlloyProcessed extends RemoteCommand {
 					+ "Done and reported: pID= " + PID + " param=" + param);
 
 		// update the predCall for the inferred properties
-		System.out.println("before updatePropertyCall->"+result);
+		System.out.println("before updatePropertyCall->" + result);
 		result = result.updatePropertyCall();
-		System.out.println("after updatePropertyCall->"+result);
-		
+		System.out.println("after updatePropertyCall->" + result);
+
 		monitor.processResponded(result, PID);
 		monitor.checkNextProperties(result);
 
-		//Approximator.getInstance().addDirectImplication(result);
-
-		System.out.println("Result is:" +result.sat +"-------" + result.params.alloyCoder.predBodyA + result.params.alloyCoder.srcNameOperator() + result.params.alloyCoder.predNameB + "   "+result.getClass());
-		
 		// Send correct result. i.e. no counter-example or sat == 0
-		if (result.params.alloyCoder.isDesiredSAT(result.sat)) {
-			System.out.println("result on the server is:"+result);
+		if (result.getParam().getAlloyCoder().get().isDesiredSAT(result.sat)) {
+			System.out.println("result on the server is:" + result);
 			try {
 				(new AnalyzeExternalResult(result))
 						.sendMe(ExpressionAnalyzerRunner_.getInstance().remoteSocket);
@@ -85,7 +80,7 @@ public class AlloyProcessed extends RemoteCommand {
 
 	@Override
 	public String toString() {
-		return "AlloyProcessed [PID=" + PID + ", param=" + result.params + "]";
+		return "AlloyProcessed [PID=" + PID + ", param=" + result.getParam() + "]";
 	}
 
 	public void send(final InetSocketAddress remoteAddres)
@@ -93,10 +88,10 @@ public class AlloyProcessed extends RemoteCommand {
 
 		if (Configuration.IsInDeubbungMode)
 			logger.fine("[" + Thread.currentThread().getName() + "] "
-					+ "Sending a response: pID= " + PID + " param=" + result.params);
+					+ "Sending a response: pID= " + PID + " param=" + result.getParam());
 		// super.sendMe(remoteAddres);
 		try {
-			AlloyProcessingParam param = this.result.params.prepareToSend();
+			AlloyProcessingParam param = this.result.getParam().prepareToSend();
 			param = param.resetToEmptyTmpLocalDirectory();
 			// System.out.println("The file stored in?
 			// "+this.result.params.srcPath.exists());

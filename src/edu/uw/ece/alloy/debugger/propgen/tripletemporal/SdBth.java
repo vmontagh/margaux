@@ -2,8 +2,6 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public class SdBth extends Sd {
 
- 
-
 	public SdBth(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
 			String sConcreteName, String sConcreteNext, String sConcreteFirst,
@@ -35,7 +33,6 @@ public class SdBth extends Sd {
 
 	@Override
 	public String getNext() {
-		// TODO Auto-generated method stub
 		return this.MiddleNext;
 	}
 
@@ -50,29 +47,31 @@ public class SdBth extends Sd {
 	}
 
 	@Override
-	public String genLetforLocality(String letVar, String quantifiedVar, final String quanitifiedOrderedVar) {
+	public String genLetforLocality(String letVar, String quantifiedVar,
+			final String quanitifiedOrderedVar) {
 		final String letExpression = "let %1$s = (%2$s.%3$s) |";
-		return String.format(letExpression, letVar, quanitifiedOrderedVar, RName );
+		return String.format(letExpression, letVar, quanitifiedOrderedVar, RName);
 	}
 
-	
 	@Override
 	public boolean isConsistentOrdered() {
-		if( !super.isConsistent() ) return false;
+		if (!super.isConsistent())
+			return false;
 
-		if( getOtherFirst() == null ) return false;
-		if( getOtherFirst().equals("") ) return false;
+		if (getOtherFirst() == null)
+			return false;
+		if (getOtherFirst().equals(""))
+			return false;
 
-		if( getOtherNext() == null ) return false;
-		if( getOtherNext().equals("") ) return false;
-		
+		if (getOtherNext() == null)
+			return false;
+		if (getOtherNext().equals(""))
+			return false;
+
 		return true;
-		
+
 	}
 
-	
-	
-	
 	@Override
 	public String getConcreteFirst() {
 		return this.MiddleConcreteFirst;
@@ -92,20 +91,24 @@ public class SdBth extends Sd {
 	public String getConcreteOtherNext() {
 		return this.EndConcreteNext;
 	}
-	
-	
+
 	@Override
 	public boolean isConsistentConcreteOrdered() {
-		if( !super.isConsistent() ) return false;
+		if (!super.isConsistent())
+			return false;
 
-		if( getConcreteOtherFirst() == null ) return false;
-		if( getConcreteOtherFirst().equals("") ) return false;
+		if (getConcreteOtherFirst() == null)
+			return false;
+		if (getConcreteOtherFirst().equals(""))
+			return false;
 
-		if( getConcreteOtherNext() == null ) return false;
-		if( getConcreteOtherNext().equals("") ) return false;
-		
+		if (getConcreteOtherNext() == null)
+			return false;
+		if (getConcreteOtherNext().equals(""))
+			return false;
+
 		return true;
-		
+
 	}
-	
+
 }

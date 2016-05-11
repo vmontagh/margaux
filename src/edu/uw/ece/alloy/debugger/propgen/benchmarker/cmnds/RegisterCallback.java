@@ -5,12 +5,6 @@ import java.net.InetSocketAddress;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
 
 /**
- * OBSOLETE
- * @author vajih
- *
- */
-
-/**
  * @deprecated
  * @author vajih
  *
@@ -22,13 +16,13 @@ public class RegisterCallback extends RemoteCommand {
 	 */
 	private static final long serialVersionUID = 4829776596375928307L;
 	final InetSocketAddress hostAddress;
-	
+
 	public RegisterCallback(final InetSocketAddress hostAddress) {
 		this.hostAddress = hostAddress;
-		
+
 	}
-	
-	public void findRemoteAddress( FrontAlloyProcess front ) {
+
+	public void findRemoteAddress(FrontAlloyProcess front) {
 		front.setRemoteAddress(hostAddress);
 	}
 
@@ -36,7 +30,5 @@ public class RegisterCallback extends RemoteCommand {
 	public String toString() {
 		return "RegisterCallback [hostAddress=" + hostAddress + "]";
 	}
-	
-	
-	
+
 }

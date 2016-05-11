@@ -22,6 +22,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessReady;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.Terminate;
 
+@Deprecated
 public class FrontAlloyProcess implements Runnable{
 
 	public final InetSocketAddress hostAddress;
@@ -154,7 +155,7 @@ public class FrontAlloyProcess implements Runnable{
 
 	public static void main(String... args) throws InterruptedException{
 
-		AlloyExecuter executer = AlloyExecuter.getInstance();
+		AlloyExecuter executer = new AlloyExecuter.getInstance();
 		FrontAlloyProcess f = new FrontAlloyProcess(45321, -1, executer);
 		ProcessesManager manager = null;// new ProcessesManager();
 

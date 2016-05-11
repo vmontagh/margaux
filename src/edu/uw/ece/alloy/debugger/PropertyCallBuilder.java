@@ -15,20 +15,22 @@ public class PropertyCallBuilder {
 	final List<PropertyDeclaration> properties = new LinkedList<PropertyDeclaration>();
 	public final static String PROPERTY_CALL_FORMAT = "%s[%s]";
 
-	final static Logger logger = Logger.getLogger(PropertyCallBuilder.class.getName()+"--"+Thread.currentThread().getName());
-	
+	final static Logger logger = Logger
+			.getLogger(PropertyCallBuilder.class.getName() + "--"
+					+ Thread.currentThread().getName());
+
 	public PropertyCallBuilder() {
 
 	}
 
 	public void addPropertyDeclration(final Func function)
 			throws IllegalArgumentException {
-		
+
 		PropertyDeclaration pd = new PropertyDeclaration(function);
-		
+
 		if (!pd.isAPropertyDefinition()) {
 			throw new IllegalArgumentException(
-					"The passed func/pred is not a property declration: "+pd);
+					"The passed func/pred is not a property declration: " + pd);
 		} else {
 			properties.add(pd);
 		}
@@ -53,23 +55,23 @@ public class PropertyCallBuilder {
 		final String leftName = field.type().extract(2).fold().get(0).get(0).label;
 		final String rightName = field.type().extract(2).fold().get(0).get(1).label;
 
-		//System.out.println(getAllBinaryPropertyDeclrations());
-		
+		// System.out.println(getAllBinaryPropertyDeclrations());
+
 		for (PropertyDeclaration pd : getAllBinaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
 			String params = relationName.replace("this/", "");
-			
+
 			if (pd.hasLeft()) {
-				params += ", " +leftName.replace("this/", "");
+				params += ", " + leftName.replace("this/", "");
 			}
 			if (pd.hasRight()) {
-				params += ", " +rightName.replace("this/", "");
+				params += ", " + rightName.replace("this/", "");
 			}
 			result.add(String.format(PROPERTY_CALL_FORMAT, propertyName, params));
 		}
 		return Collections.unmodifiableList(result);
 	}
-	
+
 	public List<PropertyDeclaration> getAllNaryPropertyDeclrations(int n) {
 		return properties.stream().filter(p -> p.getRelationArity() == n)
 				.collect(Collectors.toList());
@@ -82,7 +84,7 @@ public class PropertyCallBuilder {
 	public List<PropertyDeclaration> getAllTernaryPropertyDeclrations() {
 		return getAllNaryPropertyDeclrations(3);
 	}
-	
+
 	/**
 	 * Given a field, all applicable properties are made.
 	 * 
@@ -97,37 +99,38 @@ public class PropertyCallBuilder {
 		}
 
 		final List<String> result = new LinkedList<String>();
-		
+
 		for (PropertyDeclaration pd : getAllTernaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
 			String params = field.label.replace("this/", "");
 
 			// Signature names
-			for(int i = 0; i < 3; ++i){
-				if(pd.hasLabel(i)){
+			for (int i = 0; i < 3; ++i) {
+				if (pd.hasLabel(i)) {
 					params += "," + PropertyDeclaration.findSigInField(field, i);
 				}
 			}
 
 			boolean notOrdered = false;
 			// Orders of the Signatures in the field
-			for(int i =0; i < 3; ++i){
+			for (int i = 0; i < 3; ++i) {
 				if (pd.hasOrder(i)) {
-					final String orderName = PropertyDeclaration.findOrderingName(field, i, opens);
-					if(orderName.isEmpty()){
+					final String orderName = PropertyDeclaration.findOrderingName(field,
+							i, opens);
+					if (orderName.isEmpty()) {
 						notOrdered = true;
 						break;
 					}
-					if (orderName.contains("$")){
+					if (orderName.contains("$")) {
 						params += ", first";
 						params += ", next";
-					}else{
+					} else {
 						params += "," + orderName + "/first";
 						params += "," + orderName + "/next";
 					}
 				}
 			}
-			if(!notOrdered)
+			if (!notOrdered)
 				result.add(String.format(PROPERTY_CALL_FORMAT, propertyName, params));
 		}
 		return Collections.unmodifiableList(result);

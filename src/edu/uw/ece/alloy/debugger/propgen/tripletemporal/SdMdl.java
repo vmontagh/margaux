@@ -1,9 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public class SdMdl extends Sd implements SdOrd {
-	
-	
-	
+
 	public SdMdl(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
 			String sConcreteName, String sConcreteNext, String sConcreteFirst,
@@ -16,7 +14,6 @@ public class SdMdl extends Sd implements SdOrd {
 				eConcreteName, endNext, endFirst, middleNext, middleFirst,
 				endConcreteNext, endConcreteFirst, middleConcreteNext,
 				middleConcreteFirst);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -40,24 +37,21 @@ public class SdMdl extends Sd implements SdOrd {
 	}
 
 	@Override
-	public String genLetforLocality(String letVar, String quantifiedVar, final String quanitifiedOrderedVar) {
+	public String genLetforLocality(String letVar, String quantifiedVar,
+			final String quanitifiedOrderedVar) {
 		final String letExpression = "let %1$s = (%3$s.%4$s)%2$s |";
-		return String.format(letExpression, letVar, "."+quantifiedVar, quanitifiedOrderedVar, RName );
+		return String.format(letExpression, letVar, "." + quantifiedVar,
+				quanitifiedOrderedVar, RName);
 	}
 
 	@Override
 	public String getConcreteFirst() {
-		// TODO Auto-generated method stub
 		return MiddleConcreteFirst;
 	}
 
 	@Override
 	public String getConcreteNext() {
-		// TODO Auto-generated method stub
 		return MiddleConcreteNext;
 	}
-
-
-	
 
 }

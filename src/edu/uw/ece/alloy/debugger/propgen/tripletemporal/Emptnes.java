@@ -1,7 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
-public  class Emptnes extends Property {
-	
+public class Emptnes extends Property {
 
 	public Emptnes(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
@@ -10,27 +9,24 @@ public  class Emptnes extends Property {
 		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName,
 				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
 				eConcreteName);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected String genBody() {
-		return !genEmpty().equals("") ? genEmpty()  : "" ;
+		return !genEmpty().equals("") ? genEmpty() : "";
 	}
-	
+
 	protected String genEmpty() {
 		return null;
 	}
 
 	@Override
 	protected String getPredecessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected String getSuccessor() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -39,6 +35,4 @@ public  class Emptnes extends Property {
 		return true;
 	}
 
-
-	
 }

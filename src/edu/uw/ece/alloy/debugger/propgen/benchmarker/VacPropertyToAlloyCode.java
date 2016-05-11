@@ -6,9 +6,6 @@ import edu.uw.ece.alloy.Compressor;
 
 public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4111622846959553154L;
 
 	final public static VacPropertyToAlloyCode EMPTY_CONVERTOR = new VacPropertyToAlloyCode();

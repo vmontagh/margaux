@@ -27,9 +27,9 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalRequest;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 
 /**
  * The Class implementing the Algorithm in the paper
@@ -37,6 +37,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.AnalyzeExternalReques
  * @author vajih
  *
  */
+@Deprecated
 public class Debugger {
 
 	protected final static Logger logger = Logger.getLogger(

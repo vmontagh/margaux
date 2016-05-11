@@ -9,6 +9,8 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 
+//TODO(fikayo) Fix the issues or remove the class.
+
 public class AsyncServerSocketInterface extends ServerSocketInterface {
 
 	private final static Logger logger = Logger

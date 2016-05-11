@@ -14,7 +14,8 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager
  */
 
 @Deprecated
-public class DebuggerRemoteProcessManager extends RemoteProcessManager<ExpressionAnalyzerRunner_> {
+public class DebuggerRemoteProcessManager
+		extends RemoteProcessManager<ExpressionAnalyzerRunner_> {
 
 	public DebuggerRemoteProcessManager(InetSocketAddress localSocket,
 			int maxActiveProcessNumbers, int maxDoingTasks) {

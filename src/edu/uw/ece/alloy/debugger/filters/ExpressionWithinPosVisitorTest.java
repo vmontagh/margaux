@@ -3,9 +3,7 @@
  */
 package edu.uw.ece.alloy.debugger.filters;
 
-import static org.junit.Assert.*;
-
-import java.util.List;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -29,7 +27,7 @@ public class ExpressionWithinPosVisitorTest {
 
 	static CompModule world;
 	final static String AlloyTmpTestPath = "tmp/testing.als";
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -77,7 +75,8 @@ public class ExpressionWithinPosVisitorTest {
 	@Test
 	public void testFindExprWithinPos1() {
 		try {
-			Expr expr = ExpressionWithinPosVisitor.findExprWhitinPos(new Pos(world.pos().filename, 27, 9, 45, 9),
+			Expr expr = ExpressionWithinPosVisitor.findExprWhitinPos(
+					new Pos(world.pos().filename, 27, 9, 45, 9),
 					world.getAllCommands().get(0).formula);
 			assertTrue(expr.toString().equals("(all a | some a . (this/A <: r))"));
 		} catch (Err e) {
@@ -88,25 +87,29 @@ public class ExpressionWithinPosVisitorTest {
 	@Test
 	public void testFindExprWithinPos2() {
 		try {
-			Expr expr = ExpressionWithinPosVisitor.findExprWhitinPos(new Pos(world.pos().filename, 0, 9, 45, 9),
+			Expr expr = ExpressionWithinPosVisitor.findExprWhitinPos(
+					new Pos(world.pos().filename, 0, 9, 45, 9),
 					world.getAllCommands().get(0).formula);
 			System.out.println(expr);
-			assertTrue(expr.toString().equals("AND[this/p1[univ -> univ, univ], (all a | some a . (this/A <: r))]"));
+			assertTrue(expr.toString().equals(
+					"AND[this/p1[univ -> univ, univ], (all a | some a . (this/A <: r))]"));
 		} catch (Err e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void testFindExprWithinPos3() {
 		try {
-			Expr expr = ExpressionWithinPosVisitor.findExprWhitinPos(new Pos(world.pos().filename, 0, 9, 45, 10),
+			Expr expr = ExpressionWithinPosVisitor.findExprWhitinPos(
+					new Pos(world.pos().filename, 0, 9, 45, 10),
 					world.getAllCommands().get(0).formula);
 			System.out.println(expr);
-			assertTrue(expr.toString().equals("AND[this/p1[univ -> univ, univ], (all a | some a . (this/A <: r)), some (this/B <: c)]"));
+			assertTrue(expr.toString().equals(
+					"AND[this/p1[univ -> univ, univ], (all a | some a . (this/A <: r)), some (this/B <: c)]"));
 		} catch (Err e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 }

@@ -6,9 +6,6 @@ import edu.uw.ece.alloy.Compressor;
 
 public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 152443632901622400L;
 	final public static AndPropertyToAlloyCode EMPTY_CONVERTOR = new AndPropertyToAlloyCode();
 
@@ -89,11 +86,11 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				predNameBCompressed, headerComporessed, scopeCompressed,
 				fieldCompressed, compressedDependencies, compressedStatus);
 	}
-	
+
 	/**
 	 * an example should be found.
 	 */
-	public boolean isDesiredSAT(int sat){
+	public boolean isDesiredSAT(int sat) {
 		return sat == 1;
 	}
 

@@ -13,17 +13,18 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author vajih
  *
  */
-public class Queue<T> implements Publisher<T>,Subscriber<T> {
+public class Queue<T> implements Publisher<T>, Subscriber<T> {
 
 	final BlockingQueue<T> queue;
-	
-	public Queue(int cap){
+
+	public Queue(int cap) {
 		queue = new LinkedBlockingQueue<>(cap);
 	}
-	public Queue(){
+
+	public Queue() {
 		queue = new LinkedBlockingQueue<>();
 	}
-	
+
 	@Override
 	public T poll() {
 		return queue.poll();
@@ -38,26 +39,27 @@ public class Queue<T> implements Publisher<T>,Subscriber<T> {
 	public void put(T p) throws InterruptedException {
 		queue.put(p);
 	}
-	
+
 	@Override
 	public void clear() {
 		queue.clear();
 	}
-	
+
 	@Override
 	public int size() {
 		return queue.size();
 	}
-	
+
 	@Override
 	public boolean isEmpty() {
 		return queue.isEmpty();
 	}
-	
+
 	@Override
 	public List<T> toList() {
 		return Collections.unmodifiableList(new ArrayList<>(queue));
 	}
+
 	@Override
 	public String toString() {
 		return "Queue [queue=" + queue + "]";

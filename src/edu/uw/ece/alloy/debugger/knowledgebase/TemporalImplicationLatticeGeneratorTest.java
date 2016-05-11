@@ -3,9 +3,6 @@ package edu.uw.ece.alloy.debugger.knowledgebase;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -14,18 +11,20 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.gen.alloy.Configuration;
 
 public class TemporalImplicationLatticeGeneratorTest {
 
-	public static String pathToLegend = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/legends.csv";
-	public static String pathToImplication = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/implies.new.csv";
-	public static String pathToIff = "/Users/vajih/Documents/Papers/papers/debugger/reviews/data/relational_analyzer/csv/iff.new.csv";
+	public static String pathToLegend = Configuration
+			.getProp("kb_temporal_legend");
+	public static String pathToImplication = Configuration
+			.getProp("kb_temporal_imply");
+	public static String pathToIff = Configuration.getProp("kb_temporal_iff");
 
-	
 	File legendsFile = new File("tmp/legends.test.csv");
 	File implicationsFile = new File("tmp/implications.test.csv");
 	File iffsFile = new File("tmp/iffs.test.csv");
-	
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
@@ -53,28 +52,25 @@ public class TemporalImplicationLatticeGeneratorTest {
 
 	@Test
 	public void testAllreachablesOfB() {
-		TemporalImplicationLatticeGenerator generator = 
-				new TemporalImplicationLatticeGenerator(legendsFile.getAbsolutePath(), 
-																								implicationsFile.getAbsolutePath(), 
-																								iffsFile.getAbsolutePath());
-		
+		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
+				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(),
+				iffsFile.getAbsolutePath());
+
 		assertArrayEquals(
-				generator.findAllReachable().get("B").toArray(new String[]{}),
-				new String[]{"A", "E", "G"});
+				generator.findAllReachable().get("B").toArray(new String[] {}),
+				new String[] { "A", "E", "G" });
 
 	}
 
 	@Test
 	public void testAllrevReachablesOfG() {
-		TemporalImplicationLatticeGenerator generator = 
-				new TemporalImplicationLatticeGenerator(legendsFile.getAbsolutePath(), 
-																								implicationsFile.getAbsolutePath(), 
-																								iffsFile.getAbsolutePath());
+		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
+				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(),
+				iffsFile.getAbsolutePath());
 		assertArrayEquals(
-				generator.findAllRevReachable().get("G").toArray(new String[]{}),
-				new String[]{"A", "B", "C", "E", "F"});
-		
+				generator.findAllRevReachable().get("G").toArray(new String[] {}),
+				new String[] { "A", "B", "C", "E", "F" });
 
 	}
-	
+
 }

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +18,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.ProcessedResult.Statu
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.UpdateLivenessStatus;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Subscriber;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyDiedMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.SendOnServerSocketInterface;
 import edu.uw.ece.hola.agent.Utils;
@@ -33,8 +33,6 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 
 	private Thread executerThread = new Thread(this);
 
-	// private final BlockingQueue<AlloyProcessingParam> queue = new
-	// LinkedBlockingQueue<>();
 	protected Subscriber<AlloyProcessingParam> queue;
 	private final List<PostProcess> postProcesses = Collections
 			.synchronizedList(new LinkedList<PostProcess>());
@@ -179,7 +177,7 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 						+ " cannot be localized");
 				e1.printStackTrace();
 			}
-			
+
 			if (lastProccessing.equals(lastProccessing.EMPTY_PARAM)) {
 				logger.severe(Utils.threadName() + "Why empty?!!!");
 				return;
@@ -193,9 +191,6 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 			AlloyProcessedResult rep = new AlloyProcessedResult(
 					originalLastProcessing);
 			try {
-
-				System.out.println("lastProccessing->" + lastProccessing);
-
 				A4CommandExecuter.getInstance().run(
 						lastProccessing.getSrcPath().orElseThrow(RuntimeException::new)
 								.getAbsolutePath(),

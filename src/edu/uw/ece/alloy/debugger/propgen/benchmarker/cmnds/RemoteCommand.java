@@ -18,11 +18,12 @@ import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyExecuter;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.FrontAlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 
+@Deprecated
 public abstract class RemoteCommand implements Serializable {
 
 	/**

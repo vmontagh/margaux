@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
@@ -13,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -25,7 +21,6 @@ import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
@@ -80,9 +75,10 @@ public class Approximator {
 		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
 		this.dependentFiles = new ArrayList<>(dependentFiles);
 		this.tmpLocalDirectory = tmpLocalDirectory;
-		
+
 		implications = new LinkedList<>();
-		// The BinaryImplicationLattic and TernaryImplicationLAttice are not connected
+		// The BinaryImplicationLattic and TernaryImplicationLAttice are not
+		// connected
 		// to the given relational and temporal patterns stored in a request message
 		implications.add(new BinaryImplicationLattic());
 		implications.add(new TernaryImplicationLattic());
@@ -103,8 +99,8 @@ public class Approximator {
 	 * @param statement
 	 * @return pair.a patternNAme, pair.b property.
 	 */
-	public List<Pair<String, String>> strongestApproximation(Expr statement, Field field,
-			String scope) {
+	public List<Pair<String, String>> strongestApproximation(Expr statement,
+			Field field, String scope) {
 		System.out.println("Start strongestApproximation");
 		// Creating a request message
 		Map<String, LazyFile> files = new HashMap<>();
@@ -153,23 +149,25 @@ public class Approximator {
 		interfacE.MessageReceived.removeListener(receiveListener);
 
 		return result.getResult().get().getResults().get().stream()
-				.map(b -> new Pair(b.getParam().getAlloyCoder().get().predNameB, b.getParam().getAlloyCoder().get().predCallB))
+				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
+						b.getParam().getAlloyCoder().get().predCallB))
 				.collect(Collectors.toList());
 	}
 
-	public List<String> strongerProperties(String property){
-		System.out.println("property->"+property);
+	public List<String> strongerProperties(String property) {
+		System.out.println("property->" + property);
 		// property is in the form of A[r]. so that A is pattern
 		String pattern = property.substring(0, property.indexOf("["));
-		System.out.println("pattern->"+pattern);
+		System.out.println("pattern->" + pattern);
 		String call = property.substring(property.indexOf("["));
-		System.out.println("call->"+call);
-		return strongerPatterns(pattern).stream().map(a->a+call).collect(Collectors.toList());
+		System.out.println("call->" + call);
+		return strongerPatterns(pattern).stream().map(a -> a + call)
+				.collect(Collectors.toList());
 	}
-	
-	public List<String> strongerPatterns(String pattern){
+
+	public List<String> strongerPatterns(String pattern) {
 		List<String> result = new ArrayList<>();
-		for (ImplicationLattic il : implications){
+		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getNextImpliedProperties(pattern));
 			} catch (Err e) {
@@ -178,17 +176,18 @@ public class Approximator {
 		}
 		return Collections.unmodifiableList(result);
 	}
-	
-	public List<String> weakerProperties(String property){
+
+	public List<String> weakerProperties(String property) {
 		// property is in the form of A[r]. so that A is pattern
 		String pattern = property.substring(0, property.indexOf("["));
 		String call = property.substring(property.indexOf("["));
-		return weakerPatterns(pattern).stream().map(a->a+call).collect(Collectors.toList());
+		return weakerPatterns(pattern).stream().map(a -> a + call)
+				.collect(Collectors.toList());
 	}
-	
-	public List<String> weakerPatterns(String pattern){
+
+	public List<String> weakerPatterns(String pattern) {
 		List<String> result = new ArrayList<>();
-		for (ImplicationLattic il : implications){
+		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getNextRevImpliedProperties(pattern));
 			} catch (Err e) {

@@ -12,7 +12,6 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord.Status;
 import edu.uw.ece.alloy.util.Utils;
-import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
 /**
  * Every time the runner is booted, it has to periodically sends a liveness
@@ -46,7 +45,8 @@ public abstract class LivenessMessage extends RemoteMessage {
 	@Override
 	public void onAction(Map<String, Object> context)
 			throws InvalidParameterException {
-		RemoteProcessLogger manager = (RemoteProcessLogger) context.get("RemoteProcessLogger");
+		RemoteProcessLogger manager = (RemoteProcessLogger) context
+				.get("RemoteProcessLogger");
 		RemoteProcessRecord record = manager.getRemoteProcessRecord(process);
 
 		if (record == null) {
@@ -64,7 +64,7 @@ public abstract class LivenessMessage extends RemoteMessage {
 			// Does not need to be done atomically.
 			manager.changeDoingTasks(process, toBeProcessed);
 			manager.changeDoneTasks(process, processed);
-			manager.changeLastLiveTimeReported(process, creationTime );
+			manager.changeLastLiveTimeReported(process, creationTime);
 			manager.changeLastLiveTimeRecieved(process, System.currentTimeMillis());
 
 			if (toBeProcessed <= 0) {

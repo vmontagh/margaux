@@ -6,11 +6,13 @@ import java.util.Arrays;
 
 import edu.uw.ece.alloy.Compressor;
 
+/**
+ * It is very much like LazyFile but compresses the content. 
+ * @author vajih
+ *
+ */
 public class Dependency implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6911183169029150968L;
 	final public File path;
 	final public String content;

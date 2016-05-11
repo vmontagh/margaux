@@ -37,11 +37,10 @@ public abstract class ResponseMessage extends RemoteMessage {
 	@Override
 	public abstract void onAction(Map<String, Object> context)
 			throws InvalidParameterException;
-	
+
 	@Override
 	public void onEvent(MessageListenerAction listener, MessageEventArgs args) {
 		listener.actionOn(this, args);
 	}
-
 
 }

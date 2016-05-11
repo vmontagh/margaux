@@ -2,6 +2,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.net.InetSocketAddress;
 
+@Deprecated
 public class AlloyProcess {
 	
 	public static enum Status{

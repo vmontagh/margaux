@@ -5,9 +5,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -163,7 +161,8 @@ public final class AlloyRunner extends Runner {
 		// Queue that are shared between inputinterface and
 		feedingQueue = new Queue<>();
 
-		executer = new AlloyExecuter(feedingQueue, inputInterface, tmpLocalDirectory);
+		executer = new AlloyExecuter(feedingQueue, inputInterface,
+				tmpLocalDirectory);
 		localThreadsMonitor.addThreadToBeMonitored(executer);
 
 		inputInterface.MessageReceived

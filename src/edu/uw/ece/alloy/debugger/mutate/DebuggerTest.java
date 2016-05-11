@@ -1,7 +1,5 @@
 package edu.uw.ece.alloy.debugger.mutate;
 
-import static org.junit.Assert.*;
-
 import java.io.IOException;
 
 import org.junit.After;
@@ -16,12 +14,13 @@ import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments;
- 
+
+@Deprecated
 public class DebuggerTest {
 
 	static CompModule world;
 	final static String AlloyTmpTestPath = "tmp/testing.als";
-	
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// @formatter:off
@@ -71,7 +70,7 @@ public class DebuggerTest {
 	public void testAnalyzer() throws Err, IOException {
 		Debugger deg = new Debugger(AlloyTmpTestPath);
 		deg.bootRemoteAnalyzer();
-		//deg.analyzeImpliedPatterns();
+		// deg.analyzeImpliedPatterns();
 	}
-	
+
 }

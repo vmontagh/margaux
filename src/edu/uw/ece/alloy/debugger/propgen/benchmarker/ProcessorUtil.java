@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.util.logging.Level;
@@ -27,7 +26,6 @@ public class ProcessorUtil {
 	static int lastFoundPort = MinPortNumber;
 
 	public ProcessorUtil() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public static InetSocketAddress findEmptyLocalSocket() {
@@ -102,28 +100,11 @@ public class ProcessorUtil {
 		if (port == lastFoundPort) {
 			throw new RuntimeException("No port available");
 		}
-		
+
 		lastFoundPort = port;
 		return new InetSocketAddress(localAddress, lastFoundPort);
 	}
 
-	public static void main(String... args) throws UnknownHostException {
-		InetSocketAddress s = findEmptyLocalSocket();
-		System.out.println(s);
-		System.out.println(InetAddress.getLocalHost().getHostAddress());
-		try {
-			new ServerSocket(s.getPort());
-			Thread.sleep(10 * 1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	
 	/**
 	 * Create a process on another JVM.
 	 * 
@@ -141,7 +122,7 @@ public class ProcessorUtil {
 	 */
 	public static Process createNewJVM(int SubMemory, int SubStack,
 			String ProcessLoggerConfig, InetSocketAddress remoteSocket,
-			InetSocketAddress localSocket, Class clazz) throws IOException {
+			InetSocketAddress localSocket, Class<?> clazz) throws IOException {
 
 		final String java = "java";
 		final String debug = Boolean.parseBoolean(System.getProperty("debug"))
@@ -160,7 +141,7 @@ public class ProcessorUtil {
 			pb.redirectOutput(Redirect.INHERIT);
 			pb.redirectError(Redirect.INHERIT);
 			return pb.start();
-		
+
 		} catch (IOException e) {
 			logger
 					.log(Level.SEVERE,

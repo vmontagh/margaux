@@ -2,9 +2,10 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.util.Queue;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 
-public class AnalyzeExternalResult extends RemoteCommand  {
+@Deprecated
+public class AnalyzeExternalResult extends RemoteCommand {
 
 	/**
 	 * 
@@ -17,10 +18,10 @@ public class AnalyzeExternalResult extends RemoteCommand  {
 		super();
 		this.result = result;
 	}
-	
+
 	// It is called on the Requester side, i.e. Debugger's listener
-	public void storeResult(final Queue<AlloyProcessedResult> queue){
+	public void storeResult(final Queue<AlloyProcessedResult> queue) {
 		queue.add(this.result);
 	}
-	
+
 }

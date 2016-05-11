@@ -9,22 +9,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.util.LazyFile;
-import edu.uw.ece.alloy.Compressor;
 
 public class PatternProcessingParam extends ProcessingParam {
 
 	private static final long serialVersionUID = -7728543765538276470L;
 
 	protected final Long timeout;
-	/* An alloy file that is going to be analyzed. */
-	// public final Optional<LazyFile> toBeAnalyzedCode;
-	/* An alloy file containing the relational properties */
-	// public final Optional<LazyFile> relationalPropModuleOriginal;
-	/* An Alloy file containing temporal properties */
-	// public final Optional<LazyFile> temporalPropModuleOriginal;
 
 	/* from the file name to the File */
 	protected final Map<String, LazyFile> files;
@@ -142,7 +136,7 @@ public class PatternProcessingParam extends ProcessingParam {
 	}
 
 	public static class PatternProcessingParamLazy
-	extends PatternProcessingParam {
+			extends PatternProcessingParam {
 
 		private static final long serialVersionUID = 4915980895863419341L;
 
@@ -174,7 +168,7 @@ public class PatternProcessingParam extends ProcessingParam {
 
 			Map<String, LazyFile> loadFiles = new HashMap<>();
 			files.keySet().stream()
-			.forEach(name -> loadFiles.put(name, loadFiles.get(name).load()));
+					.forEach(name -> loadFiles.put(name, loadFiles.get(name).load()));
 
 			return new PatternProcessingParam(this.priority, tmpLocalDirectory,
 					this.analyzingSessionID, this.timeout, this.fieldName,

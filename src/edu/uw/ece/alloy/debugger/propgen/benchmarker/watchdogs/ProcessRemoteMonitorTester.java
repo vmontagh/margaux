@@ -1,6 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.net.InetSocketAddress;
 
@@ -14,6 +14,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ProcessReady;
 
+@Deprecated
 public class ProcessRemoteMonitorTester {
 
 	@BeforeClass
@@ -38,7 +39,7 @@ public class ProcessRemoteMonitorTester {
 		ProcessesManager pm = new ProcessesManager(1, "", 1, 2, "", "");
 		AlloyFeeder af = new AlloyFeeder(pm, 0, 0);
 
-		ProcessRemoteMonitor pmr =  new ProcessRemoteMonitor(1000, af, pm, 4000);
+		ProcessRemoteMonitor pmr = new ProcessRemoteMonitor(1000, af, pm, 4000);
 
 		pmr.startThread();
 
@@ -53,7 +54,7 @@ public class ProcessRemoteMonitorTester {
 
 		assertTrue(pmr.getStatus().contains("Monitor is working? true"));
 
-		for(int i = 1; i <= 99; ++i){
+		for (int i = 1; i <= 99; ++i) {
 
 			ProcessReady pReady = new ProcessReady(new InetSocketAddress(300));
 
@@ -61,11 +62,10 @@ public class ProcessRemoteMonitorTester {
 				pReady.sendMe(new InetSocketAddress(4000));
 			} catch (Throwable e) {
 				// TODO Auto-generated catch block
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
-			
-			
-			//assertTrue(pmr.getStatus().contains("Monitor is working? false"));
+
+			// assertTrue(pmr.getStatus().contains("Monitor is working? false"));
 
 			try {
 				Thread.sleep(100);
@@ -77,6 +77,5 @@ public class ProcessRemoteMonitorTester {
 		}
 		assertTrue(pmr.getStatus().contains("Monitor is working? true"));
 	}
-
 
 }

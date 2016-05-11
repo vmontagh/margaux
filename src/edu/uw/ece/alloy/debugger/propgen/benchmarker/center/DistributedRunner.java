@@ -17,8 +17,8 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.AsyncServerSocketInterface;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
-import edu.uw.ece.alloy.util.events.CommandReceivedEventArgs;
-import edu.uw.ece.alloy.util.events.CommandSentEventArgs;
+import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
+import edu.uw.ece.alloy.util.events.MessageSentEventArgs;
 import edu.uw.ece.alloy.util.events.EventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
@@ -27,6 +27,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;
 
+@Deprecated
 public abstract class DistributedRunner extends Runner_ implements EventListener<MessageReceivedEventArgs> {
     
     private final static Logger logger = Logger.getLogger(DistributedRunner.class.getName() + "--" + Thread.currentThread().getName());

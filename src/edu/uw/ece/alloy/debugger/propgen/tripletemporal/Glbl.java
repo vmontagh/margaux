@@ -2,7 +2,6 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public class Glbl extends Lclty {
 
-
 	public Glbl(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
 			String sConcreteName, String sConcreteNext, String sConcreteFirst,
@@ -15,8 +14,10 @@ public class Glbl extends Lclty {
 
 	@Override
 	protected boolean isConsistent() {
-		if( !super.isConsistent() ) return false;
-		if( side instanceof SdNon ) return false;
+		if (!super.isConsistent())
+			return false;
+		if (side instanceof SdNon)
+			return false;
 		return true;
 	}
 
@@ -27,8 +28,7 @@ public class Glbl extends Lclty {
 
 	@Override
 	public String getQunatifiedVar() {
-		//return side.genBody() ;
-		return side.getOther() ;
+		return side.getOther();
 	}
 
 }

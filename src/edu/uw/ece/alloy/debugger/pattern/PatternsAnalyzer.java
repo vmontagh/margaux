@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 
 /**
@@ -27,11 +26,13 @@ import edu.uw.ece.alloy.util.ServerSocketInterface;
  * @author vajih
  *
  */
+@Deprecated
 public class PatternsAnalyzer extends ServerSocketInterface {
 
-	// Very temporary to determine the status of the analyzer from analyzing to IDLE.
+	// Very temporary to determine the status of the analyzer from analyzing to
+	// IDLE.
 	public static Boolean analyzing = false;
-	
+
 	protected final static Logger logger = Logger
 			.getLogger(PatternsAnalyzer.class.getName() + "--"
 					+ Thread.currentThread().getName());
@@ -100,12 +101,6 @@ public class PatternsAnalyzer extends ServerSocketInterface {
 	public long isDelayed() {
 		// TODO Auto-generated method stub
 		return 0;
-	}
-
-	@Override
-	protected void onReceivedMessage(RemoteMessage message) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

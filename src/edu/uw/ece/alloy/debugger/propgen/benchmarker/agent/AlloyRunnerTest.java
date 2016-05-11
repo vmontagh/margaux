@@ -38,7 +38,7 @@ public class AlloyRunnerTest {
 	public class NotifiableInteger {
 		int val = 0;
 	}
-	
+
 	ServerSocketInterface testingInterface;
 	InetSocketAddress testingHost, runnerHost;
 

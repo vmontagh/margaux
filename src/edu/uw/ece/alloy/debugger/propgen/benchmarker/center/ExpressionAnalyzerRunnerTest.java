@@ -22,8 +22,8 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.LivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternRequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternRequestMessage;
 import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
@@ -141,43 +141,42 @@ public class ExpressionAnalyzerRunnerTest {
 			fail();
 		}
 	}
-	
+
 	@Test
 	public void testExecutionOnePattern() throws Err {
 		testExecution(/*
-				 * "pred bijective[r: univ->univ, right: set univ] {\n" +
-				 * "\tall x: right | one r.x\n" + "}\n" +
-				 * "pred acyclic[r: univ->univ, left: set univ] {\n" +
-				 * "\tall x: left | x !in x.^r" + "}\n" +
-				 */ "pred rootedOne [r: univ->univ, left:univ, right: univ]{"
-						+ "\tone root:left | right in root.*r" + "}"
-						// + "fun max [es: set univ, next: univ->univ ]: lone univ { es -
-						// es.^(~(next)) }\n"
-						// + "fun min [es: set univ, next: univ->univ ]: lone univ { es -
-						// es.^(next) }"
-						+ "");
+									 * "pred bijective[r: univ->univ, right: set univ] {\n" +
+									 * "\tall x: right | one r.x\n" + "}\n" +
+									 * "pred acyclic[r: univ->univ, left: set univ] {\n" +
+									 * "\tall x: left | x !in x.^r" + "}\n" +
+									 */ "pred rootedOne [r: univ->univ, left:univ, right: univ]{"
+				+ "\tone root:left | right in root.*r" + "}"
+				// + "fun max [es: set univ, next: univ->univ ]: lone univ { es -
+				// es.^(~(next)) }\n"
+				// + "fun min [es: set univ, next: univ->univ ]: lone univ { es -
+				// es.^(next) }"
+				+ "");
 	}
-	
+
 	@Test
 	public void testExecutionTwoPatterns() throws Err {
 		testExecution(/*
-				 * "pred bijective[r: univ->univ, right: set univ] {\n" +
-				 * "\tall x: right | one r.x\n" + "}\n" +
-				  "pred acyclic[r: univ->univ, left: set univ] {\n" +
-				 		"\tall x: left | x !in x.^r" + "}\n" +
-				 	*/	
-				
+									 * "pred bijective[r: univ->univ, right: set univ] {\n" +
+									 * "\tall x: right | one r.x\n" + "}\n" +
+									 * "pred acyclic[r: univ->univ, left: set univ] {\n" +
+									 * "\tall x: left | x !in x.^r" + "}\n" +
+									 */
+
 				"pred weaklyConnected [ r :univ->univ,  left:univ, right:univ ] {\n"
-				+ "\tall d: right | all g: left - d  | d in g.^(r + ~r)\n"
-				+ "}\n"
-				+ "pred rootedOne [r: univ->univ, left:univ, right: univ]{"
+						+ "\tall d: right | all g: left - d  | d in g.^(r + ~r)\n" + "}\n"
+						+ "pred rootedOne [r: univ->univ, left:univ, right: univ]{"
 						+ "\tone root:left | right in root.*r" + "}"
-						// + "fun max [es: set univ, next: univ->univ ]: lone univ { es -
-						// es.^(~(next)) }\n"
-						// + "fun min [es: set univ, next: univ->univ ]: lone univ { es -
-						// es.^(next) }"
-						);
-		
+		// + "fun max [es: set univ, next: univ->univ ]: lone univ { es -
+		// es.^(~(next)) }\n"
+		// + "fun min [es: set univ, next: univ->univ ]: lone univ { es -
+		// es.^(next) }"
+		);
+
 	}
 
 	public void testExecution(String patterns) throws Err {
@@ -199,7 +198,7 @@ public class ExpressionAnalyzerRunnerTest {
 					@Override
 					public void actionOn(ResponseMessage responseMessage,
 							MessageReceivedEventArgs messageArgs) {
-						print(responseMessage+"");
+						print(responseMessage + "");
 						++responseReceived.val;
 						synchronized (responseReceived) {
 							responseReceived.notify();
@@ -229,8 +228,7 @@ public class ExpressionAnalyzerRunnerTest {
 
 		LazyFile relationalPropModuleOriginal = new LazyFile(tmpLocalDirectory,
 				"relationalPropModuleOriginal.als");
-		Util.writeAll(relationalPropModuleOriginal.getAbsolutePath(),
-				patterns);
+		Util.writeAll(relationalPropModuleOriginal.getAbsolutePath(), patterns);
 
 		LazyFile temporalPropModuleOriginal = new LazyFile(tmpLocalDirectory,
 				"temporalPropModuleOriginal.als");
@@ -273,10 +271,10 @@ public class ExpressionAnalyzerRunnerTest {
 				e.printStackTrace();
 				fail();
 			} finally {
-				 toBeAnalyzedCode.delete();
-				 relationalPropModuleOriginal.delete();
-				 temporalPropModuleOriginal.delete();
-				 relationalLib.delete();
+				toBeAnalyzedCode.delete();
+				relationalPropModuleOriginal.delete();
+				temporalPropModuleOriginal.delete();
+				relationalLib.delete();
 			}
 		}
 

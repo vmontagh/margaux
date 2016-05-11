@@ -23,7 +23,7 @@ public abstract class DoneMessage extends RemoteMessage {
 	public DoneMessage(RemoteProcess process) {
 		super(process);
 	}
-	
+
 	@Override
 	public void onEvent(MessageListenerAction listener, MessageEventArgs args) {
 		listener.actionOn(this, args);

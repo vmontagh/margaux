@@ -2,9 +2,10 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.util.Queue;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 
+@Deprecated
 public class AnalyzeExternalReady extends ReadyMessage {
 
 	public AnalyzeExternalReady(RemoteProcess process) {

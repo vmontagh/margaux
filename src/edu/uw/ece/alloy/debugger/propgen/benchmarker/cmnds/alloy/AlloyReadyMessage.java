@@ -14,11 +14,11 @@ public class AlloyReadyMessage extends ReadyMessage {
 	public AlloyReadyMessage(RemoteProcess process) {
 		super(process);
 	}
-	
+
 	public AlloyReadyMessage(RemoteProcess process, long creationTime) {
 		super(process, creationTime);
-	}	
-	
+	}
+
 	@Override
 	public void onAction(Map<String, Object> context)
 			throws InvalidParameterException {
@@ -26,5 +26,5 @@ public class AlloyReadyMessage extends ReadyMessage {
 				.get("RemoteProcessLogger");
 		manager.changeStatusToIDLE(process);
 	}
-	
+
 }

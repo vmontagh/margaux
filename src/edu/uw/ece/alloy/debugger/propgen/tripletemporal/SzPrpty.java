@@ -1,16 +1,15 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public abstract class SzPrpty extends Property {
-	
-	
+
 	final protected Lclty growthLocality;
 	final protected Emptnes empty;
 
-	public SzPrpty(String rName, String sName, String sNext,
-			String sFirst, String middleName, String endName,
-			String rConcreteName, String sConcreteName, String sConcreteNext,
-			String sConcreteFirst, String mConcreteName, String eConcreteName,
-			Lclty growthLocality, Emptnes empty) {
+	public SzPrpty(String rName, String sName, String sNext, String sFirst,
+			String middleName, String endName, String rConcreteName,
+			String sConcreteName, String sConcreteNext, String sConcreteFirst,
+			String mConcreteName, String eConcreteName, Lclty growthLocality,
+			Emptnes empty) {
 		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName,
 				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
 				eConcreteName);
@@ -30,25 +29,29 @@ public abstract class SzPrpty extends Property {
 
 	@Override
 	protected boolean isConsistent() {
-		
-		if(!growthLocality.isConsistent()) return false;
-		
+
+		if (!growthLocality.isConsistent())
+			return false;
+
 		return true;
 	}
 
 	@Override
 	public String genPredName() {
-		return super.genPredName() + growthLocality.genPredName() + empty.genPredName();
+		return super.genPredName() + growthLocality.genPredName()
+				+ empty.genPredName();
 	}
 
-	
-	private String genBody(final String append){
-		return empty.genBody() + "\n"+ 
-				"all "+getTemporalQuantifiedVar()+": " + SName + " - relational_properties/last["+SName +","+SNext+"] |"+
-					"let " + getNextTemporalQuantifiedVar() + " = " + getTemporalQuantifiedVar()+"."+SNext +" |\n" +
-						growthLocality.genBody(getTemporalQuantifiedVar(), getNextTemporalQuantifiedVar())+ append;
+	private String genBody(final String append) {
+		return empty.genBody() + "\n" + "all " + getTemporalQuantifiedVar() + ": "
+				+ SName + " - relational_properties/last[" + SName + "," + SNext + "] |"
+				+ "let " + getNextTemporalQuantifiedVar() + " = "
+				+ getTemporalQuantifiedVar()
+				+ "." + SNext + " |\n" + growthLocality
+						.genBody(getTemporalQuantifiedVar(), getNextTemporalQuantifiedVar())
+				+ append;
 	}
-	
+
 	@Override
 	protected String genBody() {
 		return genBody(genGrowth());
@@ -57,26 +60,28 @@ public abstract class SzPrpty extends Property {
 	protected String genBodyOrdered() {
 		return genBody(genGrowthOredred());
 	}
-	
+
 	protected abstract String genGrowth();
-	
+
 	protected abstract String genGrowthOredred();
 
-	protected String getGrowthOrderedDelta(){
+	protected String getGrowthOrderedDelta() {
 		return "delta";
 	}
-	
-	protected String getTemporalQuantifiedVar(){
-		return SName+"'";
+
+	protected String getTemporalQuantifiedVar() {
+		return SName + "'";
 	}
-	
-	protected String getNextTemporalQuantifiedVar(){
-		return getTemporalQuantifiedVar()+"'";
+
+	protected String getNextTemporalQuantifiedVar() {
+		return getTemporalQuantifiedVar() + "'";
 	}
-	
+
 	protected abstract String orderedChange();
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -89,7 +94,9 @@ public abstract class SzPrpty extends Property {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -121,6 +128,4 @@ public abstract class SzPrpty extends Property {
 		return true;
 	}
 
-	
-	
 }

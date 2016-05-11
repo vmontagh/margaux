@@ -9,7 +9,6 @@ public class EmptNon extends Emptnes {
 		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName,
 				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
 				eConcreteName);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

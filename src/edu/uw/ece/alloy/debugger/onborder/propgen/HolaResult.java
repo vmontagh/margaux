@@ -1,7 +1,7 @@
 package edu.uw.ece.alloy.debugger.onborder.propgen;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import kodkod.instance.Instance;
 
 public class HolaResult extends AlloyProcessedResult {

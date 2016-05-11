@@ -13,14 +13,15 @@ public class AlloyLivenessMessage extends LivenessMessage {
 			int toBeProcessed) {
 		super(process, processed, toBeProcessed);
 	}
+
 	public AlloyLivenessMessage(RemoteProcess process, long creationTime,
 			int processed, int toBeProcessed) {
 		super(process, creationTime, processed, toBeProcessed);
 	}
-	
+
 	@Override
 	public void onEvent(MessageListenerAction listener, MessageEventArgs args) {
 		listener.actionOn(this, args);
 	}
-	
+
 }

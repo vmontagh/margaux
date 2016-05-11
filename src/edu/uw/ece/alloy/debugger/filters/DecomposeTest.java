@@ -3,11 +3,7 @@
  */
 package edu.uw.ece.alloy.debugger.filters;
 
-import static org.junit.Assert.*;
-
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -16,14 +12,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
-import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
-
 
 /**
  * @author vajih
@@ -33,7 +25,7 @@ public class DecomposeTest {
 
 	static CompModule world;
 	final static String AlloyTmpTestPath = "tmp/testing.als";
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -84,17 +76,17 @@ public class DecomposeTest {
 
 	@Test
 	public void testDecomposetoConjunctions() {
-			System.out.println(world.getAllCommands().get(0).formula);
-			List<Expr> conjunctions = Decompose.decomposetoConjunctions(
-					world.getAllCommands().get(0).formula);
-			System.out.println(conjunctions);
+		System.out.println(world.getAllCommands().get(0).formula);
+		List<Expr> conjunctions = Decompose
+				.decomposetoConjunctions(world.getAllCommands().get(0).formula);
+		System.out.println(conjunctions);
 	}
 
 	@Test
 	public void testDecomposetoImplications() {
-			System.out.println(world.getAllCommands().get(0).formula);
-			System.out.println(Decompose.decomposetoImplications(
-					world.getAllCommands().get(0).formula));
+		System.out.println(world.getAllCommands().get(0).formula);
+		System.out.println(Decompose
+				.decomposetoImplications(world.getAllCommands().get(0).formula));
 	}
-	
+
 }

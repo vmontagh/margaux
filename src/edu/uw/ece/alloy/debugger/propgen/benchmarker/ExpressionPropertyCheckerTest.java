@@ -3,13 +3,12 @@
  */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -24,6 +23,7 @@ import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.TemporalImplicationLatticeGenerator;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
 
 /**
  * @author vajih
@@ -31,14 +31,14 @@ import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
  */
 public class ExpressionPropertyCheckerTest {
 
-
-	final  String AlloyTmpTestPath = "tmp/testing.als";
+	final String AlloyTmpTestPath = "tmp/testing.als";
 	final String sourceFolderPath = "models/debugger/knowledge_base";
-	final String[] moduleNames = {"binary_implication.als",
-	"property_structure.als"};
+	final String[] moduleNames = { "binary_implication.als",
+			"property_structure.als" };
 	final static String tempFolderPath = "tmp/kb";
-	ImplicationLattic bil,til;
+	ImplicationLattic bil, til;
 	ExpressionPropertyGenerator epc;
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -75,28 +75,34 @@ public class ExpressionPropertyCheckerTest {
 						+ " for 5" + BlocksExtractorByComments.ExtractScope.END;
 		// @formatter:on
 
-		Util.writeAll(AlloyTmpTestPath, alloyTestCode);	
+		Util.writeAll(AlloyTmpTestPath, alloyTestCode);
 
 		// Create the temp folder
 		File tempFolder = new File(tempFolderPath);
 		if (!tempFolder.exists())
-			try{
+			try {
 				tempFolder.mkdirs();
-			}catch(Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		// Copy the module file into the temp folder
-		for (String module: moduleNames){
+		for (String module : moduleNames) {
 			File source = new File(sourceFolderPath, module);
 			File dest = new File(tempFolder, module);
-			Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		}		
+			Files.copy(source.toPath(), dest.toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
+		}
 
 		bil = new BinaryImplicationLattic(tempFolderPath, moduleNames);
-		til = new TernaryImplicationLattic(TemporalImplicationLatticeGenerator.pathToLegend,
-																									TemporalImplicationLatticeGenerator.pathToImplication,
-																									TemporalImplicationLatticeGenerator.pathToIff);
-		epc = new ExpressionPropertyGenerator(null, new File(AlloyTmpTestPath), tempFolder, tempFolder, false, false, false, false);
+		til = new TernaryImplicationLattic(
+				TemporalImplicationLatticeGenerator.pathToLegend,
+				TemporalImplicationLatticeGenerator.pathToImplication,
+				TemporalImplicationLatticeGenerator.pathToIff);
+
+		epc = new ExpressionPropertyGenerator(UUID.randomUUID(), new Queue<>(),
+				new File(AlloyTmpTestPath), tempFolder, tempFolder, "field",
+				IfPropertyToAlloyCode.EMPTY_CONVERTOR, "expresson", "scope",
+				Collections.emptyList());
 	}
 
 	/**
@@ -108,14 +114,14 @@ public class ExpressionPropertyCheckerTest {
 
 	@Test
 	public void testGenerateImplicationRelationChekersSources() throws Err {
-		GeneratedStorage<AlloyProcessingParam> result = new GeneratedStorage<>();
-		epc.generateRelationalChekers(new HashSet<>(bil.getAllSources()),result);
+		Queue<AlloyProcessingParam> result = new Queue<>();
+		epc.generatePatternCheckers(new HashSet<>(bil.getAllSources()), result);
 	}
-	
+
 	@Test
-	public void testGenerateTemporalChekers() throws Err{
-		GeneratedStorage<AlloyProcessingParam> gs = new GeneratedStorage<>();
-		epc.generateTemporalChekers(new HashSet<>(til.getAllSources()), gs);
+	public void testGenerateTemporalChekers() throws Err {
+		Queue<AlloyProcessingParam> gs = new Queue<>();
+		epc.generatePatternCheckers(new HashSet<>(til.getAllSources()), gs);
 	}
-	
+
 }

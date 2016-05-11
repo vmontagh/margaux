@@ -4,16 +4,15 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.mit.csail.sdg.alloy4.ConstList;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Decl;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary.Op;
-import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
-import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Open;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprHasName;
 import edu.mit.csail.sdg.alloy4compiler.ast.Func;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.mit.csail.sdg.alloy4compiler.parser.CompModule.Open;
 
 public class PropertyDeclaration {
 
@@ -277,6 +276,4 @@ public class PropertyDeclaration {
 		return "PropertyDeclaration [function=" + function + "]";
 	}
 
-	
-	
 }

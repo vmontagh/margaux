@@ -24,15 +24,7 @@ public class RemoteProcessManagerTest {
 		}
 	}
 	
-	private static class RemoteProcessManagerForTest extends RemoteProcessManager<RemoteProcessManagerMainMock>{
-
-		public RemoteProcessManagerForTest(InetSocketAddress localSocket,
-				int maxActiveProcessNumbers, int maxDoingTasks) {
-			super(localSocket, maxActiveProcessNumbers, maxDoingTasks);
-			// TODO Auto-generated constructor stub
-		}
-		
-	}
+	
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -42,28 +34,19 @@ public class RemoteProcessManagerTest {
 	public static void tearDownAfterClass() throws Exception {
 	}
 	
-	RemoteProcessManagerForTest manager = null;
+	RemoteProcessManager manager;
 
 	@Before
 	public void setUp() throws Exception {
 		InetSocketAddress localSocket = ProcessorUtil.findEmptyLocalSocket();
 		int maxActiveProcessNumbers = 3;
 		int maxDoingTasks = 2;
-		manager = new RemoteProcessManagerForTest(localSocket, maxActiveProcessNumbers, maxDoingTasks);
+		manager = new RemoteProcessManager(localSocket, maxActiveProcessNumbers, maxDoingTasks, RemoteProcessManagerMainMock.class);
 	}
 
 	@After
 	public void tearDown() throws Exception {
 	}
-
-	/*@Test
-	public void testConstructor() {
-		InetSocketAddress localSocket = ProcessorUtil.findEmptyLocalSocket();
-		int maxActiveProcessNumbers = 3;
-		int maxDoingTasks = 2;
-		RemoteProcessManagerForTest manager = new RemoteProcessManagerForTest(localSocket, maxActiveProcessNumbers, maxDoingTasks);
-		assertNotNull(manager);
-	}*/
 	
 	@Test
 	public void testBoot() {
@@ -81,7 +64,6 @@ public class RemoteProcessManagerTest {
 		try {
 			process.waitFor();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		assertEquals( process.exitValue(), 10);
@@ -97,7 +79,6 @@ public class RemoteProcessManagerTest {
 			manager.getRemoteProcessRecord(remoteProcess).process.waitFor();
 			manager.changeStatusToIDLE(remoteProcess);
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

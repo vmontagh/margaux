@@ -18,7 +18,7 @@ public class PatternReadyMessage extends ReadyMessage {
 	public PatternReadyMessage(RemoteProcess process) {
 		super(process);
 	}
-	
+
 	@Override
 	public void onAction(Map<String, Object> context)
 			throws InvalidParameterException {

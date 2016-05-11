@@ -7,11 +7,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.RetryingThread;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
@@ -78,7 +76,7 @@ public abstract class Feeder<T extends ProcessingParam>
 				bufferSize > 0 ? new Queue<>(bufferSize) : new Queue<>(),
 				backLogBufferSize > 0 ? new Queue<>(backLogBufferSize) : new Queue<>());
 	}
-	
+
 	public Feeder(final ProcessDistributer processes,
 			final ServerSocketInterface distributerInterface) {
 		this(processes, distributerInterface, 0, 0);
@@ -135,7 +133,7 @@ public abstract class Feeder<T extends ProcessingParam>
 							+ "a request is added to be merged and the backlog size is:"
 							+ backLogQueue.size());
 	}
-	
+
 	protected abstract RequestMessage createRequestMessage(RemoteProcess process,
 			T param);
 
@@ -248,7 +246,7 @@ public abstract class Feeder<T extends ProcessingParam>
 	@Override
 	public void run() {
 		try {
-			while(true)
+			while (true)
 				sendMessage();
 		} catch (InterruptedException e) {
 			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]"

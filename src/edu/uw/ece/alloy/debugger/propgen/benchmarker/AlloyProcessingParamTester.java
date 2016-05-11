@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.junit.After;
@@ -18,7 +19,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
@@ -100,7 +100,8 @@ public class AlloyProcessingParamTester {
 																																	// tmpDir
 		);
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate();
+		AlloyProcessingParam aParam = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());
 
 		final Field reWrite = AlloyProcessingParam.EMPTY_PARAM.getClass()
 				.getDeclaredField("reWrite");
@@ -138,7 +139,8 @@ public class AlloyProcessingParamTester {
 						AlloyProcessingParam.EMPTY_PARAM, header, scope, field// [tmpDirectory],tmpDir
 		);
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate();
+		AlloyProcessingParam aParam = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());
 
 		final Field reWrite = aParam.getClass().getDeclaredField("reWrite");
 		// reWrite.setAccessible(true);
@@ -181,7 +183,8 @@ public class AlloyProcessingParamTester {
 		final String fileContent = header + '\n' + predBodyA + '\n'
 				+ "run{ some r and " + predCallA + "}" + scope + "\n";
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate();
+		AlloyProcessingParam aParam = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());
 
 		aParam = aParam.changeTmpLocalDirectory(tmpDir).prepareToUse();
 
@@ -201,7 +204,7 @@ public class AlloyProcessingParamTester {
 		final File newDestPath = new File(this.tmpDir,
 				"predNameA_VAC_predNameA.als.out.txt");
 		assertEquals(newDestPath.getAbsolutePath(),
-				aParam.destPath().getAbsolutePath());
+				aParam.getDestPath().get().getAbsolutePath());
 	}
 
 	@Test
@@ -227,7 +230,8 @@ public class AlloyProcessingParamTester {
 						field// [tmpDirectory],tmpDir
 		);
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate();
+		AlloyProcessingParam aParam = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());
 
 		final String fileContent = header + '\n' + predBodyA + '\n' + predBodyB
 				+ '\n' + "run{ some r and " + predCallA + "}" + scope + "\n";
@@ -235,10 +239,10 @@ public class AlloyProcessingParamTester {
 		AlloyProcessingParam aParam2 = aParam.prepareToSend();
 		assertNotEquals(fileContent, aParam2.content());
 		assertNotEquals(srcPath.getAbsolutePath(),
-				aParam2.srcPath().getAbsolutePath());
+				aParam2.getSrcPath().get().getAbsolutePath());
 		assertNotEquals(destPath.getAbsolutePath(),
-				aParam2.destPath().getAbsolutePath());
-		assertEquals(0, aParam2.priority);
+				aParam2.getDestPath().get().getAbsolutePath());
+		assertEquals(0, aParam2.getPriority().get().intValue());
 		assertTrue(aParam2.dependencies().isEmpty());
 		assertEquals(aParam2.content(),
 				VacPropertyToAlloyCode.EMPTY_CONVERTOR.generateAlloyCode());
@@ -265,7 +269,8 @@ public class AlloyProcessingParamTester {
 						field// [tmpDirectory],tmpDir
 		);
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode.generate();
+		AlloyProcessingParam aParam = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());
 
 		AlloyProcessingParam aParamCoded = aParam.prepareToSend();
 
@@ -309,16 +314,17 @@ public class AlloyProcessingParamTester {
 						header, scope, field// [tmpDirectory],tmpDir
 		);
 
-		AlloyProcessingParam aParam_1 = vacPropertyToAlloyCode.generate();
+		AlloyProcessingParam aParam_1 = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());
 
 		aParam_1 = aParam_1.changeTmpLocalDirectory(tmpDir);
 		aParam_1.dumpAll();
 
-		assertTrue(aParam_1.srcPath().exists());
+		assertTrue(aParam_1.getSrcPath().get().exists());
 
 		aParam_1.removeContent();
 
-		assertFalse(aParam_1.srcPath().exists());
+		assertFalse(aParam_1.getSrcPath().get().exists());
 	}
 
 }

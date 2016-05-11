@@ -7,25 +7,27 @@ import java.io.Serializable;
 import java.net.InetSocketAddress;
 
 /**
- * The class represents the Remote process ID. 
- * It is immutable 
+ * The class represents the Remote process ID. It is immutable
+ * 
  * @author vajih
  *
  */
 public class RemoteProcess implements Serializable {
-	
+
 	private static final long serialVersionUID = -6561692016623798872L;
 	final InetSocketAddress address;
 
-	public RemoteProcess(InetSocketAddress address){
-		this.address  = address;
+	public RemoteProcess(InetSocketAddress address) {
+		this.address = address;
 	}
-	
-	public InetSocketAddress getAddress(){
+
+	public InetSocketAddress getAddress() {
 		return address;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -36,7 +38,9 @@ public class RemoteProcess implements Serializable {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -61,14 +65,14 @@ public class RemoteProcess implements Serializable {
 		return true;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
 		return "RemoteProcess [address=" + address + "]";
 	}
-	
-	
-	
+
 }

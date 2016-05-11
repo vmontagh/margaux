@@ -3,7 +3,10 @@
  */
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -26,11 +29,11 @@ import edu.uw.ece.alloy.util.Utils;
 public class BinaryImplicationLatticTest {
 
 	final String sourceFolderPath = "models/debugger/knowledge_base";
-	final String[] moduleNames = {"binary_implication.als",
-																"property_structure.als"};
+	final String[] moduleNames = { "binary_implication.als",
+			"property_structure.als" };
 	final String tempFolderPath = "tmp/kb";
 	ImplicationLattic bil;
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -54,18 +57,19 @@ public class BinaryImplicationLatticTest {
 		// Create the temp folder
 		File tempFolder = new File(tempFolderPath);
 		if (!tempFolder.exists())
-			try{
+			try {
 				tempFolder.mkdirs();
-			}catch(Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		// Copy the module file into the temp folder
-		for (String module: moduleNames){
+		for (String module : moduleNames) {
 			File source = new File(sourceFolderPath, module);
 			File dest = new File(tempFolder, module);
-			Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		}		
-		
+			Files.copy(source.toPath(), dest.toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
+		}
+
 		bil = new BinaryImplicationLattic(tempFolderPath, moduleNames);
 	}
 
@@ -83,15 +87,14 @@ public class BinaryImplicationLatticTest {
 		try {
 			List<String> sources = bil.getAllSources();
 			assertFalse(sources.isEmpty());
-			
-			for (String source: sources){
+
+			for (String source : sources) {
 				assertNotEquals("", source);
 			}
-			
-			assertArrayEquals(
-					sources.toArray(new String[]{}),
-					new String[]{"empty", "totalOrder", "equivalence", "bijection"});
-			
+
+			assertArrayEquals(sources.toArray(new String[] {}),
+					new String[] { "empty", "totalOrder", "equivalence", "bijection" });
+
 		} catch (Err e1) {
 			e1.printStackTrace();
 			fail();
@@ -103,111 +106,98 @@ public class BinaryImplicationLatticTest {
 		try {
 			List<String> sinks = bil.getAllSinks();
 			assertFalse(sinks.isEmpty());
-			
-			for (String source: sinks){
+
+			for (String source : sinks) {
 				assertNotEquals("", source);
 			}
-						
-			assertArrayEquals(
-					sinks.toArray(new String[]{}),
-					new String[]{"irreflexive",
-											 "antisymmetric",
-											 "symmetric",
-											 "transitive",
-											 "weaklyConnected",
-											 "total",
-											 "functional"});
-			
+
+			assertArrayEquals(sinks.toArray(new String[] {}),
+					new String[] { "irreflexive", "antisymmetric", "symmetric",
+							"transitive", "weaklyConnected", "total", "functional" });
+
 		} catch (Err e1) {
 			e1.printStackTrace();
 			fail();
 		}
-	}	
-	
+	}
+
 	@Test
 	public void testgetImply() {
 		try {
 			List<String> nexts = bil.getNextImpliedProperties("reflexive");
 			assertFalse(nexts.isEmpty());
-			
-			for (String source: nexts){
+
+			for (String source : nexts) {
 				assertNotEquals("", source);
 			}
-						
-			assertArrayEquals(
-					nexts.toArray(new String[]{}),
-					new String[]{"total"});
-			
+
+			assertArrayEquals(nexts.toArray(new String[] {}),
+					new String[] { "total" });
+
 		} catch (Err e1) {
 			e1.printStackTrace();
 			fail();
 		}
 	}
-	
+
 	@Test
 	public void testgetAllImply() {
 		try {
 			List<String> nexts = bil.getAllImpliedProperties("totalOrder");
 			assertFalse(nexts.isEmpty());
-			
-			for (String source: nexts){
+
+			for (String source : nexts) {
 				assertNotEquals("", source);
 			}
-						
-			assertArrayEquals(
-					nexts.toArray(new String[]{}),
-					new String[]{"complete", "preorder", "partialOrder", "rootedOne", "reflexive", "total", "weaklyConnected", "transitive", "antisymmetric"});
-			
+
+			assertArrayEquals(nexts.toArray(new String[] {}),
+					new String[] { "complete", "preorder", "partialOrder", "rootedOne",
+							"reflexive", "total", "weaklyConnected", "transitive",
+							"antisymmetric" });
+
 		} catch (Err e1) {
 			e1.printStackTrace();
 			fail();
 		}
 	}
-	
+
 	@Test
 	public void testgetRevImply() {
 		try {
 			List<String> previouses = bil.getNextRevImpliedProperties("reflexive");
 			assertFalse(previouses.isEmpty());
-			
-			for (String source: previouses){
+
+			for (String source : previouses) {
 				assertNotEquals("", source);
 			}
-			
+
 			System.out.println(previouses);
-			
-			assertArrayEquals(
-					previouses.toArray(new String[]{}),
-					new String[]{ "preorder",
-												"totalOrder",
-												"equivalence", 
-												"partialOrder"});
+
+			assertArrayEquals(previouses.toArray(new String[] {}), new String[] {
+					"preorder", "totalOrder", "equivalence", "partialOrder" });
 		} catch (Err e1) {
 			e1.printStackTrace();
 			fail();
 		}
 	}
-	
-	
+
 	@Test
 	public void testgetAllRevImply() {
 		try {
 			List<String> nexts = bil.getAllRevImpliedProperties("irreflexive");
 			assertFalse(nexts.isEmpty());
-			
-			for (String source: nexts){
+
+			for (String source : nexts) {
 				assertNotEquals("", source);
 			}
-						
-			assertArrayEquals(
-					nexts.toArray(new String[]{}),
-					new String[]{"acyclic", "empty"});
-			
+
+			assertArrayEquals(nexts.toArray(new String[] {}),
+					new String[] { "acyclic", "empty" });
+
 		} catch (Err e1) {
 			e1.printStackTrace();
 			fail();
 		}
 	}
-	
-	
+
 }

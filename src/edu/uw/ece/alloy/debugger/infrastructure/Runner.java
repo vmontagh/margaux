@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 
 /**
  * @author vajih
@@ -19,10 +18,9 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRu
  */
 public abstract class Runner {
 
-	protected final static Logger logger = Logger
-			.getLogger(Runner.class.getName() + "--"
-					+ Thread.currentThread().getName());
-	
+	protected final static Logger logger = Logger.getLogger(
+			Runner.class.getName() + "--" + Thread.currentThread().getName());
+
 	/**
 	 * getting the passed arguments from command, a pair of socket addresses will
 	 * be returned. pair.a is the local address and pair.b is remote address
@@ -78,6 +76,8 @@ public abstract class Runner {
 		return new Pair<InetSocketAddress, InetSocketAddress>(localSocket,
 				remoteSocket);
 	}
+
 	protected abstract void initiate();
+
 	public abstract void start();
 }

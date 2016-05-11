@@ -2,9 +2,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +30,6 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator.Builder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Publisher;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
@@ -42,6 +39,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.LivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternLivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
@@ -54,7 +52,6 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitor
 import edu.uw.ece.alloy.util.SendOnServerSocketInterface;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
-import edu.uw.ece.alloy.util.events.MessageEventArgs;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 import edu.uw.ece.alloy.util.events.MessageSentEventArgs;
@@ -202,18 +199,22 @@ public final class ExpressionAnalyzerRunner extends Runner {
 							.isDesiredSAT(result.sat))
 						validResults.add(result);
 
-					System.out.println("message.getResult()"+message.getResult());
-					System.out.println("result.getParam()"+result.getParam());
-					System.out.println("result.getParam().getAlloyCoder()"+result.getParam().getAlloyCoder());
-					System.out.println("result.getParam().getAlloyCoder().isDesiredSAT(result.sat)"+result.getParam().getAlloyCoder().get().isDesiredSAT(result.sat));
-					System.out.println("result.sat->"+result.sat);
-					System.out.println("validResults->"+validResults);
-					System.out.println("Condiotion->"+(message.getResult().isNormal()
+					System.out.println("message.getResult()" + message.getResult());
+					System.out.println("result.getParam()" + result.getParam());
+					System.out.println("result.getParam().getAlloyCoder()"
+							+ result.getParam().getAlloyCoder());
+					System.out.println(
+							"result.getParam().getAlloyCoder().isDesiredSAT(result.sat)"
+									+ result.getParam().getAlloyCoder().get()
+											.isDesiredSAT(result.sat));
+					System.out.println("result.sat->" + result.sat);
+					System.out.println("validResults->" + validResults);
+					System.out.println("Condiotion->" + (message.getResult().isNormal()
 							&& result.getParam().getAlloyCoder()
-							.orElseThrow(() -> new RuntimeException(
-									"Alloy Coder cannot be Null int a response."))
-					.isDesiredSAT(result.sat)));
-					
+									.orElseThrow(() -> new RuntimeException(
+											"Alloy Coder cannot be Null int a response."))
+									.isDesiredSAT(result.sat)));
+
 					// A message is received by the distributer interface so:
 					// first: notifies the monitor to update the records.
 					monitor.processResponded(message.getResult(), message.process);
@@ -394,8 +395,9 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		}
 		return session;
 	};
-	
-	protected Consumer<PatternResponseMessage> sessionDone = (PatternResponseMessage message)-> {
+
+	protected Consumer<PatternResponseMessage> sessionDone = (
+			PatternResponseMessage message) -> {
 		liveness.tobeProcessed--;
 		liveness.processed++;
 	};
@@ -433,25 +435,26 @@ public final class ExpressionAnalyzerRunner extends Runner {
 						}
 					}
 				});
-		
-		inputInterface.MessageSent.addListener(new MessageEventListener<MessageSentEventArgs>(){
-			@Override
-			public void actionOn(ResponseMessage responsetMessage,
-					MessageSentEventArgs messageArgs) {
-				final Map<String, Object> context = new HashMap<>();
-				// it is expected to see a request message. The request creates a
-				// new
-				// session and puts it in the analyzingSessions
-				context.put("sessionDone", sessionDone);
-				super.actionOn(responsetMessage, messageArgs);
-				try {
-					responsetMessage.onAction(context);
-				} catch (InvalidParameterException e) {
-					logger.severe(Utils.threadName()
-							+ "reponse cannot be processed:\n" + e.getStackTrace());
-				}
-			}
-		});
+
+		inputInterface.MessageSent
+				.addListener(new MessageEventListener<MessageSentEventArgs>() {
+					@Override
+					public void actionOn(ResponseMessage responsetMessage,
+							MessageSentEventArgs messageArgs) {
+						final Map<String, Object> context = new HashMap<>();
+						// it is expected to see a request message. The request creates a
+						// new
+						// session and puts it in the analyzingSessions
+						context.put("sessionDone", sessionDone);
+						super.actionOn(responsetMessage, messageArgs);
+						try {
+							responsetMessage.onAction(context);
+						} catch (InvalidParameterException e) {
+							logger.severe(Utils.threadName()
+									+ "reponse cannot be processed:\n" + e.getStackTrace());
+						}
+					}
+				});
 
 		// interface for distributing tasks among alloy executers.
 		distributerInterface = new ServerSocketInterface(this.distributorSocket);
@@ -618,12 +621,10 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		liveness.startThread();
 		reporterThread.start();
 
-		/*try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+		/*
+		 * try { Thread.sleep(500); } catch (InterruptedException e) { // TODO
+		 * Auto-generated catch block e.printStackTrace(); }
+		 */
 		processManager.addAllProcesses();
 
 		// Everything should be ready now, so the booter should be notified.
@@ -640,9 +641,10 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 		System.out.println("local::" + ports.a);
 		System.out.println("remoteSocket::" + ports.b);
-		ExpressionAnalyzerRunner runner = new ExpressionAnalyzerRunner(ports.a, ports.b);
+		ExpressionAnalyzerRunner runner = new ExpressionAnalyzerRunner(ports.a,
+				ports.b);
 		runner.start();
-		//create(ports.a, ports.b).start();
+		// create(ports.a, ports.b).start();
 
 	}
 

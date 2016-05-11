@@ -1,7 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs;
 
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -23,18 +22,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessesManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.util.RetryingThread;
 import edu.uw.ece.alloy.util.Utils;
 
@@ -107,16 +102,19 @@ public class ProcessRemoteMonitor
 
 	}
 
-	public boolean isDone(AlloyProcessingParam param){
-		System.out.println("doneChecks:"+param.alloyCoder.getPredName() + "?" + doneChecks.contains(param.alloyCoder.getPredName()) );
-		return (doneChecks.contains(param.alloyCoder.getPredName()));
+	public boolean isDone(AlloyProcessingParam param) {
+		System.out.println("doneChecks:" + param.getAlloyCoder().get().getPredName()
+				+ "?" + doneChecks.contains(param.getAlloyCoder().get().getPredName()));
+		return (doneChecks.contains(param.getAlloyCoder().get().getPredName()));
 	}
-	
-	public boolean isTobeDone(AlloyProcessingParam param){
-		System.out.println("isTobeDone:"+param.alloyCoder.getPredName() + "?" + toBedoneChecks.contains(param.alloyCoder.getPredName()) );
-		return (toBedoneChecks.contains(param.alloyCoder.getPredName()));
+
+	public boolean isTobeDone(AlloyProcessingParam param) {
+		System.out.println("isTobeDone:" + param.getAlloyCoder().get().getPredName()
+				+ "?"
+				+ toBedoneChecks.contains(param.getAlloyCoder().get().getPredName()));
+		return (toBedoneChecks.contains(param.getAlloyCoder().get().getPredName()));
 	}
-	
+
 	public void addMessage(final InetSocketAddress pId,
 			final AlloyProcessingParam e) {
 
@@ -156,13 +154,13 @@ public class ProcessRemoteMonitor
 
 		if (!sentMessages.containsKey(e)) {
 			sentMessages.put(e,
-					Collections.synchronizedList(new LinkedList<InetSocketAddress>()));			
+					Collections.synchronizedList(new LinkedList<InetSocketAddress>()));
 		}
 
 		List<InetSocketAddress> listPID = sentMessages.get(e);
 		listPID.add(pId);
 
-		toBedoneChecks.add(e.alloyCoder.getPredName());
+		toBedoneChecks.add(e.getAlloyCoder().get().getPredName());
 	}
 
 	public void removeMessage(final InetSocketAddress pId,
@@ -187,10 +185,10 @@ public class ProcessRemoteMonitor
 					+ "No message set is available for process: " + pId);
 		} else {
 
-				if (Configuration.IsInDeubbungMode)
-					logger.info("[" + Thread.currentThread().getName() + "] "
-							+ "The message is: " + e + "\tThe PID is: " + pId
-							+ " and message was sent to: " + sentMessages.get(e));
+			if (Configuration.IsInDeubbungMode)
+				logger.info("[" + Thread.currentThread().getName() + "] "
+						+ "The message is: " + e + "\tThe PID is: " + pId
+						+ " and message was sent to: " + sentMessages.get(e));
 
 			synchronized (incompleteMessages) {
 				Map<AlloyProcessingParam, Integer> mapValue = incompleteMessages
@@ -222,19 +220,23 @@ public class ProcessRemoteMonitor
 
 				}
 
-				if (!toBedoneChecks.contains(e.alloyCoder.getPredName())){
-					if (Configuration.IsInDeubbungMode){
-						logger.warning(Utils.threadName() + "The property checking does not exit:"+e.alloyCoder.getPredName());
-					}					
-				}else{
-					toBedoneChecks.remove(e.alloyCoder.getPredName());
+				if (!toBedoneChecks.contains(e.getAlloyCoder().get().getPredName())) {
+					if (Configuration.IsInDeubbungMode) {
+						logger.warning(
+								Utils.threadName() + "The property checking does not exit:"
+										+ e.getAlloyCoder().get().getPredName());
+					}
+				} else {
+					toBedoneChecks.remove(e.getAlloyCoder().get().getPredName());
 				}
 
-				if (!doneChecks.contains(e.alloyCoder.getPredName()) && Configuration.IsInDeubbungMode){
-						logger.warning(Utils.threadName() + "The property is already done:"+e.alloyCoder.getPredName());
-					}	
-				doneChecks.add(e.alloyCoder.getPredName());
-				
+				if (!doneChecks.contains(e.getAlloyCoder().get().getPredName())
+						&& Configuration.IsInDeubbungMode) {
+					logger.warning(Utils.threadName() + "The property is already done:"
+							+ e.getAlloyCoder().get().getPredName());
+				}
+				doneChecks.add(e.getAlloyCoder().get().getPredName());
+
 				if (Configuration.IsInDeubbungMode)
 					logger.info("[" + Thread.currentThread().getName() + "] "
 							+ " The map size is after: " + mapValue.size() + " for pId:"
@@ -251,14 +253,14 @@ public class ProcessRemoteMonitor
 			receivedMessagesNumber.get(pId).incrementAndGet();
 		}
 	}
-	
-	protected int getAllWaitings(){
+
+	protected int getAllWaitings() {
 		int waiting = 0;
 		for (InetSocketAddress pId : incompleteMessages.keySet()) {
 			int waitingForPId = incompleteMessages.get(pId).size();
 			waiting += waitingForPId;
 		}
-		
+
 		return waiting;
 	}
 
@@ -598,29 +600,30 @@ public class ProcessRemoteMonitor
 		}
 
 		// regardless of the message status, it should not be created again.
-		if (doneChecks.contains(result.params.alloyCoder.getPredName())) {
+		if (doneChecks
+				.contains(result.getParam().getAlloyCoder().get().getPredName())) {
 			if (Configuration.IsInDeubbungMode)
 				logger.warning("[" + Thread.currentThread().getName() + "] "
 						+ "The check was done before: pID= " + PID + " param="
-						+ result.params);
+						+ result.getParam());
 		}
-		doneChecks.add(result.params.alloyCoder.getPredName());
+		doneChecks.add(result.getParam().getAlloyCoder().get().getPredName());
 
 		if (result.isTimedout() || result.isFailed()) {
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "] "
 						+ "The process is timed out and is pushed back to be retried later: pID= "
-						+ PID + " param=" + result.params);
-			removeAndPushUndoneRequest(PID, result.params);
+						+ PID + " param=" + result.getParam());
+			removeAndPushUndoneRequest(PID, result.getParam());
 			manager.decreaseMessageCounter(PID);
 		} else if (result.isInferred()) {
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "] "
 						+ "The process is inferred: pID= " + PID + " param="
-						+ result.params);
+						+ result.getParam());
 			manager.increaseInferredMessageCounter(PID);
 		} else {
-			removeMessage(PID, result.params);
+			removeMessage(PID, result.getParam());
 			manager.decreaseMessageCounter(PID);
 		}
 
@@ -628,33 +631,6 @@ public class ProcessRemoteMonitor
 		manager.changeLastLiveTimeReported(PID, System.currentTimeMillis());
 		// Add the next level to be processed.
 
-	}
-
-	/**
-	 * The property is checked, and its result is sat or not. So, the implied
-	 * properties should be processed next.
-	 * 
-	 * @param result
-	 */
-	public void checkNextProperties(AlloyProcessedResult result) {
-		try {
-
-			Set<String> nextProperties = new HashSet<>(
-					result.params.alloyCoder.getToBeCheckedProperties(result.sat));
-
-			if (!nextProperties.isEmpty())
-				ExpressionPropertyGenerator.Builder.getInstance()
-						.create((GeneratedStorage<AlloyProcessingParam>) feeder,
-								nextProperties, doneChecks)
-						.startThread();
-			else
-				logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
-						+ "The next properties are empty for:" + result);
-		} catch (Err | IOException e) {
-			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
-					+ "Next properties failed to be added.", e);
-			e.printStackTrace();
-		}
 	}
 
 	public void startThread() {

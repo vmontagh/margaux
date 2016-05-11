@@ -16,12 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ProcessRemoteMonitor;
 import edu.uw.ece.alloy.util.Utils;
-import edu.uw.ece.alloy.util.events.EventArgs;
-import edu.uw.ece.alloy.util.events.EventListener;
 import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
 /**
@@ -38,7 +33,7 @@ public abstract class RemoteMessage implements Serializable {
 	public final RemoteProcess process;
 	/* The time of the message creation */
 	public final long creationTime;
-	
+
 	final static Logger logger = Logger.getLogger(
 			RemoteMessage.class.getName() + "--" + Thread.currentThread().getName());;
 
@@ -47,11 +42,11 @@ public abstract class RemoteMessage implements Serializable {
 		this.process = process;
 		this.creationTime = creationTime;
 	}
-	
-	public RemoteMessage(RemoteProcess process){
+
+	public RemoteMessage(RemoteProcess process) {
 		this(process, System.currentTimeMillis());
 	}
-	
+
 	public static void sendAMessage(final RemoteProcess remoteProcess,
 			Serializable message) throws InterruptedException {
 
@@ -104,23 +99,26 @@ public abstract class RemoteMessage implements Serializable {
 	}
 
 	/**
-	 * Prepares the data before the request is done on the client. 
+	 * Prepares the data before the request is done on the client.
+	 * 
 	 * @throws InterruptedException
 	 */
-	public void prepareBeforeUse() throws InterruptedException{
+	public void prepareBeforeUse() throws InterruptedException {
 	}
-	
+
 	/**
-	 * Prepares a message before sending a messing.
-	 * Request and Response Messages overwrites this API 
+	 * Prepares a message before sending a messing. Request and Response Messages
+	 * overwrites this API
+	 * 
 	 * @param remoteProcess
-	 * @throws InterruptedException 
-	 * @throws Exception 
+	 * @throws InterruptedException
+	 * @throws Exception
 	 */
-	public void prepareThenSend(final RemoteProcess remoteProcess) throws InterruptedException, Exception{
+	public void prepareThenSend(final RemoteProcess remoteProcess)
+			throws InterruptedException, Exception {
 		sendMe(remoteProcess);
 	}
-	
+
 	@SuppressWarnings("static-access")
 	public void sendMe(final RemoteProcess remoteProcess)
 			throws InterruptedException {
@@ -128,9 +126,12 @@ public abstract class RemoteMessage implements Serializable {
 		this.sendAMessage(remoteProcess, this);
 		afterSend(process);
 	}
-	
-	protected void beforeSend(RemoteProcess process){}
-	protected void afterSend(RemoteProcess process){}
+
+	protected void beforeSend(RemoteProcess process) {
+	}
+
+	protected void afterSend(RemoteProcess process) {
+	}
 
 	/**
 	 * The action happens once a message is processed on the callee side. A caller
@@ -179,10 +180,12 @@ public abstract class RemoteMessage implements Serializable {
 	}
 
 	/**
-	 * Once an event happens, this method is called and an implementation
-	 * of a listener is passed in.
+	 * Once an event happens, this method is called and an implementation of a
+	 * listener is passed in.
+	 * 
 	 * @param listener
 	 */
-	public abstract void onEvent(MessageListenerAction listener, MessageEventArgs args);
-	
+	public abstract void onEvent(MessageListenerAction listener,
+			MessageEventArgs args);
+
 }

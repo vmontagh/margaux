@@ -28,11 +28,12 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 
 	final private Set<Sig.Field> fields;
 
-	private FieldsExtractorVisitor(){
+	private FieldsExtractorVisitor() {
 		this.fields = new HashSet<Sig.Field>();
 	}
 
-	static public synchronized Set<Sig.Field> getReferencedFields(Expr expr) throws Err{
+	static public synchronized Set<Sig.Field> getReferencedFields(Expr expr)
+			throws Err {
 
 		FieldsExtractorVisitor obj = new FieldsExtractorVisitor();
 
@@ -40,7 +41,6 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 
 		return obj.fields;
 	}
-
 
 	@Override
 	public Expr visit(ExprBinary x) throws Err {
@@ -53,7 +53,7 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 
 	@Override
 	public Expr visit(ExprList x) throws Err {
-		for(Expr arg: x.args){
+		for (Expr arg : x.args) {
 			visitThis(arg);
 		}
 
@@ -63,7 +63,7 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 	@Override
 	public Expr visit(ExprCall x) throws Err {
 
-		for(Decl decl: x.fun.decls){
+		for (Decl decl : x.fun.decls) {
 			visitThis(decl.expr);
 		}
 
@@ -100,7 +100,7 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 	@Override
 	public Expr visit(ExprQt x) throws Err {
 
-		for(Decl decl: x.decls){
+		for (Decl decl : x.decls) {
 			visitThis(decl.expr);
 		}
 

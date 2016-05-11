@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
 import java.util.ArrayList;
@@ -20,17 +17,16 @@ public class TernaryImplicationLattic extends ImplicationLattic {
 
 	public TernaryImplicationLattic(String tempPath, String[] moduleName) {
 		super(tempPath, moduleName);
-		// TODO Auto-generated constructor stub
 		generator = null;
 	}
 
 	final TemporalImplicationLatticeGenerator generator;
 
-	public TernaryImplicationLattic(String pathToLegend,
-			String pathToImplication,
+	public TernaryImplicationLattic(String pathToLegend, String pathToImplication,
 			String pathToIff) {
 		super();
-		generator = new TemporalImplicationLatticeGenerator(pathToLegend, pathToImplication, pathToIff);
+		generator = new TemporalImplicationLatticeGenerator(pathToLegend,
+				pathToImplication, pathToIff);
 	}
 
 	public TernaryImplicationLattic() {
@@ -39,83 +35,101 @@ public class TernaryImplicationLattic extends ImplicationLattic {
 				TemporalImplicationLatticeGenerator.pathToIff);
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getAllSources()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getAllSources()
 	 */
 	@Override
 	public List<String> getAllSources() throws Err {
 		List<String> result = new LinkedList<>();
-		Map<String, Set<String>> revImpilications = generator.findRevReachable(); 
-		for(String key: revImpilications.keySet()){
+		Map<String, Set<String>> revImpilications = generator.findRevReachable();
+		for (String key : revImpilications.keySet()) {
 			Set<String> revImplied = revImpilications.get(key);
-			if (revImplied.isEmpty()){
+			if (revImplied.isEmpty()) {
 				result.add(key);
 			}
 		}
 		return Collections.unmodifiableList(result);
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getNextImpliedProperties(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#
+	 * getNextImpliedProperties(java.lang.String)
 	 */
 	@Override
 	public List<String> getNextImpliedProperties(String property) throws Err {
 		List<String> result = new ArrayList<>();
-		if(generator.findReachable().containsKey(property)){
+		if (generator.findReachable().containsKey(property)) {
 			result.addAll(generator.findReachable().get(property));
 		}
 		return Collections.unmodifiableList(result);
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getNextRevImpliedProperties(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#
+	 * getNextRevImpliedProperties(java.lang.String)
 	 */
 	@Override
 	public List<String> getNextRevImpliedProperties(String property) throws Err {
 		List<String> result = new ArrayList<>();
-		if(generator.findRevReachable().containsKey(property)){
+		if (generator.findRevReachable().containsKey(property)) {
 			result.addAll(generator.findRevReachable().get(property));
 		}
 		return Collections.unmodifiableList(result);
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getAllSinks()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getAllSinks()
 	 */
 	@Override
 	public List<String> getAllSinks() throws Err {
 		List<String> result = new LinkedList<>();
-		Map<String, Set<String>> implications = generator.findReachable(); 
-		for(String key: implications.keySet()){
+		Map<String, Set<String>> implications = generator.findReachable();
+		for (String key : implications.keySet()) {
 			Set<String> revImplied = implications.get(key);
-			if (revImplied.isEmpty()){
+			if (revImplied.isEmpty()) {
 				result.add(key);
 			}
 		}
 		return Collections.unmodifiableList(result);
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getAllImpliedProperties(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#
+	 * getAllImpliedProperties(java.lang.String)
 	 */
 	@Override
 	public List<String> getAllImpliedProperties(String property) throws Err {
-		
+
 		List<String> result = new ArrayList<>();
-		if(generator.findAllReachable().containsKey(property)){
+		if (generator.findAllReachable().containsKey(property)) {
 			result.addAll(generator.findAllReachable().get(property));
 		}
 		return Collections.unmodifiableList(result);
 	}
 
-	/* (non-Javadoc)
-	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#getAllRevImpliedProperties(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic#
+	 * getAllRevImpliedProperties(java.lang.String)
 	 */
 	@Override
 	public List<String> getAllRevImpliedProperties(String property) throws Err {
-		
+
 		List<String> result = new ArrayList<>();
-		if(generator.findAllRevReachable().containsKey(property)){
+		if (generator.findAllRevReachable().containsKey(property)) {
 			result.addAll(generator.findAllRevReachable().get(property));
 		}
 		return Collections.unmodifiableList(result);

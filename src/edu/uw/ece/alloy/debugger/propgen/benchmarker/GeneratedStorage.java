@@ -8,11 +8,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
-
 /**
  * @author vajih
- * @deprecated 
+ * @deprecated
  */
 public class GeneratedStorage<T> {
 

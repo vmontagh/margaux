@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.util.Utils;
+
 /**
  * A watchdog for monitoring any thread implementing ThreadToBeMonitored
+ * 
  * @author vajih
  *
  */

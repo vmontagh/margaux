@@ -4,43 +4,45 @@ import java.io.File;
 import java.util.UUID;
 
 import edu.uw.ece.alloy.debugger.AnalyzingSession;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 
 /**
- * The class is responsible for analyzing the patterns
- * of a given Expr in a source path.
+ * The class is responsible for analyzing the patterns of a given Expr in a
+ * source path.
+ * 
  * @author vajih
  *
  */
+
+@Deprecated
 public class ExpressionAnalyzingSession implements AnalyzingSession {
-	
+
 	final UUID id;
-	final File sourcePath;
-	final String predTobeAnalyzed;
-	final String fieldName;
-	
-	
-	
+	File sourcePath;
+	String predTobeAnalyzed;
+	String fieldName;
+
 	public ExpressionAnalyzingSession() {
-		 id = UUID.randomUUID();
-		 
+		id = UUID.randomUUID();
+
 	}
-	
+
 	/**
 	 * Start the generator to put appropriate tasks in the feeder
 	 */
-	public void start(){
-		
+	public void start() {
+
 	}
-	
+
 	/**
-	 * Once a part of 
+	 * Once a part of
 	 */
-	public void followUp(){
-		
+	public void followUp() {
+
 	}
-	
-	public void doneOnWait(){
-		
+
+	public void doneOnWait() {
+
 	}
 
 	@Override
@@ -58,7 +60,13 @@ public class ExpressionAnalyzingSession implements AnalyzingSession {
 	@Override
 	public void done() {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	public void followUp(ResponseMessage message) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

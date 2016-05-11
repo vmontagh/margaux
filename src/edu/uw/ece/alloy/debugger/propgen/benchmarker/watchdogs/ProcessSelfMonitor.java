@@ -10,66 +10,72 @@ public class ProcessSelfMonitor implements Runnable {
 	public final int monitorInterval;
 	public final int RecoveryAttemtps;
 
-	protected final static Logger logger = Logger.getLogger(ProcessSelfMonitor.class.getName()+"--"+Thread.currentThread().getName());
+	protected final static Logger logger = Logger
+			.getLogger(ProcessSelfMonitor.class.getName() + "--"
+					+ Thread.currentThread().getName());
 
 	List<ThreadDelayToBeMonitored> monitoredThreads = new LinkedList<>();
 
 	final Thread monitor = new Thread(this);
-	
-	public ProcessSelfMonitor(int monitorInterval, int RecoveryAttemtps ) {
+
+	public ProcessSelfMonitor(int monitorInterval, int RecoveryAttemtps) {
 		super();
 		this.monitorInterval = monitorInterval;
 		this.RecoveryAttemtps = RecoveryAttemtps;
 
 	}
 
-	public void addThreadToBeMonitored(ThreadDelayToBeMonitored thread){
+	public void addThreadToBeMonitored(ThreadDelayToBeMonitored thread) {
 		monitoredThreads.add(thread);
 	}
 
 	protected void monitor() {
 
-		while(!Thread.currentThread().isInterrupted()){
-			try{
-				Thread.sleep(monitorInterval/2);
-				for(ThreadDelayToBeMonitored thread: monitoredThreads){
-					try{
+		while (!Thread.currentThread().isInterrupted()) {
+			try {
+				Thread.sleep(monitorInterval / 2);
+				for (ThreadDelayToBeMonitored thread : monitoredThreads) {
+					try {
 						final long isd = thread.isDelayed();
-						if(isd != 0){
-							logger.warning("["+Thread.currentThread().getName()+"]"+ thread.amIStuck());
+						if (isd != 0) {
+							logger.warning("[" + Thread.currentThread().getName() + "]"
+									+ thread.amIStuck());
 							thread.actionOnStuck();
-						}else{
+						} else {
 							thread.actionOnNotStuck();
 						}
-					}catch(Throwable tr){
-						logger.severe("["+Thread.currentThread().getName()+"]"+ "Watchdog main loop is BADLY faced an exception!");					
+					} catch (Throwable tr) {
+						logger.severe("[" + Thread.currentThread().getName() + "]"
+								+ "Watchdog main loop is BADLY faced an exception!");
 					}
 				}
 				System.gc();
 
-				Thread.sleep(monitorInterval/2);
+				Thread.sleep(monitorInterval / 2);
 			} catch (InterruptedException e) {
-				logger.severe("["+Thread.currentThread().getName()+"]"+ "Watchdog main loop is interrpted.");
+				logger.severe("[" + Thread.currentThread().getName() + "]"
+						+ "Watchdog main loop is interrpted.");
 
-			}	
-			
-			//System.out.println("Monitor is running for "+ AlloyProcessRunner.getInstance().PID);
+			}
+
+			// System.out.println("Monitor is running for "+
+			// AlloyProcessRunner.getInstance().PID);
 		}
-		//System.out.println("Monitor is broken for "+ AlloyProcessRunner.getInstance().PID);
+		// System.out.println("Monitor is broken for "+
+		// AlloyProcessRunner.getInstance().PID);
 	}
 
 	public void cancelThreads() {
 		monitor.interrupt();
 	}
-	
-	public void startThreads(){
+
+	public void startThreads() {
 		monitor.start();
 	}
 
 	@Override
 	public void run() {
-		monitor();		
+		monitor();
 	}
-
 
 }

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger;
 
 import java.util.UUID;

@@ -15,9 +15,6 @@ import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 
 public class PropertyToAlloyCode implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7891570520910464309L;
 
 	final public static PropertyToAlloyCode EMPTY_CONVERTOR = new PropertyToAlloyCode();
@@ -97,7 +94,8 @@ public class PropertyToAlloyCode implements Serializable {
 		this.compressedStatus = compressedStatus;
 
 		implications = new LinkedList<>();
-		// The BinaryImplicationLattic and TernaryImplicationLAttice are not connected
+		// The BinaryImplicationLattic and TernaryImplicationLAttice are not
+		// connected
 		// to the given relational and temporal patterns stored in a request message
 		implications.add(new BinaryImplicationLattic());
 		implications.add(new TernaryImplicationLattic());
@@ -277,9 +275,9 @@ public class PropertyToAlloyCode implements Serializable {
 	}
 
 	protected String generateAlloyCode() {
-		
-		System.out.println("predCallA->"+predCallA);
-		
+
+		System.out.println("predCallA->" + predCallA);
+
 		String source = "";
 
 		source += generatePrepend();
@@ -315,7 +313,7 @@ public class PropertyToAlloyCode implements Serializable {
 	}
 
 	String commandStatement(final String predCallA, final String predCallB) {
-		
+
 		final String block = commandKeyWordBody() + " " + COMMAND_BLOCK_NAME
 				+ " {\n" + predCallA + " " + commandOperator() + " " + predCallB
 				+ "\n}\n";
@@ -510,8 +508,8 @@ public class PropertyToAlloyCode implements Serializable {
 		PropertyToAlloyCode other = (PropertyToAlloyCode) obj;
 		return isEqual(other);
 	}
-	
-	protected Optional<List<ImplicationLattic>> getImplicationLattices(){
+
+	protected Optional<List<ImplicationLattic>> getImplicationLattices() {
 		return Optional.ofNullable(implications);
 	}
 

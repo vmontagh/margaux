@@ -1,32 +1,30 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 /**
- * The triple relation is r:S->A->B
- * S has a temporal relation
- * A is called middle
+ * The triple relation is r:S->A->B S has a temporal relation A is called middle
  * B is called End
+ * 
  * @author vajih
  *
  */
 public abstract class Property {
-	
-	//The local variable names used for generated preds. 
+
+	// The local variable names used for generated preds.
 	public final String RName;
 	public final String SName;
 	public final String SNext;
 	public final String SFirst;
 	public final String MiddleName;
 	public final String EndName;
-	
-	//The concrete variables store the parameters names that are passed to a pred call. 
+
+	// The concrete variables store the parameters names that are passed to a pred
+	// call.
 	public final String RConcreteName;
 	public final String SConcreteName;
 	public final String SConcreteNext;
 	public final String SConcreteFirst;
 	public final String MConcreteName;
 	public final String EConcreteName;
-	
-
 
 	public Property(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
@@ -46,50 +44,59 @@ public abstract class Property {
 		MConcreteName = mConcreteName;
 		EConcreteName = eConcreteName;
 	}
+
 	protected abstract String getPredecessor();
+
 	protected abstract String getSuccessor();
-	
+
 	protected abstract boolean isConsistent();
-	
-	public  String genPredName(){
-		return this.getClass().getSimpleName()+"_";
+
+	public String genPredName() {
+		return this.getClass().getSimpleName() + "_";
 	}
-	protected String genParameters(){
-		return RName+": univ->univ->univ, "+SName+", "+MiddleName+", "+EndName+": univ, "+SFirst+": univ, "+SNext+": univ->univ";
+
+	protected String genParameters() {
+		return RName + ": univ->univ->univ, " + SName + ", " + MiddleName + ", "
+				+ EndName + ": univ, " + SFirst + ": univ, " + SNext + ": univ->univ";
 	}
+
 	protected abstract String genBody();
-	
-	protected String genParametesCall(){
-		return RConcreteName+", "+SConcreteName+", "+MConcreteName+", "+EConcreteName+", "+SConcreteFirst+", "+SConcreteNext;
+
+	protected String genParametesCall() {
+		return RConcreteName + ", " + SConcreteName + ", " + MConcreteName + ", "
+				+ EConcreteName + ", " + SConcreteFirst + ", " + SConcreteNext;
 	}
-	
-	public String generateProp(){
-		
-		if (!isConsistent()){
+
+	public String generateProp() {
+
+		if (!isConsistent()) {
 			return "";
 		}
-		
+
 		StringBuilder result = new StringBuilder();
-		
-		result.append("pred ").append(genPredName()).append("[").append(genParameters()).append("]{\n");
+
+		result.append("pred ").append(genPredName()).append("[")
+				.append(genParameters()).append("]{\n");
 		result.append(genBody()).append("\n}");
 		return result.toString();
 	}
 
-	
-	public String genPredCall(){
-		if (!isConsistent()){
+	public String genPredCall() {
+		if (!isConsistent()) {
 			return "";
 		}
-		
+
 		StringBuilder result = new StringBuilder();
-		
-		
-		result.append(genPredName()).append("[").append(genParametesCall()).append("]\n");
-		
+
+		result.append(genPredName()).append("[").append(genParametesCall())
+				.append("]\n");
+
 		return result.toString();
 	}
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -117,7 +124,10 @@ public abstract class Property {
 		result = prime * result + ((SNext == null) ? 0 : SNext.hashCode());
 		return result;
 	}
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -127,8 +137,8 @@ public abstract class Property {
 		}
 		if (obj == null) {
 			return false;
-		}		
-		if( !( obj.getClass().equals(this.getClass()) ) ){
+		}
+		if (!(obj.getClass().equals(this.getClass()))) {
 			return false;
 		}
 		if (!(obj instanceof Property)) {
@@ -221,7 +231,5 @@ public abstract class Property {
 		}
 		return true;
 	}
-	
-	
-	
+
 }

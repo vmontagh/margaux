@@ -95,8 +95,8 @@ public class ExpressionPropertyGenerator
 			final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, String fieldName,
-			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope, List<File> dependecyFiles)
-					throws Err, IOException {
+			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
+			List<File> dependecyFiles) throws Err, IOException {
 
 		this(sessionID, generatedStorage, toBeAnalyzedCode,
 				relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
@@ -115,7 +115,8 @@ public class ExpressionPropertyGenerator
 			File toBeAnalyzedCode, File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, String fieldName,
 			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
-			Set<String> excludedChecks, List<File> dependecyFiles) throws Err, IOException {
+			Set<String> excludedChecks, List<File> dependecyFiles)
+					throws Err, IOException {
 
 		this(sessionID, generatedStorage, toBeAnalyzedCode,
 				relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
@@ -131,8 +132,8 @@ public class ExpressionPropertyGenerator
 			String fieldName, PropertyToAlloyCode propertyToAlloyCode,
 			String expression, String scope,
 
-			Set<String> excludedChecks, Set<String> toBeCheckProperties, List<File> dependecyFiles)
-					throws Err, IOException {
+			Set<String> excludedChecks, Set<String> toBeCheckProperties,
+			List<File> dependecyFiles) throws Err, IOException {
 		this(sessionID, generatedStorage, toBeAnalyzedCode,
 				relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
 				propertyToAlloyCode, expression, scope, excludedChecks,
@@ -144,15 +145,19 @@ public class ExpressionPropertyGenerator
 	 * @param sessionID
 	 * @param generatedStorage
 	 * @param toBeAnalyzedCode
-	 * @param relationalPropModuleOriginal It is used to generate Relational properties
-	 * @param temporalPropModuleOriginal It is used to generate Temporal properties.
+	 * @param relationalPropModuleOriginal
+	 *          It is used to generate Relational properties
+	 * @param temporalPropModuleOriginal
+	 *          It is used to generate Temporal properties.
 	 * @param fieldName
 	 * @param propertyToAlloyCode
 	 * @param expression
 	 * @param scope
 	 * @param excludedChecks
 	 * @param toBeCheckProperties
-	 * @param dependecyFiles Dependency files including relationalPropModuleOriginal, temporalPropModuleOriginal, and any other related files.
+	 * @param dependecyFiles
+	 *          Dependency files including relationalPropModuleOriginal,
+	 *          temporalPropModuleOriginal, and any other related files.
 	 * @throws Err
 	 * @throws IOException
 	 */
@@ -164,8 +169,8 @@ public class ExpressionPropertyGenerator
 			String fieldName, PropertyToAlloyCode propertyToAlloyCode,
 			String expression, String scope,
 
-			Set<String> excludedChecks, Optional<Set<String>> toBeCheckProperties, List<File> dependecyFiles)
-					throws Err, IOException {
+			Set<String> excludedChecks, Optional<Set<String>> toBeCheckProperties,
+			List<File> dependecyFiles) throws Err, IOException {
 
 		this.sessionID = sessionID;
 
@@ -179,17 +184,15 @@ public class ExpressionPropertyGenerator
 
 		final AlloyProcessingParam paramCreator = AlloyProcessingParam.EMPTY_PARAM;
 
-		
-		for (File file: dependecyFiles){
-			dependencies
-			.add(new Dependency(new File(file.getName()), Utils.readFile(file.getAbsolutePath()) ));
+		for (File file : dependecyFiles) {
+			dependencies.add(new Dependency(new File(file.getName()),
+					Utils.readFile(file.getAbsolutePath())));
 		}
-		
 
 		propertyBuilder = new PropertyToAlloyCodeBuilder(dependencies, header,
 				scope, paramCreator);
-		
-		System.out.println("propertyToAlloyCode->"+propertyToAlloyCode);
+
+		System.out.println("propertyToAlloyCode->" + propertyToAlloyCode);
 		propertyBuilder.registerPropertyToAlloyCode(propertyToAlloyCode);
 
 		// Some sort of hacking. The content of the dependency is the path to the
@@ -263,9 +266,10 @@ public class ExpressionPropertyGenerator
 		for (Pair<String, String> key : propertyCalls.keySet()) {
 			final String pattern = key.a;
 			final String property = propertyCalls.get(key);
-			if (!patternNames.contains(pattern)){
+			if (!patternNames.contains(pattern)) {
 				if (Configuration.IsInDeubbungMode)
-					logger.warning(Utils.threadName()+" The pattern:" + pattern +" is not in the pattern list: "+patternNames);
+					logger.warning(Utils.threadName() + " The pattern:" + pattern
+							+ " is not in the pattern list: " + patternNames);
 				continue;
 			}
 
@@ -296,14 +300,15 @@ public class ExpressionPropertyGenerator
 	}
 
 	/**
-	 * Generating the properties and feed into the feeder's queue. It is a synchronized
-	 * version. and internal thread won't be triggered to run.
+	 * Generating the properties and feed into the feeder's queue. It is a
+	 * synchronized version. and internal thread won't be triggered to run.
+	 * 
 	 * @return
 	 */
-	public int generatePatternCheckers(){
-		return generatePatternCheckers(this.toBeCheckProperties, this.generatedStorage);
+	public int generatePatternCheckers() {
+		return generatePatternCheckers(this.toBeCheckProperties,
+				this.generatedStorage);
 	}
-	
 
 	/**
 	 * generate AlloyProcessingParam for relational patterns
@@ -313,12 +318,12 @@ public class ExpressionPropertyGenerator
 	 * @param result
 	 *          The result that should the params be stored there.
 	 */
-	int  generatePatternCheckers(Set<String> patternNames,
+	int generatePatternCheckers(Set<String> patternNames,
 			Publisher<AlloyProcessingParam> result) {
 		// The property calls are ready to use. (pattern,field)->property. E.g.
 		// <acyclic,next>->acyclic[next]
-		return generatePatternCheckers(patternToProperty.propertyCalls, patternNames,
-				result);
+		return generatePatternCheckers(patternToProperty.propertyCalls,
+				patternNames, result);
 	}
 
 	public void startThread() {
@@ -335,31 +340,29 @@ public class ExpressionPropertyGenerator
 
 	@Override
 	public void actionOnNotStuck() {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public int triesOnStuck() {
-		// TODO Auto-generated method stub
+
 		return 0;
 	}
 
 	@Override
 	public void actionOnStuck() {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public String amIStuck() {
-		// TODO Auto-generated method stub
+
 		return "";
 	}
 
 	@Override
 	public long isDelayed() {
-		// TODO Auto-generated method stub
+
 		return 0;
 	}
 
@@ -371,12 +374,12 @@ public class ExpressionPropertyGenerator
 
 	Set<String> generateInitialProperties() throws Err {
 		Set<String> result = new HashSet<>();
-		
+
 		for (PropertyToAlloyCode ptac : propertyBuilder
 				.getAllPropertyGenerators()) {
 			result.addAll(ptac.getInitialProperties());
 		}
-		
+
 		return Collections.unmodifiableSet(result);
 	}
 
@@ -406,7 +409,7 @@ public class ExpressionPropertyGenerator
 		 */
 
 		public Builder(final UUID sessionID,
-				
+
 				File toBeAnalyzedCode, File relationalPropModuleOriginal,
 				File temporalPropModuleOriginal,
 
@@ -430,8 +433,12 @@ public class ExpressionPropertyGenerator
 						throws Err, IOException {
 			return new ExpressionPropertyGenerator(sessionID, generatedStorage,
 					toBeAnalyzedCode, relationalPropModuleOriginal,
-					temporalPropModuleOriginal, fieldName, propertyToAlloyCode.createItself()/*some fields are transient, so the object should be recreated.*/,
-					expression, scope, dependecyFiles);
+					temporalPropModuleOriginal, fieldName,
+					propertyToAlloyCode.createItself()/*
+																						 * some fields are transient, so the
+																						 * object should be recreated.
+																						 */, expression, scope,
+					dependecyFiles);
 		}
 
 		public ExpressionPropertyGenerator createWithHistory(
@@ -441,11 +448,9 @@ public class ExpressionPropertyGenerator
 
 			return new ExpressionPropertyGenerator(sessionID, generatedStorage,
 					toBeAnalyzedCode, relationalPropModuleOriginal,
-					temporalPropModuleOriginal, fieldName, propertyToAlloyCode.createItself(),
-					expression, scope, excludedChecks, toBeCheckProperties, dependecyFiles);
-
+					temporalPropModuleOriginal, fieldName,
+					propertyToAlloyCode.createItself(), expression, scope, excludedChecks,
+					toBeCheckProperties, dependecyFiles);
 		}
-
 	}
-
 }

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
 import java.io.File;
@@ -114,7 +111,7 @@ public class PatternToProperty {
 			generateTemporalPropertyCalls(propertyCalls, fields, opens);
 
 			this.propertyCalls = Collections.unmodifiableMap(propertyCalls);
-			
+
 		} catch (Err e) {
 			logger.log(Level.WARNING,
 					Utils.threadName() + "Failling to add make properties", e);

@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.ProcessedResult;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 
 /**
  * Contains results from ExpressionAnalyzer

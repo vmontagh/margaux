@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.logging.Level;
 
+@Deprecated
 public class Terminate extends RemoteCommand {
 
 	/**
@@ -15,12 +16,13 @@ public class Terminate extends RemoteCommand {
 		super();
 	}
 
-	public void terminate(final AsynchronousSocketChannel param){
+	public void terminate(final AsynchronousSocketChannel param) {
 		try {
-			((AsynchronousSocketChannel)param).close();
+			((AsynchronousSocketChannel) param).close();
 		} catch (IOException e) {
-			logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"] "+"The connection cannot be terminated", e);
-			throw new CommandRuntimeException(e.getMessage(),e);
+			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
+					+ "The connection cannot be terminated", e);
+			throw new CommandRuntimeException(e.getMessage(), e);
 		}
 	}
 

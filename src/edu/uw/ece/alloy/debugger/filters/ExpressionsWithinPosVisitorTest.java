@@ -1,14 +1,11 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.filters;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.junit.After;
@@ -56,7 +53,7 @@ public class ExpressionsWithinPosVisitorTest {
 
 		world = CompUtil.parseEverything_fromFile(A4Reporter.NOP, null,
 				AlloyTmpTestPath);
-		
+
 	}
 
 	/**
@@ -83,20 +80,23 @@ public class ExpressionsWithinPosVisitorTest {
 	@Test
 	public void testFindAllExprsWithinPos() {
 		try {
-			List<Expr> exprs = ExpressionsWithinPosVisitor.findAllExprsWithinPos(new Pos(world.pos().filename, 27, 9, 45, 9),
+			List<Expr> exprs = ExpressionsWithinPosVisitor.findAllExprsWithinPos(
+					new Pos(world.pos().filename, 27, 9, 45, 9),
 					world.getAllCommands().get(0).formula);
 			assertEquals(1, exprs.size());
-			assertTrue(exprs.get(0).toString().equals("(all a | some a . (this/A <: r))"));
+			assertTrue(
+					exprs.get(0).toString().equals("(all a | some a . (this/A <: r))"));
 		} catch (Err e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void testFindAllFieldsWithinPosOneRelation() {
 		try {
-			List<Sig.Field> fields = ExpressionsWithinPosVisitor.findAllFieldsWithinPos(new Pos(world.pos().filename, 27, 9, 45, 9),
-					world.getAllCommands().get(0).formula);
+			List<Sig.Field> fields = ExpressionsWithinPosVisitor
+					.findAllFieldsWithinPos(new Pos(world.pos().filename, 27, 9, 45, 9),
+							world.getAllCommands().get(0).formula);
 			assertEquals(1, fields.size());
 			String fieldName = fields.get(0).label.trim();
 			assertEquals("r", fieldName);
@@ -104,19 +104,22 @@ public class ExpressionsWithinPosVisitorTest {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Test
 	public void testFindAllFieldsWithinPosIndirectRelations() {
 		try {
-			List<Sig.Field> fields = ExpressionsWithinPosVisitor.findAllFieldsWithinPos(new Pos(world.pos().filename, 1, 9, 45, 9),
-					world.getAllCommands().get(0).formula);
-			List<String> fieldsName = fields.stream().map(f->f.label.trim()).collect(Collectors.toList());
-			String[] fieldsNameArray = fieldsName.toArray(new String[fieldsName.size()]);
+			List<Sig.Field> fields = ExpressionsWithinPosVisitor
+					.findAllFieldsWithinPos(new Pos(world.pos().filename, 1, 9, 45, 9),
+							world.getAllCommands().get(0).formula);
+			List<String> fieldsName = fields.stream().map(f -> f.label.trim())
+					.collect(Collectors.toList());
+			String[] fieldsNameArray = fieldsName
+					.toArray(new String[fieldsName.size()]);
 			Arrays.sort(fieldsNameArray);
-			assertArrayEquals(new String[]{"c","r"}, fieldsNameArray);
+			assertArrayEquals(new String[] { "c", "r" }, fieldsNameArray);
 		} catch (Err e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 }

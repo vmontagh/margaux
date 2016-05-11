@@ -1,10 +1,10 @@
 package edu.uw.ece.alloy.debugger.filters;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class ExpressionExtractorByCommentsTest {
 				+ " for 5" + BlocksExtractorByComments.ExtractScope.END;
 		// @formatter:on
 
-		Util.writeAll(AlloyTmpTestPath, alloyTestCode);		
+		Util.writeAll(AlloyTmpTestPath, alloyTestCode);
 	}
 
 	@AfterClass
@@ -72,7 +72,7 @@ public class ExpressionExtractorByCommentsTest {
 	public void testFindAllPairs() {
 		System.out.println(eebt.findAllPairs());
 	}
-	
+
 	@Test
 	public void testGetAllBlocks() {
 		System.out.println(eebt.getAllBlocks());
@@ -81,38 +81,41 @@ public class ExpressionExtractorByCommentsTest {
 	@Test
 	public void testGetAllExpressionsAndFields() throws Err {
 		Map<String, List<Sig.Field>> map = eebt.getAllExpressionsAndFields();
-		
+
 		System.out.println(map);
-		
+
 		Map<String, List<String>> expectedMap = new HashMap<>();
-		
-		expectedMap.put("some r", Arrays.asList(new String[]{"r"}));
-		expectedMap.put("p1[univ->univ, univ] and all a: A| some a.r", Arrays.asList(new String[]{"r","c"}));
-		
+
+		expectedMap.put("some r", Arrays.asList(new String[] { "r" }));
+		expectedMap.put("p1[univ->univ, univ] and all a: A| some a.r",
+				Arrays.asList(new String[] { "r", "c" }));
+
 		assertEquals(expectedMap.keySet().size(), map.keySet().size());
-		
-		for(String key: expectedMap.keySet()){
+
+		for (String key : expectedMap.keySet()) {
 			assertNotNull(map.get(key));
-			
-			String[] values = map.get(key).stream().map(k->k.label.trim()).collect(Collectors.toList()).toArray(new String[0]);
+
+			String[] values = map.get(key).stream().map(k -> k.label.trim())
+					.collect(Collectors.toList()).toArray(new String[0]);
 			Arrays.sort(values);
-			
+
 			String[] expectedValues = expectedMap.get(key).toArray(new String[0]);
 			Arrays.sort(expectedValues);
-			
+
 			assertArrayEquals(expectedValues, values);
 		}
 	}
-	
+
 	@Test
-	public void testGetAllScopes() throws Err{
+	public void testGetAllScopes() throws Err {
 		System.out.println(esbt.getAllBlocks());
-		assertArrayEquals(new String[]{" for 5"}, esbt.getAllBlocks().toArray(new String[]{}));
+		assertArrayEquals(new String[] { " for 5" },
+				esbt.getAllBlocks().toArray(new String[] {}));
 	}
 
 	@Test
-	public void testGetAllExpressions() throws Err{
+	public void testGetAllExpressions() throws Err {
 		System.out.println(eebt.getAllExpressions());
 	}
-	
+
 }

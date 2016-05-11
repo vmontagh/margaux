@@ -27,7 +27,7 @@ public class RemoteProcessRecord {
 	public final int doneTasks;
 	/* How many tasks a processing now. It is increased after each */
 	public final int doingTasks;
-	/* How many tasks are sent. No matter that are received back.*/
+	/* How many tasks are sent. No matter that are received back. */
 	public final int sentTasks;
 	public final Status status;
 	public final long lastLiveTimeRecieved;
@@ -101,7 +101,9 @@ public class RemoteProcessRecord {
 		return status.equals(Status.IDLE) || status.equals(Status.WORKING);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -121,7 +123,9 @@ public class RemoteProcessRecord {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -167,7 +171,9 @@ public class RemoteProcessRecord {
 		return true;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -179,6 +185,5 @@ public class RemoteProcessRecord {
 				+ lastLiveTimeReported + ", creationTime=" + creationTime + ", process="
 				+ process + "]";
 	}
-	
-	
+
 }

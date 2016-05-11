@@ -9,6 +9,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
  */
 public abstract class ProcessedResult extends MyReporter {
 
+	private static final long serialVersionUID = 1L;
 	protected final ProcessingParam param;
 
 	public static enum Status {
@@ -41,8 +42,8 @@ public abstract class ProcessedResult extends MyReporter {
 	public boolean isNormal() {
 		return status.equals(Status.NORMAL);
 	}
-	
-	public ProcessingParam getParam(){
+
+	public ProcessingParam getParam() {
 		return param;
 	}
 

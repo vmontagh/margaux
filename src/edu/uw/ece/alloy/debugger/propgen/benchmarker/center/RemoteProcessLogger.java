@@ -6,10 +6,9 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 import java.util.List;
 import java.util.Set;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord.Status;
-
 /**
  * APIs for logging the messages that are sent or received
+ * 
  * @author vajih
  *
  */
@@ -19,11 +18,13 @@ public interface RemoteProcessLogger {
 
 	void changeLastLiveTimeRecieved(final RemoteProcess process);
 
-	void changeLastLiveTimeRecieved(final RemoteProcess process, long lastLiveTimeRecieved);
+	void changeLastLiveTimeRecieved(final RemoteProcess process,
+			long lastLiveTimeRecieved);
 
 	void changeLastLiveTimeReported(final RemoteProcess process);
 
-	void changeLastLiveTimeReported(final RemoteProcess process, long lastLiveTimeReported);
+	void changeLastLiveTimeReported(final RemoteProcess process,
+			long lastLiveTimeReported);
 
 	void IncreaseDoneTasks(final RemoteProcess process);
 
@@ -62,9 +63,9 @@ public interface RemoteProcessLogger {
 	Set<RemoteProcess> getLiveProcessIDs();
 
 	Set<RemoteProcess> getAllRegisteredProcesses();
-	
+
 	List<RemoteProcess> getTimedoutProcess(int threshold);
-	 
+
 	void killAndReplaceProcess(final RemoteProcess process);
 
 }

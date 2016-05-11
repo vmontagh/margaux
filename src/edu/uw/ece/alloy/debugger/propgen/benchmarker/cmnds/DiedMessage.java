@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;

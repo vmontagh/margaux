@@ -9,18 +9,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
+ * TODO move this class to the messages package.
  * @author Fikayo Odunayo
  * 
  */
 public abstract class ProcessingParam
 		implements Comparable<ProcessingParam>, Serializable {
 
+	private static final long serialVersionUID = 1L;
 	protected final Integer priority;
 	protected final File tmpLocalDirectory;
 	protected final UUID analyzingSessionID;
 
-	public ProcessingParam(final Integer priority,
-			final File tmpLocalDirectory, final UUID analyzingSessionID) {
+	public ProcessingParam(final Integer priority, final File tmpLocalDirectory,
+			final UUID analyzingSessionID) {
 		this.priority = priority;
 		this.tmpLocalDirectory = tmpLocalDirectory;
 		this.analyzingSessionID = analyzingSessionID;
@@ -34,18 +36,18 @@ public abstract class ProcessingParam
 		return this;
 	}
 
-	public Optional<File> getTmpLocalDirectory(){
+	public Optional<File> getTmpLocalDirectory() {
 		return Optional.ofNullable(tmpLocalDirectory);
 	}
-	
-	public Optional<Integer> getPriority(){
+
+	public Optional<Integer> getPriority() {
 		return Optional.ofNullable(priority);
 	}
-	
-	public Optional<UUID> getAnalyzingSessionID(){
+
+	public Optional<UUID> getAnalyzingSessionID() {
 		return Optional.ofNullable(analyzingSessionID);
 	}
-	
+
 	public abstract boolean isEmptyParam();
 
 	@Override
@@ -65,7 +67,8 @@ public abstract class ProcessingParam
 
 	public abstract ProcessingParam createItself();
 
-	public abstract ProcessingParam changeTmpLocalDirectory(final File tmpDirectory);
+	public abstract ProcessingParam changeTmpLocalDirectory(
+			final File tmpDirectory);
 
 	@Override
 	public int hashCode() {

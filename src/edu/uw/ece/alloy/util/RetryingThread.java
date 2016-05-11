@@ -3,12 +3,11 @@ package edu.uw.ece.alloy.util;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyFeeder;
-
 public class RetryingThread extends Thread {
 
 	final int maxRetry;
-	final static Logger logger = Logger.getLogger(RetryingThread.class.getName()+"--"+Thread.currentThread().getName());
+	final static Logger logger = Logger.getLogger(
+			RetryingThread.class.getName() + "--" + Thread.currentThread().getName());
 
 	public RetryingThread(int maxRetry) {
 		this.maxRetry = maxRetry;
@@ -22,7 +21,7 @@ public class RetryingThread extends Thread {
 		super(target);
 		this.maxRetry = 0;
 	}
-	
+
 	public RetryingThread(Runnable target, int maxRetry) {
 		super(target);
 		this.maxRetry = maxRetry;
@@ -59,21 +58,26 @@ public class RetryingThread extends Thread {
 		this.maxRetry = 0;
 	}
 
-	public void run(){
+	public void run() {
 
 		int retry = 1;
 
-		while(!Thread.currentThread().isInterrupted()){
-			if( retry > maxRetry) {
-				throw new RuntimeException("Constantly interrupted. After "+retry+"'th The thread is terminated!");
+		while (!Thread.currentThread().isInterrupted()) {
+			if (retry > maxRetry) {
+				throw new RuntimeException("Constantly interrupted. After " + retry
+						+ "'th The thread is terminated!");
 			}
 			try {
 				super.run();
-				//reset the retry counter
+				// reset the retry counter
 				retry = 1;
 			} catch (Throwable e) {
 				e.printStackTrace();
-				logger.log(Level.SEVERE, "["+Thread.currentThread().getName()+"]" + "Executing command is failed for "+retry+"'th time.", e);
+				logger
+						.log(Level.SEVERE,
+								"[" + Thread.currentThread().getName() + "]"
+										+ "Executing command is failed for " + retry + "'th time.",
+								e);
 				retry++;
 			}
 		}

@@ -9,7 +9,6 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 	final List<Dependency> dependencies;
 	String header, scope;
 	final AlloyProcessingParam paramCreator;
-
 	// [tmpDirectory]final File tmpDirectory;
 
 	public PropertyToAlloyCodeBuilder(List<Dependency> dependencies,
@@ -28,7 +27,7 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 			final String predBodyB, final String predCallA, final String predCallB,
 			final String predNameA, final String predNameB// [tmpDirectory], final
 																										// File tmpDirectory
-			, final String field) {
+	, final String field) {
 		final List<PropertyToAlloyCode> result = new LinkedList<>();
 
 		for (final PropertyToAlloyCode propertyToAlloyCode : PropertyToAlloyCodeObjects) {

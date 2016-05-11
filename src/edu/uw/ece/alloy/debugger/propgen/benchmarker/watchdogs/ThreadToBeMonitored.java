@@ -18,16 +18,18 @@ public interface ThreadToBeMonitored {
 
 	/**
 	 * How many tasks are delayed
+	 * 
 	 * @return 0 if there is no delay.
 	 */
 	// TODO(vajih) rename isDelayed to delayedTasks.
 	public long isDelayed();
-	
+
 	/**
 	 * There is no delay
+	 * 
 	 * @return
 	 */
-	public default boolean noDelay(){
+	public default boolean noDelay() {
 		return isDelayed() <= 0;
 	}
 

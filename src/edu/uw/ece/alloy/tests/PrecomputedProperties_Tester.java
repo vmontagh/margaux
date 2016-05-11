@@ -3,7 +3,8 @@
  */
 package edu.uw.ece.alloy.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 import java.util.Set;
@@ -53,31 +54,31 @@ public class PrecomputedProperties_Tester {
 
 	@Test
 	public void test_BackwardForwardImplication() {
-		
+
 		final Map<Property, Set<Property>> bw = PrecomputedProperties.INSTANCE.backwardImplicationHierarchy;
 		final Map<Property, Set<Property>> fw = PrecomputedProperties.INSTANCE.forwardImplicationHierarchy;
-		
+
 		System.out.println("Backward");
-		for(final Property p: bw.keySet()){
+		for (final Property p : bw.keySet()) {
 			final Set<Property> parentsP = bw.get(p);
 			System.out.printf("%s <-> %s%n", p, parentsP);
-			for(final Property parentP: parentsP){
-				assertNotNull(fw.get(parentP)); 
-				assertTrue(fw.get(parentP).contains(p));				
+			for (final Property parentP : parentsP) {
+				assertNotNull(fw.get(parentP));
+				assertTrue(fw.get(parentP).contains(p));
 			}
 		}
-		
+
 		System.out.println("\n\n\n\n\n\nForward");
-		for(final Property p: fw.keySet()){
+		for (final Property p : fw.keySet()) {
 			final Set<Property> childrenP = fw.get(p);
 			System.out.printf("%s <-> %s%n", p, childrenP);
-			for(final Property childP: childrenP){
+			for (final Property childP : childrenP) {
 				assertNotNull(bw.get(childP));
 				assertTrue(bw.get(childP).contains(p));
 			}
-			
+
 		}
-		
+
 	}
 
 }

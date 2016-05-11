@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger;
 
 import java.io.File;
@@ -12,12 +9,13 @@ import java.util.Set;
  */
 public class PropertyToSpecChecking extends PropertyCheckingSource {
 
-	
-	public final String assertionFiNameFormat = new String("%s"+SEPARATOR+"_F__i_"+SEPARATOR+"%s"+SEPARATOR+"%s");
+	public final String assertionFiNameFormat = new String(
+			"%s" + SEPARATOR + "_F__i_" + SEPARATOR + "%s" + SEPARATOR + "%s");
 	public final String propertyCheckingFormatBackward = "assert %1$s{ (%2$s => %3$s)  %5$s}\n check %1$s %4$s\n";
-	
+
 	final public String assertionName;
 	final public String assertionBody;
+
 	/**
 	 * @param sourceFile_
 	 * @param property_
@@ -31,26 +29,29 @@ public class PropertyToSpecChecking extends PropertyCheckingSource {
 	 */
 	public PropertyToSpecChecking(final File sourceFile_, final String property_,
 			final String fieldName_, final Set<String> binaryProperties_,
-			final Set<String> ternaryProperties_, final String sigs_, final String openModule_,
-			final String openStatements_, final String functions_, final String commandHeader_, 
+			final Set<String> ternaryProperties_, final String sigs_,
+			final String openModule_, final String openStatements_,
+			final String functions_, final String commandHeader_,
 			final String formula_, final String commandScope_, final String fact_) {
 		super(sourceFile_, property_, fieldName_, binaryProperties_,
-				ternaryProperties_, sigs_, openModule_, openStatements_,
-				functions_, commandHeader_, formula_, commandScope_, fact_);
+				ternaryProperties_, sigs_, openModule_, openStatements_, functions_,
+				commandHeader_, formula_, commandScope_, fact_);
 
-		this.assertionName = String.format(assertionFiNameFormat, commandHeader, sanitizedPropertyName, sanitizedFieldName);
+		this.assertionName = String.format(assertionFiNameFormat, commandHeader,
+				sanitizedPropertyName, sanitizedFieldName);
 		String empty = "";
-		if ( !property_.contains("EMPTY")  )
-			empty = " and " + emptyProperty ;
+		if (!property_.contains("EMPTY"))
+			empty = " and " + emptyProperty;
 
-		this.assertionBody = String.format(propertyCheckingFormatBackward, assertionName, property,  formula, commandScope, empty );
+		this.assertionBody = String.format(propertyCheckingFormatBackward,
+				assertionName, property, formula, commandScope, empty);
 	}
 
 	@Override
 	protected String makeNewFileName() {
 		final String newFileName = sourceFile.getName().replace(".als", "_tc.als");
 
-		return assertionName+"_"+newFileName;
+		return assertionName + "_" + newFileName;
 	}
 
 	@Override
@@ -65,8 +66,9 @@ public class PropertyToSpecChecking extends PropertyCheckingSource {
 	}
 
 	@Override
-	public boolean repOk(){
-		return super.repOk() && this.assertionName != null && !this.assertionName.trim().isEmpty() &&
-				this.assertionBody != null && !this.assertionBody.trim().isEmpty() ;
+	public boolean repOk() {
+		return super.repOk() && this.assertionName != null
+				&& !this.assertionName.trim().isEmpty() && this.assertionBody != null
+				&& !this.assertionBody.trim().isEmpty();
 	}
 }

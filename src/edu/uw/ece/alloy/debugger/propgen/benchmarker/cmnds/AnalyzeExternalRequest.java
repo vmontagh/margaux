@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 
 import java.io.File;
@@ -19,6 +16,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
  * @author vajih
  *
  */
+@Deprecated
 public class AnalyzeExternalRequest extends RemoteCommand {
 
 	/**

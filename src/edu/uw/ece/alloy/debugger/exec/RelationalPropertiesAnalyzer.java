@@ -1,7 +1,6 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.exec;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,45 +17,58 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import static java.nio.file.StandardCopyOption.*;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.gen.BenchmarkRunner;
 import edu.mit.csail.sdg.gen.LoggerUtil;
 import edu.uw.ece.alloy.debugger.RelationalPropertiesExecuterJob;
 import edu.uw.ece.alloy.util.Utils;
 
-
 /**
- * RelationalPropertiesAnalyzer uses RelationalPropertiesChecker to generate the checking alloy specs
- * then uses BenchmarkRunner to run them
+ * RelationalPropertiesAnalyzer uses RelationalPropertiesChecker to generate the
+ * checking alloy specs then uses BenchmarkRunner to run them
+ * 
  * @author vajih
  *
  */
 public final class RelationalPropertiesAnalyzer {
 
-	protected final static Logger logger = Logger.getLogger(RelationalPropertiesAnalyzer.class.getName()+"--"+Thread.currentThread().getName());
+	protected final static Logger logger = Logger
+			.getLogger(RelationalPropertiesAnalyzer.class.getName() + "--"
+					+ Thread.currentThread().getName());
 
-	@Option(name="-log-output-dir-path", usage="The output log directory path. The default is 'expr_output'")
-	private String logOutputDirPath = "expr_output";	
+	@Option(
+			name = "-log-output-dir-path",
+			usage = "The output log directory path. The default is 'expr_output'")
+	private String logOutputDirPath = "expr_output";
 	final File logOutput;
 
-	@Option(name="-archived-log-output-path", usage="The output logs for archive. The default is 'expr_output/aggregated'")
-	private String archivedLogOutputPath = "expr_output/aggregated";	
+	@Option(
+			name = "-archived-log-output-path",
+			usage = "The output logs for archive. The default is 'expr_output/aggregated'")
+	private String archivedLogOutputPath = "expr_output/aggregated";
 	final File archivedLogOutput;
 
-	@Option(name="-working-dir-path", usage="The working directory path. The default is 'relational_props'")
+	@Option(
+			name = "-working-dir-path",
+			usage = "The working directory path. The default is 'relational_props'")
 	private String workingDirPath = "relational_props";
 	public final File workingDir;
 
-	@Option(name="-tmp-dir-path", usage="The temporary directory. The default is 'relational_props/tmp'")
+	@Option(
+			name = "-tmp-dir-path",
+			usage = "The temporary directory. The default is 'relational_props/tmp'")
 	private String tmpDirPath = "relational_props/tmp";
 	public final File tmpDirectory;
 
-	@Option(name="-props_path", usage="The propeties metadata path. The default is 'models/debugger/models2015/props.ini'")
+	@Option(
+			name = "-props_path",
+			usage = "The propeties metadata path. The default is 'models/debugger/models2015/props.ini'")
 	private String propsPath = "models/debugger/models2015/props.ini";
 	public final File relationalPropIniOriginal;
 
-	@Option(name="-relational-lib-path", usage="The relational properties path. The default is 'models/debugger/models2015/relational_properties.als'")
+	@Option(
+			name = "-relational-lib-path",
+			usage = "The relational properties path. The default is 'models/debugger/models2015/relational_properties.als'")
 	private String relationalPropModuleOriginalPath = "models/debugger/models2015/relational_properties.als";
 	public final File relationalPropModuleOriginal;
 
@@ -65,7 +77,7 @@ public final class RelationalPropertiesAnalyzer {
 	private List<String> arguments = new ArrayList<String>();
 	public final List<String> files;
 
-	RelationalPropertiesAnalyzer(String...args){
+	RelationalPropertiesAnalyzer(String... args) {
 		CmdLineParser parser = new CmdLineParser(this);
 
 		try {
@@ -74,83 +86,97 @@ public final class RelationalPropertiesAnalyzer {
 
 			// after parsing arguments, you should check
 			// if enough arguments are given.
-			if( arguments.isEmpty() ){
+			if (arguments.isEmpty()) {
 				logger.warning("No argument is given as the file list.");
 			}
-		} catch( CmdLineException e ) {
+		} catch (CmdLineException e) {
 			// if there's a problem in the command line,
 			// you'll get this exception. this will report
-			logger.severe("Commands are invalid due to:\n"+e.getMessage());
+			logger.severe("Commands are invalid due to:\n" + e.getMessage());
 			System.exit(1);
 		}
 
-		relationalPropIniOriginal = new File( propsPath);
-		relationalPropModuleOriginal = new File( relationalPropModuleOriginalPath );
-		workingDir = new File( workingDirPath);
+		relationalPropIniOriginal = new File(propsPath);
+		relationalPropModuleOriginal = new File(relationalPropModuleOriginalPath);
+		workingDir = new File(workingDirPath);
 		tmpDirectory = new File(tmpDirPath);
 		logOutput = new File(logOutputDirPath);
-		archivedLogOutput = new File( archivedLogOutputPath );
+		archivedLogOutput = new File(archivedLogOutputPath);
 		files = Collections.unmodifiableList(arguments);
 	}
 
 	/**
-	 * Before executing this main `relational_props' has to be in path and includes
-	 *  props.ini and relational_properties.als. These files in `models/debugger/models2015'
+	 * Before executing this main `relational_props' has to be in path and
+	 * includes props.ini and relational_properties.als. These files in
+	 * `models/debugger/models2015'
+	 * 
 	 * @param args
-	 * @throws IOException 
-	 * @throws Err 
-	 * @throws InterruptedException 
+	 * @throws IOException
+	 * @throws Err
+	 * @throws InterruptedException
 	 */
-	public static void main(String[] args) throws IOException, Err, InterruptedException {
+	public static void main(String[] args)
+			throws IOException, Err, InterruptedException {
 
 		RelationalPropertiesAnalyzer rpa = new RelationalPropertiesAnalyzer(args);
 
-		if( !rpa.workingDir.exists() )
+		if (!rpa.workingDir.exists())
 			rpa.workingDir.mkdir();
 
-		//The ini file will be copied into the working directory.
-		Files.copy( rpa.relationalPropIniOriginal.toPath() ,
-				(new File(rpa.workingDir, rpa.relationalPropIniOriginal.getName())).toPath() ,
+		// The ini file will be copied into the working directory.
+		Files.copy(rpa.relationalPropIniOriginal.toPath(),
+				(new File(rpa.workingDir, rpa.relationalPropIniOriginal.getName()))
+						.toPath(),
 				REPLACE_EXISTING);
 
-		if(rpa.tmpDirectory.exists()){
-			LoggerUtil.debug(RelationalPropertiesAnalyzer.class,"%s exists and has to be recreated.", rpa.tmpDirectory.getCanonicalPath());
+		if (rpa.tmpDirectory.exists()) {
+			LoggerUtil.debug(RelationalPropertiesAnalyzer.class,
+					"%s exists and has to be recreated.",
+					rpa.tmpDirectory.getCanonicalPath());
 			Utils.deleteRecursivly(rpa.tmpDirectory);
 		}
 
-		//After deleting the temp directory create a new one.
+		// After deleting the temp directory create a new one.
 		if (!rpa.tmpDirectory.mkdir())
 			throw new RuntimeException("Can not create a new directory");
 
-		//Copy the relational module into the tmp directory
-		Files.copy( rpa.relationalPropModuleOriginal.toPath(), 
-				(new File(rpa.tmpDirectory,rpa.relationalPropModuleOriginal.getName())).toPath());
+		// Copy the relational module into the tmp directory
+		Files.copy(rpa.relationalPropModuleOriginal.toPath(),
+				(new File(rpa.tmpDirectory, rpa.relationalPropModuleOriginal.getName()))
+						.toPath());
 
-		for(String file: rpa.files){
+		for (String file : rpa.files) {
 			RelationalPropertiesChecker propertiesChecker = (new RelationalPropertiesChecker(
-					(new File(rpa.workingDir, rpa.relationalPropIniOriginal.getName()) ),
+					(new File(rpa.workingDir, rpa.relationalPropIniOriginal.getName())),
 					new File(file),
-					(new File(rpa.tmpDirectory, rpa.relationalPropModuleOriginal.getName()) )))
-					.replacingCheckAndAsserts();
+					(new File(rpa.tmpDirectory,
+							rpa.relationalPropModuleOriginal.getName()))))
+									.replacingCheckAndAsserts();
 
 			try {
-				List<File> propCheckingFiles = propertiesChecker.transformForChecking(rpa.tmpDirectory);
+				List<File> propCheckingFiles = propertiesChecker
+						.transformForChecking(rpa.tmpDirectory);
 
-				System.out.printf("%d files are enerated to be checked.",propCheckingFiles.size());
+				System.out.printf("%d files are enerated to be checked.",
+						propCheckingFiles.size());
 
-				BenchmarkRunner.getInstance().doTest(new RelationalPropertiesExecuterJob(""), 1, 0.6, propCheckingFiles, rpa.logOutput);
+				BenchmarkRunner.getInstance().doTest(
+						new RelationalPropertiesExecuterJob(""), 1, 0.6, propCheckingFiles,
+						rpa.logOutput);
 			} catch (Err | IOException | InterruptedException e) {
 				System.err.printf("%s Failed to be checked.%n", file);
 				e.printStackTrace();
 			}
 
-			//aggregated the output logs
-			final String specName =  propertiesChecker.alloySepcFileName.getName().replace(".als", "") ;
+			// aggregated the output logs
+			final String specName = propertiesChecker.alloySepcFileName.getName()
+					.replace(".als", "");
 
 			final Map<String, String> replaceMapping = new HashMap();
 
-			replaceMapping.put(rpa.tmpDirectory.getCanonicalPath()+File.separator, "");
-			//replaceMapping.put("relational_properties_S_c_P_", "");
+			replaceMapping.put(rpa.tmpDirectory.getCanonicalPath() + File.separator,
+					"");
+			// replaceMapping.put("relational_properties_S_c_P_", "");
 			replaceMapping.put("_S_p_R_", ",");
 			replaceMapping.put("_I__f_", "=>");
 			replaceMapping.put("_F__i_", "<=");
@@ -164,21 +190,25 @@ public final class RelationalPropertiesAnalyzer {
 			replaceMapping.put("_U_n_N_", "+");
 			replaceMapping.put("_D_i_F_", "-");
 			replaceMapping.put("_I_t_S_", "&");
-			replaceMapping.put("_"+specName, ","+specName.substring(0, specName.length()-1));
+			replaceMapping.put("_" + specName,
+					"," + specName.substring(0, specName.length() - 1));
 
-			final long timeStart  = System.currentTimeMillis();
+			final long timeStart = System.currentTimeMillis();
 
-			Utils.replaceTextFiles(rpa.logOutput, "(repo).*", specName, replaceMapping) ;
+			Utils.replaceTextFiles(rpa.logOutput, "(repo).*", specName,
+					replaceMapping);
 
 			System.out.println(System.currentTimeMillis() - timeStart);
 
+			(Runtime.getRuntime().exec(
+					"bash " + (new File(rpa.logOutput, "move.sh")).getAbsolutePath()))
+							.waitFor();
+			try {
 
-			(Runtime.getRuntime().exec("bash " + (new File(rpa.logOutput, "move.sh")).getAbsolutePath())).waitFor();
-			try{
-
-				//Utils.moveFiles(Utils.files(logOutput.getAbsolutePath(), "^repo.*"), archivedLogOutput);
-			}catch(Exception e){
-				System.out.println("moving failed "+e.getMessage());
+				// Utils.moveFiles(Utils.files(logOutput.getAbsolutePath(), "^repo.*"),
+				// archivedLogOutput);
+			} catch (Exception e) {
+				System.out.println("moving failed " + e.getMessage());
 			}
 		}
 

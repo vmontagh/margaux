@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,8 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -19,7 +20,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazy;
@@ -283,7 +283,7 @@ public class TriplePropsTester {
 																																			 // tempDirectory4Test
 		);
 
-		AlloyProcessingParam param = creator.generate();
+		AlloyProcessingParam param = creator.generate(UUID.randomUUID());
 
 		try {
 			param.changeTmpLocalDirectory(tempDirectory4Test).dumpAll();
@@ -442,7 +442,7 @@ public class TriplePropsTester {
 																																			 // tempDirectory4Test
 		);
 
-		AlloyProcessingParam param = creator.generate();
+		AlloyProcessingParam param = creator.generate(UUID.randomUUID());
 
 		try {
 			param.changeTmpLocalDirectory(tempDirectory4Test).dumpAll();

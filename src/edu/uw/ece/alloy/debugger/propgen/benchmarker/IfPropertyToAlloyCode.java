@@ -12,9 +12,6 @@ import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -4702673131807408629L;
 	final public static IfPropertyToAlloyCode EMPTY_CONVERTOR = new IfPropertyToAlloyCode();
 	final static Logger logger = Logger
@@ -209,8 +206,8 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	public List<String> getInitialProperties() {
 		List<String> result = new ArrayList<>();
-		System.out.println(getImplicationLattices()
-				.orElseThrow(() -> new RuntimeException(
+		System.out.println(
+				getImplicationLattices().orElseThrow(() -> new RuntimeException(
 						"Implication List is null.Since it is a trinsient property, recreating the object might be effective")));
 		for (ImplicationLattic il : getImplicationLattices()
 				.orElseThrow(() -> new RuntimeException(
@@ -241,7 +238,5 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				+ header + ", scope=" + scope + ", field=" + field + ", dependencies="
 				+ dependencies + ", getPredName()=" + getPredName() + "]";
 	}
-	
-	
 
 }
