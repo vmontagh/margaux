@@ -195,10 +195,12 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 					try {
 						Thread.sleep(originalLastProcessing.getTimeout().get());
 						if (Configuration.IsInDeubbungMode)
-							logger.warning(Utils.threadName() + originalLastProcessing.getAlloyCoder().get().getPredName()
-									+ " is timed out after "
-									+ (System.currentTimeMillis() - time)
-									+ " millisecond");
+							logger
+									.warning(Utils.threadName()
+											+ originalLastProcessing.getAlloyCoder().get()
+													.getPredName()
+											+ " is timed out after "
+											+ (System.currentTimeMillis() - time) + " millisecond");
 						recordATimeout(originalLastProcessing);
 					} catch (InterruptedException e) {
 						logger.warning(

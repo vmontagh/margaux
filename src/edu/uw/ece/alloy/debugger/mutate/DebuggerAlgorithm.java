@@ -45,7 +45,7 @@ public abstract class DebuggerAlgorithm {
 	 *
 	 * @param <T>
 	 */
-	protected static class DecisionQueueItem<T> implements Comparator<Integer> {
+	protected static class DecisionQueueItem<T> implements Comparator<DecisionQueueItem<T>>, Comparable<DecisionQueueItem<T>> {
 		// higher score is more probable to be processed first.
 		Integer score;
 		final T item;
@@ -67,8 +67,8 @@ public abstract class DebuggerAlgorithm {
 		}
 
 		@Override
-		public int compare(Integer o1, Integer o2) {
-			return o2 - o1;
+		public int compare(DecisionQueueItem<T> o1, DecisionQueueItem<T> o2) {
+			return o2.score - o1.score;
 		}
 
 		public void setScore(Integer score) {
@@ -81,6 +81,11 @@ public abstract class DebuggerAlgorithm {
 
 		public Optional<T> getItem() {
 			return Optional.ofNullable(item);
+		}
+
+		@Override
+		public int compareTo(DecisionQueueItem<T> that) {
+			return this.compare(this, that);
 		}
 	}
 
@@ -245,10 +250,10 @@ public abstract class DebuggerAlgorithm {
 
 						PriorityQueue<DecisionQueueItem<String>> toBePickedQueue = strongerApproxQueue;
 
-						if (!weakerApprox.isEmpty() && (strongerApprox.isEmpty()
+						if (!weakerApproxQueue.isEmpty() && (strongerApproxQueue.isEmpty()
 								|| !DecisionQueueItem.randomGenerator.nextBoolean()))
 							toBePickedQueue = weakerApproxQueue;
-
+						
 						String approximationProperty = toBePickedQueue.poll().getItem()
 								.orElseThrow(() -> new RuntimeException(
 										"The stronger form cannot be null"));
