@@ -12,6 +12,7 @@ import java.util.logging.Logger;
  * @author vajih
  *
  */
+@Deprecated
 public class AlloyProcessingParamLazyCompressing
 		extends AlloyProcessingParamLazy {
 

@@ -79,15 +79,12 @@ public final class AlloyRunner extends Runner {
 	protected ThreadMonitor localThreadsMonitor;
 	protected int tobeProcessed;
 
-	protected static AlloyRunner self = null;
-
 	/**
 	 * Retrieve a session from the cached sessions given the session ID.
 	 */
 	protected Consumer<AlloyProcessingParam> addNewParamInQueue = (
 			AlloyProcessingParam param) -> {
 		try {
-			System.out.println(tmpLocalDirectory);
 			feedingQueue.put(param);
 		} catch (Exception ie) {
 			logger
@@ -149,7 +146,7 @@ public final class AlloyRunner extends Runner {
 
 		// liveness messages are sent to the initiator
 		liveness = new ReportLiveness<AlloyLivenessMessage>(localSocket,
-				remoteSocket, -1, -1, livenessInterval, maxLivenessFailed,
+				remoteSocket, 0, 0, livenessInterval, maxLivenessFailed,
 				inputInterface) {
 			@Override
 			protected AlloyLivenessMessage createLivenessMessage() {
@@ -161,7 +158,7 @@ public final class AlloyRunner extends Runner {
 		// Queue that are shared between inputinterface and
 		feedingQueue = new Queue<>();
 
-		executer = new AlloyExecuter(feedingQueue, inputInterface,
+		executer = new AlloyExecuter(feedingQueue, liveness, inputInterface,
 				tmpLocalDirectory);
 		localThreadsMonitor.addThreadToBeMonitored(executer);
 

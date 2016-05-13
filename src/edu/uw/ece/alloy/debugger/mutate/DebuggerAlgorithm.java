@@ -2,8 +2,11 @@ package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -11,6 +14,8 @@ import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4compiler.ast.Command;
+import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
@@ -31,6 +36,53 @@ import edu.uw.ece.alloy.util.Utils;
  *
  */
 public abstract class DebuggerAlgorithm {
+
+	/**
+	 * The class pair any item to an integer that is comparable to be compared in
+	 * the priority queue.
+	 * 
+	 * @author vajih
+	 *
+	 * @param <T>
+	 */
+	protected static class DecisionQueueItem<T> implements Comparator<Integer> {
+		// higher score is more probable to be processed first.
+		Integer score;
+		final T item;
+		final static Random randomGenerator = new Random();
+
+		public DecisionQueueItem(final T item, Integer score) {
+			this.item = item;
+			this.score = score;
+		}
+
+		public static <T> DecisionQueueItem<T> createwithRandomPriority(
+				final T item) {
+			return new DecisionQueueItem<T>(item, randomGenerator.nextInt());
+		}
+
+		public static <T> DecisionQueueItem<T> createwithUnformPriority(
+				final T item) {
+			return new DecisionQueueItem<T>(item, Integer.MIN_VALUE);
+		}
+
+		@Override
+		public int compare(Integer o1, Integer o2) {
+			return o2 - o1;
+		}
+
+		public void setScore(Integer score) {
+			this.score = score;
+		}
+
+		public Optional<Integer> getScore() {
+			return Optional.ofNullable(score);
+		}
+
+		public Optional<T> getItem() {
+			return Optional.ofNullable(item);
+		}
+	}
 
 	protected final static Logger logger = Logger
 			.getLogger(DebuggerAlgorithm.class.getName() + "--"
@@ -54,6 +106,9 @@ public abstract class DebuggerAlgorithm {
 	// final
 	Approximator approximator;
 
+	final PriorityQueue<DecisionQueueItem<Field>> fieldsQueue;
+	final PriorityQueue<DecisionQueueItem<Expr>> modelQueue;
+
 	public DebuggerAlgorithm(final File sourceFile,
 			final Approximator approximator) {
 		this.sourceFile = sourceFile;
@@ -76,13 +131,15 @@ public abstract class DebuggerAlgorithm {
 			throw new RuntimeException("Only one valid command should be passed. "
 					+ "Comment out the rest or add at least one.");
 
-		Expr toBeCheckedModel = world.getAllCommands().get(0).formula;
+		final Command command = world.getAllCommands().get(0);
+		
+		Expr toBeCheckedModel = command.formula;
 		Pair<List<Expr>, List<Expr>> propertyChecking = Decompose
 				.decomposetoImplications(toBeCheckedModel);
 		model = Collections.unmodifiableList(propertyChecking.a);
 		property = Collections.unmodifiableList(propertyChecking.b);
 		// TODO(vajih) extract Scope from the command
-		scope = " for 5";
+		scope = extractScopeFromCommand(command);
 		try {
 			fields = Collections.unmodifiableList(
 					FieldsExtractorVisitor.getReferencedFields(toBeCheckedModel).stream()
@@ -93,6 +150,49 @@ public abstract class DebuggerAlgorithm {
 		}
 
 		this.approximator = approximator;
+
+		// The fields are picked based on their priority in the priority queue
+		fieldsQueue = new PriorityQueue<>();
+		fields.stream().forEach(field -> fieldsQueue
+				.add(DecisionQueueItem.<Field> createwithRandomPriority(field)));
+
+		modelQueue = new PriorityQueue<>();
+		model.stream().forEach(m -> modelQueue
+				.add(DecisionQueueItem.<Expr> createwithRandomPriority(m)));
+
+	}
+
+	/**
+	 * Given a command, its scope is returned as String
+	 * @param command
+	 * @return
+	 */
+	protected String extractScopeFromCommand(Command command) {
+		boolean first = true;
+		StringBuilder sb = new StringBuilder();
+		if (command.overall >= 0 && (command.bitwidth >= 0 || command.maxseq >= 0
+				|| command.scope.size() > 0))
+			sb.append(" for ").append(command.overall).append(" but");
+		else if (command.overall >= 0)
+			sb.append(" for ").append(command.overall);
+		else if (command.bitwidth >= 0 || command.maxseq >= 0
+				|| command.scope.size() > 0)
+			sb.append(" for");
+		if (command.bitwidth >= 0) {
+			sb.append(" ").append(command.bitwidth).append(" int");
+			first = false;
+		}
+		if (command.maxseq >= 0) {
+			sb.append(first ? " " : ", ").append(command.maxseq).append(" seq");
+			first = false;
+		}
+		for (CommandScope e : command.scope) {
+			sb.append(first ? " " : ", ").append(e);
+			first = false;
+		}
+		if (command.expects >= 0)
+			sb.append(" expect ").append(command.expects);
+		return sb.toString();
 	}
 
 	/**
@@ -108,63 +208,89 @@ public abstract class DebuggerAlgorithm {
 	}
 
 	public void run() {
-		for (Field field : fields) {
-			for (Expr modelPart : model) {
-				String restModel = model.stream().filter(m -> !m.equals(modelPart))
+		for (DecisionQueueItem<Field> field : fieldsQueue) {
+			for (DecisionQueueItem<Expr> modelPart : modelQueue) {
+				String restModel = model.stream()
+						.filter(m -> !m.equals(modelPart.getItem().get()))
 						.map(a -> a.toString()).collect(Collectors.joining(" and "));
 
 				List<Pair<String, String>> approximations = approximator
-						.strongestApproximation(modelPart, field, scope);
+						.strongestApproximation(modelPart.getItem().get(),
+								field.getItem().get(), scope);
 
-				System.out.println("approximations->" + approximations);
+				logger.info(Utils.threadName() + "The approximations for Expr:<"
+						+ "> is: " + approximations);
 
-				String approximationProperty = "";
-				for (Pair<String, String> approximation : approximations) {
-					List<String> strongerApprox = approximator
-							.strongerProperties(approximation.b);
-					List<String> weakerApprox = approximator
-							.weakerProperties(approximation.b);
-					if (!strongerApprox.isEmpty()) {
-						approximationProperty = strongerApprox.get(0);
-					} else if (!weakerApprox.isEmpty()) {
-						approximationProperty = weakerApprox.get(0);
-					} else {
-						break;
+				final PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue = new PriorityQueue<>();
+				approximations.stream()
+						.forEach(m -> approximationQueue.add(DecisionQueueItem
+								.<Pair<String, String>> createwithRandomPriority(m)));
+
+				for (DecisionQueueItem<Pair<String, String>> approximation : approximationQueue) {
+
+					final List<String> strongerApprox = approximator
+							.strongerProperties(approximation.getItem().get().b);
+					final PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue = new PriorityQueue<>();
+					strongerApprox.stream().forEach(m -> strongerApproxQueue
+							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
+
+					final List<String> weakerApprox = approximator
+							.weakerProperties(approximation.getItem().get().b);
+					final PriorityQueue<DecisionQueueItem<String>> weakerApproxQueue = new PriorityQueue<>();
+					weakerApprox.stream().forEach(m -> weakerApproxQueue
+							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
+
+					while (!strongerApproxQueue.isEmpty()
+							|| !weakerApproxQueue.isEmpty()) {
+
+						PriorityQueue<DecisionQueueItem<String>> toBePickedQueue = strongerApproxQueue;
+
+						if (!weakerApprox.isEmpty() && (strongerApprox.isEmpty()
+								|| !DecisionQueueItem.randomGenerator.nextBoolean()))
+							toBePickedQueue = weakerApproxQueue;
+
+						String approximationProperty = toBePickedQueue.poll().getItem()
+								.orElseThrow(() -> new RuntimeException(
+										"The stronger form cannot be null"));
+
+						findOnBorderExamples(
+								makeMutation(approximationProperty, restModel).get());
+						// ask the user
+						// Call APIs to change the priority of the next steps
 					}
+
 				}
-
-				if (approximationProperty.isEmpty())
-					break;
-
-				String ModelPartialApproximation = approximationProperty
-						+ (!restModel.trim().isEmpty() ? " and " + restModel : "");
-
-				// Make a new Model
-				String predName = "approximate_"
-						+ Math.abs(ModelPartialApproximation.hashCode());
-				String pred = String.format("pred %s[]{%s}\n", predName,
-						ModelPartialApproximation);
-				String newHeader = "open " + approximator.relationalPropModuleOriginal
-						.getName().replace(".als", "\n");
-				newHeader += "open " + approximator.temporalPropModuleOriginal.getName()
-						.replace(".als", "\n");
-				String newCommandName = "run " + predName + " " + scope;
-				String newCode = newHeader + "\n" + sourceCode + "\n" + pred + "\n"
-						+ newCommandName;
-				File newCodeFile = new File(sourceFile.getParentFile(),
-						predName + ".als");
-				try {
-					System.out.println("newCodeFile->" + newCodeFile);
-					Util.writeAll(newCodeFile.getAbsolutePath(), newCode);
-				} catch (Err e) {
-					e.printStackTrace();
-					throw new RuntimeException(e);
-				}
-				findOnBorderExamples(newCodeFile);
-				// ask the user
 			}
 		}
 
+	}
+
+	protected Optional<File> makeMutation(String approximationProperty,
+			String restModel) {
+		String ModelPartialApproximation = approximationProperty
+				+ (!restModel.trim().isEmpty() ? " and " + restModel : "");
+
+		// Make a new Model
+		String predName = "approximate_"
+				+ Math.abs(ModelPartialApproximation.hashCode());
+		String pred = String.format("pred %s[]{%s}\n", predName,
+				ModelPartialApproximation);
+		String newHeader = "open " + approximator.relationalPropModuleOriginal
+				.getName().replace(".als", "\n");
+		newHeader += "open " + approximator.temporalPropModuleOriginal.getName()
+				.replace(".als", "\n");
+		String newCommandName = "run " + predName + " " + scope;
+		String newCode = newHeader + "\n" + sourceCode + "\n" + pred + "\n"
+				+ newCommandName;
+		File newCodeFile = new File(sourceFile.getParentFile(), predName + ".als");
+		try {
+			System.out.println("newCodeFile->" + newCodeFile);
+			Util.writeAll(newCodeFile.getAbsolutePath(), newCode);
+		} catch (Err e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		return Optional.ofNullable(newCodeFile);
 	}
 
 	protected Optional<Field> pickField() {

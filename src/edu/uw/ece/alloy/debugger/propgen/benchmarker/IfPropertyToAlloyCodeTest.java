@@ -31,7 +31,7 @@ public class IfPropertyToAlloyCodeTest {
 		PropertyToAlloyCode ifPropertyToAlloyCode = IfPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt("predBodyA", "predBodyB", "predCallA", "predCallB",
 						"predNameA", "OrdIncrs_SzShrnk_Lcl_SdMdl_EmptEnd_",
-						new ArrayList<Dependency>(), AlloyProcessingParam.EMPTY_PARAM,
+						new ArrayList<Dependency>(), /*AlloyProcessingParam.EMPTY_PARAM,*/
 						"header", "scope", "field");
 
 		System.out.println(ifPropertyToAlloyCode.getInferedPropertiesCoder(-1));

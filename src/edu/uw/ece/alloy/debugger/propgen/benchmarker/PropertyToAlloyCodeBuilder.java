@@ -8,18 +8,18 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 
 	final List<Dependency> dependencies;
 	String header, scope;
-	final AlloyProcessingParam paramCreator;
+	/*final AlloyProcessingParam paramCreator;*/
 	// [tmpDirectory]final File tmpDirectory;
 
 	public PropertyToAlloyCodeBuilder(List<Dependency> dependencies,
-			String header, String scope, AlloyProcessingParam paramCreator
+			String header, String scope/*, AlloyProcessingParam paramCreator*/
 	// ,[tmpDirectory]File tmpDirectory
 	) {
 		super();
 		this.dependencies = dependencies;
 		this.header = header;
 		this.scope = scope;
-		this.paramCreator = paramCreator;
+		/*this.paramCreator = paramCreator;*/
 		// [tmpDirectory]this.tmpDirectory = tmpDirectory;
 	}
 
@@ -32,7 +32,7 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 
 		for (final PropertyToAlloyCode propertyToAlloyCode : PropertyToAlloyCodeObjects) {
 			result.add(propertyToAlloyCode.createIt(predBodyA, predBodyB, predCallA,
-					predCallB, predNameA, predNameB, dependencies, paramCreator, header,
+					predCallB, predNameA, predNameB, dependencies, /*paramCreator,*/ header,
 					scope, field));
 		}
 
@@ -44,7 +44,7 @@ public class PropertyToAlloyCodeBuilder extends AlloyCodeBuilder {
 		return propertyToAlloyCode.createIt(propertyToAlloyCode.predBodyB,
 				propertyToAlloyCode.predBodyA, propertyToAlloyCode.predCallB,
 				propertyToAlloyCode.predCallA, propertyToAlloyCode.predNameB,
-				propertyToAlloyCode.predNameA, dependencies, paramCreator, header,
+				propertyToAlloyCode.predNameA, dependencies, /*paramCreator,*/ header,
 				scope, propertyToAlloyCode.field// [tmpDirectory],
 																				// propertyToAlloyCode.tmpDirectory
 		);

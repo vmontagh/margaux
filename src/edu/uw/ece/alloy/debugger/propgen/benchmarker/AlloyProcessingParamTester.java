@@ -96,12 +96,11 @@ public class AlloyProcessingParamTester {
 		PropertyToAlloyCode vacPropertyToAlloyCode = VacPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
 						predNameB, Collections.emptyList(),
-						AlloyProcessingParam.EMPTY_PARAM, header, scope, field// [tmpDirectory],
+						/*AlloyProcessingParam.EMPTY_PARAM,*/ header, scope, field// [tmpDirectory],
 																																	// tmpDir
 		);
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode
-				.generate(UUID.randomUUID());
+		AlloyProcessingParam aParam = new AlloyProcessingParam(UUID.randomUUID(), 0, vacPropertyToAlloyCode );  
 
 		final Field reWrite = AlloyProcessingParam.EMPTY_PARAM.getClass()
 				.getDeclaredField("reWrite");
@@ -136,12 +135,13 @@ public class AlloyProcessingParamTester {
 		PropertyToAlloyCode vacPropertyToAlloyCode = VacPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
 						predNameB, Collections.emptyList(),
-						AlloyProcessingParam.EMPTY_PARAM, header, scope, field// [tmpDirectory],tmpDir
+						/*AlloyProcessingParam.EMPTY_PARAM,*/ header, scope, field// [tmpDirectory],tmpDir
 		);
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode
-				.generate(UUID.randomUUID());
-
+		/*AlloyProcessingParam aParam = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());*/
+		AlloyProcessingParam aParam = new AlloyProcessingParam(UUID.randomUUID(), 0, vacPropertyToAlloyCode );
+		
 		final Field reWrite = aParam.getClass().getDeclaredField("reWrite");
 		// reWrite.setAccessible(true);
 
@@ -176,16 +176,17 @@ public class AlloyProcessingParamTester {
 		// A file exists
 		PropertyToAlloyCode vacPropertyToAlloyCode = VacPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
-						predNameB, dependecies, AlloyProcessingParamLazy.EMPTY_PARAM,
+						predNameB, dependecies, /*AlloyProcessingParamLazy.EMPTY_PARAM,*/
 						header, scope, field// [tmpDirectory],tmpDir
 		);
 
 		final String fileContent = header + '\n' + predBodyA + '\n'
 				+ "run{ some r and " + predCallA + "}" + scope + "\n";
 
-		AlloyProcessingParam aParam = vacPropertyToAlloyCode
+		/*AlloyProcessingParam aParam = vacPropertyToAlloyCode
 				.generate(UUID.randomUUID());
-
+		*/AlloyProcessingParam aParam = new AlloyProcessingParam(UUID.randomUUID(), 0, vacPropertyToAlloyCode );
+		
 		aParam = aParam.changeTmpLocalDirectory(tmpDir).prepareToUse();
 
 		// The source is stored
@@ -207,7 +208,7 @@ public class AlloyProcessingParamTester {
 				aParam.getDestPath().get().getAbsolutePath());
 	}
 
-	@Test
+	/*@Test
 	public void testAlloyProcessingParamLazyCompressed_prepareToUse()
 			throws Exception {
 
@@ -247,9 +248,9 @@ public class AlloyProcessingParamTester {
 		assertEquals(aParam2.content(),
 				VacPropertyToAlloyCode.EMPTY_CONVERTOR.generateAlloyCode());
 
-	}
+	}*/
 
-	@Test
+/*	@Test
 	public void testAlloyProcessingParamLazyCompressed_hashCode()
 			throws Exception {
 
@@ -296,7 +297,7 @@ public class AlloyProcessingParamTester {
 
 		assertEquals(aParamDecoded.hashCode(), aParam.hashCode());
 
-	}
+	}*/
 
 	@Test
 	public void testAlloyProcessingParam_FileStorage() throws Exception {
@@ -310,13 +311,15 @@ public class AlloyProcessingParamTester {
 
 		PropertyToAlloyCode vacPropertyToAlloyCode = VacPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
-						predNameB, dependecies, AlloyProcessingParamLazy.EMPTY_PARAM,
+						predNameB, dependecies, /*AlloyProcessingParamLazy.EMPTY_PARAM,*/
 						header, scope, field// [tmpDirectory],tmpDir
 		);
 
-		AlloyProcessingParam aParam_1 = vacPropertyToAlloyCode
-				.generate(UUID.randomUUID());
+		/*AlloyProcessingParam aParam_1 = vacPropertyToAlloyCode
+				.generate(UUID.randomUUID());*/
 
+		AlloyProcessingParam aParam_1 = new AlloyProcessingParam(UUID.randomUUID(), 0, vacPropertyToAlloyCode );
+		
 		aParam_1 = aParam_1.changeTmpLocalDirectory(tmpDir);
 		aParam_1.dumpAll();
 

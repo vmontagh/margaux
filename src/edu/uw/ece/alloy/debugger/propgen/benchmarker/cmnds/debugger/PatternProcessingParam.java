@@ -18,8 +18,6 @@ public class PatternProcessingParam extends ProcessingParam {
 
 	private static final long serialVersionUID = -7728543765538276470L;
 
-	protected final Long timeout;
-
 	/* from the file name to the File */
 	protected final Map<String, LazyFile> files;
 
@@ -31,10 +29,6 @@ public class PatternProcessingParam extends ProcessingParam {
 	protected final PropertyToAlloyCode propertyToAlloyCode;
 	protected final String expression;
 	protected final String scope;
-
-	public Optional<Long> getTimeout() {
-		return Optional.ofNullable(timeout);
-	}
 
 	public Optional<File> getFile(String fileName) {
 		return Optional.ofNullable(files.get(fileName));
@@ -71,8 +65,7 @@ public class PatternProcessingParam extends ProcessingParam {
 			UUID analyzingSessionID, Long timeout, String fieldName,
 			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
 			Map<String, LazyFile> files) {
-		super(priority, tmpLocalDirectory, analyzingSessionID);
-		this.timeout = timeout;
+		super(priority, tmpLocalDirectory, analyzingSessionID, timeout);
 		this.fieldName = fieldName;
 		this.propertyToAlloyCode = propertyToAlloyCode;
 		this.expression = expression;

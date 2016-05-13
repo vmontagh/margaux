@@ -275,15 +275,15 @@ public class TriplePropsTester {
 		final String scope = " for 5";
 		final String field = "r";
 
-		AlloyProcessingParam paramCreator = AlloyProcessingParamLazy.EMPTY_PARAM;
+		/*AlloyProcessingParam paramCreator = AlloyProcessingParamLazy.EMPTY_PARAM;*/
 
 		PropertyToAlloyCode creator = VacPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
-						predNameB, dependencies, paramCreator, header, scope, field// [tmpDirectory],
+						predNameB, dependencies, /*paramCreator,*/ header, scope, field// [tmpDirectory],
 																																			 // tempDirectory4Test
 		);
 
-		AlloyProcessingParam param = creator.generate(UUID.randomUUID());
+		AlloyProcessingParam param = new AlloyProcessingParam(UUID.randomUUID(), 0, creator); 
 
 		try {
 			param.changeTmpLocalDirectory(tempDirectory4Test).dumpAll();
@@ -434,15 +434,15 @@ public class TriplePropsTester {
 		final String scope = " for 5";
 		final String field = "r";
 
-		AlloyProcessingParam paramCreator = AlloyProcessingParamLazy.EMPTY_PARAM;
+		/*AlloyProcessingParam paramCreator = AlloyProcessingParamLazy.EMPTY_PARAM;*/
 
 		PropertyToAlloyCode creator = IffPropertyToAlloyCode.EMPTY_CONVERTOR
 				.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
-						predNameB, dependencies, paramCreator, header, scope, field// [tmpDirectory],
+						predNameB, dependencies, /*paramCreator,*/ header, scope, field// [tmpDirectory],
 																																			 // tempDirectory4Test
 		);
 
-		AlloyProcessingParam param = creator.generate(UUID.randomUUID());
+		AlloyProcessingParam param = new AlloyProcessingParam(UUID.randomUUID(), 0, creator); 
 
 		try {
 			param.changeTmpLocalDirectory(tempDirectory4Test).dumpAll();

@@ -32,6 +32,7 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 			.parseInt(Configuration.getProp("self_monitor_retry_attempt"));
 
 	private Thread executerThread = new Thread(this);
+	Thread timeoutThread;
 
 	protected Subscriber<AlloyProcessingParam> queue;
 	private final List<PostProcess> postProcesses = Collections
@@ -45,7 +46,8 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 	protected volatile AtomicInteger livenessFailed = new AtomicInteger(0);
 	protected volatile AtomicInteger recoveryAttempts = new AtomicInteger(0);
 
-	private volatile AlloyProcessingParam lastProccessing = AlloyProcessingParam.EMPTY_PARAM;
+	// private volatile AlloyProcessingParam lastProccessing =
+	// AlloyProcessingParam.EMPTY_PARAM;
 
 	protected final static Logger logger = Logger.getLogger(
 			AlloyExecuter.class.getName() + "--" + Thread.currentThread().getName());
@@ -117,9 +119,6 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 		// If coders is not empty, then something is inferred.
 		for (PropertyToAlloyCode inferedCoder : result.getParam().getAlloyCoder()
 				.get().createItself().getInferedPropertiesCoder(result.sat)) {
-			if (Configuration.IsInDeubbungMode)
-				logger
-						.info(Utils.threadName() + " Start processing " + lastProccessing);
 			ret.add(new AlloyProcessedResult(result.getParam().createIt(inferedCoder),
 					Status.INFERRED));
 		}
@@ -131,23 +130,23 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 	 * This method is called by the self monitor or any external entity to send
 	 * and record a timeout.
 	 */
-	public synchronized void recordATimeout() {
+	public synchronized void recordATimeout(
+			AlloyProcessingParam lastProccessing) {
 
-		synchronized (lastProccessing) {
-			if (lastProccessing.equals(lastProccessing.EMPTY_PARAM))
-				return;
-			try {
-				if (Configuration.IsInDeubbungMode)
-					logger.info("[" + Thread.currentThread().getName() + "] "
-							+ "The timeout is recorded for " + lastProccessing);
-				runPostProcesses(
-						new AlloyProcessedResult(lastProccessing, Status.TIMEOUT));
-				lastProccessing = lastProccessing.EMPTY_PARAM;
-			} catch (InterruptedException e) {
-				logger.severe("[" + Thread.currentThread().getName() + "] "
-						+ "The thread is interuupted while recording a timeout message.");
-			}
+		if (lastProccessing.equals(lastProccessing.EMPTY_PARAM))
+			return;
+		try {
+			if (Configuration.IsInDeubbungMode)
+				logger.info("[" + Thread.currentThread().getName() + "] "
+						+ "The timeout is recorded for " + lastProccessing);
+			runPostProcesses(
+					new AlloyProcessedResult(lastProccessing, Status.TIMEOUT));
+			lastProccessing = lastProccessing.EMPTY_PARAM;
+		} catch (InterruptedException e) {
+			logger.severe("[" + Thread.currentThread().getName() + "] "
+					+ "The thread is interuupted while recording a timeout message.");
 		}
+
 	}
 
 	public boolean isEmpty() {
@@ -166,70 +165,81 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 	 */
 	private synchronized void runAlloy() throws InterruptedException {
 
-		synchronized (lastProccessing) {
-			lastProccessing = queue.take();
-			AlloyProcessingParam originalLastProcessing = lastProccessing;
-			try {
-				lastProccessing = originalLastProcessing
-						.changeTmpLocalDirectory(tmpLocalDirectory).prepareToUse();
-			} catch (Exception e1) {
-				logger.severe(Utils.threadName() + " The param: " + lastProccessing
-						+ " cannot be localized");
-				e1.printStackTrace();
-			}
+		AlloyProcessingParam lastProccessing = queue.take();
+		final AlloyProcessingParam originalLastProcessing = lastProccessing;
+		try {
+			lastProccessing = originalLastProcessing
+					.changeTmpLocalDirectory(tmpLocalDirectory).prepareToUse();
+		} catch (Exception e1) {
+			logger.severe(Utils.threadName() + " The param: " + lastProccessing
+					+ " cannot be localized");
+			e1.printStackTrace();
+		}
 
-			if (lastProccessing.equals(lastProccessing.EMPTY_PARAM)) {
-				logger.severe(Utils.threadName() + "Why empty?!!!");
-				return;
-			}
+		if (lastProccessing.equals(lastProccessing.EMPTY_PARAM)) {
+			logger.severe(Utils.threadName() + "Why empty?!!!");
+			return;
+		}
 
-			long time = System.currentTimeMillis();
+		long time = System.currentTimeMillis();
+		if (Configuration.IsInDeubbungMode)
+			logger.info("[" + Thread.currentThread().getName() + "]"
+					+ " Start processing " + lastProccessing);
+
+		AlloyProcessedResult rep = new AlloyProcessedResult(originalLastProcessing);
+		try {
+
+			timeoutThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(originalLastProcessing.getTimeout().get());
+						if (Configuration.IsInDeubbungMode)
+							logger.warning(Utils.threadName() + originalLastProcessing.getAlloyCoder().get().getPredName()
+									+ " is timed out after "
+									+ (System.currentTimeMillis() - time)
+									+ " millisecond");
+						recordATimeout(originalLastProcessing);
+					} catch (InterruptedException e) {
+						logger.warning(
+								Utils.threadName() + "timeout thread is interrupted!" + e);
+					}
+				}
+			});
+
+			A4CommandExecuter.getInstance()
+					.run(
+							lastProccessing.getSrcPath().orElseThrow(RuntimeException::new)
+									.getAbsolutePath(),
+							rep, PropertyToAlloyCode.COMMAND_BLOCK_NAME);
+
+			// stop the timeout timer
+			timeoutThread.interrupt();
+
 			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]"
-						+ " Start processing " + lastProccessing);
+				logger.info("[" + Thread.currentThread().getName() + "]" + " Prcessing "
+						+ lastProccessing + " took " + (System.currentTimeMillis() - time)
+						+ " sec and result is: " + rep);
 
-			AlloyProcessedResult rep = new AlloyProcessedResult(
-					originalLastProcessing);
-			try {
-				A4CommandExecuter.getInstance().run(
-						lastProccessing.getSrcPath().orElseThrow(RuntimeException::new)
-								.getAbsolutePath(),
-						rep, PropertyToAlloyCode.COMMAND_BLOCK_NAME);
-
-				if (Configuration.IsInDeubbungMode)
-					logger.info("[" + Thread.currentThread().getName() + "]"
-							+ " Prcessing " + lastProccessing + " took "
-							+ (System.currentTimeMillis() - time) + " sec and result is: "
-							+ rep);
-
-				runPostProcesses(rep);
-				processed.incrementAndGet();
-				livenessStatus.setProcessed(processed.get());
-				livenessStatus.setTobeProcessed(queue.size());
-				// The inferred result should be added into the logs. The log goes into
-				// file, socket, and DB.
-				for (AlloyProcessedResult inferredResult : inferProperties(rep)) {
-					runPostProcesses(inferredResult);
-				}
-
-			} catch (Err e) {
-				e.printStackTrace();
-				if (lastProccessing == null) {
-					logger.severe("[" + Thread.currentThread().getName() + "] "
-							+ " The parameter is null and no failed message can be sent: "
-							+ lastProccessing);
-					return;
-				}
-
-				runPostProcesses(
-						new AlloyProcessedResult(lastProccessing, Status.FAILED));
-				logger.severe("[" + Thread.currentThread().getName() + "] "
-						+ " The Alloy processor failed on processing: " + lastProccessing);
-				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.SEVERE,
-							"[" + Thread.currentThread().getName() + "] " + e.getMessage(),
-							e);
+			runPostProcesses(rep);
+			processed.incrementAndGet();
+			livenessStatus.setProcessed(processed.get());
+			livenessStatus.setTobeProcessed(queue.size());
+			// The inferred result should be added into the logs. The log goes into
+			// file, socket, and DB.
+			for (AlloyProcessedResult inferredResult : inferProperties(rep)) {
+				runPostProcesses(inferredResult);
 			}
+
+		} catch (Err e) {
+			e.printStackTrace();
+			runPostProcesses(
+					new AlloyProcessedResult(lastProccessing, Status.FAILED));
+			logger.severe("[" + Thread.currentThread().getName() + "] "
+					+ " The Alloy processor failed on processing: " + lastProccessing);
+			if (Configuration.IsInDeubbungMode)
+				logger.log(Level.SEVERE,
+						"[" + Thread.currentThread().getName() + "] " + e.getMessage(), e);
 		}
 
 	}
@@ -251,7 +261,6 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 	public void run() {
 
 		// if something stuck and gets timeout, a timeout message has to be sent.
-		recordATimeout();
 		killToken = false;
 		iInterrupt = 0;
 		while (!killToken && !Thread.currentThread().isInterrupted()) {
@@ -264,7 +273,6 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 				logger.severe("[" + Thread.currentThread().getName() + "] "
 						+ "Processing a result is interrupted after processed " + processed
 						+ " requests.");
-				recordATimeout();
 				++iInterrupt;
 			}
 		}
@@ -278,6 +286,9 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 	@Override
 	public void actionOnStuck() {
 
+	}
+
+	protected void restartThread() {
 		if (executerThread.isAlive()) {
 			if (this.isSpilledTimeout()) {
 				if (Configuration.IsInDeubbungMode)
@@ -285,15 +296,17 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 							+ " The AlloyExecuter thread is interrupted again and again. Replace the thread now. ");
 				this.stopMe();
 				executerThread.interrupt();
+				timeoutThread.interrupt();
 				executerThread = new Thread(this);
 				executerThread.start();
 			} else {
 				logger.severe("[" + Thread.currentThread().getName() + "]"
 						+ " Interrupt the AlloyExecuter thread. ");
 				executerThread.interrupt();
+				timeoutThread.interrupt();
 			}
+			recoveryAttempts.incrementAndGet();
 		}
-
 	}
 
 	protected void haltIfCantProceed() {

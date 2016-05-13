@@ -70,9 +70,8 @@ public class PostProcessTester {
 
 		PropertyToAlloyCode vacPropertyToAlloyCode = VacPropertyToAlloyCode.EMPTY_CONVERTOR;
 
-		AlloyProcessingParam params = vacPropertyToAlloyCode
-				.generate(UUID.randomUUID());
-
+		AlloyProcessingParam params = new AlloyProcessingParam(UUID.randomUUID(), 0,vacPropertyToAlloyCode );  
+		
 		params = params.changeDBConnectionInfo(connectionInfo);
 
 		// make a sample result

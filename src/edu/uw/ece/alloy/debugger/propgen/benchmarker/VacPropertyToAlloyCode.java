@@ -12,13 +12,13 @@ public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	protected VacPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
+			List<Dependency> dependencies, /*AlloyProcessingParam paramCreator,*/
 			String header, String scope, String field) {
 		super(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope, field);
+				dependencies, /*paramCreator,*/ header, scope, field);
 	}
 
-	protected VacPropertyToAlloyCode(String predBodyA, String predBodyB,
+/*	protected VacPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
 			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
 			String header, String scope, String field, byte[] predBodyACompressed,
@@ -32,7 +32,7 @@ public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
 				predBodyBCompressed, predCallACompressed, predCallBCompressed,
 				predNameACompressed, predNameBCompressed, headerComporessed,
 				scopeCompressed, fieldCompressed, codeDependencies, compressedStatus);
-	}
+	}*/
 
 	protected VacPropertyToAlloyCode() {
 		super();
@@ -82,14 +82,14 @@ public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
 	@Override
 	public PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
+			List<Dependency> dependencies, /*AlloyProcessingParam paramCreator,*/
 			String header, String scope, String field) {
 		return new VacPropertyToAlloyCode(predBodyA, predBodyB, predCallA,
-				predCallB, predNameA, predNameB, dependencies, paramCreator, header,
+				predCallB, predNameA, predNameB, dependencies, /*paramCreator,*/ header,
 				scope// [tmpDirectory], tmpDirectory
 				, field);
 	}
-
+/*
 	@Override
 	protected PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
@@ -107,6 +107,6 @@ public class VacPropertyToAlloyCode extends PropertyToAlloyCode {
 				predCallACompressed, predCallBCompressed, predNameACompressed,
 				predNameBCompressed, headerComporessed, scopeCompressed,
 				fieldCompressed, compressedDependencies, compressedStatus);
-	}
+	}*/
 
 }

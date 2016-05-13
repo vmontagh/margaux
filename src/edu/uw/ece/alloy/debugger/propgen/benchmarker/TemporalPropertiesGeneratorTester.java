@@ -74,11 +74,11 @@ public class TemporalPropertiesGeneratorTester {
 
 		System.out.println(preds);
 
-		Queue<AlloyProcessingParam> result = new Queue<>();
+		GeneratedStorage<AlloyProcessingParam> result = new GeneratedStorage<>();
 
 		object.generateRelationChekers(preds, result);
 
-		AlloyProcessingParam output = result.poll();
+		AlloyProcessingParam output = result.getGeneratedProps().get(0);
 
 		String content = Util.readAll(output.getSrcPath().get().getAbsolutePath());
 		content = content.replaceAll(object.RelationProps,

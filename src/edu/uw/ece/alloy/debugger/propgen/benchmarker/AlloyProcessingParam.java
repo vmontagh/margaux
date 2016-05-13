@@ -39,29 +39,39 @@ public class AlloyProcessingParam extends ProcessingParam {
 	}
 
 	protected AlloyProcessingParam(UUID analyzingSessionID, Integer priority,
-			File tmpLocalDirectory, PropertyToAlloyCode alloyCoder,
+			Long timeout, File tmpLocalDirectory, PropertyToAlloyCode alloyCoder,
 			DBConnectionInfo dBConnectionInfo) {
-		super(priority, tmpLocalDirectory, analyzingSessionID);
+		super(priority, tmpLocalDirectory, analyzingSessionID, timeout);
 		this.alloyCoder = alloyCoder;
 		this.dBConnectionInfo = dBConnectionInfo;
 	}
 
 	protected AlloyProcessingParam(UUID analyzingSessionID, int priority,
 			File tmpLocalDirectory, PropertyToAlloyCode alloyCoder) {
-		this(analyzingSessionID, priority, tmpLocalDirectory,
-				PropertyToAlloyCode.EMPTY_CONVERTOR,
+		this(analyzingSessionID, priority, Long.MAX_VALUE, tmpLocalDirectory, alloyCoder,
+				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
+	}
+	
+	protected AlloyProcessingParam(UUID analyzingSessionID, int priority, long timeout,
+			File tmpLocalDirectory, PropertyToAlloyCode alloyCoder) {
+		this(analyzingSessionID, priority, timeout, tmpLocalDirectory, alloyCoder,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
-	protected AlloyProcessingParam(UUID analyzingSessionID, int priority,
+	public AlloyProcessingParam(UUID analyzingSessionID, int priority, long timeout,
 			PropertyToAlloyCode alloyCoder) {
-		this(analyzingSessionID, priority, Compressor.EMPTY_FILE,
-				PropertyToAlloyCode.EMPTY_CONVERTOR,
+		this(analyzingSessionID, priority, timeout, Compressor.EMPTY_FILE, alloyCoder,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
+	public AlloyProcessingParam(UUID analyzingSessionID, int priority,
+			PropertyToAlloyCode alloyCoder) {
+		this(analyzingSessionID, priority, Long.MAX_VALUE, Compressor.EMPTY_FILE, alloyCoder,
+				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
+	}
+	
 	protected AlloyProcessingParam(UUID analyzingSessionID) {
-		this(analyzingSessionID, Integer.MIN_VALUE, Compressor.EMPTY_FILE,
+		this(analyzingSessionID, Integer.MIN_VALUE,  Long.MAX_VALUE, Compressor.EMPTY_FILE,
 				PropertyToAlloyCode.EMPTY_CONVERTOR,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
@@ -74,23 +84,16 @@ public class AlloyProcessingParam extends ProcessingParam {
 	 */
 
 	protected AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder, int priority,
+			final PropertyToAlloyCode alloyCoder, int priority, long timeout,
 			File tmpLocalDirectory, DBConnectionInfo dBConnectionInfo) {
-		return new AlloyProcessingParam(analyzingSessionID, priority,
+		return new AlloyProcessingParam(analyzingSessionID, priority, timeout,
 				tmpLocalDirectory, alloyCoder, dBConnectionInfo);
 	}
 
 	protected AlloyProcessingParam createIt(UUID analyzingSessionID,
-			PropertyToAlloyCode alloyCoder, Integer priority, File tmpLocalDirectory,
-			DBConnectionInfo dBConnectionInfo) {
-		return new AlloyProcessingParam(analyzingSessionID, priority,
-				tmpLocalDirectory, alloyCoder, dBConnectionInfo);
-	}
-
-	protected AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder, int priority,
+			final PropertyToAlloyCode alloyCoder, int priority, long timeout,
 			File tmpLocalDirectory) {
-		return new AlloyProcessingParam(analyzingSessionID, priority,
+		return new AlloyProcessingParam(analyzingSessionID, priority, timeout,
 				tmpLocalDirectory, alloyCoder, DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
@@ -100,19 +103,19 @@ public class AlloyProcessingParam extends ProcessingParam {
 	}
 
 	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder) {
-		return new AlloyProcessingParam(this.analyzingSessionID, Integer.MIN_VALUE,
+		return new AlloyProcessingParam(this.analyzingSessionID, this.priority,
 				alloyCoder);
 	}
 
 	public AlloyProcessingParam createIt(AlloyProcessingParam param) {
-		return createIt(param.analyzingSessionID, param.alloyCoder, param.priority,
+		return createIt(param.analyzingSessionID, param.alloyCoder, param.priority, param.timeout,
 				param.tmpLocalDirectory, param.dBConnectionInfo);
 	}
 
 	public AlloyProcessingParam createIt(UUID analyzingSessionID,
 			final PropertyToAlloyCode alloyCoder) {
 		return createIt(analyzingSessionID, PropertyToAlloyCode.EMPTY_CONVERTOR,
-				this.priority, this.tmpLocalDirectory, this.dBConnectionInfo);
+				this.priority, this.timeout, this.tmpLocalDirectory, this.dBConnectionInfo);
 	}
 
 	public AlloyProcessingParam createItself() {
@@ -224,18 +227,18 @@ public class AlloyProcessingParam extends ProcessingParam {
 	}
 
 	public AlloyProcessingParam changeTmpLocalDirectory(final File tmpDirectory) {
-		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority,
+		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout,
 				tmpDirectory, this.dBConnectionInfo);
 	}
 
 	public AlloyProcessingParam changeDBConnectionInfo(
 			final DBConnectionInfo dBConnectionIno) {
-		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority,
+		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout,
 				this.tmpLocalDirectory, dBConnectionIno);
 	}
 
 	public AlloyProcessingParam resetToEmptyTmpLocalDirectory() {
-		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority,
+		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout,
 				Compressor.EMPTY_FILE, this.dBConnectionInfo);
 	}
 
@@ -292,17 +295,6 @@ public class AlloyProcessingParam extends ProcessingParam {
 
 	public String getSourceFileName() {
 		return alloyCoder.srcName().replace(".als", "");
-	}
-
-	@Override
-	public int compareTo(ProcessingParam o) {
-		if (o == null)
-			return -1;
-		if (o.priority == this.priority)
-			return 0;
-		if (o.priority < this.priority)
-			return 1;
-		return -1;
 	}
 
 	@Override

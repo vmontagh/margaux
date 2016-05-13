@@ -41,6 +41,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternLivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
@@ -199,25 +200,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 							.isDesiredSAT(result.sat))
 						validResults.add(result);
 
-					System.out.println("message.getResult()" + message.getResult());
-					System.out.println("result.getParam()" + result.getParam());
-					System.out.println("result.getParam().getAlloyCoder()"
-							+ result.getParam().getAlloyCoder());
-					System.out.println(
-							"result.getParam().getAlloyCoder().isDesiredSAT(result.sat)"
-									+ result.getParam().getAlloyCoder().get()
-											.isDesiredSAT(result.sat));
-					System.out.println("result.sat->" + result.sat);
-					System.out.println("validResults->" + validResults);
-					System.out.println("Condiotion->" + (message.getResult().isNormal()
-							&& result.getParam().getAlloyCoder()
-									.orElseThrow(() -> new RuntimeException(
-											"Alloy Coder cannot be Null int a response."))
-									.isDesiredSAT(result.sat)));
-
-					// A message is received by the distributer interface so:
-					// first: notifies the monitor to update the records.
-					monitor.processResponded(message.getResult(), message.process);
 					// second: find out whether more properties are required to be
 					// checked.
 					try {
@@ -226,21 +208,20 @@ public final class ExpressionAnalyzerRunner extends Runner {
 						Set<String> nextProperties = new HashSet<>(
 								param.getAlloyCoder().get().createItself()
 										.getToBeCheckedProperties(message.getResult().sat));
-						System.out.println("nextProperties->" + nextProperties);
-						if (!nextProperties.isEmpty())
+						if (!nextProperties.isEmpty()) {
 							generatedPropsCount = expressionGeneratorBuilder
 									.createWithHistory(feedingQueue, nextProperties,
 											generatedProperties)
 									.generatePatternCheckers();
-						else
+						} else {
 							logger.log(Level.INFO, Utils.threadName()
 									+ "The next properties are empty for:" + message.getResult());
+						}
 					} catch (Err | IOException e) {
 						logger.log(Level.SEVERE,
 								Utils.threadName() + "Next properties failed to be added.", e);
 						e.printStackTrace();
 					}
-
 					if (0 == generatedPropsCount
 							&& monitor.sessionIsDone(getSessionID())) {
 						done();
@@ -292,7 +273,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 			getProcessingTask().orElseThrow(
 					() -> new RuntimeException("The Processing Task should not be NULL!"))
 					.cancel(true);
-			// TODO(vajih) implement the cancel session message
 			sendResult();
 		}
 
@@ -373,7 +353,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		this(localSocket, remoteSocket, ProcessorUtil.findEmptyLocalSocket(),
 				new File(TemporaryLocalDirectory), PriodicalMonitoringThreadsReportInMS,
 				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry,
-				Executors.newWorkStealingPool());
+				Executors.newFixedThreadPool(10));
 	}
 
 	/**
@@ -421,7 +401,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					@Override
 					public void actionOn(RequestMessage requestMessage,
 							MessageReceivedEventArgs messageArgs) {
-						System.out.println("receiveed->" + requestMessage);
 						final Map<String, Object> context = new HashMap<>();
 						// it is expected to see a request message. The request creates a
 						// new
@@ -486,7 +465,9 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					@Override
 					public void actionOn(ResponseMessage responseMessage,
 							MessageReceivedEventArgs event) {
-						System.out.println("responseMessage....->" + responseMessage);
+						// monitor has to process a result.
+						monitor.processResponded(responseMessage.getResult(),
+								responseMessage.process);
 						final Map<String, Object> context = new HashMap<>();
 						context.put("getSession", getSession);
 						try {
@@ -495,18 +476,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 							logger.severe(Utils.threadName()
 									+ "response cannot be processed:\n" + e.getStackTrace());
 						}
-					}
-				});
-
-		// update the monitor
-		distributerInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(ResponseMessage responseMessage,
-							MessageReceivedEventArgs event) {
-						// monitor has to process a result.
-						monitor.processResponded(responseMessage.getResult(),
-								event.getRemoteProcess());
 					}
 				});
 
@@ -519,6 +488,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 						final Map<String, Object> context = new HashMap<>();
 						context.put("RemoteProcessLogger", processManager);
 						try {
+							System.out.println("livenessMessage-E--->"+livenessMessage);
 							livenessMessage.onAction(context);
 						} catch (InvalidParameterException e) {
 							e.printStackTrace();
@@ -572,7 +542,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 		// liveness messages are sent to the initiator
 		liveness = new ReportLiveness<PatternLivenessMessage>(localSocket,
-				remoteSocket, -1, -1, livenessInterval, maxLivenessFailed,
+				remoteSocket, 0, 0, livenessInterval, maxLivenessFailed,
 				inputInterface) {
 			@Override
 			protected PatternLivenessMessage createLivenessMessage() {

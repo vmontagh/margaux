@@ -206,9 +206,10 @@ public class AlloyRunnerTest {
 				.createIt("pred pred_A[]{some A}", "pred pred_B[]{some B}", "pred_A[]",
 						"pred_B[]", "pred_A", "pred_B",
 						Arrays.asList(new Dependency[] { dep1, dep2 }),
-						AlloyProcessingParam.EMPTY_PARAM, "sig A{}\nsig B{}", " for 5",
+						/*AlloyProcessingParam.EMPTY_PARAM,*/ "sig A{}\nsig B{}", " for 5",
 						"field");
-		AlloyProcessingParam param = coder.generate(UUID.randomUUID());
+		/*AlloyProcessingParam param = coder.generate(UUID.randomUUID());*/
+		AlloyProcessingParam param = new AlloyProcessingParam(UUID.randomUUID(), 0, coder );
 
 		AlloyRequestMessage request = new AlloyRequestMessage(
 				testingInterface.getHostProcess(), param);

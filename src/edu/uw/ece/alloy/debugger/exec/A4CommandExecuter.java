@@ -54,7 +54,6 @@ public class A4CommandExecuter {
 	private void setUp() {
 		copyFromJAR();
 		final String binary = alloyHome() + fs + "binary";
-		// System.out.println(binary);
 		// Add the new JNI location to the java.library.path
 		try {
 			System.setProperty("java.library.path", binary);
@@ -150,7 +149,6 @@ public class A4CommandExecuter {
 
 	public A4Solution runThenGetAnswers(String filename, A4Reporter rep,
 			String commandName) throws Err {
-		System.out.println("filename->" + filename);
 		A4Solution result = null;
 		// Parse+typecheck the model
 		if (Configuration.IsInDeubbungMode)
@@ -224,8 +222,6 @@ public class A4CommandExecuter {
 
 	public void run(String fileName, A4Reporter rep, String commandName)
 			throws Err {
-		System.out.println(
-				"A4CommandExecuter->" + fileName + "----commandName->" + commandName);
 		runThenGetAnswers(fileName, rep, commandName);
 	}
 

@@ -20,13 +20,14 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
+			List<Dependency> dependencies, /*AlloyProcessingParam paramCreator,*/
 			String header, String scope, String field) {
 		super(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, paramCreator, header, scope, field);
+				dependencies, /*paramCreator,*/
+				header, scope, field);
 	}
 
-	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
+/*	protected IfPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
 			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
 			String header, String scope, String field, byte[] predBodyACompressed,
@@ -40,7 +41,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 				predBodyBCompressed, predCallACompressed, predCallBCompressed,
 				predNameACompressed, predNameBCompressed, headerComporessed,
 				scopeCompressed, fieldCompressed, codeDependencies, compressedStatus);
-	}
+	}*/
 
 	protected IfPropertyToAlloyCode() {
 		super();
@@ -74,13 +75,13 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	@Override
 	public PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
+			List<Dependency> dependencies, /*AlloyProcessingParam paramCreator,*/
 			String header, String scope, String field) {
 		return new IfPropertyToAlloyCode(predBodyA, predBodyB, predCallA, predCallB,
-				predNameA, predNameB, dependencies, paramCreator, header, scope, field);
+				predNameA, predNameB, dependencies, /*paramCreator, */header, scope, field);
 	}
 
-	@Override
+/*	@Override
 	protected PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
 			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
@@ -92,13 +93,18 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 			List<Dependency> compressedDependencies,
 			Compressor.STATE compressedStatus) {
 
-		return new IfPropertyToAlloyCode(predBodyA, predBodyB, predCallA, predCallB,
+		System.out.println("61111:"+this.hashCode());
+		PropertyToAlloyCode result = 
+		
+		 new IfPropertyToAlloyCode(predBodyA, predBodyB, predCallA, predCallB,
 				predNameA, predNameB, dependencies, paramCreator, header, scope, field,
 				predBodyACompressed, predBodyBCompressed, predCallACompressed,
 				predCallBCompressed, predNameACompressed, predNameBCompressed,
 				headerComporessed, scopeCompressed, fieldCompressed,
 				compressedDependencies, compressedStatus);
-	}
+		System.out.println("61112:"+this.hashCode());
+		return result;
+	}*/
 
 	/**
 	 * After checking a=>b, if a=>b is true, means the check is unSAT (No
@@ -149,7 +155,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 					for (String propName : il.getAllRevImpliedProperties(predNameA)) {
 						result.add(createIt("", this.predBodyB, "", this.predCallB,
 								propName, this.predNameB, new ArrayList<>(dependencies),
-								this.paramCreator, this.header, this.scope, this.field));
+								/*this.paramCreator,*/ this.header, this.scope, this.field));
 					}
 				} catch (Err e) {
 					logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
@@ -161,7 +167,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 					for (String propName : il.getAllImpliedProperties(predNameB)) {
 						result.add(createIt(this.predBodyA, "", this.predCallA, "",
 								this.predNameA, propName, new ArrayList<>(dependencies),
-								this.paramCreator, this.header, this.scope, this.field));
+								/*this.paramCreator, */this.header, this.scope, this.field));
 					}
 				} catch (Err e) {
 					logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
@@ -170,14 +176,13 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 			}
 		}
 
-		System.out.println("The inference result of " + this.predNameA + "=>"
-				+ this.predNameB + "?" + sat + " is:" + result);
+		//System.out.println("The inference result of " + this.predNameA + "=>"
+		//		+ this.predNameB + "?" + sat + " is:" + result);
 
 		return Collections.unmodifiableList(result);
 	}
 
 	public List<String> getToBeCheckedProperties(int sat) {
-
 		List<String> result = new ArrayList<>();
 		if (!isDesiredSAT(sat)) {
 			for (ImplicationLattic il : getImplicationLattices()
@@ -206,9 +211,6 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	public List<String> getInitialProperties() {
 		List<String> result = new ArrayList<>();
-		System.out.println(
-				getImplicationLattices().orElseThrow(() -> new RuntimeException(
-						"Implication List is null.Since it is a trinsient property, recreating the object might be effective")));
 		for (ImplicationLattic il : getImplicationLattices()
 				.orElseThrow(() -> new RuntimeException(
 						"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {

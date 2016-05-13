@@ -14,11 +14,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.ProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Publisher;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.util.Utils;
 
 public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
@@ -103,7 +105,6 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 
 	public void addMessage(final RemoteProcess process,
 			final ProcessingParam param) {
-
 		// TODO message: All message the AlloyProcessingParam objects are
 		// compressed
 		// already. to read them, they have to be decompressed.
@@ -111,7 +112,9 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 			incompleteMessages.put(process, new ConcurrentHashMap<>());
 		}
 
-		if (!unresponsededParamInSession.containsKey(process)) {
+		if (!unresponsededParamInSession.containsKey(param.getAnalyzingSessionID()
+				.orElseThrow(() -> new RuntimeException(
+						"The session Id could not be null")))) {
 			unresponsededParamInSession.put(
 					param.getAnalyzingSessionID()
 							.orElseThrow(() -> new RuntimeException(
@@ -124,54 +127,31 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 			synchronized (unresponsededParamInSession) {
 				Map<ProcessingParam, Integer> mapValue = incompleteMessages
 						.get(process);
-
 				if (mapValue.containsKey(param)) {
 					logger.severe(Utils.threadName() + "Message duplication for " + param
 							+ " of process: " + process);
 				}
 
-				if (Configuration.IsInDeubbungMode)
-					logger.info(
-							Utils.threadName() + "The map size [[[[before]]]] adding is ||"
-									+ mapValue.size() + "|| Message for: " + process);
 				mapValue.put(param, mapValue.containsKey(param)
 						? (mapValue.get(param).intValue() + 1) : 1);
-				if (Configuration.IsInDeubbungMode)
-					logger.info(
-							Utils.threadName() + "The map size [[[[after]]]] adding is ||"
-									+ mapValue.size() + "|| Message for: " + process);
-
-				if (Configuration.IsInDeubbungMode)
-					logger.info(Utils.threadName() + "Message " + param
-							+ " is added and sent to process: " + process);
-				if (Configuration.IsInDeubbungMode)
-					logger.info(Utils.threadName() + "Unrespoded messages are "
-							+ mapValue.size() + " Message " + param
-							+ " is added and sent to process: " + process);
-
-			}
-
-			if (Boolean.parseBoolean(System.getProperty("debug"))) {
-				if (!sentMessages.containsKey(param)) {
-					sentMessages.put(param,
-							Collections.synchronizedList(new LinkedList<RemoteProcess>()));
+				if (Boolean.parseBoolean(System.getProperty("debug"))) {
+					if (!sentMessages.containsKey(param)) {
+						sentMessages.put(param,
+								Collections.synchronizedList(new LinkedList<RemoteProcess>()));
+					}
+					sentMessages.get(param).add(process);
 				}
-				sentMessages.get(param).add(process);
+
+				unresponsededParamInSession.get(param.getAnalyzingSessionID().get())
+						.add(param);
 			}
-
-			unresponsededParamInSession.get(param.getAnalyzingSessionID().get())
-					.add(param);
-			if (Configuration.IsInDeubbungMode)
-				logger.info(
-						Utils.threadName() + "Message " + param + " is added session set");
-
 		}
-
 	}
+
+	
 
 	public void removeMessage(final RemoteProcess process,
 			final ProcessingParam param) {
-
 		// Safety checking
 		RemoteProcess bProcess = null;
 		for (RemoteProcess rp : incompleteMessages.keySet()) {
@@ -190,44 +170,17 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 			logger.warning(Utils.threadName()
 					+ "No message set is available for process: " + process);
 		} else {
-
-			if (Configuration.IsInDeubbungMode)
-				logger.info(Utils.threadName() + "The message is: " + param
-						+ "\tThe PID is: " + process + " and message was sent to: "
-						+ sentMessages.get(param));
-
 			synchronized (incompleteMessages) {
 				synchronized (unresponsededParamInSession) {
 					Map<ProcessingParam, Integer> mapValue = incompleteMessages
 							.get(process);
-
-					System.out.println("mapValue->" + mapValue);
-					System.out.println("param->" + param);
-
-					if (Configuration.IsInDeubbungMode)
-						logger.info(Utils.threadName() + " The map size is before: "
-								+ mapValue.size() + " for pId:" + process);
-
 					if (!mapValue.containsKey(param)) {
-						logger.warning(Utils.threadName() + mapValue);
 						logger.warning(Utils.threadName() + "Message " + param
 								+ " is not found for process: " + process);
 					} else {
 						mapValue.remove(param);
-						if (Configuration.IsInDeubbungMode)
-							logger.info(Utils.threadName() + "Message " + param
-									+ " is received and removed for process: " + process);
-
 						recordRemovedMessage(process);
-						if (Configuration.IsInDeubbungMode)
-							logger.info(Utils.threadName() + " The message is removed? "
-									+ incompleteMessages.get(process).get(param) + "for pId:"
-									+ process + " " + param);
 					}
-
-					if (Configuration.IsInDeubbungMode)
-						logger.info(Utils.threadName() + " The map size is after: "
-								+ mapValue.size() + " for pId:" + process);
 
 					if (!unresponsededParamInSession
 							.get(param.getAnalyzingSessionID().get()).remove(param)) {
@@ -296,12 +249,6 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 	}
 
 	public boolean sessionIsDone(UUID sessionId) {
-		System.out.println(
-				"sessionIsNotRecorded(sessionId)=" + !sessionIsNotRecorded(sessionId));
-		System.out.println("unresponsededParamInSession.get(sessionId).isEmpty()="
-				+ unresponsededParamInSession.get(sessionId).isEmpty());
-		System.out.println("unresponsededParamInSession.get(sessionId)="
-				+ unresponsededParamInSession.get(sessionId));
 		return !sessionIsNotRecorded(sessionId)
 				&& unresponsededParamInSession.get(sessionId).isEmpty();
 	}
@@ -351,11 +298,6 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 					Utils.threadName() + "The process is not avaialable: " + process);
 			return;
 		}
-		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO,
-					Utils.threadName() + "Remove process "
-							+ processLogger.getRemoteProcessRecord(process) + " as pId: "
-							+ process);
 
 		if (processLogger.getRemoteProcessRecord(process).isActive()) {
 			logger.log(Level.WARNING,
@@ -366,37 +308,11 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 					+ "The request is not in the map, pId: " + process);
 		} else {
 			Map<ProcessingParam, Integer> map = incompleteMessages.get(process);
-			if (Configuration.IsInDeubbungMode)
-				logger.log(Level.INFO, Utils.threadName() + "Removing " + map.size()
-						+ " undone messages from PID:" + process);
 			synchronized (map) {
-				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.INFO, Utils.threadName() + "Starting to remove "
-							+ map.size() + " messages from PID:" + process);
 				Iterable<ProcessingParam> itr = incompleteMessages.get(process)
 						.keySet();
-				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.INFO,
-							Utils.threadName() + "Starting to push back "
-									+ incompleteMessages.get(process).keySet().size()
-									+ " messages from PID:" + process);
 				pushUndoneRequests(process, itr);
-				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.INFO,
-							Utils.threadName()
-									+ incompleteMessages.get(process).keySet().size()
-									+ " messages are pushed back from PID:" + process);
-				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.INFO,
-							Utils.threadName() + "The process: " + process
-									+ " is going to be removed form the incompleteMessages: "
-									+ incompleteMessages.keySet());
 				incompleteMessages.remove(process);
-				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.INFO,
-							Utils.threadName() + "The process: " + process
-									+ " is removed form the incompleteMessages: "
-									+ incompleteMessages.keySet());
 			}
 		}
 	}
@@ -406,16 +322,7 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 
 		Set<RemoteProcess> result = new HashSet<RemoteProcess>(
 				incompleteMessages.keySet());
-		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO, Utils.threadName()
-					+ "registered incmplemete processes are: " + result);
-		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO, Utils.threadName() + "Active processes are: "
-					+ processLogger.getLiveProcessIDs());
 		result.removeAll(processLogger.getLiveProcessIDs());
-		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO,
-					Utils.threadName() + "orphan process are: " + result);
 		return Collections.unmodifiableSet(result);
 	}
 
@@ -435,24 +342,18 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 		}
 
 		if (result.isTimedout() || result.isFailed()) {
-			if (Configuration.IsInDeubbungMode)
-				logger.info(Utils.threadName()
-						+ "The process is timed out and is pushed back to be retried later: pID= "
-						+ process + " param=" + result.getParam());
 			removeAndPushUndoneRequest(process, result.getParam());
 			processLogger.DecreaseDoingTasks(process);
 		} else if (result.isInferred()) {
 			if (Configuration.IsInDeubbungMode)
 				logger.info(Utils.threadName() + "The process is inferred: pID= "
 						+ process + " param=" + result.getParam());
-
 			// manager.increaseInferredMessageCounter(PID);
 		} else {
 			removeMessage(process, result.getParam());
 			processLogger.DecreaseDoingTasks(process);
 			processLogger.IncreaseDoneTasks(process);
 		}
-
 		processLogger.changeStatusToWORKING(process);
 		processLogger.changeLastLiveTimeRecieved(process);
 	}
@@ -605,7 +506,6 @@ public class RemoteProcessMonitor implements ThreadToBeMonitored, Runnable {
 	private void pushUndoneRequest(final RemoteProcess process,
 			ProcessingParam param) {
 		try {
-			System.out.println("pushUndoneRequest");
 			backLogQueueFeeder.put(param);
 		} catch (InterruptedException e) {
 			logger.log(Level.SEVERE, Utils.threadName() + "The request is not queued:"

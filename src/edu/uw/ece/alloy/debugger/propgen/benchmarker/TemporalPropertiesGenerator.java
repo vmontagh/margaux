@@ -17,12 +17,13 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadDelayToBeMonitored;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TripleBuilder;
 import edu.uw.ece.alloy.util.Utils;
 
 public class TemporalPropertiesGenerator
-		implements Runnable, ThreadToBeMonitored {
+		implements Runnable, ThreadDelayToBeMonitored {
 
 	/*
 	 * Only the file names in the path are processed.
@@ -66,7 +67,7 @@ public class TemporalPropertiesGenerator
 	final public static File relationalPropModuleOriginal = new File(
 			Configuration.getProp("relational_properties"));
 
-	final Queue<AlloyProcessingParam> generatedStorage;
+	final GeneratedStorage<AlloyProcessingParam> generatedStorage;
 
 	final Boolean doVAC = Boolean.valueOf(Configuration.getProp("doVAC"));
 	final Boolean doIFF = Boolean.valueOf(Configuration.getProp("doIFF"));
@@ -94,11 +95,11 @@ public class TemporalPropertiesGenerator
 	public TemporalPropertiesGenerator() {
 		// A synchronized list is returned and the alloyfeeder is not called
 		// directly.
-		this(new Queue<AlloyProcessingParam>());
+		this(new GeneratedStorage<AlloyProcessingParam>());
 	}
 
 	public TemporalPropertiesGenerator(
-			final Queue<AlloyProcessingParam> generatedStorage) {
+			final GeneratedStorage<AlloyProcessingParam> generatedStorage) {
 		builder = new TripleBuilder("r", "s", "s_next", "s_first", "m", "m_next",
 				"m_first", "e", "e_next", "e_first",
 
@@ -113,7 +114,7 @@ public class TemporalPropertiesGenerator
 		}
 
 		propertyBuilder = new PropertyToAlloyCodeBuilder(dependencies, Header,
-				Scope, paramCreator// [tmpDirectory],tmpDirectory
+				Scope/*, paramCreator*/// [tmpDirectory],tmpDirectory
 		);
 
 		if (doVAC)
@@ -163,7 +164,7 @@ public class TemporalPropertiesGenerator
 
 	void generateRelationChekers(
 			final Map<String, Pair<String, String>> tripleProps,
-			Queue<AlloyProcessingParam> result) throws Err {
+			GeneratedStorage<AlloyProcessingParam> result) throws Err {
 
 		// final SimpleAsynchFileWriter safWriter = new SimpleAsynchFileWriter();
 
@@ -215,10 +216,11 @@ public class TemporalPropertiesGenerator
 					if (generatedCount >= PropertiesMin
 							&& generatedCount < PropertiesMax) {
 						try {
-							final AlloyProcessingParam generatedParam = alloyCodeGenerator
-									.generate(UUID.randomUUID());
+							/*final AlloyProcessingParam generatedParam = alloyCodeGenerator
+									.generate(UUID.randomUUID());*/
 
-							result.put(generatedParam);
+							final AlloyProcessingParam generatedParam = new AlloyProcessingParam(UUID.randomUUID(), 0, alloyCodeGenerator);
+							result.addGeneratedProp(generatedParam);
 						} catch (Exception e) {
 							logger.log(Level.SEVERE, "[" + Thread.currentThread().getName()
 									+ "] " + "Property code generation is failed:", e);
@@ -246,10 +248,10 @@ public class TemporalPropertiesGenerator
 				break;
 		}
 
-		if (result.size() != (PropertiesMax - PropertiesMin)) {
+		if (result.size != (PropertiesMax - PropertiesMin)) {
 			logger.log(Level.WARNING,
 					"[" + Thread.currentThread().getName() + "] "
-							+ "The generated and stored properties are: " + result.size()
+							+ "The generated and stored properties are: " + result.size
 							+ " But it was expecpted to have (PropertiesMax=" + PropertiesMax
 							+ "-PropertiesMin=" + PropertiesMin + ")="
 							+ (PropertiesMax - PropertiesMin));
@@ -259,7 +261,7 @@ public class TemporalPropertiesGenerator
 		doneHashedNames.clear();
 
 		if (Configuration.IsInDeubbungMode)
-			logger.info("[" + Thread.currentThread().getName() + "] " + result.size()
+			logger.info("[" + Thread.currentThread().getName() + "] " + result.size
 					+ " properties are generated: " + generatedCount);
 
 	}
@@ -280,7 +282,7 @@ public class TemporalPropertiesGenerator
 	}
 
 	public void generateAlloyProcessingParams(
-			final Queue<AlloyProcessingParam> generatedStorage)
+			final GeneratedStorage<AlloyProcessingParam> generatedStorage)
 					throws Err, IOException {
 
 		setUpFolders();
@@ -294,7 +296,7 @@ public class TemporalPropertiesGenerator
 			generateRelationChekers(tripleProps, generatedStorage);
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "] "
-						+ generatedStorage.size() + " files are generated to be checked.");
+						+ generatedStorage.size + " files are generated to be checked.");
 		} catch (Err e) {
 			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
 					+ "Unable to generate alloy files: ", e);

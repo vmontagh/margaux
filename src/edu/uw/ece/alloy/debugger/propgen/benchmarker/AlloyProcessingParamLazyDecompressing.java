@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Deprecated
 public class AlloyProcessingParamLazyDecompressing
 		extends AlloyProcessingParamLazyCompressing {
 

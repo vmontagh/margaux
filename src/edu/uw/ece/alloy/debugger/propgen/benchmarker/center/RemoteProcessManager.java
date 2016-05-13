@@ -134,7 +134,6 @@ public class RemoteProcessManager /*
 			logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
 					+ "Changing the status of PID:" + process + " to: " + status);
 		synchronized (activeProcesses) {
-			System.out.println("activeProcesses->" + activeProcesses);
 			if (activeProcesses.containsKey(process)) {
 				activeProcesses.replace(process,
 						activeProcesses.get(process).changeStatus(status));
@@ -415,17 +414,6 @@ public class RemoteProcessManager /*
 	 * @return
 	 */
 	protected Class<?> getGenericTypeAsClass() {
-		System.out.println("getClass()->" + getClass());
-		System.out.println("getClass().getGenericSuperclass()->"
-				+ getClass().getGenericSuperclass());
-		System.out
-				.println("((ParameterizedType) getClass().getGenericSuperclass())->"
-						+ ((ParameterizedType) getClass().getGenericInterfaces()[0]));
-		System.out.println("((ParameterizedType) getClass().getGenericSuperclass())"
-				+ ".getActualTypeArguments()[0]->"
-				+ ((ParameterizedType) getClass().getGenericSuperclass())
-						.getActualTypeArguments()[0]);
-
 		return (Class<?>) ((ParameterizedType) getClass().getGenericSuperclass())
 				.getActualTypeArguments()[0];
 	}
@@ -602,8 +590,6 @@ public class RemoteProcessManager /*
 				throw new RuntimeException("Not working process was found.");
 			}
 			result = getRandomProcess();
-			System.out.println("The found port on <" + localSocket + ">->" + result
-					+ "<-" + isAccepting(result));
 			++retry;
 			try {
 				Thread.sleep(retry);

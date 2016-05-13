@@ -182,7 +182,7 @@ public class ExpressionPropertyGenerator
 		expressionPredicate = new ExpressionPredicate(expression);
 		String header = makeNewHeader(expressionPredicate.predicateBody);
 
-		final AlloyProcessingParam paramCreator = AlloyProcessingParam.EMPTY_PARAM;
+		/*final AlloyProcessingParam paramCreator = AlloyProcessingParam.EMPTY_PARAM;*/
 
 		for (File file : dependecyFiles) {
 			dependencies.add(new Dependency(new File(file.getName()),
@@ -190,9 +190,8 @@ public class ExpressionPropertyGenerator
 		}
 
 		propertyBuilder = new PropertyToAlloyCodeBuilder(dependencies, header,
-				scope, paramCreator);
+				scope/*, paramCreator*/);
 
-		System.out.println("propertyToAlloyCode->" + propertyToAlloyCode);
 		propertyBuilder.registerPropertyToAlloyCode(propertyToAlloyCode);
 
 		// Some sort of hacking. The content of the dependency is the path to the
@@ -247,7 +246,7 @@ public class ExpressionPropertyGenerator
 	protected String makeNewHeader(String newPred) {
 		return makeNewOpens() + "\n" + sanitizeTheCurrentCode() + "\n" + newPred;
 	}
-
+	
 	/**
 	 * generate AlloyProcessingParam for checking properties of an expression
 	 * 
@@ -276,6 +275,7 @@ public class ExpressionPropertyGenerator
 			for (final PropertyToAlloyCode alloyCodeGenerator : propertyBuilder
 					.createObjects("", "", expressionPredicate.predicateCall, property,
 							expressionPredicate.predicateName, pattern, field.label)) {
+				
 				if (excludedChecks.contains(alloyCodeGenerator.getPredName())) {
 					logger.log(Level.INFO,
 							Utils.threadName()
@@ -284,8 +284,7 @@ public class ExpressionPropertyGenerator
 					continue;
 				}
 				try {
-					final AlloyProcessingParam generatedParam = alloyCodeGenerator
-							.generate(sessionID);
+					final AlloyProcessingParam generatedParam = new AlloyProcessingParam(sessionID, 0, alloyCodeGenerator);
 					result.put(generatedParam);
 					++numberOfGeneratedParams;
 				} catch (Exception e) {

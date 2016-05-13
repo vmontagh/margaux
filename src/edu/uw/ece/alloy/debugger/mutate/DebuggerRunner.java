@@ -71,6 +71,7 @@ public class DebuggerRunner extends Runner {
 					@Override
 					public void actionOn(LivenessMessage livenessMessage,
 							MessageReceivedEventArgs event) {
+						System.out.println("livenessMessage---->"+livenessMessage);
 						final Map<String, Object> context = new HashMap<>();
 						context.put("RemoteProcessLogger", analyzerProcessManager);
 						try {

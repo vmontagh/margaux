@@ -20,12 +20,14 @@ public abstract class ProcessingParam
 	protected final Integer priority;
 	protected final File tmpLocalDirectory;
 	protected final UUID analyzingSessionID;
-
+	protected final Long timeout;
+	
 	public ProcessingParam(final Integer priority, final File tmpLocalDirectory,
-			final UUID analyzingSessionID) {
+			final UUID analyzingSessionID, final Long timeout) {
 		this.priority = priority;
 		this.tmpLocalDirectory = tmpLocalDirectory;
 		this.analyzingSessionID = analyzingSessionID;
+		this.timeout = timeout;
 	}
 
 	public ProcessingParam prepareToUse() throws Exception {
@@ -46,6 +48,10 @@ public abstract class ProcessingParam
 
 	public Optional<UUID> getAnalyzingSessionID() {
 		return Optional.ofNullable(analyzingSessionID);
+	}
+	
+	public Optional<Long> getTimeout(){
+		return Optional.ofNullable(timeout);
 	}
 
 	public abstract boolean isEmptyParam();

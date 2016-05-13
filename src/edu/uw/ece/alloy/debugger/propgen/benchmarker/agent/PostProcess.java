@@ -219,10 +219,11 @@ public abstract class PostProcess implements Runnable, ThreadToBeMonitored {
 			this.interfacE = interfacE;
 		}
 
+		
 		@Override
 		protected void action(AlloyProcessedResult result)
 				throws InterruptedException {
-
+			
 			AlloyResponseMessage message = new AlloyResponseMessage(result,
 					interfacE.getHostProcess());
 			if (Configuration.IsInDeubbungMode)

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.After;
@@ -56,7 +57,7 @@ public class DebuggerRunnerTest {
 	}
 
 	@Test
-	public void testStrongestApproximation() throws Err {
+	public void testStrongestApproximationOneProp() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(tmpLocalDirectory,
 				"toBeAnalyzedCode.als");
@@ -104,5 +105,20 @@ public class DebuggerRunnerTest {
 		runner.start();
 		runner.debuggerAlgorithm.run();
 	}
+
+	@Test
+	public void testStrongestApproximationAllProps() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(tmpLocalDirectory,
+				"toBeAnalyzedCode.als");
+		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
+				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, Collections.emptyList(),
+				testingHost);
+		runner.start();
+		
+		runner.debuggerAlgorithm.run();
+	}
+	
 
 }
