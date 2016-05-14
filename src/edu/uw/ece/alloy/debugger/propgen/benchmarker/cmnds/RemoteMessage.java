@@ -63,6 +63,8 @@ public abstract class RemoteMessage implements Serializable {
 			OutputStream os = Channels.newOutputStream(clientSocketChannel);
 			oos = new ObjectOutputStream(os);
 			oos.writeObject(message);
+			oos.flush();
+			os.flush();
 		} catch (IOException | ExecutionException e) {
 			logger.log(Level.SEVERE,
 					Utils.threadName() + "Failed on sending the done message " + message

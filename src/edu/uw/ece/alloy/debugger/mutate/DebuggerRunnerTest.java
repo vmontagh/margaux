@@ -113,12 +113,22 @@ public class DebuggerRunnerTest {
 				"toBeAnalyzedCode.als");
 		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, Collections.emptyList(),
-				testingHost);
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
+				Collections.emptyList(), testingHost);
 		runner.start();
-		
+
 		runner.debuggerAlgorithm.run();
 	}
-	
+
+	@Test
+	public void testStrongestApproximationList() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
+				Collections.emptyList(), testingHost);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
 
 }

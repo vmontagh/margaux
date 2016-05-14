@@ -173,6 +173,8 @@ public class ServerSocketInterface
 					if ((clientSocket != null) && (clientSocket.isOpen())) {
 						connectionInputStream = Channels.newInputStream(clientSocket);
 						ois = new ObjectInputStream(connectionInputStream);
+						
+						System.out.println(ois);
 						this.onMessageReceived(new MessageReceivedEventArgs(
 								(RemoteMessage) ois.readObject(), new RemoteProcess(
 										(InetSocketAddress) clientSocket.getRemoteAddress())));
@@ -182,6 +184,12 @@ public class ServerSocketInterface
 						| ClassNotFoundException e) {
 					logger.log(Level.SEVERE,
 							Utils.threadName() + "Error while listening for request: ", e);
+					System.out.println("this.hostProcess="+this.hostProcess);
+					System.out.println("this.remoteProcess="+this.remoteProcess);
+					e.printStackTrace();
+					e.fillInStackTrace();
+					e.printStackTrace();
+					throw new RuntimeException(e);
 				} finally {
 
 					if (ois != null) {

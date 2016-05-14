@@ -251,19 +251,23 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		 * create a new response message and send to the pattern analyzer
 		 */
 		protected void sendResult() {
+			System.out.println("preparing the result 1="+validResults);
 			PatternProcessedResult result = new PatternProcessedResult(param,
-					Collections.unmodifiableSet(validResults));
+					Collections.unmodifiableSet(validResults ));
+			System.out.println("preparing the result 2="+result);
 			PatternResponseMessage message = new PatternResponseMessage(result,
 					interfacE.getHostProcess());
+			System.out.println("preparing the result 3="+message);
 			interfacE.sendMessage(message);
+			System.out.println("preparing the result 4="+message);
 		}
 
 		@Override
 		public void done() {
+			sendResult();
 			getProcessingTask().orElseThrow(
 					() -> new RuntimeException("The Processing Task should not be NULL!"))
 					.cancel(true);
-			sendResult();
 			// finish the timeout thread.
 			timeoutThread.interrupt();
 		}
