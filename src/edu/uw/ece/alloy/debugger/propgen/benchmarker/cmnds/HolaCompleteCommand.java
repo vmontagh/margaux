@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.Deque;
 import java.util.logging.Level;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.onborder.propgen.HolaResult;
 
 @Deprecated

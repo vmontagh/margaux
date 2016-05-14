@@ -21,8 +21,8 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateDeclarativeConstriant2DeclarativeFormula;
-import edu.mit.csail.sdg.gen.MyReporter;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
+import edu.uw.ece.alloy.MyReporter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import kodkod.ast.Formula;
 

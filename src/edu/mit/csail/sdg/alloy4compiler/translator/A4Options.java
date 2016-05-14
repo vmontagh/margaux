@@ -16,10 +16,9 @@
 package edu.mit.csail.sdg.alloy4compiler.translator;
 
 import java.io.Serializable;
-import java.util.prefs.Preferences;
+
 import edu.mit.csail.sdg.alloy4.ErrorAPI;
 import edu.mit.csail.sdg.alloy4.SafeList;
-import edu.mit.csail.sdg.alloy4.Util;
 
 /** Mutable; this class encapsulates the customizable options of the Alloy-to-Kodkod translator. */
 
@@ -94,10 +93,6 @@ public final class A4Options implements Serializable {
             synchronized(SatSolver.class) { for(SatSolver x:values) if (x.id.equals(id)) return x; }
             return SAT4J;
         }
-        /** Saves this value into the Java preference object. */
-        public void set() { Preferences.userNodeForPackage(Util.class).put("SatSolver2",id); }
-        /** Reads the current value of the Java preference object (if it's not set, then return SAT4J). */
-        public static SatSolver get() { return parse(Preferences.userNodeForPackage(Util.class).get("SatSolver2","")); }
         /** BerkMin via pipe */
         public static final SatSolver BerkMinPIPE = new SatSolver("berkmin", "BerkMin", "berkmin", null, true);
         /** Spear via pipe */
@@ -106,14 +101,22 @@ public final class A4Options implements Serializable {
         public static final SatSolver MiniSatJNI = new SatSolver("minisat(jni)", "MiniSat", null, null, true);
         /** MiniSatProver1 via JNI */
         public static final SatSolver MiniSatProverJNI = new SatSolver("minisatprover(jni)", "MiniSat with Unsat Core", null, null, true);
-        /** ZChaff via JNI */
-        public static final SatSolver ZChaffJNI = new SatSolver("zchaff(jni)", "ZChaff", null, null, true);
+        ///** ZChaff via JNI */
+        // public static final SatSolver ZChaffJNI = new SatSolver("zchaff(jni)", "ZChaff with mincost", null, null, true);
+        /** Lingeling */
+        public static final SatSolver LingelingJNI = new SatSolver("lingeling(jni)", "Lingeling", null, null, true);
+        public static final SatSolver PLingelingJNI = new SatSolver("plingeling(jni)", "PLingeling", null, null, true);
+        /** Glucose */
+        public static final SatSolver GlucoseJNI = new SatSolver("glucose(jni)", "Glucose", null, null, true);
+        /** CryptoMiniSat */
+        public static final SatSolver CryptoMiniSatJNI = new SatSolver("cryptominisat(jni)", "CryptoMiniSat", null, null, true);
         /** SAT4J using native Java */
         public static final SatSolver SAT4J = new SatSolver("sat4j", "SAT4J", null, null, true);
         /** Outputs the raw CNF file only */
         public static final SatSolver CNF = new SatSolver("cnf", "Output CNF to file", null, null, true);
         /** Outputs the raw Kodkod file only */
         public static final SatSolver KK = new SatSolver("kodkod", "Output Kodkod to file", null, null, true);
+
     }
 
     /** This ensures the class can be serialized reliably. */
@@ -143,7 +146,7 @@ public final class A4Options implements Serializable {
      * <p> Default value is set to the fastest current strategy.
      */
     public int coreMinimization = 2;
-    
+
     /** Unsat core granularity, default is 0 (only top-level conjuncts are considered), 3 expands all quantifiers */
     public int coreGranularity = 0;
 
@@ -171,7 +174,7 @@ public final class A4Options implements Serializable {
      * <p> Default value is false.
      */
     public boolean recordKodkod = false;
-    
+
     /** This option specifies whether the solver should report only solutions
      *  that don't cause any overflows. */
     public boolean noOverflow = false;

@@ -4,8 +4,8 @@ import java.io.Serializable;
 
 import com.google.common.base.Optional;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.Configuration;
 
 public class DBConnectionInfo implements Serializable {
 

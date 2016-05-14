@@ -1007,7 +1007,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         opt.coreMinimization = CoreMinimization.get();
         opt.coreGranularity = CoreGranularity.get();
         opt.originalFilename = Util.canon(text.get().getFilename());
-        opt.solver = SatSolver.get();
+        opt.solver = SatSolver.SAT4J;
         task.bundleIndex = i;
         task.bundleWarningNonFatal = WarningNonfatal.get();
         task.map = text.takeSnapshot();
@@ -1190,7 +1190,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             optmenu.removeAll();
             menuItem(optmenu, "Welcome Message at Start Up: "+(Welcome.get() < welcomeLevel ? "Yes" : "No"), doOptWelcome());
             //
-            final SatSolver now = SatSolver.get();
+            final SatSolver now = SatSolver.SAT4J;
             final JMenu sat = new JMenu("SAT Solver: "+now);
             for(SatSolver sc:satChoices) { menuItem(sat, ""+sc, doOptSolver(sc), sc==now?iconYes:iconNo); }
             optmenu.add(sat);
@@ -1954,12 +1954,13 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 satChoices.remove(SatSolver.MiniSatJNI);
             }
             if (!loadLibrary("minisatprover")) satChoices.remove(SatSolver.MiniSatProverJNI);
-            if (!loadLibrary("zchaff"))        satChoices.remove(SatSolver.ZChaffJNI);
-            SatSolver now = SatSolver.get();
+            if (!loadLibrary("Glucose"))        satChoices.remove(SatSolver.GlucoseJNI);
+            SatSolver now = SatSolver.SAT4J;
             if (!satChoices.contains(now)) {
-                now=SatSolver.ZChaffJNI;
-                if (!satChoices.contains(now)) now=SatSolver.SAT4J;
-                now.set();
+                now=SatSolver.MiniSatProverJNI;
+                if (!satChoices.contains(now)) 
+                	now=SatSolver.SAT4J;
+                //now.set();
             }
             if (now==SatSolver.SAT4J && satChoices.size()>3 && satChoices.contains(SatSolver.CNF) && satChoices.contains(SatSolver.KK)) {
                 log.logBold("Warning: Alloy4 defaults to SAT4J since it is pure Java and very reliable.\n");

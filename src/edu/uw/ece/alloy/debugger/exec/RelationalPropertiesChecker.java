@@ -26,8 +26,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
-import edu.mit.csail.sdg.gen.LoggerUtil;
-import edu.mit.csail.sdg.gen.visitor.FieldDecomposer;
+import edu.uw.ece.alloy.LoggerUtil;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.PrettyPrintFunction;
 import edu.uw.ece.alloy.debugger.PropertiesConsistencyChecking;
@@ -41,6 +40,7 @@ import edu.uw.ece.alloy.debugger.SpecHasPropertyChecking;
 import edu.uw.ece.alloy.debugger.SpecToApproxGenerator;
 import edu.uw.ece.alloy.debugger.SpecToPropertyChecking;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.visitor.FieldDecomposer;
 
 /**
  * This class provides an Alloy program that checks the relational properties

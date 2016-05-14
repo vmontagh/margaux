@@ -14,7 +14,7 @@ import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Module;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
-import edu.mit.csail.sdg.gen.LoggerUtil;
+import edu.uw.ece.alloy.LoggerUtil;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
 
 public class FieldsExtractorVisitor_Tester {

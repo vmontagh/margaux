@@ -18,11 +18,9 @@ package edu.mit.csail.sdg.alloy4compiler.ast;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
-import edu.mit.csail.sdg.gen.LoggerUtil;
 
 /** Immutable; represents a LET or QUANTIFICATION variable in the AST.
  *
@@ -67,7 +65,7 @@ public final class ExprVar extends ExprHasName {
     @Override public Expr resolve(Type p, Collection<ErrorWarning> warns) { return this; }
 
     /** {@inheritDoc} */
-    @Override <T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
+    @Override public <T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
 
     /** {@inheritDoc} */
     @Override public String getHTML() { return "<b>variable</b>: " + label + " <i>" + type + "</i>"; }

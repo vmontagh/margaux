@@ -6,7 +6,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;

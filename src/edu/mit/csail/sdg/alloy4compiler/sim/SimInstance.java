@@ -601,14 +601,6 @@ public final class SimInstance extends VisitReturn<Object> {
         return ans;
     }
 
-    //[VM]
-    /** {@inheritDoc} */
-    @Override public SimTupleset visit(Bounds x) throws Err {
-    	//TODO: Need to be figured out and implemmented
-
-    	return cacheSTRING;
-    }
-    
     /** {@inheritDoc} */
     @Override public SimTupleset visit(Sig x) throws Err {
        if (x.isSame(Sig.NONE)) return SimTupleset.EMPTY;
@@ -889,4 +881,9 @@ public final class SimInstance extends VisitReturn<Object> {
           return "An internal error has occured:\n" + ex.dump();
        }
     }
+
+		@Override
+		public Object visit(Bounds bounds) throws Err {
+			throw new RuntimeException("Not implemented yet!");
+		}
 }

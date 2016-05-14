@@ -1,7 +1,7 @@
 package edu.uw.ece.alloy.debugger;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.gen.ExecuterJob;
+import edu.uw.ece.alloy.ExecuterJob;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 
 public class RelationalPropertiesExecuterJob extends ExecuterJob {

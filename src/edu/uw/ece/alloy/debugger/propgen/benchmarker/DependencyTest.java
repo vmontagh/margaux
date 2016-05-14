@@ -13,7 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
 
 /**

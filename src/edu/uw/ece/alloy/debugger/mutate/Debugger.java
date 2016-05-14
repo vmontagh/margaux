@@ -23,7 +23,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;

@@ -48,6 +48,9 @@ public interface Module {
    /** Return the list containing UNIV, SIGINT, SEQIDX, STRING, NONE, and all sigs defined in this module or a reachable submodule. */
    public ConstList<Sig> getAllReachableSigs();
 
+   /** Return the list containing all sigs defined in this module or a reachable submodule. */
+   public ConstList<Sig> getAllReachableUserDefinedSigs();
+   
    /** Returns an unmodifiable list of all signatures defined inside this module. */
    public SafeList<Sig> getAllSigs();
 
@@ -74,5 +77,4 @@ public interface Module {
 
    /** Parse one expression by starting fromt this module as the root module. */
    public Expr parseOneExpressionFromString(String input) throws Err, FileNotFoundException, IOException;
-   
 }

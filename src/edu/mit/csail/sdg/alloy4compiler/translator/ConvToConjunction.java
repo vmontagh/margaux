@@ -98,9 +98,11 @@ final class ConvToConjunction extends VisitReturn<Expr> {
     /** {@inheritDoc} */
     @Override public Expr visit(Sig x) { return x; }
 
-    /**[VM] {@inheritDoc} */
-    @Override public Expr visit(Bounds x) { return x; }
-    
     /** {@inheritDoc} */
     @Override public Expr visit(Field x) { return x; }
+
+		@Override
+		public Expr visit(Bounds bounds) throws Err {
+			throw new RuntimeException("Not implemented yet!");
+		}
 }

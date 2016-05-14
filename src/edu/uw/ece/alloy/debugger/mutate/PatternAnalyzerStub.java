@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.Queue;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteCommand;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.util.ServerSocketListener;

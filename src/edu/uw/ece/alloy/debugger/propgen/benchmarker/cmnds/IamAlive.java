@@ -3,7 +3,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.pattern.PatternsAnalyzer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.AlloyProcess.Status;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner_;

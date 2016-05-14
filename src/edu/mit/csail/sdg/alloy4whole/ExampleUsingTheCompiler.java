@@ -74,8 +74,8 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Tuple;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4TupleSet;
 import edu.mit.csail.sdg.alloy4compiler.translator.TranslateAlloyToKodkod;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
-import edu.mit.csail.sdg.gen.LoggerUtil;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
+import edu.uw.ece.alloy.LoggerUtil;
 
 
 /** This class demonstrates how to access Alloy4 via the compiler methods. */

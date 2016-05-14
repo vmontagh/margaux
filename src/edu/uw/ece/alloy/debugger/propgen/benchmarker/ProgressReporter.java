@@ -23,7 +23,7 @@ import com.sun.rowset.CachedRowSetImpl;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.PostProcess;
 import edu.uw.ece.alloy.util.Utils;
 

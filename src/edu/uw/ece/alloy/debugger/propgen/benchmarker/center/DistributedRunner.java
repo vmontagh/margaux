@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.GeneratedStorage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
@@ -23,6 +22,7 @@ import edu.uw.ece.alloy.util.events.EventArgs;
 import edu.uw.ece.alloy.util.events.EventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.MySQLDBConnectionPool;

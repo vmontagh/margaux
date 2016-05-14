@@ -16,7 +16,7 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;

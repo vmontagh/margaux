@@ -151,11 +151,12 @@ public final class ExprCall extends Expr {
         @Override public Type visit(ExprVar x)      { Type t=env.get(x); return (t!=null && t!=EMPTY) ? t : x.type; }
         @Override public Type visit(ExprConstant x) { return x.type; }
         @Override public Type visit(Sig x)          { return x.type; }
-        //[VM]
-        @Override public Type visit(Bounds x)          { return x.type; }
-
         @Override public Type visit(Field x)        { return x.type; }
         @Override public Type visit(ExprList x)     { return Type.FORMULA; }
+				@Override
+				public Type visit(Bounds bounds) throws Err {
+					return bounds.type;
+				}
     }
 
     //============================================================================================================//
@@ -259,7 +260,7 @@ public final class ExprCall extends Expr {
     }
 
     /** {@inheritDoc} */
-    @Override final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
+    @Override public final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
 
     /** {@inheritDoc} */
     @Override public String getHTML() { return "<b>call</b> " + fun.label + " <i>" + type + "</i>"; }

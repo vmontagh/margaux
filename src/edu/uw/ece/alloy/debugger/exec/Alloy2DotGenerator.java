@@ -26,7 +26,7 @@ import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
-import edu.mit.csail.sdg.gen.visitor.MakeDOTCallGraph;
+import edu.uw.ece.alloy.visitor.MakeDOTCallGraph;
 
 public class Alloy2DotGenerator {
 

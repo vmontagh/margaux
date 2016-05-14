@@ -3,7 +3,7 @@ package edu.uw.ece.alloy.debugger.propgen.benchmarker.center;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.AsyncServerSocketInterface;

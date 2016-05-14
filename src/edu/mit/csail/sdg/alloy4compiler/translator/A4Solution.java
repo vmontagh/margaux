@@ -112,9 +112,9 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Options.SatSolver;
 import edu.mit.csail.sdg.alloy4whole.ExampleUsingTheCompiler;
-import edu.mit.csail.sdg.gen.LoggerUtil;
-import edu.mit.csail.sdg.gen.MyReporter;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
+import edu.uw.ece.alloy.LoggerUtil;
+import edu.uw.ece.alloy.MyReporter;
 
 
 /** This class stores a SATISFIABLE or UNSATISFIABLE solution.

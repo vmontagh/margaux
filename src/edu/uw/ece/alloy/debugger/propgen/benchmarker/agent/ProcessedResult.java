@@ -1,6 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.agent;
 
-import edu.mit.csail.sdg.gen.MyReporter;
+import edu.uw.ece.alloy.MyReporter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 
 /**

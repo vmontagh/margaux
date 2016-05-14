@@ -153,7 +153,6 @@ import java_cup.runtime.*;
 "and"                 { return alloy_sym(yytext(), CompSym.AND         );}
 "assert"              { return alloy_sym(yytext(), CompSym.ASSERT      );}
 "as"                  { return alloy_sym(yytext(), CompSym.AS          );}
-"inst"                { return alloy_sym(yytext(), CompSym.BOUND        );}
 "but"                 { return alloy_sym(yytext(), CompSym.BUT         );}
 "check"               { return alloy_sym(yytext(), CompSym.CHECK       );}
 "disjoint"            { return alloy_sym(yytext(), CompSym.DISJ        );}
@@ -174,11 +173,9 @@ import java_cup.runtime.*;
 "Int"                 { return alloy_sym(yytext(), CompSym.SIGINT      );}
 "int"                 { return alloy_sym(yytext(), CompSym.INT         );}
 "in"                  { return alloy_sym(yytext(), CompSym.IN          );}
-"include"             { return alloy_sym(yytext(), CompSym.INCLUDE     );}
 "let"                 { return alloy_sym(yytext(), CompSym.LET         );}
 "lone"                { return alloy_sym(yytext(), CompSym.LONE        );}
 "module"              { return alloy_sym(yytext(), CompSym.MODULE      );}
-"moreover"            { return alloy_sym(yytext(), CompSym.MORE		   );}
 "none"                { return alloy_sym(yytext(), CompSym.NONE        );}
 "not"                 { return alloy_sym(yytext(), CompSym.NOT         );}
 "no"                  { return alloy_sym(yytext(), CompSym.NO          );}
@@ -194,14 +191,10 @@ import java_cup.runtime.*;
 "set"                 { return alloy_sym(yytext(), CompSym.SET         );}
 "sig"                 { return alloy_sym(yytext(), CompSym.SIG         );}
 "some"                { return alloy_sym(yytext(), CompSym.SOME        );}
-"sparse"              { return alloy_sym(yytext(), CompSym.SPARSE      );}
 "String"              { return alloy_sym(yytext(), CompSym.STRING      );}
 "sum"                 { return alloy_sym(yytext(), CompSym.SUM         );}
 "this"                { return alloy_sym(yytext(), CompSym.THIS        );}
 "univ"                { return alloy_sym(yytext(), CompSym.UNIV        );}
-"uniq"                { return alloy_sym(yytext(), CompSym.UNIQ        );}
-"eval"                { return alloy_sym(yytext(), CompSym.EVAL        );}
-
 
 [\"] ([^\\\"] | ("\\" .))* [\"] [\$0-9a-zA-Z_\'\"] [\$0-9a-zA-Z_\'\"]* { throw new ErrorSyntax(alloy_here(yytext()),"String literal cannot be followed by a legal identifier character."); }
 [\"] ([^\\\"] | ("\\" .))* [\"]                                        { return alloy_string(yytext()); }

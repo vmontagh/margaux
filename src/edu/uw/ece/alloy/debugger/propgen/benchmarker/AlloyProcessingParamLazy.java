@@ -10,9 +10,9 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam {
 	final public static AlloyProcessingParamLazy EMPTY_PARAM = new AlloyProcessingParamLazy();
 
 	protected AlloyProcessingParamLazy(UUID analyzingSessionID, int priority,
-			File tmpDirectory, PropertyToAlloyCode alloyCoder,
+			Long timeout, File tmpDirectory, PropertyToAlloyCode alloyCoder,
 			DBConnectionInfo dBConnectionInfo) {
-		super(analyzingSessionID, priority, tmpDirectory, alloyCoder,
+		super(analyzingSessionID, priority, timeout, tmpDirectory, alloyCoder,
 				dBConnectionInfo);
 	}
 
@@ -37,9 +37,9 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam {
 	 * property generators.
 	 */
 	protected AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder, int priority, File tmpDirectory,
-			DBConnectionInfo dBConnectionInfo) {
-		return new AlloyProcessingParamLazy(analyzingSessionID, priority,
+			final PropertyToAlloyCode alloyCoder, int priority, Long timeout,
+			File tmpDirectory, DBConnectionInfo dBConnectionInfo) {
+		return new AlloyProcessingParamLazy(analyzingSessionID, priority, timeout,
 				tmpDirectory, alloyCoder, dBConnectionInfo);
 	}
 
@@ -57,8 +57,9 @@ public class AlloyProcessingParamLazy extends AlloyProcessingParam {
 
 	public AlloyProcessingParam createIt(AlloyProcessingParamLazy param) {
 		return new AlloyProcessingParamLazy(param.getAnalyzingSessionID().get(),
-				param.getPriority().get(), param.getTmpLocalDirectory().get(),
-				param.getAlloyCoder().get(), param.getDBConnectionInfo().get());
+				param.getPriority().get(), param.getTimeout().get(),
+				param.getTmpLocalDirectory().get(), param.getAlloyCoder().get(),
+				param.getDBConnectionInfo().get());
 	}
 
 	public AlloyProcessingParam prepareToSend() throws Exception {

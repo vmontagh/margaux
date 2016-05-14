@@ -13,8 +13,8 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
 
 public class AlloyProcessingParam extends ProcessingParam {

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.alloy.util.graph.AdjMatrixEdgeWeightedDigraph;
 import edu.uw.ece.alloy.util.graph.DirectedEdge;

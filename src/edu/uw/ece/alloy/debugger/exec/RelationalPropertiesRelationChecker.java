@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.mit.csail.sdg.gen.BenchmarkRunner;
-import edu.mit.csail.sdg.gen.LoggerUtil;
+import edu.uw.ece.alloy.BenchmarkRunner;
+import edu.uw.ece.alloy.LoggerUtil;
 import edu.uw.ece.alloy.debugger.RelationalPropertiesExecuterJob;
 import edu.uw.ece.alloy.util.Utils;
 

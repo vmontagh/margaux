@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 
 public abstract class DBConnectionPool {
 

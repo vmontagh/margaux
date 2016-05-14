@@ -7,7 +7,7 @@ import java.util.List;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 
 public class BinaryImplicationLattic extends ImplicationLattic {

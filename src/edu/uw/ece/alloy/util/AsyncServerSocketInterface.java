@@ -5,7 +5,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 

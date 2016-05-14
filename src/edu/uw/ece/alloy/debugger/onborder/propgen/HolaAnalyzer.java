@@ -10,8 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 
 public class HolaAnalyzer {

@@ -21,7 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.gen.LoggerUtil;
+import edu.uw.ece.alloy.LoggerUtil;
 import edu.uw.ece.alloy.debugger.RelationalPropertiesExecuterJob;
 
 /**

@@ -15,12 +15,9 @@
 
 package edu.mit.csail.sdg.alloy4compiler.ast;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import edu.mit.csail.sdg.alloy4.ErrorAPI;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.ErrorFatal;
@@ -38,7 +35,6 @@ import edu.mit.csail.sdg.alloy4.Util;
 
 public abstract class Sig extends Expr {
 
-	
    /** The built-in "univ" signature. */
    public static final PrimSig UNIV = new PrimSig("univ", null, false);
 
@@ -53,10 +49,6 @@ public abstract class Sig extends Expr {
 
    /** The built-in "none" signature. */
    public static final PrimSig NONE = new PrimSig("none", null, false);
-   
-	/**[VM] to add a set of integers as atoms */
-   public static final PrimSig SPARSE_INT = new PrimSig("int", SIGINT, false);
-
    
    /** The built-in "none" signature. */
    public static final PrimSig GHOST = mkGhostSig();
@@ -89,7 +81,7 @@ public abstract class Sig extends Expr {
    @Override public Expr resolve(Type t, Collection<ErrorWarning> warns) { return this; }
 
    /** {@inheritDoc} */
-   @Override final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
+   @Override public final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
 
    /**
     * Store the list of attributes.
@@ -122,7 +114,7 @@ public abstract class Sig extends Expr {
    /** Nonnull if this sig's multiplicity is declared to be one.
     * <p> Note: at most one of "lone", "one", "some" can be nonnull for each sig.
     */
-   public /*final*/ Pos isOne;
+   public final Pos isOne;
 
    /** Nonnull if this sig's multiplicity is declared to be some.
     * <p> Note: at most one of "lone", "one", "some" can be nonnull for each sig.
@@ -149,9 +141,6 @@ public abstract class Sig extends Expr {
 
    /** The declaration that quantifies over each atom in this sig. */
    public final Decl decl;
-   
-   /** The unique sig should be generated over all legal predicate in the appended fact*/
-   public final Pos isUnique;
 
    /** The list of "per atom" fact associated with this signature; each fact is allowed to refer to this.decl.get() */
    private final SafeList<Expr> facts = new SafeList<Expr>();
@@ -178,19 +167,17 @@ public abstract class Sig extends Expr {
       this.isPrivate = null;
       this.isMeta = null;
       this.isEnum = null;
-      this.isUnique = null;
       this.attributes = ConstList.make();
-      this.fields = new SafeList<Decl>();;
    }
 
    /** Constructs a new PrimSig or SubsetSig. */
-   private Sig(Type type, String label, SafeList<Decl> fields,Attr... attributes) throws Err {
+   private Sig(Type type, String label, Attr... attributes) throws Err {
       super(AttrType.WHERE.find(attributes), type);
       this.attributes = Util.asList(attributes);
       Expr oneof = ExprUnary.Op.ONEOF.make(null, this);
       ExprVar v = ExprVar.make(null, "this", oneof.type);
       this.decl = new Decl(null, null, null, Util.asList(v), oneof);
-      Pos isAbstract=null, isLone=null, isOne=null, isSome=null, isSubsig=null, isSubset=null, isPrivate=null, isMeta=null, isEnum=null, isUnique=null;
+      Pos isAbstract=null, isLone=null, isOne=null, isSome=null, isSubsig=null, isSubset=null, isPrivate=null, isMeta=null, isEnum=null;
       for(Attr a: attributes) if (a!=null) switch(a.type) {
          case ABSTRACT: isAbstract = a.pos.merge(isAbstract); break;
          case ENUM:     isEnum     = a.pos.merge(isEnum);     break;
@@ -201,7 +188,6 @@ public abstract class Sig extends Expr {
          case SOME:     isSome     = a.pos.merge(isSome);     break;
          case SUBSET:   isSubset   = a.pos.merge(isSubset);   break;
          case SUBSIG:   isSubsig   = a.pos.merge(isSubsig);   break;
-         case UNIQUE:	isUnique   = a.pos.merge(isUnique);   break;
       }
       this.isPrivate  = isPrivate;
       this.isMeta     = isMeta;
@@ -213,20 +199,13 @@ public abstract class Sig extends Expr {
       this.isSubset   = isSubset;
       this.isSubsig   = isSubsig;
       this.label      = label;
-      this.isUnique	  = isUnique;
       this.builtin    = false;
-      this.fields = fields;
       if (isLone!=null && isOne!=null)  throw new ErrorSyntax(isLone.merge(isOne),  "You cannot declare a sig to be both lone and one.");
       if (isLone!=null && isSome!=null) throw new ErrorSyntax(isLone.merge(isSome), "You cannot declare a sig to be both lone and some.");
       if (isOne!=null  && isSome!=null) throw new ErrorSyntax(isOne.merge(isSome),  "You cannot declare a sig to be both one and some.");
       if (isSubset!=null && isAbstract!=null) throw new ErrorSyntax(isAbstract,  "Subset signature cannot be abstract.");
       if (isSubset!=null && isSubsig!=null)   throw new ErrorSyntax(isAbstract,  "Subset signature cannot be a regular subsignature.");
    }
-   
-   private Sig(Type type, String label, Attr... attributes) throws Err {
-	   this(type,label,new SafeList<Decl>(),attributes);
-   }
-   
 
    /** Returns true if we can determine the two expressions are equivalent; may sometimes return false. */
    @Override public boolean isSame(Expr obj) {
@@ -273,22 +252,6 @@ public abstract class Sig extends Expr {
       for(Expr f: facts) ans.add(make(f.span(), f.span(), "<b>fact</b>", f));
       return ans.makeConst();
    }
-   
-	/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint). 
-	 * PrimSig will override it.*/
-	public  SafeList<Field> getFieldsWithParents() {
-		return this.getFields();
-	}
-	
-	/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint) */
-	public  SafeList<Decl> getFieldsDeclWithParents() {
-		return this.getFieldDecls();
-	}
-	
-	public List<PrimSig> allPrimSigParent() throws ErrorAPI {
-		throw new ErrorAPI("A sig does not have parent");
-  	  //return new ArrayList<Sig.PrimSig>();
-     }
 
    //==============================================================================================================//
 
@@ -304,7 +267,7 @@ public abstract class Sig extends Expr {
       /** Stores its immediate children sigs (not including NONE)
        * <p> Note: if this==UNIV, then this list will always be empty, since we don't keep track of UNIV's children
        */
-      private /*final*/ SafeList<PrimSig> children = new SafeList<PrimSig>();
+      private final SafeList<PrimSig> children = new SafeList<PrimSig>();
 
       /** Returns its immediate children sigs (not including NONE)
        * <p> Note: if this==UNIV, then this method will throw an exception, since we don't keep track of UNIV's children
@@ -312,12 +275,6 @@ public abstract class Sig extends Expr {
       public SafeList<PrimSig> children() throws Err {
          if (this==UNIV) throw new ErrorFatal("Internal error (cannot enumerate the subsigs of UNIV)");
          return children.dup();
-      }
-      
-      //[VM]
-      public void setChilderen(SafeList<PrimSig> children) throws ErrorFatal{
-          if (this==UNIV) throw new ErrorFatal("Internal error (cannot enumerate the subsigs of UNIV)");
-          this.children = children.dup();
       }
 
       /** Returns its subsigs and their subsigs and their subsigs, etc.
@@ -349,8 +306,8 @@ public abstract class Sig extends Expr {
        * @throws ErrorSyntax if the signature has two or more multiplicities
        * @throws ErrorType if you attempt to extend the builtin sigs NONE, SIGINT, SEQIDX, or STRING
        */
-      public PrimSig (String label, PrimSig parent, SafeList<Decl> fields, Attr... attributes) throws Err {
-         super(((parent!=null && parent.isEnum!=null) ? parent.type : null), label, fields,Util.append(attributes, Attr.SUBSIG));
+      public PrimSig (String label, PrimSig parent, Attr... attributes) throws Err {
+         super(((parent!=null && parent.isEnum!=null) ? parent.type : null), label, Util.append(attributes, Attr.SUBSIG));
          if (parent==SIGINT) throw new ErrorSyntax(pos, "sig "+label+" cannot extend the builtin \"Int\" signature");
          if (parent==SEQIDX) throw new ErrorSyntax(pos, "sig "+label+" cannot extend the builtin \"seq/Int\" signature");
          if (parent==STRING) throw new ErrorSyntax(pos, "sig "+label+" cannot extend the builtin \"String\" signature");
@@ -364,10 +321,6 @@ public abstract class Sig extends Expr {
          }
       }
 
-      
-      public PrimSig (String label, PrimSig parent, Attr... attributes) throws Err {
-    	  this(label,parent,new SafeList<Decl>(), attributes);
-      }
       /** Constructs a toplevel non-builtin sig.
        *
        * @param label - the name of this sig (it does not need to be unique)
@@ -411,44 +364,6 @@ public abstract class Sig extends Expr {
             if (me==null) return UNIV;
          }
       }
-      
-      
-      public List<PrimSig> allPrimSigParent() {
-    	  List<PrimSig> result = new ArrayList<Sig.PrimSig>();
-    	  for(PrimSig parent = this.parent; parent!= null && !parent.builtin && parent.parent instanceof PrimSig ; parent = parent.parent){
-    		  result.add(parent);
-    	  }
-    	  return result;
-       }
-
-	/*@Override
-	public Sig change(SafeList<Decl> fields) throws Err {
-		return new PrimSig(this.label,this.parent,fields.dup(),this.attributes.toArray(new Attr[0]));
-	}*/
-      
-  	/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint) */
-		public final SafeList<Field> getFieldsWithParents() {
-			SafeList<Field> ans = new SafeList<Field>();
-			ans.addAll(this.getFields().makeCopy());
-			PrimSig crntSig = this;
-			while(crntSig.parent != null){
-				ans.addAll(crntSig.parent.getFields().makeCopy());
-				crntSig = crntSig.parent;
-			}
-			return ans.dup();
-		}
-		
-		/** Return the list of fields and the parents' fields as a combined unmodifiable list (without telling you which fields are declared to be disjoint) */
-		public final SafeList<Decl> getFieldsDeclWithParents() {
-			SafeList<Decl> ans = new SafeList<Decl>();
-			ans.addAll(this.getFieldDecls().makeCopy());
-			PrimSig crntSig = this;
-			while(crntSig.parent != null){
-				ans.addAll(crntSig.getFieldDecls().makeCopy());
-				crntSig = crntSig.parent;
-			}
-			return ans.dup();
-		}
    }
 
    //==============================================================================================================//
@@ -482,8 +397,8 @@ public abstract class Sig extends Expr {
        * @throws ErrorSyntax if the signature has two or more multiplicities
        * @throws ErrorType if parents only contains NONE
        */
-      public SubsetSig(String label, Collection<Sig> parents,SafeList<Decl> fields, Attr... attributes) throws Err {
-         super(getType(label,parents), label,fields, Util.append(attributes, Attr.SUBSET));
+      public SubsetSig(String label, Collection<Sig> parents, Attr... attributes) throws Err {
+         super(getType(label,parents), label, Util.append(attributes, Attr.SUBSET));
          if (isEnum!=null) throw new ErrorType(pos, "Subset signature cannot be an enum.");
          boolean exact = false;
          for(Attr a: attributes) if (a!=null && a.type==AttrType.EXACT) exact = true;
@@ -505,12 +420,6 @@ public abstract class Sig extends Expr {
          if (temp.size()==0) throw new ErrorType(pos, "Sig "+label+" must have at least one non-empty parent.");
          this.parents = temp.makeConst();
       }
-      
-      public SubsetSig(String label, Collection<Sig> parents,Attr... attributes) throws Err {
-    	  this(label, parents,new  SafeList<Decl>(), attributes);
-      }
-      
-      
 
       /** {@inheritDoc} */
       @Override public boolean isSameOrDescendentOf(Sig that) {
@@ -519,11 +428,6 @@ public abstract class Sig extends Expr {
          for(Sig p:parents) if (p.isSameOrDescendentOf(that)) return true;
          return false;
       }
-
-	/*@Override
-	public Sig change(SafeList<Decl> fields) throws Err {
-		return new SubsetSig(this.label,this.parents,fields.dup(),this.attributes.toArray(new Attr[0]));
-	}*/
    }
 
    //==============================================================================================================//
@@ -582,7 +486,7 @@ public abstract class Sig extends Expr {
       @Override public Expr resolve(Type t, Collection<ErrorWarning> warns) { return this; }
 
       /** {@inheritDoc} */
-      @Override final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
+      @Override public final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
 
       /** {@inheritDoc} */
       @Override public String getHTML() { return "<b>field</b> " + label + " <i>" + type + "</i>"; }
@@ -599,7 +503,7 @@ public abstract class Sig extends Expr {
    //==============================================================================================================//
 
    /** The list of fields. */
-   private final SafeList<Decl> fields;
+   private final SafeList<Decl> fields = new SafeList<Decl>();
 
    /** Return the list of fields as a unmodifiable list of declarations (where you can see which fields are declared to be disjoint) */
    public final SafeList<Decl> getFieldDecls() {
@@ -683,7 +587,4 @@ public abstract class Sig extends Expr {
       fields.add(d);
       return f;
    }
-   
-   //It is not possible to change the field without affecting the signature declration. It has a huge side effect.
-   //public abstract Sig change(SafeList<Decl> fields) throws Err;
 }

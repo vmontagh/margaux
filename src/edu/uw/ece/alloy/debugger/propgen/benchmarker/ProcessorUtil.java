@@ -9,7 +9,7 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
 
 public class ProcessorUtil {

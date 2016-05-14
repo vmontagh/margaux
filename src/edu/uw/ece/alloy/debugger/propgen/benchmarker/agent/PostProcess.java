@@ -11,7 +11,7 @@ import com.google.common.base.Optional;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.mit.csail.sdg.gen.alloy.Configuration;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionInfo;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBConnectionPool;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.DBLogger;

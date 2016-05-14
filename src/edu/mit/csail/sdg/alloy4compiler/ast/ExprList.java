@@ -71,10 +71,7 @@ public final class ExprList extends Expr {
     @Override public void toString(StringBuilder out, int indent) {
         if (indent<0) {
             out.append(op).append("[");
-            for(int i=0; i<args.size(); i++) { 
-            	if (i>0) out.append(", "); 
-            	args.get(i).toString(out,-1); 
-            }
+            for(int i=0; i<args.size(); i++) { if (i>0) out.append(", "); args.get(i).toString(out,-1); }
             out.append(']');
         } else {
             for(int i=0; i<indent; i++) { out.append(' '); }
@@ -231,7 +228,7 @@ public final class ExprList extends Expr {
     }
 
     /** {@inheritDoc} */
-    @Override final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
+    @Override public final<T> T accept(VisitReturn<T> visitor) throws Err { return visitor.visit(this); }
 
     /** {@inheritDoc} */
     @Override public String getHTML() { return "<b>" + op + " [ ]</b>"; }
