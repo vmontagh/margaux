@@ -116,18 +116,6 @@ public class DebuggerRunner extends Runner {
 	 */
 	public static void main(String[] args) throws InterruptedException {
 
-		String AlloyTmpTestPath = "tmp/testing.als";
-
-		Debugger deg;
-		try {
-			deg = new Debugger(AlloyTmpTestPath);
-			deg.bootRemoteAnalyzer();
-			// Thread.sleep(1000);
-			deg.analyzeImpliedPatterns();
-		} catch (Err | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 }
