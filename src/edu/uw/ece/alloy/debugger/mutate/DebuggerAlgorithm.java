@@ -1,9 +1,12 @@
 package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -45,7 +48,8 @@ public abstract class DebuggerAlgorithm {
 	 *
 	 * @param <T>
 	 */
-	protected static class DecisionQueueItem<T> implements Comparator<DecisionQueueItem<T>>, Comparable<DecisionQueueItem<T>> {
+	protected static class DecisionQueueItem<T> implements
+			Comparator<DecisionQueueItem<T>>, Comparable<DecisionQueueItem<T>> {
 		// higher score is more probable to be processed first.
 		Integer score;
 		final T item;
@@ -113,6 +117,25 @@ public abstract class DebuggerAlgorithm {
 
 	final PriorityQueue<DecisionQueueItem<Field>> fieldsQueue;
 	final PriorityQueue<DecisionQueueItem<Expr>> modelQueue;
+	/*
+	 * Part of the model that is being analyzed. This property is changed while
+	 * the algorithm is run. Other methods have access to this variable.
+	 */
+	Expr toBeingAnalyzedModelPart;
+	Field toBeingAnalyzedField;
+	/* The rest the mode. I.e Model - toBeingAnalyzedModelPart */
+	List<Expr> restModelParts;
+	/* Mapping from What is analyzed far to its approximations */
+	final Map<Expr, List<Pair<String, String>>> approximations;
+	/*
+	 * A PQ to determine which approximation should be fixed first. It varies at
+	 * each iteration
+	 */
+	PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue;
+	/* The property that is chosen to be weaken or strengthened */
+	Pair<String, String> toBeingWeakenOrStrengthenedApproximation;
+	PriorityQueue<DecisionQueueItem<String>> toBePickedQueueFromWeakenOrStrengthened;
+	boolean strengthened;
 
 	public DebuggerAlgorithm(final File sourceFile,
 			final Approximator approximator) {
@@ -137,7 +160,7 @@ public abstract class DebuggerAlgorithm {
 					+ "Comment out the rest or add at least one.");
 
 		final Command command = world.getAllCommands().get(0);
-		
+
 		Expr toBeCheckedModel = command.formula;
 		Pair<List<Expr>, List<Expr>> propertyChecking = Decompose
 				.decomposetoImplications(toBeCheckedModel);
@@ -165,39 +188,8 @@ public abstract class DebuggerAlgorithm {
 		model.stream().forEach(m -> modelQueue
 				.add(DecisionQueueItem.<Expr> createwithRandomPriority(m)));
 
-	}
+		approximations = new HashMap<>();
 
-	/**
-	 * Given a command, its scope is returned as String
-	 * @param command
-	 * @return
-	 */
-	protected String extractScopeFromCommand(Command command) {
-		boolean first = true;
-		StringBuilder sb = new StringBuilder();
-		if (command.overall >= 0 && (command.bitwidth >= 0 || command.maxseq >= 0
-				|| command.scope.size() > 0))
-			sb.append(" for ").append(command.overall).append(" but");
-		else if (command.overall >= 0)
-			sb.append(" for ").append(command.overall);
-		else if (command.bitwidth >= 0 || command.maxseq >= 0
-				|| command.scope.size() > 0)
-			sb.append(" for");
-		if (command.bitwidth >= 0) {
-			sb.append(" ").append(command.bitwidth).append(" int");
-			first = false;
-		}
-		if (command.maxseq >= 0) {
-			sb.append(first ? " " : ", ").append(command.maxseq).append(" seq");
-			first = false;
-		}
-		for (CommandScope e : command.scope) {
-			sb.append(first ? " " : ", ").append(e);
-			first = false;
-		}
-		if (command.expects >= 0)
-			sb.append(" expect ").append(command.expects);
-		return sb.toString();
 	}
 
 	/**
@@ -213,61 +205,183 @@ public abstract class DebuggerAlgorithm {
 	}
 
 	public void run() {
+		onStartLoop();
+		beforePickField();
 		for (DecisionQueueItem<Field> field : fieldsQueue) {
+			afterPickField();
+			toBeingAnalyzedField = field.getItem().get();
+			beforePickModelPart();
 			for (DecisionQueueItem<Expr> modelPart : modelQueue) {
-				String restModel = model.stream()
-						.filter(m -> !m.equals(modelPart.getItem().get()))
-						.map(a -> a.toString()).collect(Collectors.joining(" and "));
+				afterPickModelPart();
+				toBeingAnalyzedModelPart = modelPart.getItem().get();
 
-				List<Pair<String, String>> approximations = approximator
-						.strongestApproximation(modelPart.getItem().get(),
-								field.getItem().get(), scope);
+				restModelParts = model.stream()
+						.filter(m -> !m.equals(modelPart.getItem().get()))
+						.collect(Collectors.toList());
+
+				String restModel = restModelParts.stream().map(m -> m.toString())
+						.collect(Collectors.joining(" and "));
+
+				approximations.put(modelPart.getItem().get(),
+						approximator.strongestApproximation(modelPart.getItem().get(),
+								field.getItem().get(), scope));
+
+				List<Pair<String, String>> approximation = approximations
+						.get(modelPart.getItem().get());
 
 				logger.info(Utils.threadName() + "The approximations for Expr:<"
-						+ "> is: " + approximations);
+						+ modelPart.getItem().get() + "> is: " + approximation);
 
-				final PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue = new PriorityQueue<>();
-				approximations.stream()
+				// converting the approximations into a PQ.
+				this.approximationQueue = new PriorityQueue<>();
+				approximation.stream()
 						.forEach(m -> approximationQueue.add(DecisionQueueItem
 								.<Pair<String, String>> createwithRandomPriority(m)));
-
-				for (DecisionQueueItem<Pair<String, String>> approximation : approximationQueue) {
+				beforePickApproximation();
+				for (DecisionQueueItem<Pair<String, String>> approx : approximationQueue) {
+					afterPickApproximation();
+					toBeingWeakenOrStrengthenedApproximation = approx.getItem().get();
 
 					final List<String> strongerApprox = approximator
-							.strongerProperties(approximation.getItem().get().b);
+							.strongerProperties(toBeingWeakenOrStrengthenedApproximation.b);
 					final PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue = new PriorityQueue<>();
 					strongerApprox.stream().forEach(m -> strongerApproxQueue
 							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
 
 					final List<String> weakerApprox = approximator
-							.weakerProperties(approximation.getItem().get().b);
+							.weakerProperties(toBeingWeakenOrStrengthenedApproximation.b);
 					final PriorityQueue<DecisionQueueItem<String>> weakerApproxQueue = new PriorityQueue<>();
 					weakerApprox.stream().forEach(m -> weakerApproxQueue
 							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
 
+					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
+
 					while (!strongerApproxQueue.isEmpty()
 							|| !weakerApproxQueue.isEmpty()) {
 
-						PriorityQueue<DecisionQueueItem<String>> toBePickedQueue = strongerApproxQueue;
-
-						if (!weakerApproxQueue.isEmpty() && (strongerApproxQueue.isEmpty()
-								|| !DecisionQueueItem.randomGenerator.nextBoolean()))
-							toBePickedQueue = weakerApproxQueue;
+						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
+						beforePickWeakenOrStrengthened();
+						strengthened = DecisionQueueItem.randomGenerator.nextBoolean();
+						afterPickWeakenOrStrengthened();
 						
-						String approximationProperty = toBePickedQueue.poll().getItem()
-								.orElseThrow(() -> new RuntimeException(
-										"The stronger form cannot be null"));
+						if (!weakerApproxQueue.isEmpty() && (strongerApproxQueue.isEmpty()
+								|| !strengthened)) {
+							toBePickedQueueFromWeakenOrStrengthened = weakerApproxQueue;
+						}
 
-						findOnBorderExamples(
-								makeMutation(approximationProperty, restModel).get());
+						beforePickWeakenOrStrengthenedApprox();
+						String approximationProperty = toBePickedQueueFromWeakenOrStrengthened
+								.poll().getItem().orElseThrow(() -> new RuntimeException(
+										"The stronger form cannot be null"));
+						beforePickWeakenOrStrengthenedApprox();
+						
+						beforeMutating();
+						File mutatedFile = makeMutation(approximationProperty, restModel).get();
+						afterMutating();
+						
+						beforeCallingExampleFinder();
+						findOnBorderExamples(mutatedFile);
+						afterCallingExampleFinder();
+						
+						beforeAskingUser();
 						// ask the user
+						afterAskingUser();
+						// store the answer
+						afterAskingUserResponse();
 						// Call APIs to change the priority of the next steps
 					}
 
 				}
 			}
+			if (!fieldsQueue.isEmpty())
+				beforePickField();
 		}
 
+	}
+
+	private void afterAskingUserResponse() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterAskingUser() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforeAskingUser() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterCallingExampleFinder() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforeCallingExampleFinder() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterMutating() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforeMutating() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforePickWeakenOrStrengthenedApprox() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterPickWeakenOrStrengthened() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforePickWeakenOrStrengthened() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterPickApproximation() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforePickApproximation() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterPickModelPart() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforePickModelPart() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void afterPickField() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void beforePickField() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void onStartLoop() {
+		// TODO Auto-generated method stub
+		
 	}
 
 	protected Optional<File> makeMutation(String approximationProperty,
@@ -310,6 +424,40 @@ public abstract class DebuggerAlgorithm {
 	 */
 	public List<String> findOnBorderExamples(File path) {
 		return Collections.EMPTY_LIST;
+	}
+
+	/**
+	 * Given a command, its scope is returned as String
+	 * 
+	 * @param command
+	 * @return
+	 */
+	protected String extractScopeFromCommand(Command command) {
+		boolean first = true;
+		StringBuilder sb = new StringBuilder();
+		if (command.overall >= 0 && (command.bitwidth >= 0 || command.maxseq >= 0
+				|| command.scope.size() > 0))
+			sb.append(" for ").append(command.overall).append(" but");
+		else if (command.overall >= 0)
+			sb.append(" for ").append(command.overall);
+		else if (command.bitwidth >= 0 || command.maxseq >= 0
+				|| command.scope.size() > 0)
+			sb.append(" for");
+		if (command.bitwidth >= 0) {
+			sb.append(" ").append(command.bitwidth).append(" int");
+			first = false;
+		}
+		if (command.maxseq >= 0) {
+			sb.append(first ? " " : ", ").append(command.maxseq).append(" seq");
+			first = false;
+		}
+		for (CommandScope e : command.scope) {
+			sb.append(first ? " " : ", ").append(e);
+			first = false;
+		}
+		if (command.expects >= 0)
+			sb.append(" expect ").append(command.expects);
+		return sb.toString();
 	}
 
 	/*

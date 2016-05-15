@@ -227,7 +227,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 						done();
 					}
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					//e1.printStackTrace();
 					logger.log(Level.SEVERE,
 							Utils.threadName() + "The thread is interrupted.", e1);
 				}
@@ -251,15 +251,11 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		 * create a new response message and send to the pattern analyzer
 		 */
 		protected void sendResult() {
-			System.out.println("preparing the result 1="+validResults);
 			PatternProcessedResult result = new PatternProcessedResult(param,
 					Collections.unmodifiableSet(validResults ));
-			System.out.println("preparing the result 2="+result);
 			PatternResponseMessage message = new PatternResponseMessage(result,
 					interfacE.getHostProcess());
-			System.out.println("preparing the result 3="+message);
 			interfacE.sendMessage(message);
-			System.out.println("preparing the result 4="+message);
 		}
 
 		@Override

@@ -155,12 +155,9 @@ public class Approximator {
 	}
 
 	public List<String> strongerProperties(String property) {
-		System.out.println("property->" + property);
 		// property is in the form of A[r]. so that A is pattern
 		String pattern = property.substring(0, property.indexOf("["));
-		System.out.println("pattern->" + pattern);
 		String call = property.substring(property.indexOf("["));
-		System.out.println("call->" + call);
 		return strongerPatterns(pattern).stream().map(a -> a + call)
 				.collect(Collectors.toList());
 	}
