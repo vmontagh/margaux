@@ -21,12 +21,11 @@ import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParamLazy;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.Dependency;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IffPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.TemporalPropertiesGenerator;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.VacPropertyToAlloyCode;
 import edu.uw.ece.alloy.util.Utils;
 
@@ -261,9 +260,8 @@ public class TriplePropsTester {
 		final List<Dependency> dependencies = new LinkedList<Dependency>();
 		dependencies.add(Dependency.EMPTY_DEPENDENCY.createIt(
 				new File(
-						TemporalPropertiesGenerator.relationalPropModuleOriginal.getName()),
-				Utils.readFile(TemporalPropertiesGenerator.relationalPropModuleOriginal
-						.getAbsolutePath())));
+						Configuration.getProp("relational_properties")),
+				Utils.readFile(Configuration.getProp("relational_properties"))));
 
 		final String SigDecl = "sig M,E{}\nsig S{r:M->E}";
 		final String ModuleS = "open util/ordering [S] as so";
@@ -420,9 +418,8 @@ public class TriplePropsTester {
 		final List<Dependency> dependencies = new LinkedList<Dependency>();
 		dependencies.add(Dependency.EMPTY_DEPENDENCY.createIt(
 				new File(
-						TemporalPropertiesGenerator.relationalPropModuleOriginal.getName()),
-				Utils.readFile(TemporalPropertiesGenerator.relationalPropModuleOriginal
-						.getAbsolutePath())));
+						Configuration.getProp("relational_properties")),
+				Utils.readFile(Configuration.getProp("relational_properties"))));
 
 		final String SigDecl = "sig M,E{}\nsig S{r:M->E}";
 		final String ModuleS = "open util/ordering [S] as so";
