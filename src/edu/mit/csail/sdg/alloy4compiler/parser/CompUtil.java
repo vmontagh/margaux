@@ -329,6 +329,10 @@ public final class CompUtil {
             loaded.clear();
             List<Object> seenDollar = new ArrayList<Object>();
             CompModule root = parseRecursively(seenDollar, loaded, fc, new Pos(filename,1,1), filename, null, "", thispath, initialResolutionMode);
+            // if no sigs are defined by the user, add one
+            if (root.getAllReachableUserDefinedSigs().isEmpty()) {
+                root.addGhostSig(); 
+            }
             root.seenDollar = seenDollar.size()>0;
             return CompModule.resolveAll(rep==null ? A4Reporter.NOP : rep, root);
         } catch(FileNotFoundException ex) {

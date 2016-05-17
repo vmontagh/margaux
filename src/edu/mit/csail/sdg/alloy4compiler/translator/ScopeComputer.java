@@ -37,9 +37,14 @@ import edu.mit.csail.sdg.alloy4.UniqueNameGenerator;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.CommandScope;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprCall;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprUnary.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
+import edu.mit.csail.sdg.alloy4compiler.ast.VisitQuery;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.PrimSig;
-import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
+import edu.mit.csail.sdg.alloy4compiler.ast.Type.ProductType;
 
 /** Immutable; this class computes the scopes for each sig and computes the bitwidth and maximum sequence length.
  *
@@ -65,6 +70,7 @@ import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
  *
  * <p> Please see ScopeComputer.java for the exact rules for deriving the missing scopes.
  */
+
 final class ScopeComputer {
 
     // It calls A4Solution's constructor
@@ -263,7 +269,7 @@ final class ScopeComputer {
     private ScopeComputer(A4Reporter rep, Iterable<Sig> sigs, Command cmd) throws Err {
         this.rep = rep;
         this.cmd = cmd;
-        boolean shouldUseInts = CompUtil.areIntsUsed(sigs, cmd);
+        boolean shouldUseInts = areIntsUsed(sigs, cmd);
         // Process each sig listed in the command
         for(CommandScope entry:cmd.scope) {
             Sig s = entry.sig;
@@ -319,6 +325,45 @@ final class ScopeComputer {
         for(Sig s:sigs) if (s.isTopLevel()) computeLowerBound((PrimSig)s);
         int max = max(), min = min();
         if (max >= min) for(int i=min; i<=max; i++) atoms.add(""+i);
+    }
+
+    /** Whether or not Int appears in the relation types found in these sigs */
+    private boolean areIntsUsed(Iterable<Sig> sigs, Command cmd) {
+        /* check for Int-typed relations */
+        for (Sig s : sigs) {
+            for (Field f : s.getFields()) {
+                for (ProductType pt : f.type()) {
+                    for (int k = 0; k < pt.arity(); k++) {
+                        if (pt.get(k) == SIGINT || pt.get(k) == SEQIDX)
+                            return true;
+                    }
+                }
+            }
+        }
+        /* check expressions; look for CAST2SIGING (Int[]) */
+        try {
+            Object intTriggerNode;
+            intTriggerNode = cmd.formula.accept(new VisitQuery<Object>() {                
+                @Override
+                public Object visit(ExprCall x) throws Err {
+                    // skip integer arithmetic functions, because their
+                    // arguments are always explicitly cast to SIGINT using Int[]
+                    if (x.fun.label.startsWith("integer/"))
+                        return null;
+                    return super.visit(x);
+                }
+
+                @Override
+                public Object visit(ExprUnary x) throws Err {
+                    if (x.op == Op.CAST2SIGINT)
+                        return x;                    
+                    return super.visit(x);
+                }                
+            });
+            if (intTriggerNode != null) return true;
+        } catch (Err e) {}
+        
+        return false;
     }
 
     //===========================================================================================================================//
