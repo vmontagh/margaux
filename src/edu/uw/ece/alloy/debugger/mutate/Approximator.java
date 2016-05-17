@@ -19,6 +19,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
@@ -49,32 +50,34 @@ public class Approximator {
 	final static Logger logger = Logger.getLogger(
 			Approximator.class.getName() + "--" + Thread.currentThread().getName());
 
-	final public static File RelationalPropModuleOriginal = new File(
+	final public static File RelationalPropModule = new File(
 			Configuration.getProp("relational_properties_tagged"));
-	final public static File TemporalPropModuleOriginal = new File(
+	final public static File TemporalPropModule = new File(
 			Configuration.getProp("temporal_properties_tagged"));
 	final ServerSocketInterface interfacE;
 	final ProcessDistributer processManager;
-
+	final PatternToProperty patternToProperty;
 	final File tmpLocalDirectory;
 
 	final File toBeAnalyzedCode;
-	final File relationalPropModuleOriginal;
-	final File temporalPropModuleOriginal;
+	final File relationalPropModule;
+	final File temporalPropModule;
 	final List<File> dependentFiles;
 	final List<ImplicationLattic> implications;
 
 	public Approximator(ServerSocketInterface interfacE,
-			ProcessDistributer processManager, File tmpLocalDirectory,
-			File toBeAnalyzedCode, File relationalPropModuleOriginal,
-			File temporalPropModuleOriginal, List<File> dependentFiles) {
+			ProcessDistributer processManager, PatternToProperty patternToProperty,
+			File tmpLocalDirectory, File toBeAnalyzedCode,
+			File relationalPropModuleOriginal, File temporalPropModuleOriginal,
+			List<File> dependentFiles) {
 		this.interfacE = interfacE;
 		this.processManager = processManager;
 		this.toBeAnalyzedCode = toBeAnalyzedCode;
-		this.relationalPropModuleOriginal = relationalPropModuleOriginal;
-		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
+		this.relationalPropModule = relationalPropModuleOriginal;
+		this.temporalPropModule = temporalPropModuleOriginal;
 		this.dependentFiles = new ArrayList<>(dependentFiles);
 		this.tmpLocalDirectory = tmpLocalDirectory;
+		this.patternToProperty = patternToProperty;
 
 		implications = new LinkedList<>();
 		// The BinaryImplicationLattic and TernaryImplicationLAttice are not
@@ -87,9 +90,11 @@ public class Approximator {
 	public Approximator(ServerSocketInterface interfacE,
 			ProcessDistributer processManager, File tmpLocalDirectory,
 			File toBeAnalyzedCode, List<File> dependentFiles) {
-		this(interfacE, processManager, tmpLocalDirectory, toBeAnalyzedCode,
-				RelationalPropModuleOriginal, TemporalPropModuleOriginal,
-				dependentFiles);
+		this(interfacE, processManager,
+				new PatternToProperty(RelationalPropModule, TemporalPropModule,
+						toBeAnalyzedCode, Optional.empty()),
+				tmpLocalDirectory, toBeAnalyzedCode, RelationalPropModule,
+				TemporalPropModule, dependentFiles);
 	}
 
 	/**
@@ -99,25 +104,29 @@ public class Approximator {
 	 * @param statement
 	 * @return pair.a patternNAme, pair.b property.
 	 */
+
 	public List<Pair<String, String>> strongestApproximation(Expr statement,
 			Field field, String scope) {
-		System.out.println("Start strongestApproximation");
+		return strongestApproximation(statement.toString(), field.label, scope);
+	}
+
+	public List<Pair<String, String>> strongestApproximation(String statement,
+			String fieldLabel, String scope) {
 		// Creating a request message
 		Map<String, LazyFile> files = new HashMap<>();
 
 		files.put("toBeAnalyzedCode",
 				new LazyFile(toBeAnalyzedCode.getAbsolutePath()));
 		files.put("relationalPropModuleOriginal",
-				new LazyFile(relationalPropModuleOriginal.getAbsolutePath()));
+				new LazyFile(relationalPropModule.getAbsolutePath()));
 		files.put("temporalPropModuleOriginal",
-				new LazyFile(temporalPropModuleOriginal.getAbsolutePath()));
+				new LazyFile(temporalPropModule.getAbsolutePath()));
 		for (File file : dependentFiles)
 			files.put("relationalLib", new LazyFile(file.getAbsolutePath()));
 
 		PatternProcessingParam param = new PatternProcessingParam(0,
-				tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE, field.label,
-				IfPropertyToAlloyCode.EMPTY_CONVERTOR, statement.toString(), scope,
-				files);
+				tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE, fieldLabel,
+				IfPropertyToAlloyCode.EMPTY_CONVERTOR, statement, scope, files);
 		PatternRequestMessage message = new PatternRequestMessage(
 				interfacE.getHostProcess(), param);
 
@@ -139,7 +148,7 @@ public class Approximator {
 			try {
 				do {
 					result.wait();
-					// Wait until the repone for the same session is arrived.
+					// Wait until the response for the same session is arrived.
 				} while (!result.getResult().get().getParam().getAnalyzingSessionID()
 						.equals(param.getAnalyzingSessionID()));
 			} catch (InterruptedException e) {
@@ -148,17 +157,20 @@ public class Approximator {
 		}
 		interfacE.MessageReceived.removeListener(receiveListener);
 
+		System.out.println(
+				statement + ": " + result.getResult().get().getResults().get());
+
 		return result.getResult().get().getResults().get().stream()
 				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
 						b.getParam().getAlloyCoder().get().predCallB))
 				.collect(Collectors.toList());
 	}
 
-	public List<String> strongerProperties(String property) {
+	public List<String> strongerProperties(String property, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		String pattern = property.substring(0, property.indexOf("["));
-		String call = property.substring(property.indexOf("["));
-		return strongerPatterns(pattern).stream().map(a -> a + call)
+		return strongerPatterns(pattern).stream()
+				.map(a -> patternToProperty.getProperty(a, fieldName))
 				.collect(Collectors.toList());
 	}
 
@@ -174,11 +186,11 @@ public class Approximator {
 		return Collections.unmodifiableList(result);
 	}
 
-	public List<String> weakerProperties(String property) {
+	public List<String> weakerProperties(String property, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		String pattern = property.substring(0, property.indexOf("["));
-		String call = property.substring(property.indexOf("["));
-		return weakerPatterns(pattern).stream().map(a -> a + call)
+		return weakerPatterns(pattern).stream()
+				.map(a -> patternToProperty.getProperty(a, fieldName))
 				.collect(Collectors.toList());
 	}
 

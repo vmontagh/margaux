@@ -68,7 +68,7 @@ public class PatternToProperty {
 
 	public PatternToProperty(File relationalPropModuleOriginal,
 			File temporalPropModuleOriginal, File tobeAnalyzedCode,
-			Optional<String> fieldName) throws Err {
+			Optional<String> fieldName) {
 		this.relationalPropModuleOriginal = relationalPropModuleOriginal;
 		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
 
@@ -115,35 +115,8 @@ public class PatternToProperty {
 		} catch (Err e) {
 			logger.log(Level.WARNING,
 					Utils.threadName() + "Failling to add make properties", e);
-			throw e;
+			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * Within each JVM one instance is enough
-	 * 
-	 * @param relationalPropModuleOriginal
-	 * @param temporalPropModuleOriginal
-	 * @param tobeAnalyzedCode
-	 * @return
-	 * @throws Err
-	 */
-	public static PatternToProperty initialize(File relationalPropModuleOriginal,
-			File temporalPropModuleOriginal, File tobeAnalyzedCode) throws Err {
-		if (self == null) {
-			self = new PatternToProperty(relationalPropModuleOriginal,
-					temporalPropModuleOriginal, tobeAnalyzedCode);
-		}
-		return getInstance();
-	}
-
-	public static PatternToProperty getInstance() {
-		if (self == null) {
-			logger.log(Level.SEVERE,
-					Utils.threadName() + "Failling to add make properties");
-			throw new RuntimeException("The object is not initialized.");
-		}
-		return self;
 	}
 
 	/**
@@ -167,8 +140,8 @@ public class PatternToProperty {
 			try {
 				pcb.addPropertyDeclration(func);
 			} catch (IllegalArgumentException ia) {
-				logger.log(Level.WARNING,
-						Utils.threadName() + "Failling to add a property declaration:", ia);
+				/*logger.log(Level.WARNING,
+						Utils.threadName() + "Failling to add a property declaration:", ia);*/
 			}
 			for (Field field : fields.stream().filter(f -> f.type().arity() == 2)
 					.collect(Collectors.toList())) {

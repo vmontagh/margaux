@@ -1,16 +1,16 @@
 package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.infrastructure.Runner;
+import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmRandom;
+import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByAlloy;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.InvalidParameterException;
@@ -42,6 +42,8 @@ public class DebuggerRunner extends Runner {
 	protected ServerSocketInterface distributerInterface;
 	protected RemoteProcessManager analyzerProcessManager;
 	protected Approximator approximator;
+	protected Oracle oracle;
+	protected ExampleFinder exampleFinder;
 	protected DebuggerAlgorithm debuggerAlgorithm;
 
 	protected DebuggerRunner(final File toBeAnalyzedCode,
@@ -71,7 +73,7 @@ public class DebuggerRunner extends Runner {
 					@Override
 					public void actionOn(LivenessMessage livenessMessage,
 							MessageReceivedEventArgs event) {
-						System.out.println("livenessMessage---->"+livenessMessage);
+						System.out.println("livenessMessage---->" + livenessMessage);
 						final Map<String, Object> context = new HashMap<>();
 						context.put("RemoteProcessLogger", analyzerProcessManager);
 						try {
@@ -99,8 +101,11 @@ public class DebuggerRunner extends Runner {
 				analyzerProcessManager, tmpLocalDirectory, toBeAnalyzedCode,
 				dependentFiles);
 
-		debuggerAlgorithm = new DebuggerAlgorithm(toBeAnalyzedCode, approximator) {
-		};
+		exampleFinder = new ExampleFinderByAlloy();
+		oracle = new CorrectModelOracle(toBeAnalyzedCode);
+
+		debuggerAlgorithm = new DebuggerAlgorithmRandom(toBeAnalyzedCode,
+				tmpLocalDirectory, approximator, oracle, exampleFinder);
 
 	}
 

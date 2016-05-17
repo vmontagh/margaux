@@ -41,7 +41,6 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternLivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
@@ -222,12 +221,13 @@ public final class ExpressionAnalyzerRunner extends Runner {
 								Utils.threadName() + "Next properties failed to be added.", e);
 						e.printStackTrace();
 					}
-					if (0 == generatedPropsCount
-							&& monitor.sessionIsDone(getSessionID())) {
+					if (0 == generatedPropsCount && monitor.sessionIsDone(getSessionID())
+							&& responseQueue.size() == 0) {
 						done();
 					}
+
 				} catch (InterruptedException e1) {
-					//e1.printStackTrace();
+					// e1.printStackTrace();
 					logger.log(Level.SEVERE,
 							Utils.threadName() + "The thread is interrupted.", e1);
 				}
@@ -252,7 +252,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		 */
 		protected void sendResult() {
 			PatternProcessedResult result = new PatternProcessedResult(param,
-					Collections.unmodifiableSet(validResults ));
+					Collections.unmodifiableSet(validResults));
 			PatternResponseMessage message = new PatternResponseMessage(result,
 					interfacE.getHostProcess());
 			interfacE.sendMessage(message);
@@ -488,7 +488,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 						final Map<String, Object> context = new HashMap<>();
 						context.put("RemoteProcessLogger", processManager);
 						try {
-							System.out.println("livenessMessage-E--->"+livenessMessage);
+							System.out.println("livenessMessage-E--->" + livenessMessage);
 							livenessMessage.onAction(context);
 						} catch (InvalidParameterException e) {
 							e.printStackTrace();

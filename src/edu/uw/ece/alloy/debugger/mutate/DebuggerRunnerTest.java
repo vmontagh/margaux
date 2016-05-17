@@ -6,7 +6,9 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -15,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.util.LazyFile;
@@ -94,8 +97,10 @@ public class DebuggerRunnerTest {
 
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, dependentFiles,
 				testingHost);
+
 		runner.approximator = new Approximator(runner.approximator.interfacE,
 				runner.approximator.processManager,
+				runner.approximator.patternToProperty,
 				runner.approximator.tmpLocalDirectory, toBeAnalyzedCode,
 				relationalPropModuleOriginal, temporalPropModuleOriginal,
 				dependentFiles);
@@ -123,11 +128,57 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestApproximationList() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.als");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
+		runner.debuggerAlgorithm.run();
+	}
+
+	@Test
+	public void testStrongestApproximationListMocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
+				Collections.emptyList(), testingHost);
+		runner.start();
+
+		Map<String, List<Pair<String, String>>> listProperties = new HashMap<>();
+		listProperties.put("this/lowerBoudnxt for 3", Collections.emptyList());
+
+		listProperties.put("this/acyclicnxt for 3", new ArrayList<>());
+		listProperties.get("this/acyclicnxt for 3")
+				.add(new Pair<>("acyclic", "acyclic[nxt, Node]"));
+		listProperties.get("this/acyclicnxt for 3")
+				.add(new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]"));
+		listProperties.get("this/acyclicnxt for 3")
+				.add(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"));
+
+		listProperties.put("this/structuralConstraintnxt for 3", new ArrayList<>());
+		listProperties.get("this/structuralConstraintnxt for 3")
+				.add(new Pair<>("functional", "functional[nxt, Node]"));
+		listProperties.get("this/structuralConstraintnxt for 3")
+				.add(new Pair<>("function", "function[nxt, Node]"));
+		listProperties.get("this/structuralConstraintnxt for 3")
+				.add(new Pair<>("total", "total[nxt, Node]"));
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestApproximation(String statement,
+					String fieldLabel, String scope) {
+				System.out.println(statement + fieldLabel + scope);
+				return listProperties.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
 	}
 

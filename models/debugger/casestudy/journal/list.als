@@ -3,14 +3,14 @@
 **/
 
 sig Node{
-	next:  set  Node}
+	nxt:  set  Node}
 
 pred acyclic{
-	all n: Node| !( n in n.^(next) )
+	all n: Node| !( n in n.^(nxt) )
 }
 
 pred structuralConstraint{
-	all n:Node | one n.next
+	all n:Node | one n.nxt
 }
 
 pred lowerBoud[]{
@@ -24,7 +24,7 @@ pred listModel[]{
 }
 
 pred allReachable[]{
-	some n: Node| Node = n.*(next)
+	some n: Node| Node = n.*(nxt)
 }
 
 //run genBinaryTree for 3
