@@ -226,7 +226,8 @@ public abstract class DebuggerAlgorithm {
 	public void run() {
 
 		StringBuilder report = new StringBuilder();
-
+		String reportHeader = new String();
+		
 		onStartLoop();
 		beforePickField();
 		for (DecisionQueueItem<Field> field : fieldsQueue) {
@@ -339,66 +340,72 @@ public abstract class DebuggerAlgorithm {
 						boolean outExampleIsInteded = inAndOutExamples.b.isPresent()
 								? oracle.isIntended(inAndOutExamples.b.get()) : false;
 
-						report.append("toBeingAnalyzedModelPart=")
-								.append(toBeingAnalyzedModelPart).append(",");
-						report.append("toBeingWeakenOrStrengthenedApproximation=")
-								.append(toBeingWeakenOrStrengthenedApproximation).append(",");
-						report.append("approximationProperty=")
-								.append(approximationProperty).append(",");
+						StringBuilder rowRoport = new StringBuilder();
+								
+						rowRoport.append("toBeingAnalyzedModelPart=")
+								.append("\""+toBeingAnalyzedModelPart+"\"").append(",");
+						rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
+								.append("\""+toBeingWeakenOrStrengthenedApproximation+"\"").append(",");
+						rowRoport.append("approximationProperty=")
+								.append("\""+approximationProperty+"\"").append(",");
 
-						report.append("inExamples=").append(inAndOutExamples.a.orElse(""))
+						rowRoport.append("inExamples=").append("\""+inAndOutExamples.a.orElse("")+"\"")
 								.append(",");
-						report.append("inExampleIsInteded=").append(inExampleIsInteded)
-								.append(",");
-
-						report.append("outExamples=").append(inAndOutExamples.b.orElse(""))
-								.append(",");
-						report.append("outExampleIsInteded=").append(outExampleIsInteded)
+						rowRoport.append("inExampleIsInteded=").append(inExampleIsInteded)
 								.append(",");
 
-						report.append("strengthened=").append(strengthened).append(",");
+						rowRoport.append("outExamples=").append("\""+inAndOutExamples.b.orElse("")+"\"")
+								.append(",");
+						rowRoport.append("outExampleIsInteded=").append(outExampleIsInteded)
+								.append(",");
 
-						report.append("\n");
+						rowRoport.append("strengthened=").append(strengthened).append(",");
+						
 						if (strengthened) {
 							if (inExampleIsInteded) {
 								logger.info("The model is correct so far.");
-								report.append("Error=correct,");
+								rowRoport.append("Error=correct,");
 								acceptedExamples.add(inAndOutExamples.a.get());
 							} else {
 								logger.info("The model has underconstraint issue.");
-								report.append("Error=underconstraint,");
+								rowRoport.append("Error=underconstraint,");
 								rejectedExamples.add(inAndOutExamples.a.orElse(""));
 							}
 							if (outExampleIsInteded) {
 								logger.info("The model is overconstraint issue.");
-								report.append("Error=overconstraint,");
+								rowRoport.append("Error=overconstraint,");
 								acceptedExamples.add(inAndOutExamples.b.get());
 							} else {
 								logger.info("The model is correct.");
-								report.append("Error=correct,");
+								rowRoport.append("Error=correct,");
 								rejectedExamples.add(inAndOutExamples.b.orElse(""));
 							}
 						} else {
 							if (inExampleIsInteded) {
 								logger.info("The model is in overconstraint issue");
-								report.append("Error=overconstraint,");
+								rowRoport.append("Error=overconstraint,");
 								acceptedExamples.add(inAndOutExamples.a.get());
 							} else {
 								logger.info("The model is correct.");
-								report.append("Error=correct,");
+								rowRoport.append("Error=correct,");
 								rejectedExamples.add(inAndOutExamples.a.orElse(""));
 							}
 							if (outExampleIsInteded) {
 								logger.info("The model is overconstraint issue.");
-								report.append("Error=overconstraint,");
+								rowRoport.append("Error=overconstraint,");
 								acceptedExamples.add(inAndOutExamples.b.get());
 							} else {
 								logger.info("The model is correct.");
-								report.append("Error=correct,");
+								rowRoport.append("Error=correct,");
 								rejectedExamples.add(inAndOutExamples.b.orElse(""));
 							}
 						}
 
+						String row = rowRoport.toString();
+						row = row.replaceAll("\n", " and ");
+						Pair<String, String> headerRow = Utils.extractHeader(row);
+						reportHeader = headerRow.a;
+						report.append(headerRow.b).append("\n");
 						// store the answer
 						afterInquiryOracle();
 						// Call APIs to change the priority of the next steps
@@ -410,7 +417,13 @@ public abstract class DebuggerAlgorithm {
 				beforePickField();
 		}
 		System.out.println("--------------------------");
+		System.out.println(reportHeader);
 		System.out.println(report);
+		try {
+			Util.writeAll("tmp/"+sourceFile.getName()+".csv", reportHeader + "\n" + report);
+		} catch (Err e) {
+			e.printStackTrace();
+		}
 		System.out.println("--------------------------");
 	}
 

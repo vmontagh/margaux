@@ -30,12 +30,14 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.sql.rowset.serial.SerialException;
 
 import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Pos;
 
 public class Utils {
@@ -468,6 +470,30 @@ public class Utils {
 		pb.redirectError(Redirect.INHERIT);
 
 		return pb.start();
+	}
+
+	/**
+	 * Given a row string in the form of h1=va,h2=vb,h3=vc two strings are
+	 * returned: the header: h1,h2,h3 and the row: va,vb,vc
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static Pair<String, String> extractHeader(String input) {
+		input = "," + input;
+		String pattern = ",([^,])*=";
+
+		Pattern r = Pattern.compile(pattern);
+
+		// Now create matcher object.
+		Matcher m = r.matcher(input);
+		StringBuilder header = new StringBuilder();
+		while (m.find()) {
+			header.append(m.group().replaceAll("=", ""));
+		}
+
+		return new Pair<>(header.toString(), m.replaceAll(","));
+
 	}
 
 }

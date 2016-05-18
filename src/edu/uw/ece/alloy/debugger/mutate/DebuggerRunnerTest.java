@@ -164,18 +164,10 @@ public class DebuggerRunnerTest {
 		listProperties.put("this/acyclicnxt for 3", new ArrayList<>());
 		listProperties.get("this/acyclicnxt for 3")
 				.add(new Pair<>("acyclic", "acyclic[nxt, Node]"));
-		listProperties.get("this/acyclicnxt for 3")
-				.add(new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]"));
-		listProperties.get("this/acyclicnxt for 3")
-				.add(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"));
 
 		listProperties.put("this/structuralConstraintnxt for 3", new ArrayList<>());
 		listProperties.get("this/structuralConstraintnxt for 3")
-				.add(new Pair<>("functional", "functional[nxt, Node]"));
-		listProperties.get("this/structuralConstraintnxt for 3")
 				.add(new Pair<>("function", "function[nxt, Node]"));
-		listProperties.get("this/structuralConstraintnxt for 3")
-				.add(new Pair<>("total", "total[nxt, Node]"));
 
 		Approximator approximatorMock = new Approximator(
 				runner.approximator.interfacE, runner.approximator.processManager,

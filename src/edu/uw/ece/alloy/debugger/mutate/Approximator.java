@@ -4,10 +4,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -110,6 +112,13 @@ public class Approximator {
 		return strongestApproximation(statement.toString(), field.label, scope);
 	}
 
+	/**
+	 * 
+	 * @param statement
+	 * @param fieldLabel
+	 * @param scope
+	 * @return pattern and property
+	 */
 	public List<Pair<String, String>> strongestApproximation(String statement,
 			String fieldLabel, String scope) {
 		// Creating a request message
@@ -160,10 +169,33 @@ public class Approximator {
 		System.out.println(
 				statement + ": " + result.getResult().get().getResults().get());
 
-		return result.getResult().get().getResults().get().stream()
+		return
+				filterWeakerApproximations(
+				result.getResult().get().getResults().get().stream()
 				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
 						b.getParam().getAlloyCoder().get().predCallB))
-				.collect(Collectors.toList());
+				.collect(Collectors.toList()));
+	}
+
+	/**
+	 * The ExpressionAnalyzer tries to finds the strongest properties
+	 * approximating the given expression. Since it paralyzes the computations,
+	 * some noises might be returned. The function does the weaker properties if
+	 * an stronger form of them exists in the input list.
+	 * 
+	 * @param properties
+	 * @return
+	 */
+	protected List<Pair<String, String>> filterWeakerApproximations(
+			final List<Pair<String, String>> properties) {
+		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
+		properties.stream().forEach(p->patternMap.put(p.a, p));
+		for (Pair<String, String> patternProperty : properties) {
+			for (String weakerPattern: weakerPatterns(patternProperty.a)){
+				patternMap.remove(weakerPattern);
+			}
+		}
+		return patternMap.values().stream().collect(Collectors.toList());
 	}
 
 	public List<String> strongerProperties(String pattern, String fieldName) {
