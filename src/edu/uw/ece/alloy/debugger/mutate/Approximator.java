@@ -166,9 +166,8 @@ public class Approximator {
 				.collect(Collectors.toList());
 	}
 
-	public List<String> strongerProperties(String property, String fieldName) {
+	public List<String> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
-		String pattern = property.substring(0, property.indexOf("["));
 		return strongerPatterns(pattern).stream()
 				.map(a -> patternToProperty.getProperty(a, fieldName))
 				.collect(Collectors.toList());
@@ -178,7 +177,7 @@ public class Approximator {
 		List<String> result = new ArrayList<>();
 		for (ImplicationLattic il : implications) {
 			try {
-				result.addAll(il.getNextImpliedProperties(pattern));
+				result.addAll(il.getNextRevImpliedProperties(pattern));
 			} catch (Err e) {
 				e.printStackTrace();
 			}
@@ -186,9 +185,8 @@ public class Approximator {
 		return Collections.unmodifiableList(result);
 	}
 
-	public List<String> weakerProperties(String property, String fieldName) {
+	public List<String> weakerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
-		String pattern = property.substring(0, property.indexOf("["));
 		return weakerPatterns(pattern).stream()
 				.map(a -> patternToProperty.getProperty(a, fieldName))
 				.collect(Collectors.toList());
@@ -198,7 +196,7 @@ public class Approximator {
 		List<String> result = new ArrayList<>();
 		for (ImplicationLattic il : implications) {
 			try {
-				result.addAll(il.getNextRevImpliedProperties(pattern));
+				result.addAll(il.getNextImpliedProperties(pattern));
 			} catch (Err e) {
 				e.printStackTrace();
 			}

@@ -93,6 +93,7 @@ public class CorrectModelOracle implements Oracle {
 				sourceFile.getName().replace(".als", "") + predName + ".als");
 
 		try {
+			System.out.println("newSource.getAbsolutePath()->"+newSource.getAbsolutePath());
 			Util.writeAll(newSource.getAbsolutePath(), newCode);
 		} catch (Err e) {
 			logger.severe(Utils.threadName()

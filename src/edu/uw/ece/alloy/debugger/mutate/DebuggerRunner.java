@@ -33,6 +33,7 @@ public class DebuggerRunner extends Runner {
 			Configuration.getProp("temporary_directory"));
 
 	protected final File toBeAnalyzedCode;
+	protected final File correctModel;
 	protected final List<File> dependentFiles;
 	protected final File tmpLocalDirectory;
 
@@ -46,19 +47,21 @@ public class DebuggerRunner extends Runner {
 	protected ExampleFinder exampleFinder;
 	protected DebuggerAlgorithm debuggerAlgorithm;
 
-	protected DebuggerRunner(final File toBeAnalyzedCode,
+	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
 			List<File> dependentFiles, File tmpLocalDirectory,
 			InetSocketAddress distributorSocket) {
 		this.toBeAnalyzedCode = toBeAnalyzedCode;
+		this.correctModel = correctModel;
 		this.distributorSocket = distributorSocket;
 		this.dependentFiles = dependentFiles;
 		this.tmpLocalDirectory = tmpLocalDirectory;
 		initiate();
 	}
 
-	protected DebuggerRunner(final File toBeAnalyzedCode,
+	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
 			List<File> dependentFiles, InetSocketAddress distributorSocket) {
-		this(toBeAnalyzedCode, dependentFiles, TmpDirectoryRoot, distributorSocket);
+		this(toBeAnalyzedCode, correctModel, dependentFiles, TmpDirectoryRoot,
+				distributorSocket);
 	}
 
 	@Override
@@ -102,7 +105,7 @@ public class DebuggerRunner extends Runner {
 				dependentFiles);
 
 		exampleFinder = new ExampleFinderByAlloy();
-		oracle = new CorrectModelOracle(toBeAnalyzedCode);
+		oracle = new CorrectModelOracle(correctModel);
 
 		debuggerAlgorithm = new DebuggerAlgorithmRandom(toBeAnalyzedCode,
 				tmpLocalDirectory, approximator, oracle, exampleFinder);

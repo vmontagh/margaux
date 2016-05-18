@@ -94,8 +94,10 @@ public class DebuggerRunnerTest {
 
 		List<File> dependentFiles = new ArrayList<>();
 		dependentFiles.add(relationalLib);
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/correctedlist.als");		
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, dependentFiles,
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,correctedModel, dependentFiles,
 				testingHost);
 
 		runner.approximator = new Approximator(runner.approximator.interfacE,
@@ -118,7 +120,11 @@ public class DebuggerRunnerTest {
 				"toBeAnalyzedCode.als");
 		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/correctedlist.als");		
+
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
+				correctedModel,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
@@ -130,7 +136,10 @@ public class DebuggerRunnerTest {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
 				"models/debugger/casestudy/journal/list.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/correctedlist.als");		
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
+				correctedModel,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
@@ -142,7 +151,10 @@ public class DebuggerRunnerTest {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
 				"models/debugger/casestudy/journal/list.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
+				correctedModel,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
