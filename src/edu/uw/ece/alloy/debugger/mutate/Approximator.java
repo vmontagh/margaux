@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,10 @@ import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.AndPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.InconPropertyToAlloyCode;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
@@ -107,9 +111,40 @@ public class Approximator {
 	 * @return pair.a patternNAme, pair.b property.
 	 */
 
-	public List<Pair<String, String>> strongestApproximation(Expr statement,
-			Field field, String scope) {
-		return strongestApproximation(statement.toString(), field.label, scope);
+	public List<Pair<String, String>> strongestImplicationApproximation(
+			Expr statement, Field field, String scope) {
+		return strongestImplicationApproximation(statement.toString(), field.label,
+				scope);
+	}
+
+	public List<Pair<String, String>> strongestConsistentApproximation(
+			Expr statement, Field field, String scope) {
+		return strongestConsistentApproximation(statement.toString(), field.label,
+				scope);
+	}
+
+	public List<Pair<String, String>> weakestInconsistentApproximation(
+			Expr statement, Field field, String scope) {
+		return weakestInconsistentApproximation(statement.toString(), field.label,
+				scope);
+	}
+	
+	public List<Pair<String, String>> strongestImplicationApproximation(
+			String statement, String fieldLabel, String scope) {
+		return findApproximation(statement, fieldLabel, scope,
+				IfPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
+	}
+
+	public List<Pair<String, String>> strongestConsistentApproximation(
+			String statement, String fieldLabel, String scope) {
+		return findApproximation(statement, fieldLabel, scope,
+				AndPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
+	}
+
+	public List<Pair<String, String>> weakestInconsistentApproximation(
+			String statement, String fieldLabel, String scope) {
+		return findApproximation(statement, fieldLabel, scope,
+				InconPropertyToAlloyCode.EMPTY_CONVERTOR, filterStrongerApproximations);
 	}
 
 	/**
@@ -119,8 +154,9 @@ public class Approximator {
 	 * @param scope
 	 * @return pattern and property
 	 */
-	public List<Pair<String, String>> strongestApproximation(String statement,
-			String fieldLabel, String scope) {
+	protected List<Pair<String, String>> findApproximation(String statement,
+			String fieldLabel, String scope, PropertyToAlloyCode coder,
+			Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
 		// Creating a request message
 		Map<String, LazyFile> files = new HashMap<>();
 
@@ -134,8 +170,8 @@ public class Approximator {
 			files.put("relationalLib", new LazyFile(file.getAbsolutePath()));
 
 		PatternProcessingParam param = new PatternProcessingParam(0,
-				tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE, fieldLabel,
-				IfPropertyToAlloyCode.EMPTY_CONVERTOR, statement, scope, files);
+				tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE, fieldLabel, coder,
+				statement, scope, files);
 		PatternRequestMessage message = new PatternRequestMessage(
 				interfacE.getHostProcess(), param);
 
@@ -166,14 +202,10 @@ public class Approximator {
 		}
 		interfacE.MessageReceived.removeListener(receiveListener);
 
-		System.out.println(
-				statement + ": " + result.getResult().get().getResults().get());
-
-		return
-				filterWeakerApproximations(
+		return filter.apply(
 				result.getResult().get().getResults().get().stream()
-				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
-						b.getParam().getAlloyCoder().get().predCallB))
+						.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
+								b.getParam().getAlloyCoder().get().predCallB))
 				.collect(Collectors.toList()));
 	}
 
@@ -186,17 +218,30 @@ public class Approximator {
 	 * @param properties
 	 * @return
 	 */
-	protected List<Pair<String, String>> filterWeakerApproximations(
-			final List<Pair<String, String>> properties) {
+	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterWeakerApproximations = 
+			(properties) ->{
 		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
-		properties.stream().forEach(p->patternMap.put(p.a, p));
+		properties.stream().forEach(p -> patternMap.put(p.a, p));
 		for (Pair<String, String> patternProperty : properties) {
-			for (String weakerPattern: weakerPatterns(patternProperty.a)){
+			for (String weakerPattern : weakerPatterns(patternProperty.a)) {
 				patternMap.remove(weakerPattern);
 			}
 		}
 		return patternMap.values().stream().collect(Collectors.toList());
-	}
+	};
+	
+	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterStrongerApproximations = 
+			(properties) ->{
+		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
+		properties.stream().forEach(p -> patternMap.put(p.a, p));
+		for (Pair<String, String> patternProperty : properties) {
+			for (String strongerPattern : strongerPatterns(patternProperty.a)) {
+				patternMap.remove(strongerPattern);
+			}
+		}
+		return patternMap.values().stream().collect(Collectors.toList());
+	};
+	
 
 	public List<String> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
@@ -209,7 +254,7 @@ public class Approximator {
 		List<String> result = new ArrayList<>();
 		for (ImplicationLattic il : implications) {
 			try {
-				result.addAll(il.getNextRevImpliedProperties(pattern));
+				result.addAll(il.getAllRevImpliedProperties(pattern));
 			} catch (Err e) {
 				e.printStackTrace();
 			}
@@ -228,7 +273,7 @@ public class Approximator {
 		List<String> result = new ArrayList<>();
 		for (ImplicationLattic il : implications) {
 			try {
-				result.addAll(il.getNextImpliedProperties(pattern));
+				result.addAll(il.getAllImpliedProperties(pattern));
 			} catch (Err e) {
 				e.printStackTrace();
 			}

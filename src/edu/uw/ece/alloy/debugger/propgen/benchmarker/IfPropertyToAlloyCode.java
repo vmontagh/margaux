@@ -7,7 +7,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
-import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
@@ -61,6 +60,7 @@ public class IfPropertyToAlloyCode extends PropertyToAlloyCode {
 	public String srcNameOperator() {
 		return "_IMPLY_";
 	}
+
 
 	@Override
 	String commandKeyWordBody() {

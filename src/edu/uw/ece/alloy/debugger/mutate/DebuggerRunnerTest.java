@@ -95,10 +95,10 @@ public class DebuggerRunnerTest {
 		List<File> dependentFiles = new ArrayList<>();
 		dependentFiles.add(relationalLib);
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");		
+				"models/debugger/casestudy/journal/correctedlist.als");
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,correctedModel, dependentFiles,
-				testingHost);
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				dependentFiles, testingHost);
 
 		runner.approximator = new Approximator(runner.approximator.interfacE,
 				runner.approximator.processManager,
@@ -121,10 +121,9 @@ public class DebuggerRunnerTest {
 		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");		
+				"models/debugger/casestudy/journal/correctedlist.als");
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
-				correctedModel,
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
@@ -137,9 +136,8 @@ public class DebuggerRunnerTest {
 		File toBeAnalyzedCode = new LazyFile(
 				"models/debugger/casestudy/journal/list.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");		
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
-				correctedModel,
+				"models/debugger/casestudy/journal/correctedlist.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
@@ -153,8 +151,7 @@ public class DebuggerRunnerTest {
 				"models/debugger/casestudy/journal/list.als");
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode,
-				correctedModel,
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost);
 		runner.start();
 
@@ -175,8 +172,8 @@ public class DebuggerRunnerTest {
 				runner.approximator.toBeAnalyzedCode,
 				runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestApproximation(String statement,
-					String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return listProperties.get(statement + fieldLabel + scope);
 			}

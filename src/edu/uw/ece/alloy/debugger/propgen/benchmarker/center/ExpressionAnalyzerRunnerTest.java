@@ -135,7 +135,7 @@ public class ExpressionAnalyzerRunnerTest {
 			synchronized (livenessReceived) {
 				livenessReceived.wait(2000);
 			}
-			assertTrue(0 < readynessReceived.val);
+			assertTrue(0 < livenessReceived.val);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			fail();
@@ -182,7 +182,6 @@ public class ExpressionAnalyzerRunnerTest {
 	public void testExecution(String patterns) throws Err {
 		ExpressionAnalyzerRunner runner = new ExpressionAnalyzerRunner(runnerHost,
 				testingHost);
-		runner.initiate();
 
 		testingInterface.MessageReceived
 				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {

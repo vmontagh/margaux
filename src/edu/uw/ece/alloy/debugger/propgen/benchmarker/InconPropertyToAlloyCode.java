@@ -9,15 +9,22 @@ import java.util.logging.Logger;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
-public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
+/**
+ * The Alloy coder for generating Alloy code to check if
+ * two predicates are inconsistent.
+ * @author vajih
+ *
+ */
+public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 
-	private static final long serialVersionUID = 152443632901622400L;
-	final public static AndPropertyToAlloyCode EMPTY_CONVERTOR = new AndPropertyToAlloyCode();
+	private static final long serialVersionUID = -1823724347450192446L;
+	
+	final public static InconPropertyToAlloyCode EMPTY_CONVERTOR = new InconPropertyToAlloyCode();
 	final static Logger logger = Logger
-			.getLogger(AndPropertyToAlloyCode.class.getName() + "--"
+			.getLogger(InconPropertyToAlloyCode.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
-	protected AndPropertyToAlloyCode(String predBodyA, String predBodyB,
+	protected InconPropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
 			List<Dependency> dependencies, /* AlloyProcessingParam paramCreator, */
 			String header, String scope, String field) {
@@ -25,24 +32,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				dependencies, /* paramCreator, */ header, scope, field);
 	}
 
-	/*
-	 * protected AndPropertyToAlloyCode(String predBodyA, String predBodyB, String
-	 * predCallA, String predCallB, String predNameA, String predNameB,
-	 * List<Dependency> dependencies, AlloyProcessingParam paramCreator, String
-	 * header, String scope, String field, byte[] predBodyACompressed, byte[]
-	 * predBodyBCompressed, byte[] predCallACompressed, byte[]
-	 * predCallBCompressed, byte[] predNameACompressed, byte[]
-	 * predNameBCompressed, byte[] headerComporessed, byte[] scopeCompressed,
-	 * byte[] fieldCompressed, List<Dependency> codeDependencies, Compressor.STATE
-	 * compressedStatus) { super(predBodyA, predBodyB, predCallA, predCallB,
-	 * predNameA, predNameB, dependencies, paramCreator, header, scope, field,
-	 * predBodyACompressed, predBodyBCompressed, predCallACompressed,
-	 * predCallBCompressed, predNameACompressed, predNameBCompressed,
-	 * headerComporessed, scopeCompressed, fieldCompressed, codeDependencies,
-	 * compressedStatus); }
-	 */
-
-	protected AndPropertyToAlloyCode() {
+	protected InconPropertyToAlloyCode() {
 		super();
 	}
 
@@ -58,7 +48,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	@Override
 	public String srcNameOperator() {
-		return "_AND_";
+		return "_INCON_";
 	}
 
 	@Override
@@ -77,33 +67,14 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 			String predCallA, String predCallB, String predNameA, String predNameB,
 			List<Dependency> dependencies, /* AlloyProcessingParam paramCreator, */
 			String header, String scope, String field) {
-		return new AndPropertyToAlloyCode(predBodyA, predBodyB, predCallA,
+		return new InconPropertyToAlloyCode(predBodyA, predBodyB, predCallA,
 				predCallB, predNameA, predNameB, dependencies,
 				/* paramCreator, */ header, scope, field);
 	}
 
-	/*
-	 * @Override protected PropertyToAlloyCode createIt(String predBodyA, String
-	 * predBodyB, String predCallA, String predCallB, String predNameA, String
-	 * predNameB, List<Dependency> dependencies, AlloyProcessingParam
-	 * paramCreator, String header, String scope, String field, byte[]
-	 * predBodyACompressed, byte[] predBodyBCompressed, byte[]
-	 * predCallACompressed, byte[] predCallBCompressed, byte[]
-	 * predNameACompressed, byte[] predNameBCompressed, byte[] headerComporessed,
-	 * byte[] scopeCompressed, byte[] fieldCompressed, List<Dependency>
-	 * compressedDependencies, Compressor.STATE compressedStatus) {
-	 * 
-	 * return new AndPropertyToAlloyCode(predBodyA, predBodyB, predCallA,
-	 * predCallB, predNameA, predNameB, dependencies, paramCreator, header, scope,
-	 * field, predBodyACompressed, predBodyBCompressed, predCallACompressed,
-	 * predCallBCompressed, predNameACompressed, predNameBCompressed,
-	 * headerComporessed, scopeCompressed, fieldCompressed,
-	 * compressedDependencies, compressedStatus); }
-	 */
-
 	/**
-	 * After checking a ^ b, if a ^ b is true, means the check is SAT (Found an
-	 * example): if a=E and b=Prop then allImpliedProperties Of b also has to be
+	 * After checking a ^ b, if a ^ b is false, means the check is UnSAT (not Found an
+	 * example): if a=E and b=Prop then allRevImpliedProperties Of b also has to be
 	 * returned. The return type is false. Means stop any furtherAnaylsis and take
 	 * the result as the inferred propertied else, there is a counterexample if
 	 * a=E and b=Prop then next properties implied from Prop has to be evaluated
@@ -119,12 +90,12 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				try {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
-					result.addAll(il.getAllImpliedProperties(predNameA));
+					result.addAll(il.getAllRevImpliedProperties(predNameA));
 				} catch (Err e) {}
 				try {
 					// predNameB is supposed to be the name exists in the library.
 					// otherwise it throws an exception
-					result.addAll(il.getAllImpliedProperties(predNameB));
+					result.addAll(il.getAllRevImpliedProperties(predNameB));
 				} catch (Err e) {}
 			}
 		}
@@ -140,7 +111,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				try {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
-					for (String propName : il.getAllImpliedProperties(predNameA)) {
+					for (String propName : il.getAllRevImpliedProperties(predNameA)) {
 						result.add(createIt("", this.predBodyB, "", this.predCallB,
 								propName, this.predNameB, new ArrayList<>(dependencies),
 								/* this.paramCreator, */ this.header, this.scope, this.field));
@@ -152,7 +123,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				try {
 					// predNameB is supposed to be the name exists in the library.
 					// otherwise it throws an exception
-					for (String propName : il.getAllImpliedProperties(predNameB)) {
+					for (String propName : il.getAllRevImpliedProperties(predNameB)) {
 						result.add(createIt(this.predBodyA, "", this.predCallA, "",
 								this.predNameA, propName, new ArrayList<>(dependencies),
 								/* this.paramCreator, */this.header, this.scope, this.field));
@@ -179,7 +150,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				try {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
-					result.addAll(il.getNextImpliedProperties(predNameA));
+					result.addAll(il.getNextRevImpliedProperties(predNameA));
 				} catch (Err e) {
 					logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
 							+ "Failed to getInferedSAT for " + predNameA, e);
@@ -187,7 +158,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				try {
 					// predNameB is supposed to be the name exists in the library.
 					// otherwise it throws an exception
-					result.addAll(il.getNextImpliedProperties(predNameB));
+					result.addAll(il.getNextRevImpliedProperties(predNameB));
 				} catch (Err e) {
 					logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
 							+ "Failed to getInferedSAT for " + predNameB, e);
@@ -203,7 +174,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 				.orElseThrow(() -> new RuntimeException(
 						"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {
 			try {
-				result.addAll(il.getAllSources());
+				result.addAll(il.getAllSinks());
 			} catch (Err e) {
 				logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
 						+ "Cannot find the initial properties ", e);
@@ -217,7 +188,7 @@ public class AndPropertyToAlloyCode extends PropertyToAlloyCode {
 	 * an example should be found.
 	 */
 	public boolean isDesiredSAT(int sat) {
-		return sat == 1;
+		return sat == -1;
 	}
-
+	
 }

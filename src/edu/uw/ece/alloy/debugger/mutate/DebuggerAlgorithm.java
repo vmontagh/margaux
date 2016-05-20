@@ -247,7 +247,7 @@ public abstract class DebuggerAlgorithm {
 
 				if (!approximations.containsKey(modelPart.getItem().get().toString()))
 					approximations.put(modelPart.getItem().get().toString(),
-							approximator.strongestApproximation(modelPart.getItem().get(),
+							approximator.strongestImplicationApproximation(modelPart.getItem().get(),
 									field.getItem().get(), scope));
 
 				List<Pair<String, String>> approximation = approximations

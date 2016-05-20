@@ -14,7 +14,7 @@ pred structuralConstraint{
 }
 
 pred lowerBoud[]{
-	some Node
+//	some nxt //Node
 }
 
 pred listModel[]{
@@ -24,12 +24,14 @@ pred listModel[]{
 }
 
 pred allReachable[]{
-	some n: Node| Node = n.*(nxt)
+	lone n: Node| Node = n.*(nxt)
 }
 
 //run genBinaryTree for 3
 
-run {
+//run 
+check
+{
 	(structuralConstraint and
 	acyclic and
 	lowerBoud) implies allReachable 

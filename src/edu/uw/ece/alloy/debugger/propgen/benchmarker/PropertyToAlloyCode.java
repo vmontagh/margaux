@@ -283,7 +283,7 @@ public class PropertyToAlloyCode implements Serializable {
 		source += '\n' + generatePredicateBody(predBodyA);
 		source += '\n' + generatePredicateBody(predBodyB);
 		source += '\n' + commandStatement(predCallA, predCallB);
-		source += scope;
+		source += " " + scope;
 
 		return source;
 	}
@@ -311,10 +311,11 @@ public class PropertyToAlloyCode implements Serializable {
 		throw new RuntimeException("Invalid call!");
 	}
 
+	
 	String commandStatement(final String predCallA, final String predCallB) {
 
 		final String block = commandKeyWordBody() + " " + COMMAND_BLOCK_NAME
-				+ " {\n" + predCallA + " " + commandOperator() + " " + predCallB
+				+ " {\n" + " ("  + predCallA + " " + commandOperator() + " " + predCallB + ")"
 				+ "\n}\n";
 
 		return block + commandKeyword() + " " + COMMAND_BLOCK_NAME;
