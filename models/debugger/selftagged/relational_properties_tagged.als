@@ -10,6 +10,13 @@ module relational_properties_tagged
  * author: Greg Dennis
  */
 
+pred noop[r:univ->univ]{
+}
+
+pred notempty[r:univ->univ]{
+	not empty[r]
+}
+
 /** r is empty **/
 pred empty3[r: univ -> univ -> univ]{
 	no r

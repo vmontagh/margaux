@@ -29,8 +29,7 @@ pred allReachable[]{
 
 //run genBinaryTree for 3
 
-//run 
-check
+run
 {
 	(structuralConstraint and
 	acyclic and

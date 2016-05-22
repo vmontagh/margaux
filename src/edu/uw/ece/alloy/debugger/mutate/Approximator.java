@@ -19,13 +19,16 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.Configuration;
+import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AndPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.InconExpressionToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.InconPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
@@ -109,23 +112,30 @@ public class Approximator {
 	 * 
 	 * @param statement
 	 * @return pair.a patternNAme, pair.b property.
+	 * @throws Err 
 	 */
 
 	public List<Pair<String, String>> strongestImplicationApproximation(
-			Expr statement, Field field, String scope) {
-		return strongestImplicationApproximation(statement.toString(), field.label,
+			Expr statement, Field field, String scope) throws Err {
+		return strongestImplicationApproximation(PrettyPrintExpression.makeString(statement), field.label,
 				scope);
 	}
 
 	public List<Pair<String, String>> strongestConsistentApproximation(
-			Expr statement, Field field, String scope) {
-		return strongestConsistentApproximation(statement.toString(), field.label,
+			Expr statement, Field field, String scope) throws Err {
+		return strongestConsistentApproximation(PrettyPrintExpression.makeString(statement), field.label,
 				scope);
 	}
 
 	public List<Pair<String, String>> weakestInconsistentApproximation(
-			Expr statement, Field field, String scope) {
-		return weakestInconsistentApproximation(statement.toString(), field.label,
+			Expr statement, Field field, String scope) throws Err {
+		return weakestInconsistentApproximation(PrettyPrintExpression.makeString(statement), field.label,
+				scope);
+	}
+	
+	public List<Pair<String, String>> isInconsistent(
+			Expr statement, Field field, String scope) throws Err {
+		return isInconsistent(PrettyPrintExpression.makeString(statement), field.label,
 				scope);
 	}
 	
@@ -145,6 +155,12 @@ public class Approximator {
 			String statement, String fieldLabel, String scope) {
 		return findApproximation(statement, fieldLabel, scope,
 				InconPropertyToAlloyCode.EMPTY_CONVERTOR, filterStrongerApproximations);
+	}
+	
+	public List<Pair<String, String>> isInconsistent(
+			String statement, String fieldLabel, String scope) {
+		return findApproximation(statement, fieldLabel, scope,
+				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity());
 	}
 
 	/**

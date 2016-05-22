@@ -19,6 +19,7 @@ import org.junit.Test;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristicsForList;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.util.LazyFile;
 
@@ -145,7 +146,7 @@ public class DebuggerRunnerTest {
 	}
 
 	@Test
-	public void testStrongestApproximationListMocked() throws Err {
+	public void testStrongestRandomApproximationListMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
 				"models/debugger/casestudy/journal/list.als");
@@ -183,4 +184,49 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.run();
 	}
 
+	@Test
+	public void testStrongestHeuristicApproximationListMocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/correctedlist.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost);
+		
+		// change the debugger algorithm in runner
+		runner.debuggerAlgorithm = new DebuggerAlgorithmHeuristicsForList(
+				runner.toBeAnalyzedCode,
+				runner.tmpLocalDirectory, runner.approximator, runner.oracle, runner.exampleFinder);
+		
+		runner.start();
+
+		Map<String, List<Pair<String, String>>> listProperties = new HashMap<>();
+		listProperties.put(" lowerBoud[ ]nxt for 3", Collections.emptyList());
+
+		listProperties.put(" acyclic[ ]nxt for 3", new ArrayList<>());
+		listProperties.get(" acyclic[ ]nxt for 3")
+				.add(new Pair<>("acyclic", "acyclic[nxt, Node]"));
+
+		listProperties.put(" structuralConstraint[ ]nxt for 3", new ArrayList<>());
+		listProperties.get(" structuralConstraint[ ]nxt for 3")
+				.add(new Pair<>("function", "function[nxt, Node]"));
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				System.out.println(statement + fieldLabel + scope);
+				return listProperties.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+	}
+	
 }

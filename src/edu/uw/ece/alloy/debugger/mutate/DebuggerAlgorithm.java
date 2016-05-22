@@ -113,13 +113,13 @@ public abstract class DebuggerAlgorithm {
 	final protected String scope;
 
 	// A model is a conjunction of constraints. this.constraint = model
-	final List<Expr> model;// = Collections.emptyList();
+	final protected List<Expr> model;// = Collections.emptyList();
 	// In a model in the form of M => P, P is a conjunction of constraints.
 	// constraint = model => property
-	final List<Expr> property;// = Collections.emptyList();
+	final protected List<Expr> property;// = Collections.emptyList();
 
 	// final
-	Approximator approximator;
+	protected Approximator approximator;
 	final Oracle oracle;
 	final ExampleFinder exampleFinder;
 
@@ -130,11 +130,12 @@ public abstract class DebuggerAlgorithm {
 	 * the algorithm is run. Other methods have access to this variable.
 	 */
 	Expr toBeingAnalyzedModelPart;
-	Field toBeingAnalyzedField;
+	protected Field toBeingAnalyzedField;
 	/* The rest the mode. I.e Model - toBeingAnalyzedModelPart */
 	List<Expr> restModelParts;
 	/* Mapping from What is analyzed far to its approximations */
 	final Map<String, List<Pair<String, String>>> approximations;
+	protected PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue, weakerApproxQueue;
 	/*
 	 * A PQ to determine which approximation should be fixed first. It varies at
 	 * each iteration
@@ -231,8 +232,9 @@ public abstract class DebuggerAlgorithm {
 		onStartLoop();
 		beforePickField();
 		for (DecisionQueueItem<Field> field : fieldsQueue) {
-			afterPickField();
 			toBeingAnalyzedField = field.getItem().get();
+			afterPickField();
+
 			beforePickModelPart();
 			for (DecisionQueueItem<Expr> modelPart : modelQueue) {
 				afterPickModelPart();
@@ -246,9 +248,18 @@ public abstract class DebuggerAlgorithm {
 						.collect(Collectors.joining(" and "));
 
 				if (!approximations.containsKey(modelPart.getItem().get().toString()))
-					approximations.put(modelPart.getItem().get().toString(),
-							approximator.strongestImplicationApproximation(modelPart.getItem().get(),
-									field.getItem().get(), scope));
+					try {
+						
+						List<Pair<String, String>> approximation_ = approximator.strongestImplicationApproximation(modelPart.getItem().get(),
+								field.getItem().get(), scope);
+						
+						approximations.put(modelPart.getItem().get().toString(),
+								approximation_);
+					} catch (Err e) {
+						e.printStackTrace();
+						logger.severe(Utils.threadName() + modelPart.getItem().get() + " cannot be converted to an inorder form.");
+						throw new RuntimeException(e);
+					}
 
 				List<Pair<String, String>> approximation = approximations
 						.get(modelPart.getItem().get().toString());
@@ -276,7 +287,7 @@ public abstract class DebuggerAlgorithm {
 					final List<String> strongerApprox = approximator.strongerProperties(
 							toBeingWeakenOrStrengthenedApproximation.a,
 							field.getItem().get().label);
-					final PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue = new PriorityQueue<>();
+					strongerApproxQueue = new PriorityQueue<>();
 					strongerApprox.stream().forEach(m -> strongerApproxQueue
 							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
 
@@ -285,7 +296,7 @@ public abstract class DebuggerAlgorithm {
 							field.getItem().get().label);
 					// The current pattern should also be added to the list
 					weakerApprox.add(toBeingWeakenOrStrengthenedApproximation.b);
-					final PriorityQueue<DecisionQueueItem<String>> weakerApproxQueue = new PriorityQueue<>();
+					weakerApproxQueue = new PriorityQueue<>();
 					weakerApprox.stream().forEach(m -> weakerApproxQueue
 							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
 
@@ -298,13 +309,13 @@ public abstract class DebuggerAlgorithm {
 
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
+					beforePickWeakenOrStrengthened();
 					while (!strongerApproxQueue.isEmpty()
 							|| !weakerApproxQueue.isEmpty()) {
 
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
-						beforePickWeakenOrStrengthened();
 						strengthened = true;
-						afterPickWeakenOrStrengthened();
+						
 
 						if (!weakerApproxQueue.isEmpty() && (strongerApproxQueue.isEmpty()
 								|| DecisionQueueItem.randomGenerator.nextBoolean())) {
@@ -312,6 +323,8 @@ public abstract class DebuggerAlgorithm {
 							strengthened = false;
 						}
 
+						afterPickWeakenOrStrengthened();
+						
 						beforePickWeakenOrStrengthenedApprox();
 						String approximationProperty = toBePickedQueueFromWeakenOrStrengthened
 								.poll().getItem().orElseThrow(() -> new RuntimeException(
@@ -409,6 +422,10 @@ public abstract class DebuggerAlgorithm {
 						// store the answer
 						afterInquiryOracle();
 						// Call APIs to change the priority of the next steps
+						
+						if (!strongerApproxQueue.isEmpty()
+								|| !weakerApproxQueue.isEmpty())
+							beforePickWeakenOrStrengthened();
 					}
 
 				}

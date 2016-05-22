@@ -3,16 +3,16 @@
  */
 package edu.uw.ece.alloy.debugger.mutate;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,17 +25,11 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
-import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunnerTest.NotifiableInteger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessRecord;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
-import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
@@ -171,6 +165,27 @@ public class ApproximatorTest {
 	}
 
 	@Test
+	public void testIsInconsistentExpression() throws Exception {
+
+		File toBeAnalyzedCode = testingFile;
+
+		String testContent = 
+				  "open relational_properties_tagged\n"
+				+ "sig Node{nxt:  set  Node}\n"
+				+ "pred A{ !function[nxt, Node] /*and function[nxt, Node]*/ }\n"
+				+ "pred C{some nxt and no nxt}\n" 
+				+ "run {}";
+
+		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(), testContent);
+
+		Approximator approximator = prepareApproximator(toBeAnalyzedCode,
+				tmpLocalDirectory);
+
+		print( approximator.isInconsistent("A", "nxt", "").toString() );
+		
+	}
+	
+	@Test
 	public void testStrongestConsistentApproximation() throws Exception {
 
 		File toBeAnalyzedCode = testingFile;
@@ -245,5 +260,5 @@ public class ApproximatorTest {
 					approximator.weakerPatterns(pattern));
 		}
 	}
-
+	
 }

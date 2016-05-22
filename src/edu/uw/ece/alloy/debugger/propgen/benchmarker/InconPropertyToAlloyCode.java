@@ -10,15 +10,16 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 /**
- * The Alloy coder for generating Alloy code to check if
- * two predicates are inconsistent.
+ * The Alloy coder for generating Alloy code to check if two predicates are
+ * inconsistent.
+ * 
  * @author vajih
  *
  */
 public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 
 	private static final long serialVersionUID = -1823724347450192446L;
-	
+
 	final public static InconPropertyToAlloyCode EMPTY_CONVERTOR = new InconPropertyToAlloyCode();
 	final static Logger logger = Logger
 			.getLogger(InconPropertyToAlloyCode.class.getName() + "--"
@@ -56,7 +57,6 @@ public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 		return "pred";
 	}
 
-
 	@Override
 	public boolean isSymmetric() {
 		return true;
@@ -73,13 +73,13 @@ public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 	}
 
 	/**
-	 * After checking a ^ b, if a ^ b is false, means the check is UnSAT (not Found an
-	 * example): if a=E and b=Prop then allRevImpliedProperties Of b also has to be
-	 * returned. The return type is false. Means stop any furtherAnaylsis and take
-	 * the result as the inferred propertied else, there is a counterexample if
-	 * a=E and b=Prop then next properties implied from Prop has to be evaluated
-	 * if a=Prop and b=E then next properties that implying Prop has to be
-	 * evaluated
+	 * After checking a ^ b, if a ^ b is false, means the check is UnSAT (not
+	 * Found an example): if a=E and b=Prop then allRevImpliedProperties Of b also
+	 * has to be returned. The return type is false. Means stop any
+	 * furtherAnaylsis and take the result as the inferred propertied else, there
+	 * is a counterexample if a=E and b=Prop then next properties implied from
+	 * Prop has to be evaluated if a=Prop and b=E then next properties that
+	 * implying Prop has to be evaluated
 	 */
 	public List<String> getInferedProperties(int sat) {
 		List<String> result = new ArrayList<>();
@@ -91,12 +91,14 @@ public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 					// predNameA is supposed to be the name exists in the library.
 					// otherwise it throws an exception
 					result.addAll(il.getAllRevImpliedProperties(predNameA));
-				} catch (Err e) {}
+				} catch (Err e) {
+				}
 				try {
 					// predNameB is supposed to be the name exists in the library.
 					// otherwise it throws an exception
 					result.addAll(il.getAllRevImpliedProperties(predNameB));
-				} catch (Err e) {}
+				} catch (Err e) {
+				}
 			}
 		}
 		return Collections.unmodifiableList(result);
@@ -190,5 +192,5 @@ public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 	public boolean isDesiredSAT(int sat) {
 		return sat == -1;
 	}
-	
+
 }
