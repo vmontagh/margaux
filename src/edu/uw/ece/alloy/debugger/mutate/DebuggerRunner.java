@@ -46,22 +46,26 @@ public class DebuggerRunner extends Runner {
 	protected Oracle oracle;
 	protected ExampleFinder exampleFinder;
 	protected DebuggerAlgorithm debuggerAlgorithm;
+	final protected DebuggerAlgorithm debuggerAlgorithmCreator;
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
 			List<File> dependentFiles, File tmpLocalDirectory,
-			InetSocketAddress distributorSocket) {
+			InetSocketAddress distributorSocket,
+			DebuggerAlgorithm debuggerAlgorithmCreator) {
 		this.toBeAnalyzedCode = toBeAnalyzedCode;
 		this.correctModel = correctModel;
 		this.distributorSocket = distributorSocket;
 		this.dependentFiles = dependentFiles;
 		this.tmpLocalDirectory = tmpLocalDirectory;
+		this.debuggerAlgorithmCreator = debuggerAlgorithmCreator;
 		initiate();
 	}
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
-			List<File> dependentFiles, InetSocketAddress distributorSocket) {
+			List<File> dependentFiles, InetSocketAddress distributorSocket,
+			DebuggerAlgorithm debuggerAlgorithmCreator) {
 		this(toBeAnalyzedCode, correctModel, dependentFiles, TmpDirectoryRoot,
-				distributorSocket);
+				distributorSocket, debuggerAlgorithmCreator);
 	}
 
 	@Override
@@ -107,7 +111,7 @@ public class DebuggerRunner extends Runner {
 		exampleFinder = new ExampleFinderByAlloy();
 		oracle = new CorrectModelOracle(correctModel);
 
-		debuggerAlgorithm = new DebuggerAlgorithmRandom(toBeAnalyzedCode,
+		debuggerAlgorithm = debuggerAlgorithmCreator.createIt(toBeAnalyzedCode,
 				tmpLocalDirectory, approximator, oracle, exampleFinder);
 
 	}

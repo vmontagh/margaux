@@ -26,6 +26,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
+import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.ExtractorUtils;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
@@ -135,7 +136,8 @@ public abstract class DebuggerAlgorithm {
 	List<Expr> restModelParts;
 	/* Mapping from What is analyzed far to its approximations */
 	final Map<String, List<Pair<String, String>>> approximations;
-	protected PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue, weakerApproxQueue;
+	protected PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue,
+			weakerApproxQueue;
 	/*
 	 * A PQ to determine which approximation should be fixed first. It varies at
 	 * each iteration
@@ -212,6 +214,10 @@ public abstract class DebuggerAlgorithm {
 		rejectedExamples = new HashSet<>();
 	}
 
+	protected DebuggerAlgorithm() {
+		this(Compressor.EMPTY_FILE, Compressor.EMPTY_FILE, null, null, null);
+	}
+
 	/**
 	 * Given a statement, then an strongest approximation is found and returned.
 	 * The return is a the actual call. E.g. acyclic[r]
@@ -228,7 +234,7 @@ public abstract class DebuggerAlgorithm {
 
 		StringBuilder report = new StringBuilder();
 		String reportHeader = new String();
-		
+
 		onStartLoop();
 		beforePickField();
 		for (DecisionQueueItem<Field> field : fieldsQueue) {
@@ -249,15 +255,17 @@ public abstract class DebuggerAlgorithm {
 
 				if (!approximations.containsKey(modelPart.getItem().get().toString()))
 					try {
-						
-						List<Pair<String, String>> approximation_ = approximator.strongestImplicationApproximation(modelPart.getItem().get(),
-								field.getItem().get(), scope);
-						
+
+						List<Pair<String, String>> approximation_ = approximator
+								.strongestImplicationApproximation(modelPart.getItem().get(),
+										field.getItem().get(), scope);
+
 						approximations.put(modelPart.getItem().get().toString(),
 								approximation_);
 					} catch (Err e) {
 						e.printStackTrace();
-						logger.severe(Utils.threadName() + modelPart.getItem().get() + " cannot be converted to an inorder form.");
+						logger.severe(Utils.threadName() + modelPart.getItem().get()
+								+ " cannot be converted to an inorder form.");
 						throw new RuntimeException(e);
 					}
 
@@ -315,7 +323,6 @@ public abstract class DebuggerAlgorithm {
 
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 						strengthened = true;
-						
 
 						if (!weakerApproxQueue.isEmpty() && (strongerApproxQueue.isEmpty()
 								|| DecisionQueueItem.randomGenerator.nextBoolean())) {
@@ -324,7 +331,7 @@ public abstract class DebuggerAlgorithm {
 						}
 
 						afterPickWeakenOrStrengthened();
-						
+
 						beforePickWeakenOrStrengthenedApprox();
 						String approximationProperty = toBePickedQueueFromWeakenOrStrengthened
 								.poll().getItem().orElseThrow(() -> new RuntimeException(
@@ -354,26 +361,29 @@ public abstract class DebuggerAlgorithm {
 								? oracle.isIntended(inAndOutExamples.b.get()) : false;
 
 						StringBuilder rowRoport = new StringBuilder();
-								
-						rowRoport.append("toBeingAnalyzedModelPart=")
-								.append("\""+toBeingAnalyzedModelPart+"\"").append(",");
-						rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
-								.append("\""+toBeingWeakenOrStrengthenedApproximation+"\"").append(",");
-						rowRoport.append("approximationProperty=")
-								.append("\""+approximationProperty+"\"").append(",");
 
-						rowRoport.append("inExamples=").append("\""+inAndOutExamples.a.orElse("")+"\"")
+						rowRoport.append("toBeingAnalyzedModelPart=")
+								.append("\"" + toBeingAnalyzedModelPart + "\"").append(",");
+						rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
+								.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"")
+								.append(",");
+						rowRoport.append("approximationProperty=")
+								.append("\"" + approximationProperty + "\"").append(",");
+
+						rowRoport.append("inExamples=")
+								.append("\"" + inAndOutExamples.a.orElse("") + "\"")
 								.append(",");
 						rowRoport.append("inExampleIsInteded=").append(inExampleIsInteded)
 								.append(",");
 
-						rowRoport.append("outExamples=").append("\""+inAndOutExamples.b.orElse("")+"\"")
+						rowRoport.append("outExamples=")
+								.append("\"" + inAndOutExamples.b.orElse("") + "\"")
 								.append(",");
 						rowRoport.append("outExampleIsInteded=").append(outExampleIsInteded)
 								.append(",");
 
 						rowRoport.append("strengthened=").append(strengthened).append(",");
-						
+
 						if (strengthened) {
 							if (inExampleIsInteded) {
 								logger.info("The model is correct so far.");
@@ -422,9 +432,8 @@ public abstract class DebuggerAlgorithm {
 						// store the answer
 						afterInquiryOracle();
 						// Call APIs to change the priority of the next steps
-						
-						if (!strongerApproxQueue.isEmpty()
-								|| !weakerApproxQueue.isEmpty())
+
+						if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 							beforePickWeakenOrStrengthened();
 					}
 
@@ -437,7 +446,8 @@ public abstract class DebuggerAlgorithm {
 		System.out.println(reportHeader);
 		System.out.println(report);
 		try {
-			Util.writeAll("tmp/"+sourceFile.getName()+".csv", reportHeader + "\n" + report);
+			Util.writeAll("tmp/" + sourceFile.getName() + ".csv",
+					reportHeader + "\n" + report);
 		} catch (Err e) {
 			e.printStackTrace();
 		}
@@ -601,5 +611,20 @@ public abstract class DebuggerAlgorithm {
 				+ ", constraint=" + constraint + ", model=" + model + ", property="
 				+ property + "]";
 	}
+
+	/**
+	 * Create an instance of the class. The subclasses should return their object
+	 * and types.
+	 * 
+	 * @param sourceFile
+	 * @param destinationDir
+	 * @param approximator
+	 * @param oracle
+	 * @param exampleFinder
+	 * @return
+	 */
+	public abstract DebuggerAlgorithm createIt(final File sourceFile,
+			final File destinationDir, final Approximator approximator,
+			final Oracle oracle, final ExampleFinder exampleFinder);
 
 }

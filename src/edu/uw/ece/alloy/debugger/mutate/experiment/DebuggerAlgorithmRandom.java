@@ -13,10 +13,15 @@ import edu.uw.ece.alloy.debugger.mutate.Oracle;
  */
 public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 
+	final public static DebuggerAlgorithmRandom EMPTY_ALGORITHM = new DebuggerAlgorithmRandom();
+	
 	public DebuggerAlgorithmRandom(File sourceFile, File destinationDir,
 			Approximator approximator, Oracle oracle, ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
-		// TODO Auto-generated constructor stub
+	}
+
+	public DebuggerAlgorithmRandom() {
+		super();
 	}
 
 	/*
@@ -27,8 +32,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterInquiryOracle() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -39,8 +42,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforeInquiryOracle() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -51,8 +52,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterCallingExampleFinder() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -63,8 +62,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforeCallingExampleFinder() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -74,8 +71,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterMutating() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -85,8 +80,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforeMutating() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -97,8 +90,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforePickWeakenOrStrengthenedApprox() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -109,8 +100,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterPickWeakenOrStrengthened() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -121,8 +110,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforePickWeakenOrStrengthened() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -133,8 +120,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterPickApproximation() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -146,8 +131,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforePickApproximation() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -158,8 +141,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterPickModelPart() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -170,8 +151,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforePickModelPart() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -181,8 +160,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void afterPickField() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -192,8 +169,6 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void beforePickField() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -203,8 +178,13 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected void onStartLoop() {
-		// TODO Auto-generated method stub
+	}
 
+	public DebuggerAlgorithmRandom createIt(final File sourceFile,
+			final File destinationDir, final Approximator approximator,
+			final Oracle oracle, final ExampleFinder exampleFinder) {
+		return new DebuggerAlgorithmRandom(sourceFile, destinationDir, approximator,
+				oracle, exampleFinder);
 	}
 
 }

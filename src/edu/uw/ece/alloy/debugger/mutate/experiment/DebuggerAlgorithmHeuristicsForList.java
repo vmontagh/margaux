@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
@@ -18,6 +15,8 @@ import edu.uw.ece.alloy.util.Utils;
  */
 public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
+	final public static DebuggerAlgorithmHeuristicsForList EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristicsForList();
+	
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 
@@ -25,6 +24,10 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			File destinationDir, Approximator approximator, Oracle oracle,
 			ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+	}
+
+	public DebuggerAlgorithmHeuristicsForList() {
+		super();
 	}
 
 	@Override
@@ -96,7 +99,8 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 					.isInconsistent(constraint, toBeingAnalyzedField, scope).isEmpty();
 		} catch (Err e) {
 			e.printStackTrace();
-			logger.severe(Utils.threadName() + constraint + " cannot be converted to an inorder form.");
+			logger.severe(Utils.threadName() + constraint
+					+ " cannot be converted to an inorder form.");
 			throw new RuntimeException(e);
 		}
 	}
@@ -107,6 +111,14 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	@Override
 	protected void onStartLoop() {
+	}
+
+	@Override
+	public DebuggerAlgorithmHeuristicsForList createIt(File sourceFile,
+			File destinationDir, Approximator approximator, Oracle oracle,
+			ExampleFinder exampleFinder) {
+		return new DebuggerAlgorithmHeuristicsForList(sourceFile, destinationDir,
+				approximator, oracle, exampleFinder);
 	}
 
 }

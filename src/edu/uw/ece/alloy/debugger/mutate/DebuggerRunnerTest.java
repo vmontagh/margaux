@@ -20,6 +20,7 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristicsForList;
+import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmRandom;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.util.LazyFile;
 
@@ -99,7 +100,7 @@ public class DebuggerRunnerTest {
 				"models/debugger/casestudy/journal/correctedlist.als");
 
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				dependentFiles, testingHost);
+				dependentFiles, testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 
 		runner.approximator = new Approximator(runner.approximator.interfacE,
 				runner.approximator.processManager,
@@ -125,7 +126,7 @@ public class DebuggerRunnerTest {
 				"models/debugger/casestudy/journal/correctedlist.als");
 
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost);
+				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -139,7 +140,7 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost);
+				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -153,7 +154,7 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost);
+				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		Map<String, List<Pair<String, String>>> listProperties = new HashMap<>();
@@ -192,7 +193,7 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost);
+				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
 		
 		// change the debugger algorithm in runner
 		runner.debuggerAlgorithm = new DebuggerAlgorithmHeuristicsForList(

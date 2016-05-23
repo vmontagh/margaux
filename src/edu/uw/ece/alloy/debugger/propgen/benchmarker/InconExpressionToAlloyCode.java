@@ -1,14 +1,9 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.mit.csail.sdg.alloy4.Err;
-import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 /**
  * The class is for determining whether an expression is inconsistent by itself.
