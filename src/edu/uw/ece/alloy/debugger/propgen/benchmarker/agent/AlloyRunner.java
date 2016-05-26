@@ -135,7 +135,7 @@ public final class AlloyRunner extends Runner {
 			}
 		}
 		// After deleting the temp directory create a new one.
-		if (!tmpLocalDirectory.mkdir())
+		if (!tmpLocalDirectory.mkdirs())
 			throw new RuntimeException("Can not create a new directory");
 
 		localThreadsMonitor = new ThreadMonitor(threadMonitoringInterval, 0);
