@@ -2,11 +2,14 @@ package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
@@ -20,12 +23,15 @@ import edu.uw.ece.alloy.util.Utils;
 public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	final public static DebuggerAlgorithmHeuristicsForList EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristicsForList();
+	protected final static Logger logger = Logger
+			.getLogger(DebuggerAlgorithmHeuristicsForList.class.getName() + "--"
+					+ Thread.currentThread().getName());
 
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 	// A map from an expression and weakest inconsistent properties.
-	final Map<Expr, Pair<String, String>> weakestInconsistentProps;
-	final Map<Expr, Pair<String, String>> allInconsistentProps;
+	final Map<Pair<Expr, Field>, List<Pair<String, String>>> weakestInconsistentProps;
+	final Map<Pair<Expr, Field>, List<Pair<String, String>>> allInconsistentProps;
 
 	protected DebuggerAlgorithmHeuristicsForList(File sourceFile,
 			File destinationDir, Approximator approximator, Oracle oracle,
@@ -122,6 +128,25 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	@Override
 	protected void onStartLoop() {
+		// fill in weakestInconsistentProps and allInconsistentProps
+		for (Field field : super.fields) {
+			for (Expr expr : model) {
+				Pair<Expr, Field> key = new Pair<>(expr, field);
+				if (!weakestInconsistentProps.containsKey(key)) {
+					try {
+						weakestInconsistentProps.put(key, approximator
+								.weakestInconsistentApproximation(expr, field, scope));
+					} catch (Err e) {
+						logger.severe(Utils.threadName()
+								+ " could not find incosistent properties for " + key);
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
+		System.out.println("weakestInconsistentProps->"+weakestInconsistentProps);
+		System.exit(-1);
 	}
 
 	@Override
