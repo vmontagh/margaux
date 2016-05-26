@@ -1,8 +1,12 @@
 package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
@@ -19,15 +23,22 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
+	// A map from an expression and weakest inconsistent properties.
+	final Map<Expr, Pair<String, String>> weakestInconsistentProps;
+	final Map<Expr, Pair<String, String>> allInconsistentProps;
 
 	protected DebuggerAlgorithmHeuristicsForList(File sourceFile,
 			File destinationDir, Approximator approximator, Oracle oracle,
 			ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+		weakestInconsistentProps = new HashMap<>();
+		allInconsistentProps = new HashMap<>();
 	}
 
 	protected DebuggerAlgorithmHeuristicsForList() {
 		super();
+		weakestInconsistentProps = null;
+		allInconsistentProps = null;
 	}
 
 	@Override

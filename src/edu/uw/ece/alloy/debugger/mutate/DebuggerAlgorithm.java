@@ -27,7 +27,6 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
-import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.ExtractorUtils;
@@ -136,8 +135,8 @@ public abstract class DebuggerAlgorithm {
 	protected Field toBeingAnalyzedField;
 	/* The rest the mode. I.e Model - toBeingAnalyzedModelPart */
 	List<Expr> restModelParts;
-	/* Mapping from What is analyzed far to its approximations */
-	final Map<String, List<Pair<String, String>>> approximations;
+	/* Mapping from What is analyzed so far to its approximations */
+	final Map<Pair<Expr, Field>, List<Pair<String, String>>> approximations;
 	protected PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue,
 			weakerApproxQueue;
 	/*
@@ -269,7 +268,10 @@ public abstract class DebuggerAlgorithm {
 				String restModel = restModelParts.stream().map(m -> m.toString())
 						.collect(Collectors.joining(" and "));
 
-				if (!approximations.containsKey(modelPart.getItem().get().toString()))
+				Pair<Expr, Field> approximationCacheKey = new Pair<Expr, Field>(
+						modelPart.getItem().get(), toBeingAnalyzedField);
+
+				if (!approximations.containsKey(approximationCacheKey))
 					try {
 
 						List<Pair<String, String>> approximation_ = approximator
@@ -283,8 +285,7 @@ public abstract class DebuggerAlgorithm {
 											.replace("]", "").replace(" ", ""),
 									toBeingAnalyzedModelPartString));
 						}
-						approximations.put(modelPart.getItem().get().toString(),
-								approximation_);
+						approximations.put(approximationCacheKey, approximation_);
 					} catch (Err e) {
 						e.printStackTrace();
 						logger.severe(Utils.threadName() + modelPart.getItem().get()
@@ -293,7 +294,7 @@ public abstract class DebuggerAlgorithm {
 					}
 
 				List<Pair<String, String>> approximation = approximations
-						.get(modelPart.getItem().get().toString());
+						.get(approximationCacheKey);
 
 				logger.info(Utils.threadName() + "The approximations for Expr:<"
 						+ modelPart.getItem().get() + "> is: " + approximation);
