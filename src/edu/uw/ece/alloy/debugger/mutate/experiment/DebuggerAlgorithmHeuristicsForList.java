@@ -16,17 +16,17 @@ import edu.uw.ece.alloy.util.Utils;
 public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	final public static DebuggerAlgorithmHeuristicsForList EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristicsForList();
-	
+
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 
-	public DebuggerAlgorithmHeuristicsForList(File sourceFile,
+	protected DebuggerAlgorithmHeuristicsForList(File sourceFile,
 			File destinationDir, Approximator approximator, Oracle oracle,
 			ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
 	}
 
-	public DebuggerAlgorithmHeuristicsForList() {
+	protected DebuggerAlgorithmHeuristicsForList() {
 		super();
 	}
 
@@ -92,11 +92,11 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	@Override
 	protected void afterPickField() {
-		System.out.println(constraint.toString() + " " + toBeingAnalyzedField);
 		// find out whether an expression is inconsistent by itself
 		try {
-			inconsistentExpressions = super.approximator
-					.isInconsistent(constraint, toBeingAnalyzedField, scope).isEmpty();
+
+			inconsistentExpressions = super.approximator.isInconsistent(constraint,
+					toBeingAnalyzedField, scope);
 		} catch (Err e) {
 			e.printStackTrace();
 			logger.severe(Utils.threadName() + constraint

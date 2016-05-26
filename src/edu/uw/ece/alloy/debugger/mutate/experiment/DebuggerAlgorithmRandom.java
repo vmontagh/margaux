@@ -15,7 +15,7 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 
 	final public static DebuggerAlgorithmRandom EMPTY_ALGORITHM = new DebuggerAlgorithmRandom();
 	
-	public DebuggerAlgorithmRandom(File sourceFile, File destinationDir,
+	protected DebuggerAlgorithmRandom(File sourceFile, File destinationDir,
 			Approximator approximator, Oracle oracle, ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
 	}

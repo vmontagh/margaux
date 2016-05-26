@@ -145,6 +145,22 @@ public class DebuggerRunnerTest {
 
 		runner.debuggerAlgorithm.run();
 	}
+	
+	@Test
+	public void testStrongestApproximationListConsistent() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/correctedlist.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		System.out.println(runner.debuggerAlgorithm.approximator.weakestInconsistentApproximation("acyclic", "nxt", ""));
+		
+		//runner.debuggerAlgorithm.run();
+	}
 
 	@Test
 	public void testStrongestRandomApproximationListMocked() throws Err {
@@ -196,7 +212,7 @@ public class DebuggerRunnerTest {
 				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
 		
 		// change the debugger algorithm in runner
-		runner.debuggerAlgorithm = new DebuggerAlgorithmHeuristicsForList(
+		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM.createIt(
 				runner.toBeAnalyzedCode,
 				runner.tmpLocalDirectory, runner.approximator, runner.oracle, runner.exampleFinder);
 		
@@ -228,6 +244,52 @@ public class DebuggerRunnerTest {
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
+	}
+	
+	
+	@Test
+	public void testStrongestApproximationBinaryTreeRadonom() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/binary_tree.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestApproximationBinaryTreeHeuristic() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/binary_tree.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
+	
+	
+	@Test
+	public void testStrongestApproximationBinaryTreeConsistent() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/binary_tree.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		System.out.println(runner.debuggerAlgorithm.approximator.strongestConsistentApproximation("distinctChildren", "right", ""));
+		
+		//runner.debuggerAlgorithm.run();
 	}
 	
 }

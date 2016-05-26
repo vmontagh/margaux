@@ -11,7 +11,7 @@ pred acyclic{
 }
 
 pred distinctChildren{
-	all n: Node| /*!(no left && no right) implies*/ n.right != n.left
+	all n: Node| (some n.right || some left) implies n.right != n.left
 }
 
 pred structuralConstraint{
@@ -42,17 +42,3 @@ check {
 	distinctChildren
 	lowerBoud
 } implies allReachable }for 3
-
-/*run{
-	structuralConstraint
-	acyclic
-	distinctChildren
-	lowerBoud
-}*/
-
-/*check {
-some Node implies ( distinctChildren implies left != right  )
-}
-
-run {
-not distinctChildren and acyclic}*/

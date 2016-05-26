@@ -111,7 +111,7 @@ public class Approximator {
 	 * The return is a the actual call. E.g. acyclic[r]
 	 * 
 	 * @param statement
-	 * @return pair.a patternNAme, pair.b property.
+	 * @return pair.a patternName, pair.b property.
 	 * @throws Err 
 	 */
 
@@ -133,7 +133,7 @@ public class Approximator {
 				scope);
 	}
 	
-	public List<Pair<String, String>> isInconsistent(
+	public boolean isInconsistent(
 			Expr statement, Field field, String scope) throws Err {
 		return isInconsistent(PrettyPrintExpression.makeString(statement), field.label,
 				scope);
@@ -157,10 +157,10 @@ public class Approximator {
 				InconPropertyToAlloyCode.EMPTY_CONVERTOR, filterStrongerApproximations);
 	}
 	
-	public List<Pair<String, String>> isInconsistent(
+	public boolean isInconsistent(
 			String statement, String fieldLabel, String scope) {
-		return findApproximation(statement, fieldLabel, scope,
-				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity());
+		return !findApproximation(statement, fieldLabel, scope,
+				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity()).isEmpty();
 	}
 
 	/**
@@ -218,6 +218,9 @@ public class Approximator {
 		}
 		interfacE.MessageReceived.removeListener(receiveListener);
 
+		
+		System.out.println("result:"+result.getResult().get().getResults());
+		
 		return filter.apply(
 				result.getResult().get().getResults().get().stream()
 						.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,

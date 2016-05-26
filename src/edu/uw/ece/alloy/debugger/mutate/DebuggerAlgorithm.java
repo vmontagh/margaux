@@ -2,6 +2,7 @@ package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.ExtractorUtils;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
@@ -215,7 +217,21 @@ public abstract class DebuggerAlgorithm {
 	}
 
 	protected DebuggerAlgorithm() {
-		this(Compressor.EMPTY_FILE, Compressor.EMPTY_FILE, null, null, null);
+		sourceFile = null;
+		destinationDir = null;
+		sourceCode = null;
+		fields = null;
+		constraint = null;
+		scope = null;
+		model = null;
+		property = null;
+		oracle = null;
+		exampleFinder = null;
+		fieldsQueue = null;
+		modelQueue = null;
+		approximations = null;
+		acceptedExamples = null;
+		rejectedExamples = null;
 	}
 
 	/**
@@ -259,7 +275,14 @@ public abstract class DebuggerAlgorithm {
 						List<Pair<String, String>> approximation_ = approximator
 								.strongestImplicationApproximation(modelPart.getItem().get(),
 										field.getItem().get(), scope);
-
+						if (approximation_.isEmpty()) {
+							String toBeingAnalyzedModelPartString = PrettyPrintExpression
+									.makeString(toBeingAnalyzedModelPart);
+							approximation_ = Arrays.asList(new Pair<String, String>(
+									toBeingAnalyzedModelPartString.replace("[", "")
+											.replace("]", "").replace(" ", ""),
+									toBeingAnalyzedModelPartString));
+						}
 						approximations.put(modelPart.getItem().get().toString(),
 								approximation_);
 					} catch (Err e) {
@@ -531,7 +554,10 @@ public abstract class DebuggerAlgorithm {
 
 		String approximatedProperty = new String();
 		String notApproximatedProperty = new String();
-		if (property.equals(approximationProperty)) {
+		if (toBeingAnalyzedModelPart.equals(property)) {
+			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")";
+			notApproximatedProperty = "(not " + toBeingAnalyzedModelPart + ")";
+		} else if (property.equals(approximationProperty)) {
 			approximatedProperty = "(not " + toBeingAnalyzedModelPart + " and "
 					+ property + ")";
 			notApproximatedProperty = "(not " + approximatedProperty + ")";

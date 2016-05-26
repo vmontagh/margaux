@@ -18,12 +18,6 @@ public class PropertyToAlloyCode implements Serializable {
 	final public static PropertyToAlloyCode EMPTY_CONVERTOR = new PropertyToAlloyCode();
 	final public static String COMMAND_BLOCK_NAME = "check_or_run_assert_or_preicate_name";
 
-/*	final public Compressor.STATE compressedStatus;
-
-	final byte[] predBodyACompressed, predBodyBCompressed, predCallACompressed,
-			predCallBCompressed, predNameACompressed, predNameBCompressed,
-			headerComporessed, scopeCompressed, fieldCompressed;
-*/
 	// Sources are generated here.
 
 	// template names
@@ -35,21 +29,13 @@ public class PropertyToAlloyCode implements Serializable {
 	// pair.a is the file and pair.b is the content
 	public final List<Dependency> dependencies;
 
-//	final List<Dependency> compressedDependencies;
-
-//	final AlloyProcessingParam paramCreator;
-
 	final transient List<ImplicationLattic> implications;
 
 	protected PropertyToAlloyCode(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, //AlloyProcessingParam paramCreator,
-			String header, String scope, String field/*, byte[] predBodyACompressed,
-			byte[] predBodyBCompressed, byte[] predCallACompressed,
-			byte[] predCallBCompressed, byte[] predNameACompressed,
-			byte[] predNameBCompressed, byte[] headerComporessed,
-			byte[] scopeCompressed, byte[] fieldCompressed,
-			List<Dependency> codeDependencies, Compressor.STATE compressedStatus*/) {
+			List<Dependency> dependencies, // AlloyProcessingParam paramCreator,
+			String header, String scope,
+			String field) {
 		super();
 		this.predBodyA = predBodyA;
 		this.predBodyB = predBodyB;
@@ -57,221 +43,38 @@ public class PropertyToAlloyCode implements Serializable {
 		this.predCallB = predCallB;
 		this.predNameA = predNameA;
 		this.predNameB = predNameB;
-//		this.paramCreator = paramCreator;
 		this.dependencies = new LinkedList<Dependency>();
 		dependencies.forEach(p -> this.dependencies.add(p.createItsef()));
-/*		this.compressedDependencies = new LinkedList<Dependency>();
-		codeDependencies
-				.forEach(p -> this.compressedDependencies.add(p.createItsef()));
-				*/
 		this.header = header;
 		this.scope = scope;
 		this.field = field;
-/*		this.predBodyACompressed = Arrays.copyOf(predBodyACompressed,
-				predBodyACompressed.length);
-		this.predBodyBCompressed = Arrays.copyOf(predBodyBCompressed,
-				predBodyBCompressed.length);
-		this.predCallACompressed = Arrays.copyOf(predCallACompressed,
-				predCallACompressed.length);
-		this.predCallBCompressed = Arrays.copyOf(predCallBCompressed,
-				predCallBCompressed.length);
-		this.predNameACompressed = Arrays.copyOf(predNameACompressed,
-				predNameACompressed.length);
-		this.predNameBCompressed = Arrays.copyOf(predNameBCompressed,
-				predNameBCompressed.length);
-		this.headerComporessed = Arrays.copyOf(headerComporessed,
-				headerComporessed.length);
-		this.scopeCompressed = Arrays.copyOf(scopeCompressed,
-				scopeCompressed.length);
-		this.fieldCompressed = Arrays.copyOf(fieldCompressed,
-				fieldCompressed.length);
-		System.out.println("611116");
-		this.compressedStatus = compressedStatus;
-*/
 		implications = new LinkedList<>();
-		// The BinaryImplicationLattic and TernaryImplicationLAttice are not
-		// connected
-		// to the given relational and temporal patterns stored in a request message
+		/* The BinaryImplicationLattic and TernaryImplicationLAttice are not
+		* connected to the given relational and temporal patterns stored in a request message
+		*/
 		implications.add(new BinaryImplicationLattic());
 		implications.add(new TernaryImplicationLattic());
 	}
-
-/*	protected PropertyToAlloyCode(String predBodyA, String predBodyB,
-			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, //AlloyProcessingParam paramCreator,
-			String header, String scope, String field) {
-		this(predBodyA, predBodyB, predCallA, predCallB, predNameA, predNameB,
-				dependencies, //paramCreator,
-				header, scope, field/*, Compressor.EMPTY_1D,
-				Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
-				Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
-				Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.EMPTY_LIST,
-				Compressor.STATE.DEOMPRESSED);
-	}*/
 
 	public PropertyToAlloyCode() {
 		this(Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING, Compressor.EMPTY_LIST,
-				//AlloyProcessingParam.EMPTY_PARAM, 
-				Compressor.EMPTY_STRING,
-				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING);
-	}
-
-/*	public PropertyToAlloyCode compress() throws Exception {
-
-		if (compressedStatus.equals(Compressor.STATE.COMPRESSED))
-			throw new RuntimeException("The object is already compressed.");
-
-		if (predBodyA == null)
-			throw new RuntimeException(
-					"The predBodyA is null and cannot be compressed.");
-		if (predBodyB == null)
-			throw new RuntimeException(
-					"The predBodyB is null and cannot be compressed.");
-		if (predCallA == null)
-			throw new RuntimeException(
-					"The predCallA is null and cannot be compressed.");
-		if (predCallB == null)
-			throw new RuntimeException(
-					"The predCallB is null and cannot be compressed.");
-		if (predNameA == null)
-			throw new RuntimeException(
-					"The predNameA is null and cannot be compressed.");
-		if (predNameB == null)
-			throw new RuntimeException(
-					"The predNameB is null and cannot be compressed.");
-		if (header == null)
-			throw new RuntimeException(
-					"The header is null and cannot be compressed.");
-		if (scope == null)
-			throw new RuntimeException("The scope is null and cannot be compressed.");
-		if (field == null)
-			throw new RuntimeException("The field is null and cannot be compressed.");
-
-		if (dependencies == null)
-			throw new RuntimeException(
-					"The dependencies is empty and cannot be compressed.");
-
-		final byte[] predBodyACompressed = Compressor.compress(predBodyA);
-		final byte[] predBodyBCompressed = Compressor.compress(predBodyB);
-
-		final byte[] predCallACompressed = Compressor.compress(predCallA);
-		final byte[] predCallBCompressed = Compressor.compress(predCallB);
-
-		final byte[] predNameACompressed = Compressor.compress(predNameA);
-		final byte[] predNameBCompressed = Compressor.compress(predNameB);
-
-		final byte[] headerComporessed = Compressor.compress(header);
-		final byte[] scopeCompressed = Compressor.compress(scope);
-		final byte[] fieldCompressed = Compressor.compress(field);
-
-		final List<Dependency> compressedDependencies = new LinkedList<Dependency>();
-		for (Dependency dependency : this.dependencies) {
-			compressedDependencies.add(dependency.compress());
-		}
-
-		return createIt(Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
 				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
-				Compressor.EMPTY_STRING, Compressor.EMPTY_STRING, Compressor.EMPTY_LIST,
-				this.paramCreator, Compressor.EMPTY_STRING, Compressor.EMPTY_STRING,
-				Compressor.EMPTY_STRING, predBodyACompressed, predBodyBCompressed,
-				predCallACompressed, predCallBCompressed, predNameACompressed,
-				predNameBCompressed, headerComporessed, scopeCompressed,
-				fieldCompressed, compressedDependencies, Compressor.STATE.COMPRESSED);
+				Compressor.EMPTY_STRING);
 	}
-*/
-/*
-	public PropertyToAlloyCode deCompress() throws Exception {
 
-		if (compressedStatus.equals(Compressor.STATE.DEOMPRESSED))
-			throw new RuntimeException("The object is not compressed.");
-
-		if (predBodyACompressed == null)
-			throw new RuntimeException(
-					"The predBodyACompressed is null and cannot be compressed.");
-		if (predBodyBCompressed == null)
-			throw new RuntimeException(
-					"The predBodyBCompressed is null and cannot be compressed.");
-		if (predCallACompressed == null)
-			throw new RuntimeException(
-					"The predCallACompressed is null and cannot be compressed.");
-		if (predCallBCompressed == null)
-			throw new RuntimeException(
-					"The predCallBCompressed is null and cannot be compressed.");
-		if (predNameACompressed == null)
-			throw new RuntimeException(
-					"The predNameACompressed is null and cannot be compressed.");
-		if (predNameBCompressed == null)
-			throw new RuntimeException(
-					"The predNameBCompressed is null and cannot be compressed.");
-		if (headerComporessed == null)
-			throw new RuntimeException(
-					"The headerComporessed is null and cannot be compressed.");
-		if (scopeCompressed == null)
-			throw new RuntimeException(
-					"The scopeCompressed is null and cannot be compressed.");
-		if (fieldCompressed == null)
-			throw new RuntimeException(
-					"The fieldCompressed is null and cannot be compressed.");
-		if (compressedDependencies == null)
-			throw new RuntimeException(
-					"The compressedDependencies is null and cannot be compressed.");
-
-		final String predBodyA = Compressor.decompress(predBodyACompressed);
-		final String predBodyB = Compressor.decompress(predBodyBCompressed);
-		final String predCallA = Compressor.decompress(predCallACompressed);
-		final String predCallB = Compressor.decompress(predCallBCompressed);
-		final String predNameA = Compressor.decompress(predNameACompressed);
-		final String predNameB = Compressor.decompress(predNameBCompressed);
-		final String header = Compressor.decompress(headerComporessed);
-		final String scope = Compressor.decompress(scopeCompressed);
-		final String field = Compressor.decompress(fieldCompressed);
-
-		final List<Dependency> dependencies = new LinkedList<Dependency>();
-		for (Dependency dependency : this.compressedDependencies) {
-			dependencies.add(dependency.deCompress());
-		}
-
-		return this.createIt(predBodyA, predBodyB, predCallA, predCallB, predNameA,
-				predNameB, dependencies, this.paramCreator, header, scope, field,
-				Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
-				Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
-				Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
-				Compressor.EMPTY_LIST, Compressor.STATE.DEOMPRESSED);
-	}
-*/
-	
 	public PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
 			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, //AlloyProcessingParam paramCreator,
+			List<Dependency> dependencies, // AlloyProcessingParam paramCreator,
 			String header, String scope, String field) {
 		throw new RuntimeException("Invalid call!");
 	}
-/*
-	protected PropertyToAlloyCode createIt(String predBodyA, String predBodyB,
-			String predCallA, String predCallB, String predNameA, String predNameB,
-			List<Dependency> dependencies, AlloyProcessingParam paramCreator,
-			String header, String scope, String field, byte[] predBodyACompressed,
-			byte[] predBodyBCompressed, byte[] predCallACompressed,
-			byte[] predCallBCompressed, byte[] predNameACompressed,
-			byte[] predNameBCompressed, byte[] headerComporessed,
-			byte[] scopeCompressed, byte[] fieldCompressed,
-			List<Dependency> compressedDependencies,
-			Compressor.STATE compressedStatus) {
-		throw new RuntimeException("Invalid call!");
-	}*/
 
 	public PropertyToAlloyCode createItself() {
-		PropertyToAlloyCode result = createIt(this.predBodyA, this.predBodyB, this.predCallA,
-				this.predCallB, this.predNameA, this.predNameB, this.dependencies,
-				//this.paramCreator, 
-				this.header, this.scope, this.field
-/*				,this.predBodyACompressed, this.predBodyBCompressed,
-				this.predCallACompressed, this.predCallBCompressed,
-				this.predNameACompressed, this.predNameBCompressed,
-				this.headerComporessed, this.scopeCompressed, this.fieldCompressed,
-				this.compressedDependencies, compressedStatus*/);
+		PropertyToAlloyCode result = createIt(this.predBodyA, this.predBodyB,
+				this.predCallA, this.predCallB, this.predNameA, this.predNameB,
+				this.dependencies, this.header, this.scope, this.field);
 		return result;
 	}
 
@@ -311,12 +114,11 @@ public class PropertyToAlloyCode implements Serializable {
 		throw new RuntimeException("Invalid call!");
 	}
 
-	
 	String commandStatement(final String predCallA, final String predCallB) {
 
 		final String block = commandKeyWordBody() + " " + COMMAND_BLOCK_NAME
-				+ " {\n" + " ("  + predCallA + " " + commandOperator() + " " + predCallB + ")"
-				+ "\n}\n";
+				+ " {\n" + " (" + predCallA + " " + commandOperator() + " " + predCallB
+				+ ")" + "\n}\n";
 
 		return block + commandKeyword() + " " + COMMAND_BLOCK_NAME;
 	}
@@ -329,13 +131,6 @@ public class PropertyToAlloyCode implements Serializable {
 		return destName();
 	}
 
-/*	public AlloyProcessingParam generate(UUID sessionId) {
-
-		int priority = 0;
-		return paramCreator.createIt(sessionId, this, priority,
-				paramCreator.getTmpLocalDirectory().orElse(Compressor.EMPTY_FILE));
-	}
-*/
 	public String srcName() {
 		return predNameA + srcNameOperator() + predNameB + ".als";
 	}
@@ -365,9 +160,8 @@ public class PropertyToAlloyCode implements Serializable {
 		}
 
 		result = prime * result + ((header == null) ? 0 : header.hashCode());
-/*		result = prime * result
-				+ ((paramCreator == null) ? 0 : paramCreator.hashCode());
-*/		result = prime * result + ((predBodyA == null) ? 0 : predBodyA.hashCode());
+		result = prime * result
+				+ ((predBodyA == null) ? 0 : predBodyA.hashCode());
 		result = prime * result + ((predBodyB == null) ? 0 : predBodyB.hashCode());
 		result = prime * result + ((predCallA == null) ? 0 : predCallA.hashCode());
 		result = prime * result + ((predCallB == null) ? 0 : predCallB.hashCode());
@@ -376,24 +170,7 @@ public class PropertyToAlloyCode implements Serializable {
 		result = prime * result + ((scope == null) ? 0 : scope.hashCode());
 		result = prime * result + ((field == null) ? 0 : field.hashCode());
 
-/*		if (compressedDependencies != null) {
-			for (Dependency dependency : compressedDependencies) {
-				result = prime * result
-						+ ((dependency == null) ? 0 : dependency.hashCode());
-			}
-		}
-
-		result = prime * result + Arrays.hashCode(headerComporessed);
-		result = prime * result + compressedStatus.hashCode();
-		result = prime * result + Arrays.hashCode(predBodyACompressed);
-		result = prime * result + Arrays.hashCode(predBodyBCompressed);
-		result = prime * result + Arrays.hashCode(predCallACompressed);
-		result = prime * result + Arrays.hashCode(predCallBCompressed);
-		result = prime * result + Arrays.hashCode(predNameACompressed);
-		result = prime * result + Arrays.hashCode(predNameBCompressed);
-		result = prime * result + Arrays.hashCode(scopeCompressed);
-		result = prime * result + Arrays.hashCode(fieldCompressed);
-*/		return result;
+	  return result;
 	}
 
 	protected boolean isEqual(PropertyToAlloyCode other) {
@@ -409,30 +186,12 @@ public class PropertyToAlloyCode implements Serializable {
 			}
 		}
 
-/*		if (compressedDependencies == null) {
-			if (other.compressedDependencies != null)
-				return false;
-		} else {
-			if (compressedDependencies.size() != other.compressedDependencies.size())
-				return false;
-			for (int i = 0; i < compressedDependencies.size(); ++i) {
-				if (!compressedDependencies.get(i)
-						.equals(other.compressedDependencies.get(i)))
-					return false;
-			}
-		}*/
-
 		if (header == null) {
 			if (other.header != null)
 				return false;
 		} else if (!header.equals(other.header))
 			return false;
-/*		if (paramCreator == null) {
-			if (other.paramCreator != null)
-				return false;
-		} else if (!paramCreator.equals(other.paramCreator))
-			return false;
-*/		if (predBodyA == null) {
+		if (predBodyA == null) {
 			if (other.predBodyA != null)
 				return false;
 		} else if (!predBodyA.equals(other.predBodyA))
@@ -473,27 +232,6 @@ public class PropertyToAlloyCode implements Serializable {
 		} else if (!field.equals(other.field))
 			return false;
 
-/*		if (!Arrays.equals(headerComporessed, other.headerComporessed))
-			return false;
-		if (!compressedStatus.equals(other.compressedStatus))
-			return false;
-		if (!Arrays.equals(predBodyACompressed, other.predBodyACompressed))
-			return false;
-		if (!Arrays.equals(predBodyBCompressed, other.predBodyBCompressed))
-			return false;
-		if (!Arrays.equals(predCallACompressed, other.predCallACompressed))
-			return false;
-		if (!Arrays.equals(predCallBCompressed, other.predCallBCompressed))
-			return false;
-		if (!Arrays.equals(predNameACompressed, other.predNameACompressed))
-			return false;
-		if (!Arrays.equals(predNameBCompressed, other.predNameBCompressed))
-			return false;
-		if (!Arrays.equals(scopeCompressed, other.scopeCompressed))
-			return false;
-		if (!Arrays.equals(fieldCompressed, other.fieldCompressed))
-			return false;
-*/
 		return true;
 	}
 
@@ -552,23 +290,12 @@ public class PropertyToAlloyCode implements Serializable {
 	 */
 	public String getPredName() {
 		return predNameA + commandOperator() + predNameB;
-
-		/*
-		 * (predCallA.indexOf("___") >= 0 ? predCallA.substring(0,
-		 * predCallA.indexOf("___")) : predCallA) + commandOperator() +
-		 * (predCallB.indexOf("___") >= 0 ? predCallB.substring(0,
-		 * predCallB.indexOf("___")) : predCallB);
-		 */
 	}
 
 	public List<Dependency> getDependencies() {
 		return Collections.unmodifiableList(dependencies);
 	}
 
-/*	public AlloyProcessingParam getParamCreator() {
-		return this.paramCreator.createItself();
-	}
-*/
 	/**
 	 * What would be the desired sat answer for the property to be checked. sat ==
 	 * 1 SAT sat == -1 UnSAT sat == 0 Unknown

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.sun.javafx.fxml.expression.UnaryExpression;
+
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary;
@@ -72,6 +74,26 @@ public class Decompose {
 			tmpExpr = ((ExprUnary) tmpExpr).sub;
 		}
 
+		// if the check is in the form of P=Q, then the given formula is
+		// in the form of !(P=>Q) in order to find counter example.
+
+		System.out.println("before:" + tmpExpr);
+		
+		if ((tmpExpr instanceof ExprUnary)
+				&& (((ExprUnary) tmpExpr).op.equals(ExprUnary.Op.NOT))) {
+			tmpExpr = ((ExprUnary) tmpExpr).sub;
+		}
+		System.out.println("after1:" + tmpExpr);
+
+
+		while ((tmpExpr instanceof ExprUnary)
+				&& (((ExprUnary) tmpExpr).op.equals(ExprUnary.Op.NOOP))) {
+			tmpExpr = ((ExprUnary) tmpExpr).sub;
+		}
+		
+		System.out.println("after2:" + tmpExpr);
+		
+		
 		if (!(tmpExpr instanceof ExprBinary)
 				|| !(((ExprBinary) tmpExpr).op.equals(ExprBinary.Op.IMPLIES))) {
 			throw new RuntimeException(
