@@ -133,7 +133,7 @@ public class Approximator {
 				scope);
 	}
 	
-	public boolean isInconsistent(
+	public Boolean isInconsistent(
 			Expr statement, Field field, String scope) throws Err {
 		return isInconsistent(PrettyPrintExpression.makeString(statement), field.label,
 				scope);
@@ -157,7 +157,7 @@ public class Approximator {
 				InconPropertyToAlloyCode.EMPTY_CONVERTOR, filterStrongerApproximations);
 	}
 	
-	public boolean isInconsistent(
+	public Boolean isInconsistent(
 			String statement, String fieldLabel, String scope) {
 		return !findApproximation(statement, fieldLabel, scope,
 				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity()).isEmpty();
