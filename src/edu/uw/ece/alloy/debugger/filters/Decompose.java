@@ -77,23 +77,16 @@ public class Decompose {
 		// if the check is in the form of P=Q, then the given formula is
 		// in the form of !(P=>Q) in order to find counter example.
 
-		System.out.println("before:" + tmpExpr);
-		
 		if ((tmpExpr instanceof ExprUnary)
 				&& (((ExprUnary) tmpExpr).op.equals(ExprUnary.Op.NOT))) {
 			tmpExpr = ((ExprUnary) tmpExpr).sub;
 		}
-		System.out.println("after1:" + tmpExpr);
-
 
 		while ((tmpExpr instanceof ExprUnary)
 				&& (((ExprUnary) tmpExpr).op.equals(ExprUnary.Op.NOOP))) {
 			tmpExpr = ((ExprUnary) tmpExpr).sub;
 		}
-		
-		System.out.println("after2:" + tmpExpr);
-		
-		
+
 		if (!(tmpExpr instanceof ExprBinary)
 				|| !(((ExprBinary) tmpExpr).op.equals(ExprBinary.Op.IMPLIES))) {
 			throw new RuntimeException(

@@ -53,8 +53,6 @@ public class RemoteProcessManager /*
 
 	public final static int MaxFeedThreashold = Integer
 			.valueOf(Configuration.getProp("max_feed_treashold"));
-	final static int ProccessNumber = Integer
-			.parseInt(Configuration.getProp("processes_number"));
 
 	final public InetSocketAddress localSocket;
 	final public int maxActiveProcessNumbers;
@@ -74,23 +72,23 @@ public class RemoteProcessManager /*
 	final ConcurrentMap<RemoteProcess, RemoteProcessRecord> deadProcesses = new ConcurrentHashMap<>();
 
 	public RemoteProcessManager(InetSocketAddress localSocket,
-			Class<?> remoteRunnerClass) {
+			Class<?> remoteRunnerClass, int proccessNumber) {
 		// InetSocketAddress is immutable.
-		this(localSocket, ProccessNumber, MaxFeedThreashold, remoteRunnerClass);
+		this(localSocket, proccessNumber, MaxFeedThreashold, remoteRunnerClass);
 	}
 
-	public RemoteProcessManager(Class<?> remoteRunnerClass) {
-		this(ProcessorUtil.findEmptyLocalSocket(), ProccessNumber,
+	public RemoteProcessManager(Class<?> remoteRunnerClass, int proccessNumber) {
+		this(ProcessorUtil.findEmptyLocalSocket(), proccessNumber,
 				MaxFeedThreashold, remoteRunnerClass);
 	}
 
 	public RemoteProcessManager() {
-		this(ProcessorUtil.findEmptyLocalSocket(), ProccessNumber,
+		this(ProcessorUtil.findEmptyLocalSocket(), 0,
 				MaxFeedThreashold, null);
 	}
 
-	public RemoteProcessManager(InetSocketAddress localSocket) {
-		this(localSocket, ProccessNumber, MaxFeedThreashold, null);
+	public RemoteProcessManager(InetSocketAddress localSocket, int proccessNumber) {
+		this(localSocket, proccessNumber, MaxFeedThreashold, null);
 	}
 
 	public RemoteProcessManager(InetSocketAddress localSocket,
@@ -433,7 +431,9 @@ public class RemoteProcessManager /*
 	 * @throws IOException
 	 */
 	public void addProcess() throws IOException {
-		addProcess(new RemoteProcess(ProcessorUtil.findEmptyLocalSocket()));
+		
+		RemoteProcess emptyPort = new RemoteProcess(ProcessorUtil.findEmptyLocalSocket());
+		addProcess(emptyPort);
 	}
 
 	/**

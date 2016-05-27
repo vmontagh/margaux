@@ -289,6 +289,9 @@ public final class ExpressionAnalyzerRunner extends Runner {
 			.parseLong(Configuration.getProp("self_monitor_interval"));
 	final public static String TemporaryLocalDirectory = Configuration
 			.getProp("temporary_directory");
+	final static int ProccessNumber = Integer
+			.parseInt(Configuration.getProp("alloy_processes_number"));
+
 
 	protected final static Logger logger = Logger
 			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--"
@@ -350,7 +353,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 	protected ExpressionAnalyzerRunner(InetSocketAddress localSocket,
 			InetSocketAddress remoteSocket) {
-		this(localSocket, remoteSocket, ProcessorUtil.findEmptyLocalSocket(),
+		this(localSocket, remoteSocket, ProcessorUtil.findEmptyLocalSocket(localSocket.getPort()),
 				new File(TemporaryLocalDirectory), PriodicalMonitoringThreadsReportInMS,
 				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry,
 				Executors.newFixedThreadPool(10));
@@ -530,7 +533,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		backlogFeedingQueue = new Queue<>();
 
 		processManager = new RemoteProcessManager(
-				distributerInterface.getHostProcess().address, AlloyRunner.class);
+				distributerInterface.getHostProcess().address, AlloyRunner.class, ProccessNumber);
 		feeder = new Feeder<AlloyProcessingParam>(processManager,
 				distributerInterface, feedingQueue, backlogFeedingQueue) {
 			@Override

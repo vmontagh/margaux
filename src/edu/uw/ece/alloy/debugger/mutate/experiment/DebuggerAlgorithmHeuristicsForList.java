@@ -144,8 +144,8 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 				}
 			}
 		}
-		
-		System.out.println("weakestInconsistentProps->"+weakestInconsistentProps);
+
+		System.out.println("weakestInconsistentProps->" + weakestInconsistentProps);
 		System.exit(-1);
 	}
 

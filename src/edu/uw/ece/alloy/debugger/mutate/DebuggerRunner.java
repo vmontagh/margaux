@@ -31,7 +31,9 @@ public class DebuggerRunner extends Runner {
 
 	final public static File TmpDirectoryRoot = new File(
 			Configuration.getProp("temporary_directory"));
-
+	final static int ProccessNumber = Integer
+			.parseInt(Configuration.getProp("analyzer_processes_number"));
+	
 	protected final File toBeAnalyzedCode;
 	protected final File correctModel;
 	protected final List<File> dependentFiles;
@@ -73,7 +75,7 @@ public class DebuggerRunner extends Runner {
 
 		distributerInterface = new ServerSocketInterface(distributorSocket);
 		analyzerProcessManager = new RemoteProcessManager(distributorSocket,
-				ExpressionAnalyzerRunner.class);
+				ExpressionAnalyzerRunner.class, ProccessNumber);
 		// Livensess or readyness message message is received from a remote process.
 		distributerInterface.MessageReceived
 				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {

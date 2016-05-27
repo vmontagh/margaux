@@ -17,20 +17,113 @@ public class ProcessorUtil {
 	protected final static Logger logger = Logger.getLogger(
 			ProcessorUtil.class.getName() + "--" + Thread.currentThread().getName());;
 
-	public final static int MaxPortNumber = Integer
-			.valueOf(Configuration.getProp("max_port"));
-	public final static int MinPortNumber = Integer
-			.valueOf(Configuration.getProp("min_port"));
-	public final static int MaxTryPort = 10000000;
+	public static class EmptySocketFinder {
 
-	static int lastFoundPort = MinPortNumber;
+		public final static int MaxPortNumber = Integer
+				.valueOf(Configuration.getProp("max_port"));
+		public final static int MinPortNumberOffset = Integer
+				.valueOf(Configuration.getProp("min_port_offset"));
+		public final static int MinPortNumber = Integer
+				.valueOf(Configuration.getProp("min_port"));
+		public final static int MaxTryPort = 10000000;
 
-	public ProcessorUtil() {
+		protected final int minPort;
+		protected final int maxPort;
+
+		protected int lastFoundPort = Integer.MIN_VALUE;
+
+		protected EmptySocketFinder(int startingPort, int minPortOffset,
+				int maxPort) {
+			this.minPort = startingPort
+					+ (startingPort % minPortOffset) * minPortOffset;
+			this.maxPort = maxPort;
+			this.lastFoundPort = this.minPort;
+		}
+
+		public boolean available(int port) {
+			if (port < minPort || port > maxPort) {
+				throw new IllegalArgumentException("Invalid start port: " + port);
+			}
+
+			AsynchronousServerSocketChannel channel = null;
+			try {
+				channel = AsynchronousServerSocketChannel.open().bind(
+						new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(),
+								port));
+				return true;
+			} catch (IOException e) {
+				logger.info(
+						Utils.threadName() + "Port cannot be used: " + e.getMessage());
+			} finally {
+				if (channel != null) {
+					try {
+						channel.close();
+					} catch (IOException e) {
+						/* should not be thrown */
+						logger.severe(Utils.threadName() + "Open port '" + port
+								+ "' cannot be closed: " + e.getMessage());
+					}
+				}
+			}
+
+			return false;
+		}
+
+		/**
+		 * This function may return already used ports. So the history in
+		 * sentMessagesCounter should be cleaned.
+		 * 
+		 * @return
+		 */
+		public synchronized InetSocketAddress findEmptyLocalSocket(
+				final InetAddress localAddress) {
+			int port = lastFoundPort;
+			int tmpPort = lastFoundPort - minPort + 1;
+
+			int findPortTriesMax = 1;
+
+			while (++findPortTriesMax < MaxTryPort) {
+				tmpPort = (tmpPort + 1) % (maxPort
+						- minPort);/*
+											  * The range is an odd number so the second round it
+											  * iterates the other sent of numbers.
+											  */
+				int actualport = tmpPort + minPort;
+
+				if (available(actualport)) {
+					port = actualport;
+					break;
+				}
+			}
+
+			if (port == lastFoundPort) {
+				throw new RuntimeException("No port available");
+			}
+
+			lastFoundPort = port;
+			return new InetSocketAddress(localAddress, lastFoundPort);
+		}
 	}
 
-	public static InetSocketAddress findEmptyLocalSocket() {
+	protected static EmptySocketFinder socketFinder = null;
+
+	/**
+	 * Only the first initialization is considered. The rest will be ignored.
+	 * 
+	 * @param initialPort
+	 * @return
+	 */
+	public static synchronized InetSocketAddress findEmptyLocalSocket(
+			int initialPort) {
+
+		if (null == socketFinder) {
+			socketFinder = new EmptySocketFinder(initialPort,
+					EmptySocketFinder.MinPortNumberOffset,
+					EmptySocketFinder.MaxPortNumber);
+		}
+
 		try {
-			return findEmptyLocalSocket(
+			return socketFinder.findEmptyLocalSocket(
 					InetAddress.getByName(InetAddress.getLocalHost().getHostAddress()));
 		} catch (UnknownHostException e) {
 			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
@@ -40,69 +133,8 @@ public class ProcessorUtil {
 		}
 	}
 
-	public static boolean available(int port) {
-		if (port < MinPortNumber || port > MaxPortNumber) {
-			throw new IllegalArgumentException("Invalid start port: " + port);
-		}
-
-		AsynchronousServerSocketChannel channel = null;
-		try {
-			channel = AsynchronousServerSocketChannel.open().bind(
-					new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(),
-							port));
-			return true;
-		} catch (IOException e) {
-			logger
-					.info(Utils.threadName() + "Port cannot be used: " + e.getMessage());
-		} finally {
-			if (channel != null) {
-				try {
-					channel.close();
-				} catch (IOException e) {
-					/* should not be thrown */
-					logger.severe(Utils.threadName() + "Opne port '" + port
-							+ "' cannot be closed: " + e.getMessage());
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * This function may return already used ports. So the history in
-	 * sentMessagesCounter should be cleaned.
-	 * 
-	 * @return
-	 */
-	public synchronized static InetSocketAddress findEmptyLocalSocket(
-			final InetAddress localAddress) {
-		int port = lastFoundPort;
-		int tmpPort = lastFoundPort - MinPortNumber + 1;
-
-		int findPortTriesMax = 1;
-
-		while (++findPortTriesMax < MaxTryPort) {
-			tmpPort = (tmpPort + 2) % (MaxPortNumber
-					- MinPortNumber);/*
-													  * The range is an odd number so the second round it
-													  * iterates the other sent of numbers.
-													  */
-			int actualport = tmpPort + MinPortNumber;
-
-			if (available(actualport)) {
-				port = actualport;
-				break;
-			}
-
-		}
-
-		if (port == lastFoundPort) {
-			throw new RuntimeException("No port available");
-		}
-
-		lastFoundPort = port;
-		return new InetSocketAddress(localAddress, lastFoundPort);
+	public static InetSocketAddress findEmptyLocalSocket() {
+		return findEmptyLocalSocket(EmptySocketFinder.MinPortNumber);
 	}
 
 	/**
