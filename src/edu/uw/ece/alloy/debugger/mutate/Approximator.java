@@ -151,10 +151,20 @@ public class Approximator {
 				AndPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
 	}
 
+	StringBuilder sb = new StringBuilder("Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();\n");
+	
 	public List<Pair<String, String>> weakestInconsistentApproximation(
 			String statement, String fieldLabel, String scope) {
-		return findApproximation(statement, fieldLabel, scope,
+		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel, scope,
 				InconPropertyToAlloyCode.EMPTY_CONVERTOR, filterStrongerApproximations);
+
+		// Converting to Cache.
+		String key = statement + fieldLabel + scope;
+		sb.append("weakestIncon.put(\"").append(key).append("\", Arrays.asList(").append(
+		approx.stream().map(p-> "new Pair<>(\""+p.a+"\", \""+p.b+"\")").collect(Collectors.joining(", "))).append("));\n");
+		System.out.println(sb);
+		
+		return approx;
 	}
 	
 	public Boolean isInconsistent(
@@ -262,10 +272,10 @@ public class Approximator {
 	};
 	
 
-	public List<String> strongerProperties(String pattern, String fieldName) {
+	public List<Pair<String, String>> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		return strongerPatterns(pattern).stream()
-				.map(a -> patternToProperty.getProperty(a, fieldName))
+				.map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName)))
 				.collect(Collectors.toList());
 	}
 

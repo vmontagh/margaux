@@ -54,7 +54,7 @@ public abstract class DebuggerAlgorithm {
 	 *
 	 * @param <T>
 	 */
-	protected static class DecisionQueueItem<T> implements
+	public static class DecisionQueueItem<T> implements
 			Comparator<DecisionQueueItem<T>>, Comparable<DecisionQueueItem<T>> {
 		// higher score is more probable to be processed first.
 		Integer score;
@@ -316,12 +316,12 @@ public abstract class DebuggerAlgorithm {
 					afterPickApproximation();
 					toBeingWeakenOrStrengthenedApproximation = approx.getItem().get();
 
-					final List<String> strongerApprox = approximator.strongerProperties(
+					final List<Pair<String,String>> strongerApprox = approximator.strongerProperties(
 							toBeingWeakenOrStrengthenedApproximation.a,
 							field.getItem().get().label);
 					strongerApproxQueue = new PriorityQueue<>();
 					strongerApprox.stream().forEach(m -> strongerApproxQueue
-							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
+							.add(DecisionQueueItem.<String> createwithRandomPriority(m.b)));
 
 					final List<String> weakerApprox = approximator.weakerProperties(
 							toBeingWeakenOrStrengthenedApproximation.a,

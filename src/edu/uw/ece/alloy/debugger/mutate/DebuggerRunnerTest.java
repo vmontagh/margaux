@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -229,6 +230,11 @@ public class DebuggerRunnerTest {
 		listProperties.get(" structuralConstraint[ ]nxt for 3")
 				.add(new Pair<>("function", "function[nxt, Node]"));
 
+		Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();
+		weakestIncon.put(" structuralConstraint[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		weakestIncon.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
+		weakestIncon.put(" lowerBoud[ ]nxt for 3", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		
 		Approximator approximatorMock = new Approximator(
 				runner.approximator.interfacE, runner.approximator.processManager,
 				runner.approximator.tmpLocalDirectory,
@@ -240,6 +246,12 @@ public class DebuggerRunnerTest {
 				System.out.println(statement + fieldLabel + scope);
 				return listProperties.get(statement + fieldLabel + scope);
 			}
+			
+			@Override
+					public List<Pair<String, String>> weakestInconsistentApproximation(
+							String statement, String fieldLabel, String scope) {
+						return weakestIncon.get(statement+ fieldLabel+ scope);
+					}
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;

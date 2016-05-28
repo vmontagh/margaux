@@ -1,9 +1,11 @@
 package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -14,6 +16,7 @@ import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
 import edu.uw.ece.alloy.debugger.mutate.Oracle;
+import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm.DecisionQueueItem;
 import edu.uw.ece.alloy.util.Utils;
 
 /**
@@ -88,7 +91,36 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			// emptying the strongerApproxQueue prevents any strengthening
 			strongerApproxQueue.clear();
 		}
+		
+		// RULE: any approximation that is inconsistent with other expressions should be 
+		// removed or has lower priority.
+		PriorityQueue<DecisionQueueItem<String>> newStrongerApproxQueue = new PriorityQueue<>();
+		for (DecisionQueueItem<String> prop: strongerApproxQueue){
+			if (!isInconsistentWithOtherStatments(prop.getItem().get())){
+				newStrongerApproxQueue.add(prop);
+			}
+		}
+		strongerApproxQueue = newStrongerApproxQueue;
+		
+		PriorityQueue<DecisionQueueItem<String>> newWeakerApproxQueue = new PriorityQueue<>();
+		for (DecisionQueueItem<String> prop: weakerApproxQueue){
+			if (!isInconsistentWithOtherStatments(prop.getItem().get())){
+				newWeakerApproxQueue.add(prop);
+			}
+		}
+		weakerApproxQueue = newWeakerApproxQueue;
 
+	}
+	
+	protected boolean isInconsistentWithOtherStatments(String pattern){
+		for (List<Pair<String, String>> list: allInconsistentProps.values()){
+			for (Pair<String, String> inconProp: list){
+				if (inconProp.b.equals(pattern)){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -136,6 +168,14 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 					try {
 						weakestInconsistentProps.put(key, approximator
 								.weakestInconsistentApproximation(expr, field, scope));
+						allInconsistentProps.put(key, new ArrayList<>());
+						for (Pair<String, String> val : weakestInconsistentProps.get(key)) {
+							allInconsistentProps.get(key).add(val);
+							for (Pair<String, String> sotrongerProp : approximator
+									.strongerProperties(val.a, field.label)) {
+								allInconsistentProps.get(key).add(sotrongerProp);
+							}
+						}
 					} catch (Err e) {
 						logger.severe(Utils.threadName()
 								+ " could not find incosistent properties for " + key);
@@ -144,9 +184,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 				}
 			}
 		}
-
-		System.out.println("weakestInconsistentProps->" + weakestInconsistentProps);
-		System.exit(-1);
 	}
 
 	@Override
