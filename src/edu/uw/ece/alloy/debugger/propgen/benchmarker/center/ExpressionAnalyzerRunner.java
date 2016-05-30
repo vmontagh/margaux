@@ -105,8 +105,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		public ExpressionAnalyzingSession(final PatternProcessingParam param,
 				final File tmpLocalDirectory, ExecutorService threadExecutor,
 				SendOnServerSocketInterface interfacE) throws Exception {
-			System.out.println("Session is started for:"+param);
-			
 			this.creationTime = System.currentTimeMillis();
 			this.id = param.getAnalyzingSessionID().get();
 			this.timeout = param.getTimeout().orElse(Long.MAX_VALUE);
@@ -151,8 +149,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					}
 				}
 			});
-			
-			System.out.println("Session is started created:"+param);
 		}
 
 		public void addGeneratedProperties(String propertyName) {

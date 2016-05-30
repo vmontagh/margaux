@@ -228,9 +228,6 @@ public class Approximator {
 		}
 		interfacE.MessageReceived.removeListener(receiveListener);
 
-		
-		System.out.println("result:"+result.getResult().get().getResults());
-		
 		return filter.apply(
 				result.getResult().get().getResults().get().stream()
 						.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,

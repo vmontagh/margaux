@@ -91,7 +91,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			// emptying the strongerApproxQueue prevents any strengthening
 			strongerApproxQueue.clear();
 		}
-		System.out.println("strongerApproxQueue after inconsistency>"+strongerApproxQueue);
 		// RULE: any approximation that is inconsistent with other expressions should be 
 		// removed or has lower priority.
 		PriorityQueue<DecisionQueueItem<String>> newStrongerApproxQueue = new PriorityQueue<>();
@@ -102,8 +101,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 		}
 		strongerApproxQueue = newStrongerApproxQueue;
 		
-		System.out.println("strongerApproxQueue after inconsistency:"+strongerApproxQueue);
-		
 		PriorityQueue<DecisionQueueItem<String>> newWeakerApproxQueue = new PriorityQueue<>();
 		for (DecisionQueueItem<String> prop: weakerApproxQueue){
 			if (!isInconsistentWithOtherStatments(prop.getItem().get())){
@@ -111,8 +108,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			}
 		}
 		weakerApproxQueue = newWeakerApproxQueue;
-		System.out.println("weakerApproxQueue after inconsistency:" + weakerApproxQueue);
-
 	}
 	
 	protected boolean isInconsistentWithOtherStatments(String pattern){
