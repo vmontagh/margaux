@@ -225,6 +225,7 @@ public class ServerSocketInterface
 		} catch (Throwable t) {
 			logger.log(Level.SEVERE, Utils.threadName()
 					+ "A serious error breaks the Front Processor listener: ", t);
+			t.printStackTrace();
 			throw new RuntimeException(t);
 
 		} finally {

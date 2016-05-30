@@ -201,4 +201,15 @@ public class PatternProcessingParam extends ProcessingParam {
 
 	}
 
+	@Override
+	public String toString() {
+		return "PatternProcessingParam [files=" + files + ", fieldName=" + fieldName
+				+ ", propertyToAlloyCode=" + propertyToAlloyCode + ", expression="
+				+ expression + ", scope=" + scope + ", priority=" + priority
+				+ ", tmpLocalDirectory=" + tmpLocalDirectory + ", analyzingSessionID="
+				+ analyzingSessionID + ", timeout=" + timeout + "]";
+	}
+	
+	
+
 }

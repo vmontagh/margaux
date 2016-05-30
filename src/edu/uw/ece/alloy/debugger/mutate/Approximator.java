@@ -285,7 +285,7 @@ public class Approximator {
 			try {
 				result.addAll(il.getAllRevImpliedProperties(pattern));
 			} catch (Err e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return Collections.unmodifiableList(result);
@@ -304,7 +304,7 @@ public class Approximator {
 			try {
 				result.addAll(il.getAllImpliedProperties(pattern));
 			} catch (Err e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return Collections.unmodifiableList(result);

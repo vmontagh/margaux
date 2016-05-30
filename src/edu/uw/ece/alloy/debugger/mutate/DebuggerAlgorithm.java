@@ -97,6 +97,12 @@ public abstract class DebuggerAlgorithm {
 		public int compareTo(DecisionQueueItem<T> that) {
 			return this.compare(this, that);
 		}
+
+		@Override
+		public String toString() {
+			return "DecisionQueueItem [score=" + score + ", item=" + item + "]";
+		}
+		
 	}
 
 	protected final static Logger logger = Logger
@@ -258,22 +264,24 @@ public abstract class DebuggerAlgorithm {
 
 			beforePickModelPart();
 			for (DecisionQueueItem<Expr> modelPart : modelQueue) {
+				System.out.println("AAAAAAAAAAAAAAAA->"+modelPart);
 				afterPickModelPart();
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-
+				System.out.println("AAAAAAAAAAAAAAB->"+modelPart);
 				restModelParts = model.stream()
 						.filter(m -> !m.equals(modelPart.getItem().get()))
 						.collect(Collectors.toList());
-
+				System.out.println("AAAAAAAAAAAAAAAC->"+modelPart);
 				String restModel = restModelParts.stream().map(m -> m.toString())
 						.collect(Collectors.joining(" and "));
-
+				System.out.println("AAAAAAAAAAAAAAAD->"+modelPart);
 				Pair<Expr, Field> approximationCacheKey = new Pair<Expr, Field>(
 						modelPart.getItem().get(), toBeingAnalyzedField);
-
-				if (!approximations.containsKey(approximationCacheKey))
+				System.out.println("AAAAAAAAAAAAAAAD->"+modelPart);
+				System.out.println("AAAAAAAAAAAAAAAD,approximations->"+approximations);
+				if (!approximations.containsKey(approximationCacheKey)){
 					try {
-
+						System.out.println("AAAAAAAAAAAAAAAE->"+modelPart);
 						List<Pair<String, String>> approximation_ = approximator
 								.strongestImplicationApproximation(modelPart.getItem().get(),
 										field.getItem().get(), scope);
@@ -292,7 +300,8 @@ public abstract class DebuggerAlgorithm {
 								+ " cannot be converted to an inorder form.");
 						throw new RuntimeException(e);
 					}
-
+				}
+				System.out.println("AAAAAAAAAAAAAAAF->"+modelPart);
 				List<Pair<String, String>> approximation = approximations
 						.get(approximationCacheKey);
 
@@ -342,9 +351,10 @@ public abstract class DebuggerAlgorithm {
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
 					beforePickWeakenOrStrengthened();
+					System.out.println("modelPart 1-> "+ modelPart + "....."+field + "=====" + approx);
 					while (!strongerApproxQueue.isEmpty()
 							|| !weakerApproxQueue.isEmpty()) {
-
+						System.out.println("modelPart 2-> "+ modelPart + "....."+field + "=====" + approx);
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 						strengthened = true;
 
@@ -352,6 +362,7 @@ public abstract class DebuggerAlgorithm {
 								|| DecisionQueueItem.randomGenerator.nextBoolean())) {
 							toBePickedQueueFromWeakenOrStrengthened = weakerApproxQueue;
 							strengthened = false;
+							System.out.println("modelPart 3-> "+ modelPart + "....."+field + "=====" + approx);
 						}
 
 						afterPickWeakenOrStrengthened();
@@ -456,13 +467,17 @@ public abstract class DebuggerAlgorithm {
 						// store the answer
 						afterInquiryOracle();
 						// Call APIs to change the priority of the next steps
-
+						
+						System.out.println("After checking the corretion: " + report);
+						
 						if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 							beforePickWeakenOrStrengthened();
 					}
-
+					System.out.println("VAjih");
 				}
+				System.out.println("valeh");
 			}
+			System.out.println("Anna");
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
 		}
