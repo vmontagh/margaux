@@ -4,12 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -19,7 +17,6 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
-import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
@@ -112,33 +109,33 @@ public class Approximator {
 	 * 
 	 * @param statement
 	 * @return pair.a patternName, pair.b property.
-	 * @throws Err 
+	 * @throws Err
 	 */
 
 	public List<Pair<String, String>> strongestImplicationApproximation(
 			Expr statement, Field field, String scope) throws Err {
-		return strongestImplicationApproximation(PrettyPrintExpression.makeString(statement), field.label,
-				scope);
+		return strongestImplicationApproximation(
+				PrettyPrintExpression.makeString(statement), field.label, scope);
 	}
 
 	public List<Pair<String, String>> strongestConsistentApproximation(
 			Expr statement, Field field, String scope) throws Err {
-		return strongestConsistentApproximation(PrettyPrintExpression.makeString(statement), field.label,
-				scope);
+		return strongestConsistentApproximation(
+				PrettyPrintExpression.makeString(statement), field.label, scope);
 	}
 
 	public List<Pair<String, String>> weakestInconsistentApproximation(
 			Expr statement, Field field, String scope) throws Err {
-		return weakestInconsistentApproximation(PrettyPrintExpression.makeString(statement), field.label,
-				scope);
+		return weakestInconsistentApproximation(
+				PrettyPrintExpression.makeString(statement), field.label, scope);
 	}
-	
-	public Boolean isInconsistent(
-			Expr statement, Field field, String scope) throws Err {
-		return isInconsistent(PrettyPrintExpression.makeString(statement), field.label,
-				scope);
+
+	public Boolean isInconsistent(Expr statement, Field field, String scope)
+			throws Err {
+		return isInconsistent(PrettyPrintExpression.makeString(statement),
+				field.label, scope);
 	}
-	
+
 	public List<Pair<String, String>> strongestImplicationApproximation(
 			String statement, String fieldLabel, String scope) {
 		return findApproximation(statement, fieldLabel, scope,
@@ -151,26 +148,32 @@ public class Approximator {
 				AndPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
 	}
 
-	StringBuilder sb = new StringBuilder("Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();\n");
-	
+	StringBuilder sb = new StringBuilder(
+			"Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();\n");
+
 	public List<Pair<String, String>> weakestInconsistentApproximation(
 			String statement, String fieldLabel, String scope) {
-		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel, scope,
-				InconPropertyToAlloyCode.EMPTY_CONVERTOR, filterStrongerApproximations);
+		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel,
+				scope, InconPropertyToAlloyCode.EMPTY_CONVERTOR,
+				filterStrongerApproximations);
 
 		// Converting to Cache.
 		String key = statement + fieldLabel + scope;
-		sb.append("weakestIncon.put(\"").append(key).append("\", Arrays.asList(").append(
-		approx.stream().map(p-> "new Pair<>(\""+p.a+"\", \""+p.b+"\")").collect(Collectors.joining(", "))).append("));\n");
+		sb.append("weakestIncon.put(\"").append(key).append("\", Arrays.asList(")
+				.append(approx.stream()
+						.map(p -> "new Pair<>(\"" + p.a + "\", \"" + p.b + "\")")
+						.collect(Collectors.joining(", ")))
+				.append("));\n");
 		System.out.println(sb);
-		
+
 		return approx;
 	}
-	
-	public Boolean isInconsistent(
-			String statement, String fieldLabel, String scope) {
+
+	public Boolean isInconsistent(String statement, String fieldLabel,
+			String scope) {
 		return !findApproximation(statement, fieldLabel, scope,
-				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity()).isEmpty();
+				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity())
+						.isEmpty();
 	}
 
 	/**
@@ -228,10 +231,9 @@ public class Approximator {
 		}
 		interfacE.MessageReceived.removeListener(receiveListener);
 
-		return filter.apply(
-				result.getResult().get().getResults().get().stream()
-						.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
-								b.getParam().getAlloyCoder().get().predCallB))
+		return filter.apply(result.getResult().get().getResults().get().stream()
+				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
+						b.getParam().getAlloyCoder().get().predCallB))
 				.collect(Collectors.toList()));
 	}
 
@@ -244,8 +246,8 @@ public class Approximator {
 	 * @param properties
 	 * @return
 	 */
-	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterWeakerApproximations = 
-			(properties) ->{
+	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterWeakerApproximations = (
+			properties) -> {
 		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
 		properties.stream().forEach(p -> patternMap.put(p.a, p));
 		for (Pair<String, String> patternProperty : properties) {
@@ -255,9 +257,9 @@ public class Approximator {
 		}
 		return patternMap.values().stream().collect(Collectors.toList());
 	};
-	
-	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterStrongerApproximations = 
-			(properties) ->{
+
+	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterStrongerApproximations = (
+			properties) -> {
 		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
 		properties.stream().forEach(p -> patternMap.put(p.a, p));
 		for (Pair<String, String> patternProperty : properties) {
@@ -267,9 +269,9 @@ public class Approximator {
 		}
 		return patternMap.values().stream().collect(Collectors.toList());
 	};
-	
 
-	public List<Pair<String, String>> strongerProperties(String pattern, String fieldName) {
+	public List<Pair<String, String>> strongerProperties(String pattern,
+			String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		return strongerPatterns(pattern).stream()
 				.map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName)))
@@ -282,7 +284,7 @@ public class Approximator {
 			try {
 				result.addAll(il.getAllRevImpliedProperties(pattern));
 			} catch (Err e) {
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 		}
 		return Collections.unmodifiableList(result);
@@ -301,7 +303,7 @@ public class Approximator {
 			try {
 				result.addAll(il.getAllImpliedProperties(pattern));
 			} catch (Err e) {
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 		}
 		return Collections.unmodifiableList(result);

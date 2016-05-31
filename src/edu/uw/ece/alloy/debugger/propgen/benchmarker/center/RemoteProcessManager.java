@@ -83,11 +83,11 @@ public class RemoteProcessManager /*
 	}
 
 	public RemoteProcessManager() {
-		this(ProcessorUtil.findEmptyLocalSocket(), 0,
-				MaxFeedThreashold, null);
+		this(ProcessorUtil.findEmptyLocalSocket(), 0, MaxFeedThreashold, null);
 	}
 
-	public RemoteProcessManager(InetSocketAddress localSocket, int proccessNumber) {
+	public RemoteProcessManager(InetSocketAddress localSocket,
+			int proccessNumber) {
 		this(localSocket, proccessNumber, MaxFeedThreashold, null);
 	}
 
@@ -431,8 +431,9 @@ public class RemoteProcessManager /*
 	 * @throws IOException
 	 */
 	public void addProcess() throws IOException {
-		
-		RemoteProcess emptyPort = new RemoteProcess(ProcessorUtil.findEmptyLocalSocket());
+
+		RemoteProcess emptyPort = new RemoteProcess(
+				ProcessorUtil.findEmptyLocalSocket());
 		addProcess(emptyPort);
 	}
 
@@ -521,11 +522,9 @@ public class RemoteProcessManager /*
 	 * @param port
 	 */
 	public void killAndReplaceProcess(final RemoteProcess process) {
-		// synchronized (processes) {
 		if (killProcess(process)) {
 			addAllProcesses();
 		}
-		// }
 	}
 
 	/*

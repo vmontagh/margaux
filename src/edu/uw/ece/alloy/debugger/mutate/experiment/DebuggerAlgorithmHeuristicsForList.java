@@ -3,20 +3,22 @@ package edu.uw.ece.alloy.debugger.mutate.experiment;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
 import edu.uw.ece.alloy.debugger.mutate.Oracle;
-import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm.DecisionQueueItem;
 import edu.uw.ece.alloy.util.Utils;
 
 /**
@@ -91,29 +93,30 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			// emptying the strongerApproxQueue prevents any strengthening
 			strongerApproxQueue.clear();
 		}
-		// RULE: any approximation that is inconsistent with other expressions should be 
+		// RULE: any approximation that is inconsistent with other expressions
+		// should be
 		// removed or has lower priority.
 		PriorityQueue<DecisionQueueItem<String>> newStrongerApproxQueue = new PriorityQueue<>();
-		for (DecisionQueueItem<String> prop: strongerApproxQueue){
-			if (!isInconsistentWithOtherStatments(prop.getItem().get())){
+		for (DecisionQueueItem<String> prop : strongerApproxQueue) {
+			if (!isInconsistentWithOtherStatments(prop.getItem().get())) {
 				newStrongerApproxQueue.add(prop);
 			}
 		}
 		strongerApproxQueue = newStrongerApproxQueue;
-		
+
 		PriorityQueue<DecisionQueueItem<String>> newWeakerApproxQueue = new PriorityQueue<>();
-		for (DecisionQueueItem<String> prop: weakerApproxQueue){
-			if (!isInconsistentWithOtherStatments(prop.getItem().get())){
+		for (DecisionQueueItem<String> prop : weakerApproxQueue) {
+			if (!isInconsistentWithOtherStatments(prop.getItem().get())) {
 				newWeakerApproxQueue.add(prop);
 			}
 		}
 		weakerApproxQueue = newWeakerApproxQueue;
 	}
-	
-	protected boolean isInconsistentWithOtherStatments(String pattern){
-		for (List<Pair<String, String>> list: allInconsistentProps.values()){
-			for (Pair<String, String> inconProp: list){
-				if (inconProp.b.equals(pattern)){
+
+	protected boolean isInconsistentWithOtherStatments(String pattern) {
+		for (List<Pair<String, String>> list : allInconsistentProps.values()) {
+			for (Pair<String, String> inconProp : list) {
+				if (inconProp.b.equals(pattern)) {
 					return true;
 				}
 			}
@@ -158,10 +161,11 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 	@Override
 	protected void onStartLoop() {
-		// fill in weakestInconsistentProps and allInconsistentProps
+		Set<Expr> notApproximatedExprs = new HashSet<>();
 		for (Field field : super.fields) {
 			for (Expr expr : model) {
 				Pair<Expr, Field> key = new Pair<>(expr, field);
+				// fill in weakestInconsistentProps and allInconsistentProps
 				if (!weakestInconsistentProps.containsKey(key)) {
 					try {
 						weakestInconsistentProps.put(key, approximator
@@ -180,8 +184,41 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 						e.printStackTrace();
 					}
 				}
+
+				// find all implication approximations
+				if (!super.approximations.containsKey(key)) {
+					fillApproximations(expr, field);
+					List<Pair<String, String>> approximatedExpr = super.approximations
+							.get(key);
+					String exprString = expr.toString();
+					try {
+						exprString = PrettyPrintExpression.makeString(expr);
+					} catch (Err e) {
+						e.printStackTrace();
+					}
+					if (approximatedExpr.size() == 1
+							&& approximatedExpr.get(0).a.equals(exprString)) {
+						notApproximatedExprs.add(expr);
+					}
+				}
 			}
 		}
+
+		// RULE: if a given expression does not approximated by any pattern, then it
+		// should be weaken by its
+		// negation. Such expression has lower priority compared to the expressions
+		// that could be approximated
+		// by one or more predefined patterns.
+		int minPriority = super.modelQueue.stream()
+				.mapToInt(a -> a.getScore().get()).max()
+				.orElse(DecisionQueueItem.MinUniformScore);
+		for (DecisionQueueItem<Expr> modelPart : super.modelQueue) {
+			if (notApproximatedExprs.contains(modelPart.getItem().get())) {
+				modelPart.setScore(minPriority + 1);
+			}
+		}
+		
+		modelQueue.stream().forEach(m->System.out.println(m.getItem().get() + " " + m.getScore().get()));
 	}
 
 	@Override
