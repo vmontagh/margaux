@@ -25,6 +25,6 @@ public class OnBorderInstanceFinderTest {
 		args[4] = file;
 		args[5] = "resources/debugger.expriment.config";
 		
-		OnBorderInstanceFinder.main(args);
+//		OnBorderInstanceFinder.main(args);
 	}
 }

@@ -21,7 +21,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyDiedMessag
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.SendOnServerSocketInterface;
-import edu.uw.ece.hola.agent.Utils;
+import edu.uw.ece.alloy.util.Utils;
 
 public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 
