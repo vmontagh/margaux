@@ -290,10 +290,10 @@ public class Approximator {
 		return Collections.unmodifiableList(result);
 	}
 
-	public List<String> weakerProperties(String pattern, String fieldName) {
+	public List<Pair<String, String>> weakerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		return weakerPatterns(pattern).stream()
-				.map(a -> patternToProperty.getProperty(a, fieldName))
+				.map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName)))
 				.collect(Collectors.toList());
 	}
 
@@ -302,7 +302,7 @@ public class Approximator {
 		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getAllImpliedProperties(pattern));
-			} catch (Err e) {
+			} catch (Throwable e) {
 				// e.printStackTrace();
 			}
 		}

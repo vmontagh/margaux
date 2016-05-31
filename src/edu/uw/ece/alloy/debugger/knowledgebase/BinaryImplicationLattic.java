@@ -99,7 +99,7 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 							+ "run {run_getAllImplied[%s]} for 0",
 					property);
 			final File file = new File(this.TEMPORARY_FOLDER, "allimplied_"
-					+ System.currentTimeMillis() + "_" + rand.nextInt() + ".als");
+					+ System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 			for (A4Solution sol : writeAndFind(alloyCode, file)) {
 				result.add(extractSkolemedValue(sol));
 			}
