@@ -2,10 +2,14 @@ package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -35,8 +39,8 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 	// A map from an expression and weakest inconsistent properties.
-	final Map<Pair<Expr, Field>, List<Pair<String, String>>> weakestInconsistentProps;
-	final Map<Pair<Expr, Field>, List<Pair<String, String>>> allInconsistentProps;
+	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps,
+			allInconsistentProps;
 
 	protected DebuggerAlgorithmHeuristicsForList(File sourceFile,
 			File destinationDir, Approximator approximator, Oracle oracle,
@@ -114,14 +118,11 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 	}
 
 	protected boolean isInconsistentWithOtherStatments(String pattern) {
-		for (List<Pair<String, String>> list : allInconsistentProps.values()) {
-			for (Pair<String, String> inconProp : list) {
-				if (inconProp.b.equals(pattern)) {
-					return true;
-				}
-			}
-		}
-		return false;
+		
+		return  allInconsistentProps.keySet().stream()
+				.map(f -> allInconsistentProps.get(f)).map(e -> e.values())
+				.flatMap(Collection::stream).flatMap(Collection::stream)
+				.anyMatch(p -> p.b.equals(pattern));
 	}
 
 	@Override
@@ -164,42 +165,52 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 		Set<Expr> notApproximatedExprs = new HashSet<>();
 		for (Field field : super.fields) {
 			for (Expr expr : model) {
-				Pair<Expr, Field> key = new Pair<>(expr, field);
+				// Pair<Expr, Field> key = new Pair<>(expr, field);
 				// fill in weakestInconsistentProps and allInconsistentProps
-				if (!weakestInconsistentProps.containsKey(key)) {
+				if (!(weakestInconsistentProps.containsKey(field)
+						&& weakestInconsistentProps.get(field).containsKey(expr))) {
 					try {
-						weakestInconsistentProps.put(key, approximator
+						if (!weakestInconsistentProps.containsKey(field))
+							weakestInconsistentProps.put(field, new HashMap<>());
+						if (!weakestInconsistentProps.get(field).containsKey(expr))
+							weakestInconsistentProps.get(field).put(expr, new LinkedList<>());
+						weakestInconsistentProps.get(field).get(expr).addAll(approximator
 								.weakestInconsistentApproximation(expr, field, scope));
-						allInconsistentProps.put(key, new ArrayList<>());
-						for (Pair<String, String> val : weakestInconsistentProps.get(key)) {
-							allInconsistentProps.get(key).add(val);
+
+						if (!allInconsistentProps.containsKey(field))
+							allInconsistentProps.put(field, new HashMap<>());
+						if (!allInconsistentProps.get(field).containsKey(expr))
+							allInconsistentProps.get(field).put(expr, new LinkedList<>());
+
+						for (Pair<String, String> val : weakestInconsistentProps.get(field)
+								.get(expr)) {
+							allInconsistentProps.get(field).get(expr).add(val);
 							for (Pair<String, String> sotrongerProp : approximator
 									.strongerProperties(val.a, field.label)) {
-								allInconsistentProps.get(key).add(sotrongerProp);
+								allInconsistentProps.get(field).get(expr).add(sotrongerProp);
 							}
 						}
 					} catch (Err e) {
 						logger.severe(Utils.threadName()
-								+ " could not find incosistent properties for " + key);
+								+ " could not find incosistent properties for " + field + " "
+								+ expr);
 						e.printStackTrace();
 					}
 				}
 
 				// find all implication approximations
-				if (!super.approximations.containsKey(key)) {
-					fillApproximations(expr, field);
-					List<Pair<String, String>> approximatedExpr = super.approximations
-							.get(key);
-					String exprString = expr.toString();
-					try {
-						exprString = PrettyPrintExpression.makeString(expr);
-					} catch (Err e) {
-						e.printStackTrace();
-					}
-					if (approximatedExpr.size() == 1
-							&& approximatedExpr.get(0).a.equals(exprString)) {
-						notApproximatedExprs.add(expr);
-					}
+				fillApproximations(expr, field);
+				List<Pair<String, String>> approximatedExpr = super.approximations
+						.get(field).get(expr);
+				String exprString = expr.toString();
+				try {
+					exprString = PrettyPrintExpression.makeString(expr);
+				} catch (Err e) {
+					e.printStackTrace();
+				}
+				if (approximatedExpr.size() == 1
+						&& approximatedExpr.get(0).a.equals(exprString)) {
+					notApproximatedExprs.add(expr);
 				}
 			}
 		}
@@ -217,8 +228,9 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 				modelPart.setScore(minPriority + 1);
 			}
 		}
-		
-		modelQueue.stream().forEach(m->System.out.println(m.getItem().get() + " " + m.getScore().get()));
+
+		modelQueue.stream().forEach(
+				m -> System.out.println(m.getItem().get() + " " + m.getScore().get()));
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -146,7 +147,8 @@ public abstract class DebuggerAlgorithm {
 	/* The rest the mode. I.e Model - toBeingAnalyzedModelPart */
 	List<Expr> restModelParts;
 	/* Mapping from What is analyzed so far to its approximations */
-	final protected Map<Pair<Expr, Field>, List<Pair<String, String>>> approximations;
+	final protected Map<Field, Map< Expr, List<Pair<String, String>>>> approximations;
+	
 	protected PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue,
 			weakerApproxQueue;
 	/*
@@ -262,12 +264,14 @@ public abstract class DebuggerAlgorithm {
 
 		onStartLoop();
 		beforePickField();
-		for (DecisionQueueItem<Field> field : fieldsQueue) {
+		while (!fieldsQueue.isEmpty()) {
+			DecisionQueueItem<Field> field = fieldsQueue.poll();
 			toBeingAnalyzedField = field.getItem().get();
 			afterPickField();
 
 			beforePickModelPart();
-			for (DecisionQueueItem<Expr> modelPart : modelQueue) {
+			while (!modelQueue.isEmpty()) {
+				DecisionQueueItem<Expr> modelPart = modelQueue.poll();
 				afterPickModelPart();
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
 				String toBeingAnalyzedModelPartString = toBeingAnalyzedModelPart
@@ -283,11 +287,11 @@ public abstract class DebuggerAlgorithm {
 						.collect(Collectors.toList());
 				String restModel = restModelParts.stream().map(m -> m.toString())
 						.collect(Collectors.joining(" and "));
-				Pair<Expr, Field> approximationCacheKey = new Pair<Expr, Field>(
-						modelPart.getItem().get(), toBeingAnalyzedField);
+
 				fillApproximations(modelPart.getItem().get(), field.getItem().get());
+				
 				List<Pair<String, String>> approximation = approximations
-						.get(approximationCacheKey);
+						.get(toBeingAnalyzedField).get(modelPart.getItem().get());
 
 				logger.info(Utils.threadName() + "The approximations for Expr:<"
 						+ modelPart.getItem().get() + "> is: " + approximation);
@@ -305,7 +309,9 @@ public abstract class DebuggerAlgorithm {
 						.forEach(m -> approximationQueue.add(DecisionQueueItem
 								.<Pair<String, String>> createwithRandomPriority(m)));
 				beforePickApproximation();
-				for (DecisionQueueItem<Pair<String, String>> approx : approximationQueue) {
+				
+				while (!approximationQueue.isEmpty()) {
+					DecisionQueueItem<Pair<String, String>> approx = approximationQueue.poll();
 					afterPickApproximation();
 					toBeingWeakenOrStrengthenedApproximation = approx.getItem().get();
 
@@ -624,9 +630,8 @@ public abstract class DebuggerAlgorithm {
 	 * @param field
 	 */
 	protected void fillApproximations(Expr expr, Field field) {
-		Pair<Expr, Field> approximationCacheKey = new Pair<Expr, Field>(expr,
-				field);
-		if (approximations.containsKey(approximationCacheKey))
+		
+		if (approximations.containsKey(field) && approximations.get(field).containsKey(expr) )
 			return;
 		try {
 			List<Pair<String, String>> approximation_ = approximator
@@ -641,7 +646,11 @@ public abstract class DebuggerAlgorithm {
 												.replace("]", "").replace(" ", ""),
 										toBeingAnalyzedModelPartString));
 			}
-			approximations.put(approximationCacheKey, approximation_);
+			if (!approximations.containsKey(field))
+				approximations.put(field, new HashMap<>());
+			if (!approximations.get(field).containsKey(expr))
+				approximations.get(field).put(expr, new LinkedList<>());			
+			approximations.get(field).get(expr).addAll(approximation_);
 		} catch (Err e) {
 			e.printStackTrace();
 			logger.severe(Utils.threadName() + expr
