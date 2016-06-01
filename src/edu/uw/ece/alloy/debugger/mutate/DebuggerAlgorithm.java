@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.io.Files;
 
@@ -59,7 +61,9 @@ public abstract class DebuggerAlgorithm {
 		// higher score is more probable to be processed first.
 		Integer score;
 		final T item;
-		final static Random randomGenerator = new Random();
+		final protected static Random RandomGenerator = new Random();
+		final public static Integer MinUniformScore = 0;
+		final public static Integer MaxUniformScore = Integer.MAX_VALUE / 2;
 
 		public DecisionQueueItem(final T item, Integer score) {
 			this.item = item;
@@ -68,12 +72,14 @@ public abstract class DebuggerAlgorithm {
 
 		public static <T> DecisionQueueItem<T> createwithRandomPriority(
 				final T item) {
-			return new DecisionQueueItem<T>(item, randomGenerator.nextInt());
+			return new DecisionQueueItem<T>(item,
+					RandomGenerator.nextInt(MaxUniformScore - MinUniformScore + 1)
+							+ MinUniformScore);
 		}
 
 		public static <T> DecisionQueueItem<T> createwithUnformPriority(
 				final T item) {
-			return new DecisionQueueItem<T>(item, Integer.MIN_VALUE);
+			return new DecisionQueueItem<T>(item, MinUniformScore);
 		}
 
 		@Override
@@ -102,7 +108,7 @@ public abstract class DebuggerAlgorithm {
 		public String toString() {
 			return "DecisionQueueItem [score=" + score + ", item=" + item + "]";
 		}
-		
+
 	}
 
 	protected final static Logger logger = Logger
@@ -131,34 +137,37 @@ public abstract class DebuggerAlgorithm {
 	final Oracle oracle;
 	final ExampleFinder exampleFinder;
 
-	final PriorityQueue<DecisionQueueItem<Field>> fieldsQueue;
-	final PriorityQueue<DecisionQueueItem<Expr>> modelQueue;
+	final protected PriorityQueue<DecisionQueueItem<Field>> fieldsQueue;
+	final protected PriorityQueue<DecisionQueueItem<Expr>> modelQueue;
 	/*
 	 * Part of the model that is being analyzed. This property is changed while
 	 * the algorithm is run. Other methods have access to this variable.
 	 */
-	Expr toBeingAnalyzedModelPart;
+	protected Expr toBeingAnalyzedModelPart;
 	protected Field toBeingAnalyzedField;
 	/* The rest the mode. I.e Model - toBeingAnalyzedModelPart */
 	List<Expr> restModelParts;
 	/* Mapping from What is analyzed so far to its approximations */
-	final Map<Pair<Expr, Field>, List<Pair<String, String>>> approximations;
-	protected PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue,
-			weakerApproxQueue;
+	final protected Map<Field, Map<Expr, List<Pair<String, String>>>> approximations;
+
+	protected final Map<Field, Map<Expr, Map<Pair<String, String>, PriorityQueue<DecisionQueueItem<String>>>>> strongerApproxQueues,
+			weakerApproxQueues;
 	/*
 	 * A PQ to determine which approximation should be fixed first. It varies at
 	 * each iteration
 	 */
-	PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue;
+	final protected Map<Field, Map<Expr, PriorityQueue<DecisionQueueItem<Pair<String, String>>>>> approximationQueues;
 	/* The property that is chosen to be weaken or strengthened */
-	Pair<String, String> toBeingWeakenOrStrengthenedApproximation;
+	protected Pair<String, String> toBeingWeakenOrStrengthenedApproximation;
 	PriorityQueue<DecisionQueueItem<String>> toBePickedQueueFromWeakenOrStrengthened;
-	boolean strengthened;
+	protected boolean strengthened;
 	/*
 	 * findOnBorderExamples finds two examples close to border: inAndOutExamples.a
 	 * is inside and inAndOutExamples.b is outside.
 	 */
 	protected Pair<Optional<String>, Optional<String>> inAndOutExamples;
+
+	protected boolean inExampleIsInteded, outExampleIsInteded;
 
 	/* Examples that are reviewed by oracle are stored in the following sets */
 	final protected Set<String> acceptedExamples, rejectedExamples;
@@ -214,6 +223,10 @@ public abstract class DebuggerAlgorithm {
 		model.stream().forEach(m -> modelQueue
 				.add(DecisionQueueItem.<Expr> createwithRandomPriority(m)));
 
+		approximationQueues = new HashMap<>();
+		strongerApproxQueues = new HashMap<>();
+		weakerApproxQueues = new HashMap<>();
+
 		approximations = new HashMap<>();
 		this.destinationDir = destinationDir;
 
@@ -234,6 +247,9 @@ public abstract class DebuggerAlgorithm {
 		exampleFinder = null;
 		fieldsQueue = null;
 		modelQueue = null;
+		approximationQueues = null;
+		strongerApproxQueues = null;
+		weakerApproxQueues = null;
 		approximations = null;
 		acceptedExamples = null;
 		rejectedExamples = null;
@@ -258,111 +274,142 @@ public abstract class DebuggerAlgorithm {
 
 		onStartLoop();
 		beforePickField();
-		for (DecisionQueueItem<Field> field : fieldsQueue) {
+		while (!fieldsQueue.isEmpty()) {
+			DecisionQueueItem<Field> field = fieldsQueue.poll();
 			toBeingAnalyzedField = field.getItem().get();
 			afterPickField();
 
 			beforePickModelPart();
-			for (DecisionQueueItem<Expr> modelPart : modelQueue) {
-				System.out.println("AAAAAAAAAAAAAAAA->"+modelPart);
+			while (!modelQueue.isEmpty()) {
+				DecisionQueueItem<Expr> modelPart = modelQueue.poll();
 				afterPickModelPart();
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-				System.out.println("AAAAAAAAAAAAAAB->"+modelPart);
+				String toBeingAnalyzedModelPartString = toBeingAnalyzedModelPart
+						.toString();
+				try {
+					toBeingAnalyzedModelPartString = PrettyPrintExpression
+							.makeString(toBeingAnalyzedModelPart);
+				} catch (Err e) {
+					e.printStackTrace();
+				}
 				restModelParts = model.stream()
-						.filter(m -> !m.equals(modelPart.getItem().get()))
+						.filter(m -> !m.equals(toBeingAnalyzedModelPart))
 						.collect(Collectors.toList());
-				System.out.println("AAAAAAAAAAAAAAAC->"+modelPart);
 				String restModel = restModelParts.stream().map(m -> m.toString())
 						.collect(Collectors.joining(" and "));
-				System.out.println("AAAAAAAAAAAAAAAD->"+modelPart);
-				Pair<Expr, Field> approximationCacheKey = new Pair<Expr, Field>(
-						modelPart.getItem().get(), toBeingAnalyzedField);
-				System.out.println("AAAAAAAAAAAAAAAD->"+modelPart);
-				System.out.println("AAAAAAAAAAAAAAAD,approximations->"+approximations);
-				if (!approximations.containsKey(approximationCacheKey)){
-					try {
-						System.out.println("AAAAAAAAAAAAAAAE->"+modelPart);
-						List<Pair<String, String>> approximation_ = approximator
-								.strongestImplicationApproximation(modelPart.getItem().get(),
-										field.getItem().get(), scope);
-						if (approximation_.isEmpty()) {
-							String toBeingAnalyzedModelPartString = PrettyPrintExpression
-									.makeString(toBeingAnalyzedModelPart);
-							approximation_ = Arrays.asList(new Pair<String, String>(
-									toBeingAnalyzedModelPartString.replace("[", "")
-											.replace("]", "").replace(" ", ""),
-									toBeingAnalyzedModelPartString));
-						}
-						approximations.put(approximationCacheKey, approximation_);
-					} catch (Err e) {
-						e.printStackTrace();
-						logger.severe(Utils.threadName() + modelPart.getItem().get()
-								+ " cannot be converted to an inorder form.");
-						throw new RuntimeException(e);
-					}
-				}
-				System.out.println("AAAAAAAAAAAAAAAF->"+modelPart);
+
+				fillApproximations(toBeingAnalyzedModelPart, toBeingAnalyzedField);
+
 				List<Pair<String, String>> approximation = approximations
-						.get(approximationCacheKey);
+						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
 
 				logger.info(Utils.threadName() + "The approximations for Expr:<"
-						+ modelPart.getItem().get() + "> is: " + approximation);
+						+ toBeingAnalyzedModelPart + "> is: " + approximation);
 
 				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-				System.out.println(modelPart.getItem().get());
-				System.out.println(field.getItem().get());
+				System.out.println(toBeingAnalyzedModelPart);
+				System.out.println(toBeingAnalyzedField);
 				System.out.println(scope);
 				System.out.println(approximation);
 				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
+				if (!approximationQueues.containsKey(toBeingAnalyzedField))
+					approximationQueues.put(toBeingAnalyzedField, new HashMap<>());
+				if (!approximationQueues.get(toBeingAnalyzedField)
+						.containsKey(toBeingAnalyzedModelPart)) {
+					// initializing the priority queue.
+					approximationQueues.get(toBeingAnalyzedField).put(
+							toBeingAnalyzedModelPart,
+							approximation.stream()
+									.map(m -> DecisionQueueItem
+											.<Pair<String, String>> createwithRandomPriority(m))
+									.collect(Collectors.toCollection(PriorityQueue::new)));
+				}
+
 				// converting the approximations into a PQ.
-				this.approximationQueue = new PriorityQueue<>();
-				approximation.stream()
-						.forEach(m -> approximationQueue.add(DecisionQueueItem
-								.<Pair<String, String>> createwithRandomPriority(m)));
+				PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue = approximationQueues
+						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
+
+				System.out.println("approximationQueue->" + approximationQueue);
+
 				beforePickApproximation();
-				for (DecisionQueueItem<Pair<String, String>> approx : approximationQueue) {
-					afterPickApproximation();
+				while (!approximationQueue.isEmpty()) {
+					DecisionQueueItem<Pair<String, String>> approx = approximationQueue
+							.poll();
+
 					toBeingWeakenOrStrengthenedApproximation = approx.getItem().get();
+					afterPickApproximation();
 
-					final List<Pair<String,String>> strongerApprox = approximator.strongerProperties(
-							toBeingWeakenOrStrengthenedApproximation.a,
-							field.getItem().get().label);
-					strongerApproxQueue = new PriorityQueue<>();
-					strongerApprox.stream().forEach(m -> strongerApproxQueue
-							.add(DecisionQueueItem.<String> createwithRandomPriority(m.b)));
+					if (!strongerApproxQueues.containsKey(toBeingAnalyzedField))
+						strongerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
+					if (!strongerApproxQueues.get(toBeingAnalyzedField)
+							.containsKey(toBeingAnalyzedModelPart))
+						strongerApproxQueues.get(toBeingAnalyzedField)
+								.put(toBeingAnalyzedModelPart, new HashMap<>());
+					if (!strongerApproxQueues.get(toBeingAnalyzedField)
+							.get(toBeingAnalyzedModelPart)
+							.containsKey(toBeingWeakenOrStrengthenedApproximation))
+						strongerApproxQueues.get(toBeingAnalyzedField)
+								.get(toBeingAnalyzedModelPart)
+								.put(toBeingWeakenOrStrengthenedApproximation,
+										approximator
+												.strongerProperties(
+														toBeingWeakenOrStrengthenedApproximation.a,
+														toBeingAnalyzedField.label)
+												.stream()
+												.map(s -> DecisionQueueItem
+														.<String> createwithRandomPriority(s.b))
+												.collect(Collectors.toCollection(PriorityQueue::new)));
 
-					final List<String> weakerApprox = approximator.weakerProperties(
-							toBeingWeakenOrStrengthenedApproximation.a,
-							field.getItem().get().label);
-					// The current pattern should also be added to the list
-					weakerApprox.add(toBeingWeakenOrStrengthenedApproximation.b);
-					weakerApproxQueue = new PriorityQueue<>();
-					weakerApprox.stream().forEach(m -> weakerApproxQueue
-							.add(DecisionQueueItem.<String> createwithRandomPriority(m)));
+					if (!weakerApproxQueues.containsKey(toBeingAnalyzedField))
+						weakerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
+					if (!weakerApproxQueues.get(toBeingAnalyzedField)
+							.containsKey(toBeingAnalyzedModelPart))
+						weakerApproxQueues.get(toBeingAnalyzedField)
+								.put(toBeingAnalyzedModelPart, new HashMap<>());
+					if (!weakerApproxQueues.get(toBeingAnalyzedField)
+							.get(toBeingAnalyzedModelPart)
+							.containsKey(toBeingWeakenOrStrengthenedApproximation))
+						weakerApproxQueues
+								.get(
+										toBeingAnalyzedField)
+								.get(toBeingAnalyzedModelPart)
+								.put(toBeingWeakenOrStrengthenedApproximation,
+										Stream
+												.concat(
+														// The current pattern should also be added to the
+														// list
+														Arrays
+																.asList(
+																		toBeingWeakenOrStrengthenedApproximation)
+																.stream(),
+														approximator.weakerProperties(
+																toBeingWeakenOrStrengthenedApproximation.a,
+																toBeingAnalyzedField.label).stream())
+												.map(s -> DecisionQueueItem
+														.<String> createwithRandomPriority(s.b))
+												.collect(Collectors.toCollection(PriorityQueue::new)));
 
-					System.out.println("Stronger patterns of <"
-							+ toBeingWeakenOrStrengthenedApproximation.a + "> is:"
-							+ strongerApprox);
-					System.out.println("Weaker patterns of <"
-							+ toBeingWeakenOrStrengthenedApproximation.a + "> is:"
-							+ weakerApprox);
+					beforePickWeakenOrStrengthened();
+
+					PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue = strongerApproxQueues
+							.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
+							.get(toBeingWeakenOrStrengthenedApproximation);
+					PriorityQueue<DecisionQueueItem<String>> weakerApproxQueue = weakerApproxQueues
+							.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
+							.get(toBeingWeakenOrStrengthenedApproximation);
 
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
-					beforePickWeakenOrStrengthened();
-					System.out.println("modelPart 1-> "+ modelPart + "....."+field + "=====" + approx);
 					while (!strongerApproxQueue.isEmpty()
 							|| !weakerApproxQueue.isEmpty()) {
-						System.out.println("modelPart 2-> "+ modelPart + "....."+field + "=====" + approx);
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 						strengthened = true;
 
 						if (!weakerApproxQueue.isEmpty() && (strongerApproxQueue.isEmpty()
-								|| DecisionQueueItem.randomGenerator.nextBoolean())) {
+								|| DecisionQueueItem.RandomGenerator.nextBoolean())) {
 							toBePickedQueueFromWeakenOrStrengthened = weakerApproxQueue;
 							strengthened = false;
-							System.out.println("modelPart 3-> "+ modelPart + "....."+field + "=====" + approx);
 						}
 
 						afterPickWeakenOrStrengthened();
@@ -374,7 +421,7 @@ public abstract class DebuggerAlgorithm {
 						beforePickWeakenOrStrengthenedApprox();
 
 						beforeMutating();
-						File mutatedFile = makeMutation(toBeingAnalyzedModelPart.toString(),
+						File mutatedFile = makeMutation(toBeingAnalyzedModelPartString,
 								toBeingWeakenOrStrengthenedApproximation.b,
 								approximationProperty, strengthened, restModel).get();
 						afterMutating();
@@ -390,15 +437,16 @@ public abstract class DebuggerAlgorithm {
 						// ask the user
 
 						// Interpreting the result
-						boolean inExampleIsInteded = inAndOutExamples.a.isPresent()
+						inExampleIsInteded = inAndOutExamples.a.isPresent()
 								? oracle.isIntended(inAndOutExamples.a.get()) : false;
-						boolean outExampleIsInteded = inAndOutExamples.b.isPresent()
+						outExampleIsInteded = inAndOutExamples.b.isPresent()
 								? oracle.isIntended(inAndOutExamples.b.get()) : false;
 
 						StringBuilder rowRoport = new StringBuilder();
 
 						rowRoport.append("toBeingAnalyzedModelPart=")
-								.append("\"" + toBeingAnalyzedModelPart + "\"").append(",");
+								.append("\"" + toBeingAnalyzedModelPartString + "\"")
+								.append(",");
 						rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
 								.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"")
 								.append(",");
@@ -465,25 +513,27 @@ public abstract class DebuggerAlgorithm {
 						reportHeader = headerRow.a;
 						report.append(headerRow.b).append("\n");
 						// store the answer
-						afterInquiryOracle();
+						if (afterInquiryOracle())
+							break;
 						// Call APIs to change the priority of the next steps
-						
-						System.out.println("After checking the corretion: " + report);
-						
 						if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 							beforePickWeakenOrStrengthened();
 					}
-					System.out.println("VAjih");
+					if (!approximationQueue.isEmpty())
+						if (beforePickApproximation())
+							break;
 				}
-				System.out.println("valeh");
+				if (!modelQueue.isEmpty())
+					beforePickModelPart();
 			}
-			System.out.println("Anna");
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
 		}
 		System.out.println("--------------------------");
 		System.out.println(reportHeader);
 		System.out.println(report);
+		
+		System.out.println(approximator.getAllChachedResults());
 		try {
 			Util.writeAll("tmp/" + sourceFile.getName() + ".csv",
 					reportHeader + "\n" + report);
@@ -493,7 +543,7 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("--------------------------");
 	}
 
-	protected abstract void afterInquiryOracle();
+	protected abstract boolean afterInquiryOracle();
 
 	protected abstract void beforeInquiryOracle();
 
@@ -513,7 +563,7 @@ public abstract class DebuggerAlgorithm {
 
 	protected abstract void afterPickApproximation();
 
-	protected abstract void beforePickApproximation();
+	protected abstract boolean beforePickApproximation();
 
 	protected abstract void afterPickModelPart();
 
@@ -628,13 +678,52 @@ public abstract class DebuggerAlgorithm {
 				+ notPred + "\n" + newCommandName + "\n" + newCommandNameNot;
 		File newCodeFile = new File(destinationDir, predName + ".als");
 		try {
-			System.out.println("newCodeFile->" + newCodeFile);
 			Util.writeAll(newCodeFile.getAbsolutePath(), newCode);
 		} catch (Err e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 		return Optional.ofNullable(newCodeFile);
+	}
+
+	/**
+	 * Given an expr and field, the implication approximation of the expr is
+	 * determined and put in the approximations map. If the approximations map has
+	 * already have the implication analysis result, the call to approximator is
+	 * ignored.
+	 * 
+	 * @param expr
+	 * @param field
+	 */
+	protected void fillApproximations(Expr expr, Field field) {
+
+		if (approximations.containsKey(field)
+				&& approximations.get(field).containsKey(expr))
+			return;
+		try {
+			List<Pair<String, String>> approximation_ = approximator
+					.strongestImplicationApproximation(expr, field, scope);
+			if (approximation_.isEmpty()) {
+				String toBeingAnalyzedModelPartString = PrettyPrintExpression
+						.makeString(expr);
+				approximation_ = Arrays
+						.asList(
+								new Pair<String, String>(
+										toBeingAnalyzedModelPartString.replace("[", "")
+												.replace("]", "").replace(" ", ""),
+										toBeingAnalyzedModelPartString));
+			}
+			if (!approximations.containsKey(field))
+				approximations.put(field, new HashMap<>());
+			if (!approximations.get(field).containsKey(expr))
+				approximations.get(field).put(expr, new LinkedList<>());
+			approximations.get(field).get(expr).addAll(approximation_);
+		} catch (Err e) {
+			e.printStackTrace();
+			logger.severe(Utils.threadName() + expr
+					+ " cannot be converted to an inorder form.");
+			throw new RuntimeException(e);
+		}
 	}
 
 	protected Optional<Field> pickField() {

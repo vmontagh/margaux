@@ -20,7 +20,7 @@ import org.junit.Test;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristicsForList;
+import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristics;
 import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmRandom;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.util.LazyFile;
@@ -127,7 +127,8 @@ public class DebuggerRunnerTest {
 				"models/debugger/casestudy/journal/correctedlist.als");
 
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -141,12 +142,13 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
 	}
-	
+
 	@Test
 	public void testStrongestApproximationListConsistent() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -155,12 +157,14 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
-		System.out.println(runner.debuggerAlgorithm.approximator.weakestInconsistentApproximation("acyclic", "nxt", ""));
-		
-		//runner.debuggerAlgorithm.run();
+		System.out.println(runner.debuggerAlgorithm.approximator
+				.weakestInconsistentApproximation("acyclic", "nxt", ""));
+
+		// runner.debuggerAlgorithm.run();
 	}
 
 	@Test
@@ -171,7 +175,8 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		Map<String, List<Pair<String, String>>> listProperties = new HashMap<>();
@@ -210,13 +215,14 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
-		
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+
 		// change the debugger algorithm in runner
-		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM.createIt(
-				runner.toBeAnalyzedCode,
-				runner.tmpLocalDirectory, runner.approximator, runner.oracle, runner.exampleFinder);
-		
+		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM
+				.createIt(runner.toBeAnalyzedCode, runner.tmpLocalDirectory,
+						runner.approximator, runner.oracle, runner.exampleFinder);
+
 		runner.start();
 
 		Map<String, List<Pair<String, String>>> listProperties = new HashMap<>();
@@ -230,11 +236,22 @@ public class DebuggerRunnerTest {
 		listProperties.get(" structuralConstraint[ ]nxt for 3")
 				.add(new Pair<>("function", "function[nxt, Node]"));
 
-		Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();
-		weakestIncon.put(" structuralConstraint[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		weakestIncon.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
-		weakestIncon.put(" lowerBoud[ ]nxt for 3", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		
+		Map<String, List<Pair<String, String>>> weakestIncon = new HashMap<>();
+		weakestIncon.put(" structuralConstraint[ ]nxt for 3",
+				Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		weakestIncon.put(" acyclic[ ]nxt for 3",
+				Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"),
+						new Pair<>("stronglyConnected",
+								"stronglyConnected[nxt, Node, Node]"),
+						new Pair<>("total", "total[nxt, Node]"),
+						new Pair<>("surjective", "surjective[nxt, Node]")));
+		weakestIncon.put(" lowerBoud[ ]nxt for 3",
+				Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		Map<String, Boolean> isIncon = new HashMap<>();
+		isIncon.put(
+				"( ( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] )  ) )nxt for 3",
+				false);
+
 		Approximator approximatorMock = new Approximator(
 				runner.approximator.interfacE, runner.approximator.processManager,
 				runner.approximator.tmpLocalDirectory,
@@ -246,19 +263,24 @@ public class DebuggerRunnerTest {
 				System.out.println(statement + fieldLabel + scope);
 				return listProperties.get(statement + fieldLabel + scope);
 			}
-			
+
 			@Override
-					public List<Pair<String, String>> weakestInconsistentApproximation(
-							String statement, String fieldLabel, String scope) {
-						return weakestIncon.get(statement+ fieldLabel+ scope);
-					}
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return weakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return isIncon.get(statement + fieldLabel + scope);
+			}
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
 	}
-	
-	
+
 	@Test
 	public void testStrongestApproximationBinaryTreeRadonom() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -267,12 +289,86 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/corrected_binary_tree.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
 	}
-	
+
+	@Test
+	public void testStrongestApproximationBinaryTreeHeuristicMocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/binary_tree.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		//@formatter:off
+		Map<String, List<Pair<String, String>> > strongestImpl = new HashMap<>();
+		strongestImpl.put(" structuralConstraint[ ]right for 3", Arrays.asList(new Pair<>("functional", "functional[right, Node]")));
+		strongestImpl.put(" acyclic[ ]right for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[right, Node]")));
+		strongestImpl.put(" distinctChildren[ ]right for 3", Arrays.asList());
+		strongestImpl.put(" lowerBoud[ ]right for 3", Arrays.asList());
+		strongestImpl.put(" structuralConstraint[ ]left for 3", Arrays.asList(new Pair<>("functional", "functional[left, Node]")));
+		strongestImpl.put(" acyclic[ ]left for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[left, Node]")));
+		strongestImpl.put(" distinctChildren[ ]left for 3", Arrays.asList());
+		strongestImpl.put(" lowerBoud[ ]left for 3", Arrays.asList());
+		Map<String, List<Pair<String, String>> > strongestCon = new HashMap<>();
+		Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();
+		weakestIncon.put(" structuralConstraint[ ]right for 3", Arrays.asList(new Pair<>("empty", "empty[right]")));
+		weakestIncon.put(" acyclic[ ]right for 3", Arrays.asList(new Pair<>("stronglyConnected", "stronglyConnected[right, Node, Node]"), new Pair<>("symmetric", "symmetric[right, Node, Node]"), new Pair<>("total", "total[right, Node]"), new Pair<>("surjective", "surjective[right, Node]")));
+		weakestIncon.put(" distinctChildren[ ]right for 3", Arrays.asList(new Pair<>("empty", "empty[right]")));
+		weakestIncon.put(" lowerBoud[ ]right for 3", Arrays.asList(new Pair<>("empty", "empty[right]")));
+		weakestIncon.put(" structuralConstraint[ ]left for 3", Arrays.asList(new Pair<>("empty", "empty[left]")));
+		weakestIncon.put(" acyclic[ ]left for 3", Arrays.asList(new Pair<>("stronglyConnected", "stronglyConnected[left, Node, Node]"), new Pair<>("symmetric", "symmetric[left, Node, Node]"), new Pair<>("total", "total[left, Node]"), new Pair<>("surjective", "surjective[left, Node]")));
+		weakestIncon.put(" distinctChildren[ ]left for 3", Arrays.asList(new Pair<>("empty", "empty[left]")));
+		weakestIncon.put(" lowerBoud[ ]left for 3", Arrays.asList(new Pair<>("empty", "empty[left]")));
+		Map<String, Boolean > isIncon = new HashMap<>();
+		isIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )right for 3", true);
+		isIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )left for 3", true);
+		//@formatter:on
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				System.out.println(statement + fieldLabel + scope);
+				return strongestImpl.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return weakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return isIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> strongestConsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return strongestCon.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+
+		runner.debuggerAlgorithm.run();
+	}
+
 	@Test
 	public void testStrongestApproximationBinaryTreeHeuristic() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -281,27 +377,11 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/corrected_binary_tree.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
 	}
-	
-	
-	@Test
-	public void testStrongestApproximationBinaryTreeConsistent() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary_tree.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected_binary_tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
 
-		System.out.println(runner.debuggerAlgorithm.approximator.strongestConsistentApproximation("distinctChildren", "right", ""));
-		
-		//runner.debuggerAlgorithm.run();
-	}
-	
 }

@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.infrastructure.Runner;
-import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmRandom;
 import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByAlloy;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
@@ -33,7 +32,7 @@ public class DebuggerRunner extends Runner {
 			Configuration.getProp("temporary_directory"));
 	final static int ProccessNumber = Integer
 			.parseInt(Configuration.getProp("analyzer_processes_number"));
-	
+
 	protected final File toBeAnalyzedCode;
 	protected final File correctModel;
 	protected final List<File> dependentFiles;

@@ -105,8 +105,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		public ExpressionAnalyzingSession(final PatternProcessingParam param,
 				final File tmpLocalDirectory, ExecutorService threadExecutor,
 				SendOnServerSocketInterface interfacE) throws Exception {
-			System.out.println("Session is started for:"+param);
-			
 			this.creationTime = System.currentTimeMillis();
 			this.id = param.getAnalyzingSessionID().get();
 			this.timeout = param.getTimeout().orElse(Long.MAX_VALUE);
@@ -151,8 +149,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					}
 				}
 			});
-			
-			System.out.println("Session is started created:"+param);
 		}
 
 		public void addGeneratedProperties(String propertyName) {
@@ -200,7 +196,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 							&& result.getParam().getAlloyCoder()
 									.orElseThrow(() -> new RuntimeException(
 											"Alloy Coder cannot be Null int a response."))
-							.isDesiredSAT(result.sat))
+									.isDesiredSAT(result.sat))
 						validResults.add(result);
 
 					// second: find out whether more properties are required to be
@@ -297,7 +293,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	final static int ProccessNumber = Integer
 			.parseInt(Configuration.getProp("alloy_processes_number"));
 
-
 	protected final static Logger logger = Logger
 			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--"
 					+ Thread.currentThread().getName());
@@ -358,7 +353,8 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 	protected ExpressionAnalyzerRunner(InetSocketAddress localSocket,
 			InetSocketAddress remoteSocket) {
-		this(localSocket, remoteSocket, ProcessorUtil.findEmptyLocalSocket(localSocket.getPort()),
+		this(localSocket, remoteSocket,
+				ProcessorUtil.findEmptyLocalSocket(localSocket.getPort()),
 				new File(TemporaryLocalDirectory), PriodicalMonitoringThreadsReportInMS,
 				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry,
 				Executors.newFixedThreadPool(10));
@@ -538,7 +534,8 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		backlogFeedingQueue = new Queue<>();
 
 		processManager = new RemoteProcessManager(
-				distributerInterface.getHostProcess().address, AlloyRunner.class, ProccessNumber);
+				distributerInterface.getHostProcess().address, AlloyRunner.class,
+				ProccessNumber);
 		feeder = new Feeder<AlloyProcessingParam>(processManager,
 				distributerInterface, feedingQueue, backlogFeedingQueue) {
 			@Override

@@ -88,14 +88,15 @@ public abstract class ImplicationLattic {
 		try {
 			Util.writeAll(file.getAbsolutePath(), content);
 			result.addAll(getAllproperties(file.getAbsolutePath()));
-			file.delete();
-		} catch (Err e) {
+		} catch (Throwable e) {
 			logger
 					.log(Level.SEVERE,
 							"[" + Thread.currentThread().getName() + "] "
 									+ "Error while getting all sources in implication lattice: ",
 							e);
 			throw e;
+		} finally{
+			file.delete();
 		}
 
 		return Collections.unmodifiableList(result);

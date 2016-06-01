@@ -148,9 +148,6 @@ public abstract class Feeder<T extends ProcessingParam>
 					+ "Queue size is: " + queue.size());
 		T e;
 		try {
-			if (Configuration.IsInDeubbungMode)
-				logger.info("[" + Thread.currentThread().getName() + "]" + "Queue is: "
-						+ queue);
 			// take a request, if something is in the queue. Otherwise the thread
 			// parks here.
 			e = queue.take();
