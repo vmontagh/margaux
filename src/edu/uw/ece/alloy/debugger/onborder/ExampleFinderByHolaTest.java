@@ -6,23 +6,18 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.Optional;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.uw.ece.alloy.Configuration;
-import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.InvalidParameterException;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.TerminateMessage;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
@@ -63,22 +58,6 @@ public class ExampleFinderByHolaTest {
         readynessReceived.val = 0;
     }
     
-    @After
-    public void tearDown() {
-        
-//        System.out.println("Teraming down remotes");
-//        TerminateMessage message = new TerminateMessage(this.testingInterface.getHostProcess()) {
-//                        
-//            @Override
-//            public void onAction(Map<String, Object> context) throws InvalidParameterException {
-//                                            
-//            }
-//        };
-//        
-//        testingInterface.sendMessage(message, testingInterface.getRemoteProcess().get());
-//
-//        System.out.println("Hopefully they all die");
-    }
     /**
      * Given the file, all other required parameters for creating an
      * ExampleFinder object is created.

@@ -20,7 +20,7 @@ public class OnBorderCodeGenerator {
     private PrintWriter out;
     private String indent;
     private Module module;
-    private String sigString;
+    private String sigDeclaration;
     private String[] predNames;
     private List<SigFieldWrapper> sigs;
     
@@ -44,7 +44,7 @@ public class OnBorderCodeGenerator {
         this.module = module;
         
         try {
-            this.sigString = Field2ConstraintMapper.getSigDeclationViaPos(this.module);
+            this.sigDeclaration = Field2ConstraintMapper.getSigDeclarationViaPos(this.module);
             this.sigs = A4SolutionVisitor.getSigs(module);
         }
         catch (Err e) {
@@ -87,7 +87,7 @@ public class OnBorderCodeGenerator {
         }
         
         try {
-            this.sigString = Field2ConstraintMapper.getSigDeclationViaPos(this.module);
+            this.sigDeclaration = Field2ConstraintMapper.getSigDeclarationViaPos(this.module);
             this.sigs = A4SolutionVisitor.getSigs(module);
         }
         catch (Err e) {
@@ -135,7 +135,7 @@ public class OnBorderCodeGenerator {
         this.out = out;
         ln();
         
-        println(this.sigString);
+        println(this.sigDeclaration);
         
     }
     
@@ -346,7 +346,7 @@ public class OnBorderCodeGenerator {
         
         // Create temp file for extracted signatures
         File file = File.createTempFile("sig", ".als");
-        String sigs = this.sigString + OnBorderCodeGenerator.RUN;
+        String sigs = this.sigDeclaration + OnBorderCodeGenerator.RUN;
         Util.writeAll(file.getAbsolutePath(), sigs);
         
         // Translate signatures to KodKod

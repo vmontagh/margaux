@@ -31,7 +31,8 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 * edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#afterInquiryOracle()
 	 */
 	@Override
-	protected void afterInquiryOracle() {
+	protected boolean afterInquiryOracle() {
+	    return false;
 	}
 
 	/*
@@ -130,7 +131,8 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 * )
 	 */
 	@Override
-	protected void beforePickApproximation() {
+	protected boolean beforePickApproximation() {
+	    return false;
 	}
 
 	/*
