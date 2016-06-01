@@ -1,0 +1,87 @@
+May 31, 2016 10:09:31 PM edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager addAllProcesses
+WARNING: [main] A process is added to the processes list:{RemoteProcess [address=/127.0.1.1:60362]=RemoteProcessRecord [id=RemoteProcess [address=/127.0.1.1:60362], doneTasks=0, doingTasks=0, sentTasks=0, status=INITIATED, lastLiveTimeRecieved=0, lastLiveTimeReported=0, creationTime=1464746971970, process=java.lang.UNIXProcess@2e817b38]}
+May 31, 2016 10:09:32 PM edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager addAllProcesses
+WARNING: [main] A process is added to the processes list:{RemoteProcess [address=/127.0.1.1:60362]=RemoteProcessRecord [id=RemoteProcess [address=/127.0.1.1:60362], doneTasks=0, doingTasks=0, sentTasks=0, status=INITIATED, lastLiveTimeRecieved=0, lastLiveTimeReported=0, creationTime=1464746971970, process=java.lang.UNIXProcess@2e817b38], RemoteProcess [address=/127.0.1.1:60364]=RemoteProcessRecord [id=RemoteProcess [address=/127.0.1.1:60364], doneTasks=0, doingTasks=0, sentTasks=0, status=INITIATED, lastLiveTimeRecieved=0, lastLiveTimeReported=0, creationTime=1464746972011, process=java.lang.UNIXProcess@1d56ce6a]}
+May 31, 2016 10:09:32 PM edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage sendAMessage
+SEVERE: [main] Failed on sending the done message edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternReadyMessage@ac6a0ec7 TO =RemoteProcess [address=/127.0.1.1:54556]
+java.util.concurrent.ExecutionException: java.net.ConnectException: Connection refused
+	at sun.nio.ch.PendingFuture.get(PendingFuture.java:185)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendAMessage(RemoteMessage.java:62)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendMe(RemoteMessage.java:128)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:126)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:102)
+	at edu.uw.ece.hola.agent.OnBorderAnalyzerRunner.start(OnBorderAnalyzerRunner.java:371)
+	at edu.uw.ece.hola.agent.OnBorderAnalyzerRunner.main(OnBorderAnalyzerRunner.java:383)
+Caused by: java.net.ConnectException: Connection refused
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.finishConnect(UnixAsynchronousSocketChannelImpl.java:252)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.finish(UnixAsynchronousSocketChannelImpl.java:198)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.onEvent(UnixAsynchronousSocketChannelImpl.java:213)
+	at sun.nio.ch.EPollPort$EventHandlerTask.run(EPollPort.java:293)
+	at java.lang.Thread.run(Thread.java:745)
+
+May 31, 2016 10:09:32 PM edu.uw.ece.alloy.util.ServerSocketInterface sendMessage
+SEVERE: [main] Failed to send command: edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternReadyMessage@ac6a0ec7
+java.lang.RuntimeException: Unseccesful sending message java.net.ConnectException: Connection refused
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendAMessage(RemoteMessage.java:73)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendMe(RemoteMessage.java:128)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:126)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:102)
+	at edu.uw.ece.hola.agent.OnBorderAnalyzerRunner.start(OnBorderAnalyzerRunner.java:371)
+	at edu.uw.ece.hola.agent.OnBorderAnalyzerRunner.main(OnBorderAnalyzerRunner.java:383)
+
+May 31, 2016 10:09:33 PM edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage sendAMessage
+SEVERE: [Thread-10] Failed on sending the done message LivenessMessage [process=RemoteProcess [address=/127.0.1.1:54558], creationTime=1464746973978, processed=0, toBeProcessed=0] TO =RemoteProcess [address=/127.0.1.1:54556]
+java.util.concurrent.ExecutionException: java.net.ConnectException: Connection refused
+	at sun.nio.ch.PendingFuture.get(PendingFuture.java:185)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendAMessage(RemoteMessage.java:62)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendMe(RemoteMessage.java:128)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:126)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ReportLiveness.run(ReportLiveness.java:119)
+	at java.lang.Thread.run(Thread.java:745)
+Caused by: java.net.ConnectException: Connection refused
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.finishConnect(UnixAsynchronousSocketChannelImpl.java:252)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.finish(UnixAsynchronousSocketChannelImpl.java:198)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.onEvent(UnixAsynchronousSocketChannelImpl.java:213)
+	at sun.nio.ch.EPollPort$EventHandlerTask.run(EPollPort.java:293)
+	at sun.nio.ch.AsynchronousChannelGroupImpl$1.run(AsynchronousChannelGroupImpl.java:112)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	... 1 more
+
+May 31, 2016 10:09:33 PM edu.uw.ece.alloy.util.ServerSocketInterface sendMessage
+SEVERE: [Thread-10] Failed to send command: LivenessMessage [process=RemoteProcess [address=/127.0.1.1:54558], creationTime=1464746973978, processed=0, toBeProcessed=0]
+java.lang.RuntimeException: Unseccesful sending message java.net.ConnectException: Connection refused
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendAMessage(RemoteMessage.java:73)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendMe(RemoteMessage.java:128)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:126)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ReportLiveness.run(ReportLiveness.java:119)
+	at java.lang.Thread.run(Thread.java:745)
+
+May 31, 2016 10:09:35 PM edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage sendAMessage
+SEVERE: [Thread-10] Failed on sending the done message LivenessMessage [process=RemoteProcess [address=/127.0.1.1:54558], creationTime=1464746975981, processed=0, toBeProcessed=0] TO =RemoteProcess [address=/127.0.1.1:54556]
+java.util.concurrent.ExecutionException: java.net.ConnectException: Connection refused
+	at sun.nio.ch.PendingFuture.get(PendingFuture.java:185)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendAMessage(RemoteMessage.java:62)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendMe(RemoteMessage.java:128)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:126)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ReportLiveness.run(ReportLiveness.java:119)
+	at java.lang.Thread.run(Thread.java:745)
+Caused by: java.net.ConnectException: Connection refused
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.finishConnect(UnixAsynchronousSocketChannelImpl.java:252)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.finish(UnixAsynchronousSocketChannelImpl.java:198)
+	at sun.nio.ch.UnixAsynchronousSocketChannelImpl.onEvent(UnixAsynchronousSocketChannelImpl.java:213)
+	at sun.nio.ch.EPollPort$EventHandlerTask.run(EPollPort.java:293)
+	... 1 more
+
+May 31, 2016 10:09:35 PM edu.uw.ece.alloy.util.ServerSocketInterface sendMessage
+SEVERE: [Thread-10] Failed to send command: LivenessMessage [process=RemoteProcess [address=/127.0.1.1:54558], creationTime=1464746975981, processed=0, toBeProcessed=0]
+java.lang.RuntimeException: Unseccesful sending message java.net.ConnectException: Connection refused
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendAMessage(RemoteMessage.java:73)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage.sendMe(RemoteMessage.java:128)
+	at edu.uw.ece.alloy.util.ServerSocketInterface.sendMessage(ServerSocketInterface.java:126)
+	at edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ReportLiveness.run(ReportLiveness.java:119)
+	at java.lang.Thread.run(Thread.java:745)
+

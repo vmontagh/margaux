@@ -22,11 +22,13 @@ public class ExampleFinderByHola implements ExampleFinder {
 
 	private final ServerSocketInterface interfacE;
 	private final ProcessDistributer processManager;
+	private final File tmpLocalDirectory;
 
 	public ExampleFinderByHola(ServerSocketInterface interfacE,
-			ProcessDistributer processManager) {
+			ProcessDistributer processManager, File tmpLocalDirectory) {
 		this.interfacE = interfacE;
 		this.processManager = processManager;
+		this.tmpLocalDirectory = tmpLocalDirectory;
 	}
 
 	@Override
@@ -48,7 +50,7 @@ public class ExampleFinderByHola implements ExampleFinder {
 //		generator.run(predNameA, predNameB);
 
 		OnBorderProcessingParam param = new OnBorderProcessingParam(0,
-				Compressor.EMPTY_FILE, UUID.randomUUID(), Long.MAX_VALUE,
+				this.tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE,
 				path.getAbsolutePath(), predNameA, predNameB);
 		
 		OnBorderRequestMessage message = new OnBorderRequestMessage(this.interfacE.getHostProcess(), param);

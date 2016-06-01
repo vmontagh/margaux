@@ -21,9 +21,9 @@ public class OnBorderProcessedResult extends ProcessedResult {
 		this.results = results;
 	}
 
-	public OnBorderProcessedResult(ProcessingParam param, Pair<Optional<String>, Optional<String>> results) {
+	public OnBorderProcessedResult(ProcessingParam param, Object results) {
 		super(param);
-		this.results = results;
+		this.results = null;
 	}
 
 	public Optional<Pair<Optional<String>, Optional<String>>> getResults() {

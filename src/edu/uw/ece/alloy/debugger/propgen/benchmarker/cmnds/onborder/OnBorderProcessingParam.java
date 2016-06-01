@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
 
 /**
  * @author ooodunay
@@ -43,13 +44,23 @@ public class OnBorderProcessingParam extends ProcessingParam {
 	}
 
 	@Override
+	public OnBorderProcessingParam prepareToUse() throws Exception {
+		return this;
+	}
+
+	@Override
+	public OnBorderProcessingParam prepareToSend() throws Exception {
+		return this;
+	}
+	
+	@Override
 	public ProcessingParam createItself() {
 		return new OnBorderProcessingParam(this.priority, this.tmpLocalDirectory,
 				this.analyzingSessionID, this.timeout, this.fileName, this.predNames);
 	}
 
 	@Override
-	public ProcessingParam changeTmpLocalDirectory(File tmpDirectory) {
+	public OnBorderProcessingParam changeTmpLocalDirectory(File tmpDirectory) {
 		return new OnBorderProcessingParam(this.priority, tmpDirectory,
 				this.analyzingSessionID, this.timeout, this.fileName, this.predNames); 
 	}
