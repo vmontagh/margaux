@@ -160,12 +160,14 @@ public abstract class DebuggerAlgorithm {
 	/* The property that is chosen to be weaken or strengthened */
 	protected Pair<String, String> toBeingWeakenOrStrengthenedApproximation;
 	PriorityQueue<DecisionQueueItem<String>> toBePickedQueueFromWeakenOrStrengthened;
-	boolean strengthened;
+	protected boolean strengthened;
 	/*
 	 * findOnBorderExamples finds two examples close to border: inAndOutExamples.a
 	 * is inside and inAndOutExamples.b is outside.
 	 */
 	protected Pair<Optional<String>, Optional<String>> inAndOutExamples;
+
+	protected boolean inExampleIsInteded, outExampleIsInteded;
 
 	/* Examples that are reviewed by oracle are stored in the following sets */
 	final protected Set<String> acceptedExamples, rejectedExamples;
@@ -328,12 +330,15 @@ public abstract class DebuggerAlgorithm {
 				PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue = approximationQueues
 						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
 
+				System.out.println("approximationQueue->"+approximationQueue);
+				
 				beforePickApproximation();
 				while (!approximationQueue.isEmpty()) {
 					DecisionQueueItem<Pair<String, String>> approx = approximationQueue
 							.poll();
-					afterPickApproximation();
+
 					toBeingWeakenOrStrengthenedApproximation = approx.getItem().get();
+					afterPickApproximation();
 
 					if (!strongerApproxQueues.containsKey(toBeingAnalyzedField))
 						strongerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
@@ -394,11 +399,6 @@ public abstract class DebuggerAlgorithm {
 							.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
 							.get(toBeingWeakenOrStrengthenedApproximation);
 
-					System.out.println("For field:" + toBeingAnalyzedField + " Expr:"
-							+ toBeingAnalyzedModelPart + " strongerApproxQueue:"
-							+ strongerApproxQueue + " weakerApproxQueue:"
-							+ weakerApproxQueue);
-
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
 					while (!strongerApproxQueue.isEmpty()
@@ -410,8 +410,6 @@ public abstract class DebuggerAlgorithm {
 								|| DecisionQueueItem.RandomGenerator.nextBoolean())) {
 							toBePickedQueueFromWeakenOrStrengthened = weakerApproxQueue;
 							strengthened = false;
-							System.out.println("modelPart 3-> " + modelPart + "....." + field
-									+ "=====" + approx);
 						}
 
 						afterPickWeakenOrStrengthened();
@@ -439,9 +437,9 @@ public abstract class DebuggerAlgorithm {
 						// ask the user
 
 						// Interpreting the result
-						boolean inExampleIsInteded = inAndOutExamples.a.isPresent()
+						inExampleIsInteded = inAndOutExamples.a.isPresent()
 								? oracle.isIntended(inAndOutExamples.a.get()) : false;
-						boolean outExampleIsInteded = inAndOutExamples.b.isPresent()
+						outExampleIsInteded = inAndOutExamples.b.isPresent()
 								? oracle.isIntended(inAndOutExamples.b.get()) : false;
 
 						StringBuilder rowRoport = new StringBuilder();
@@ -515,12 +513,18 @@ public abstract class DebuggerAlgorithm {
 						reportHeader = headerRow.a;
 						report.append(headerRow.b).append("\n");
 						// store the answer
-						afterInquiryOracle();
+						if (afterInquiryOracle())
+							break;
 						// Call APIs to change the priority of the next steps
 						if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 							beforePickWeakenOrStrengthened();
 					}
+					if (!approximationQueue.isEmpty())
+						if (beforePickApproximation())
+							break;
 				}
+				if (!modelQueue.isEmpty())
+					beforePickModelPart();
 			}
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
@@ -537,7 +541,7 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("--------------------------");
 	}
 
-	protected abstract void afterInquiryOracle();
+	protected abstract boolean afterInquiryOracle();
 
 	protected abstract void beforeInquiryOracle();
 
@@ -557,7 +561,7 @@ public abstract class DebuggerAlgorithm {
 
 	protected abstract void afterPickApproximation();
 
-	protected abstract void beforePickApproximation();
+	protected abstract boolean beforePickApproximation();
 
 	protected abstract void afterPickModelPart();
 

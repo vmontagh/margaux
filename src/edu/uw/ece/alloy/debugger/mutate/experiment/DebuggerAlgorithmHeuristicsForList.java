@@ -34,6 +34,7 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			.getLogger(DebuggerAlgorithmHeuristicsForList.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
+	boolean breakApproximationSelection = false;
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 	// A map from an expression and weakest inconsistent properties.
@@ -55,7 +56,33 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 	}
 
 	@Override
-	protected void afterInquiryOracle() {
+	protected boolean afterInquiryOracle() {
+		// RULE: if weakened and other approximation remained and the inExample is
+		// correct, then the expression's priority is degraded.
+
+		if (!strengthened && !inExampleIsInteded) {
+			System.out.println("modelQueue before:" + modelQueue);
+			modelQueue.add(new DecisionQueueItem<Expr>(toBeingAnalyzedModelPart,
+					modelQueue.stream().mapToInt(a -> a.getScore().get()).min()
+							.orElse(DecisionQueueItem.MinUniformScore) - 1));
+			approximationQueues.get(toBeingAnalyzedField)
+					.get(toBeingAnalyzedModelPart)
+					.add(new DecisionQueueItem<Pair<String, String>>(
+							toBeingWeakenOrStrengthenedApproximation,
+
+							approximationQueues.get(toBeingAnalyzedField)
+									.get(toBeingAnalyzedModelPart).stream()
+									.min((a1, a2) -> a1.compare(a1, a2))
+									.map(a -> a.getScore()
+											.orElse(DecisionQueueItem.MinUniformScore) - 1)
+									.orElse(DecisionQueueItem.MinUniformScore) - 1)
+
+			);
+			breakApproximationSelection = true;
+			System.out.println("modelQueue after:" + modelQueue);
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -98,8 +125,7 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 					.get(toBeingWeakenOrStrengthenedApproximation).clear();
 		}
 		// RULE: any approximation that is inconsistent with other expressions
-		// should be
-		// removed or has lower priority.
+		// should be removed or has lower priority.
 		strongerApproxQueues.get(super.toBeingAnalyzedField)
 				.get(toBeingAnalyzedModelPart)
 				.put(toBeingWeakenOrStrengthenedApproximation,
@@ -119,6 +145,7 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 								.filter(prop -> !isInconsistentWithOtherStatments(
 										prop.getItem().get()))
 								.collect(Collectors.toCollection(PriorityQueue::new)));
+
 	}
 
 	protected boolean isInconsistentWithOtherStatments(String pattern) {
@@ -134,7 +161,12 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 	}
 
 	@Override
-	protected void beforePickApproximation() {
+	protected boolean beforePickApproximation() {
+		if (breakApproximationSelection) {
+			breakApproximationSelection = false;
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -212,21 +244,21 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 				} catch (Err e) {
 					e.printStackTrace();
 				}
-				System.out.println("approximatedExpr:"+approximatedExpr);
-				System.out.println("exprString:"+exprString);
+				System.out.println("approximatedExpr:" + approximatedExpr);
+				System.out.println("exprString:" + exprString);
 				if (approximatedExpr.size() == 1
 						&& approximatedExpr.get(0).b.equals(exprString)) {
 					notApproximatedExprs.add(expr);
 				}
 			}
 		}
-		
+
 		System.out.println("modelQueu before:");
 		modelQueue.stream().forEach(
 				m -> System.out.println(m.getItem().get() + " " + m.getScore().get()));
-		
+
 		System.out.println(notApproximatedExprs);
-		
+
 		// RULE: if a given expression does not approximated by any pattern, then it
 		// should be weaken by its negation. Such expression has lower priority
 		// compared to the expressions that could be approximated by one or more
@@ -235,12 +267,12 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 				.mapToInt(a -> a.getScore().get()).min()
 				.orElse(DecisionQueueItem.MinUniformScore);
 		final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
-		while (!modelQueue.isEmpty()){
+		while (!modelQueue.isEmpty()) {
 			DecisionQueueItem<Expr> modelPart = modelQueue.poll();
 			if (notApproximatedExprs.contains(modelPart.getItem().get())) {
 				System.out.println("changed");
 				modelPart.setScore(minPriority - 1);
-				
+
 			}
 			toBeUpdated.add(modelPart);
 		}
@@ -248,7 +280,7 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 		System.out.println("modelQueu after:");
 		modelQueue.stream().forEach(
 				m -> System.out.println(m.getItem().get() + " " + m.getScore().get()));
-		
+
 	}
 
 	@Override
