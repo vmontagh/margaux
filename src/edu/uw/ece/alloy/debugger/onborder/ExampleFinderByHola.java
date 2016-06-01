@@ -34,20 +34,6 @@ public class ExampleFinderByHola implements ExampleFinder {
 	public Pair<Optional<String>, Optional<String>> findOnBorderExamples(
 			File path, String predNameA, String predNameB) {
 
-//		String fileName = path.getAbsolutePath();
-//		String destFileName = fileName.substring(0, fileName.lastIndexOf("."))
-//				+ ".hola.als";
-//		File destFile = new File(destFileName);
-//		PrintWriter pw = null;
-//		try {
-//			pw = new PrintWriter(destFile);
-//		} catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//
-//		OnBorderCodeGenerator generator = new OnBorderCodeGenerator(fileName, pw);
-//		generator.run(predNameA, predNameB);
-
 		OnBorderProcessingParam param = new OnBorderProcessingParam(0,
 				this.tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE,
 				path.getAbsolutePath(), predNameA, predNameB);
@@ -93,7 +79,7 @@ public class ExampleFinderByHola implements ExampleFinder {
 		    return new Pair<Optional<String>, Optional<String>>(Optional.of(res.get(predNameA)), Optional.of(res.get(predNameB)));
 		}
 		
-		return null;
+		return new Pair<Optional<String>, Optional<String>>(Optional.empty(), Optional.empty());
 	}
 	
 	public class SynchronizedResult<T> {

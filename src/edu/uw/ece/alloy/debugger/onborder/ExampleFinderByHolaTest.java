@@ -124,7 +124,7 @@ public class ExampleFinderByHolaTest {
 
         System.out.println("\n======= Going In =======\n");
         ExampleFinder finder = prepareExampleFinder(toBeAnalyzedCode, tmpLocalDirectory);        
-        Pair<Optional<String>, Optional<String>> result = finder.findOnBorderExamples(toBeAnalyzedCode, "milo", "bournvita");
+        Pair<Optional<String>, Optional<String>> result = finder.findOnBorderExamples(toBeAnalyzedCode, "hello", "hi");
         System.out.println("\n======= I'm out =======\n");
         System.out.println("result: " + result);
     }
