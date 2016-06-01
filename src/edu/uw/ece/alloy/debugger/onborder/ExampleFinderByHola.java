@@ -1,13 +1,12 @@
 package edu.uw.ece.alloy.debugger.onborder;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import edu.mit.csail.sdg.alloy4.Pair;
-import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
@@ -62,6 +61,7 @@ public class ExampleFinderByHola implements ExampleFinder {
 				
 				result.result = (OnBorderProcessedResult) responseMessage.getResult();
 				synchronized (result) {
+					System.out.println("I have the result at last");
 					result.notify();
 				}
 				
@@ -85,9 +85,15 @@ public class ExampleFinderByHola implements ExampleFinder {
 		}
 		
 		interfacE.MessageReceived.removeListener(receiveListener);		
-		System.out.println("result:"+result.getResult().get().getResults());
+		System.out.println("result: " + result.getResult().get().getResults());
 		
-		return result.getResult().get().getResults().get();
+		// Right now, the result is the same for both
+		if(result.getResult().get().getResults().isPresent()) {
+		    HashMap<String, String> res = result.getResult().get().getResults().get();
+		    return new Pair<Optional<String>, Optional<String>>(Optional.of(res.get(predNameA)), Optional.of(res.get(predNameB)));
+		}
+		
+		return null;
 	}
 	
 	public class SynchronizedResult<T> {

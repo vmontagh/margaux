@@ -4,10 +4,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner.ExpressionAnalyzingSession;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.InvalidParameterException;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
+import edu.uw.ece.hola.agent.OnBorderAnalyzerRunner.OnBorderAnalyzingSession;
 
 /**
  * @author ooodunay
@@ -29,7 +29,7 @@ public class HolaResponseMessage extends ResponseMessage {
 	public void onAction(Map<String, Object> context)
 			throws InvalidParameterException {
 		@SuppressWarnings("unchecked")
-		Function<HolaProcessingParam, Optional<ExpressionAnalyzingSession>> getSession = (Function<HolaProcessingParam, Optional<ExpressionAnalyzingSession>>) context
+		Function<HolaProcessingParam, Optional<OnBorderAnalyzingSession>> getSession = (Function<HolaProcessingParam, Optional<OnBorderAnalyzingSession>>) context
 				.get("getSession");
 		try {
 			getSession.apply(this.getResult().getParam()).get().followUp(this);

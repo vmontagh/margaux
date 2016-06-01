@@ -1,12 +1,12 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
 import edu.uw.ece.alloy.Compressor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
 
 /**
  * @author ooodunay
@@ -64,5 +64,13 @@ public class OnBorderProcessingParam extends ProcessingParam {
 		return new OnBorderProcessingParam(this.priority, tmpDirectory,
 				this.analyzingSessionID, this.timeout, this.fileName, this.predNames); 
 	}
+	
+	@Override
+    public String toString() {
+        return "OnBorderProcessingParam [filePath=" + fileName
+                + ", predNames=" + Arrays.toString(getPredNames().get()) + ", priority=" + priority
+                + ", tmpLocalDirectory=" + tmpLocalDirectory + ", analyzingSessionID="
+                + analyzingSessionID + ", timeout=" + timeout + "]";
+    }
 
 }

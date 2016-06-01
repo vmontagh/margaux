@@ -4,11 +4,14 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.InvalidParameterException;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
+import edu.uw.ece.hola.agent.OnBorderAnalyzerRunner.OnBorderAnalyzingSession;
 
 /**
  * @author ooodunay
@@ -42,7 +45,14 @@ public class OnBorderRequestMessage extends RequestMessage {
 	public void onAction(Map<String, Object> context)
 			throws InvalidParameterException {
 		
-		System.out.println("I received your action. Hooray!");
+	    @SuppressWarnings("unchecked")
+        Function<OnBorderProcessingParam, Optional<OnBorderAnalyzingSession>> createNewSession = (Function<OnBorderProcessingParam, Optional<OnBorderAnalyzingSession>>) context
+                .get("createNewSession");
+        try {
+            createNewSession.apply(getProcessingParam()).get().start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 }
