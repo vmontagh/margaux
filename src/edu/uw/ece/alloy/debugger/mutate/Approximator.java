@@ -136,19 +136,34 @@ public class Approximator {
 				field.label, scope);
 	}
 
+	StringBuilder sb_strongestImplicationApproximation = new StringBuilder(
+			"Map<String, List<Pair<String, String>> > strongestImpl = new HashMap<>();\n");
+	
 	public List<Pair<String, String>> strongestImplicationApproximation(
 			String statement, String fieldLabel, String scope) {
-		return findApproximation(statement, fieldLabel, scope,
+		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel, scope,
 				IfPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
+		
+		makeNewRecordInCacheResult(sb_strongestImplicationApproximation, "strongestImpl", statement, fieldLabel, scope, approx);
+		
+		return approx;
 	}
+
+	StringBuilder sb_strongestConsistentApproximation = new StringBuilder(
+			"Map<String, List<Pair<String, String>> > strongestCon = new HashMap<>();\n");
 
 	public List<Pair<String, String>> strongestConsistentApproximation(
 			String statement, String fieldLabel, String scope) {
-		return findApproximation(statement, fieldLabel, scope,
-				AndPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
+		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel,
+				scope, AndPropertyToAlloyCode.EMPTY_CONVERTOR,
+				filterWeakerApproximations);
+
+		makeNewRecordInCacheResult(sb_strongestConsistentApproximation, "strongestCon", statement, fieldLabel, scope, approx);
+
+		return approx;
 	}
 
-	StringBuilder sb = new StringBuilder(
+	public StringBuilder sb_weakestInconsistentApproximation = new StringBuilder(
 			"Map<String, List<Pair<String, String>> > weakestIncon = new HashMap<>();\n");
 
 	public List<Pair<String, String>> weakestInconsistentApproximation(
@@ -156,24 +171,46 @@ public class Approximator {
 		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel,
 				scope, InconPropertyToAlloyCode.EMPTY_CONVERTOR,
 				filterStrongerApproximations);
+		
+		makeNewRecordInCacheResult(sb_weakestInconsistentApproximation, "weakestIncon", statement, fieldLabel, scope, approx);
+		
+		return approx;
+	}
 
+	private void makeNewRecordInCacheResult(StringBuilder sb, String name,
+			String statement, String fieldLabel, String scope, List<Pair<String, String>> approx) {
 		// Converting to Cache.
 		String key = statement + fieldLabel + scope;
-		sb.append("weakestIncon.put(\"").append(key).append("\", Arrays.asList(")
+		sb.append(name+".put(\"")
+				.append(key).append("\", Arrays.asList(")
 				.append(approx.stream()
 						.map(p -> "new Pair<>(\"" + p.a + "\", \"" + p.b + "\")")
 						.collect(Collectors.joining(", ")))
 				.append("));\n");
-		System.out.println(sb);
-
-		return approx;
 	}
 
+	public String getAllChachedResults(){
+		return sb_strongestImplicationApproximation.toString() +
+				sb_strongestConsistentApproximation.toString() +
+				sb_weakestInconsistentApproximation.toString() +
+				sb_isInconsistent.toString();
+				
+	}
+	public StringBuilder sb_isInconsistent = new StringBuilder(
+			"Map<String, Boolean > isIncon = new HashMap<>();\n");
+	
 	public Boolean isInconsistent(String statement, String fieldLabel,
 			String scope) {
-		return !findApproximation(statement, fieldLabel, scope,
+		Boolean result =  !findApproximation(statement, fieldLabel, scope,
 				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity())
 						.isEmpty();
+		// Converting to Cache.
+		String key = statement + fieldLabel + scope;
+		sb_isInconsistent.append("isIncon.put(\"")
+		.append(key).append("\", ").append(result)
+		.append(");\n");
+		
+		return result;
 	}
 
 	/**
@@ -290,7 +327,8 @@ public class Approximator {
 		return Collections.unmodifiableList(result);
 	}
 
-	public List<Pair<String, String>> weakerProperties(String pattern, String fieldName) {
+	public List<Pair<String, String>> weakerProperties(String pattern,
+			String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		return weakerPatterns(pattern).stream()
 				.map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName)))

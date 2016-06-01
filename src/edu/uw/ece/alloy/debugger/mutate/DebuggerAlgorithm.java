@@ -532,6 +532,8 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("--------------------------");
 		System.out.println(reportHeader);
 		System.out.println(report);
+		
+		System.out.println(approximator.getAllChachedResults());
 		try {
 			Util.writeAll("tmp/" + sourceFile.getName() + ".csv",
 					reportHeader + "\n" + report);
