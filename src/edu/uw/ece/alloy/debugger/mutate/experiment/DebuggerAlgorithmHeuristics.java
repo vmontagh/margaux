@@ -27,11 +27,11 @@ import edu.uw.ece.alloy.util.Utils;
  * @author vajih
  *
  */
-public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
+public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
-	final public static DebuggerAlgorithmHeuristicsForList EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristicsForList();
+	final public static DebuggerAlgorithmHeuristics EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristics();
 	protected final static Logger logger = Logger
-			.getLogger(DebuggerAlgorithmHeuristicsForList.class.getName() + "--"
+			.getLogger(DebuggerAlgorithmHeuristics.class.getName() + "--"
 					+ Thread.currentThread().getName());
 
 	boolean breakApproximationSelection = false;
@@ -41,7 +41,7 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps,
 			allInconsistentProps;
 
-	protected DebuggerAlgorithmHeuristicsForList(File sourceFile,
+	protected DebuggerAlgorithmHeuristics(File sourceFile,
 			File destinationDir, Approximator approximator, Oracle oracle,
 			ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
@@ -49,7 +49,7 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 		allInconsistentProps = new HashMap<>();
 	}
 
-	protected DebuggerAlgorithmHeuristicsForList() {
+	protected DebuggerAlgorithmHeuristics() {
 		super();
 		weakestInconsistentProps = null;
 		allInconsistentProps = null;
@@ -249,7 +249,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			}
 		}
 
-
 		// RULE: if a given expression does not approximated by any pattern, then it
 		// should be weaken by its negation. Such expression has lower priority
 		// compared to the expressions that could be approximated by one or more
@@ -271,10 +270,10 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 	}
 
 	@Override
-	public DebuggerAlgorithmHeuristicsForList createIt(File sourceFile,
+	public DebuggerAlgorithmHeuristics createIt(File sourceFile,
 			File destinationDir, Approximator approximator, Oracle oracle,
 			ExampleFinder exampleFinder) {
-		return new DebuggerAlgorithmHeuristicsForList(sourceFile, destinationDir,
+		return new DebuggerAlgorithmHeuristics(sourceFile, destinationDir,
 				approximator, oracle, exampleFinder);
 	}
 

@@ -20,7 +20,7 @@ import org.junit.Test;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
-import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristicsForList;
+import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristics;
 import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmRandom;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.util.LazyFile;
@@ -210,10 +210,10 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/correctedlist.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		
 		// change the debugger algorithm in runner
-		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM.createIt(
+		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM.createIt(
 				runner.toBeAnalyzedCode,
 				runner.tmpLocalDirectory, runner.approximator, runner.oracle, runner.exampleFinder);
 		
@@ -281,7 +281,7 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File(
 				"models/debugger/casestudy/journal/corrected_binary_tree.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristicsForList.EMPTY_ALGORITHM);
+				Collections.emptyList(), testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();

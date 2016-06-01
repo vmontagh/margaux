@@ -330,8 +330,8 @@ public abstract class DebuggerAlgorithm {
 				PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue = approximationQueues
 						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
 
-				System.out.println("approximationQueue->"+approximationQueue);
-				
+				System.out.println("approximationQueue->" + approximationQueue);
+
 				beforePickApproximation();
 				while (!approximationQueue.isEmpty()) {
 					DecisionQueueItem<Pair<String, String>> approx = approximationQueue
