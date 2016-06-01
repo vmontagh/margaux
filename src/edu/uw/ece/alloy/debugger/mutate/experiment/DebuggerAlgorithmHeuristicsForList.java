@@ -61,7 +61,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 		// correct, then the expression's priority is degraded.
 
 		if (!strengthened && !inExampleIsInteded) {
-			System.out.println("modelQueue before:" + modelQueue);
 			modelQueue.add(new DecisionQueueItem<Expr>(toBeingAnalyzedModelPart,
 					modelQueue.stream().mapToInt(a -> a.getScore().get()).min()
 							.orElse(DecisionQueueItem.MinUniformScore) - 1));
@@ -79,7 +78,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 
 			);
 			breakApproximationSelection = true;
-			System.out.println("modelQueue after:" + modelQueue);
 			return true;
 		}
 		return false;
@@ -244,8 +242,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 				} catch (Err e) {
 					e.printStackTrace();
 				}
-				System.out.println("approximatedExpr:" + approximatedExpr);
-				System.out.println("exprString:" + exprString);
 				if (approximatedExpr.size() == 1
 						&& approximatedExpr.get(0).b.equals(exprString)) {
 					notApproximatedExprs.add(expr);
@@ -253,11 +249,6 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 			}
 		}
 
-		System.out.println("modelQueu before:");
-		modelQueue.stream().forEach(
-				m -> System.out.println(m.getItem().get() + " " + m.getScore().get()));
-
-		System.out.println(notApproximatedExprs);
 
 		// RULE: if a given expression does not approximated by any pattern, then it
 		// should be weaken by its negation. Such expression has lower priority
@@ -270,16 +261,12 @@ public class DebuggerAlgorithmHeuristicsForList extends DebuggerAlgorithm {
 		while (!modelQueue.isEmpty()) {
 			DecisionQueueItem<Expr> modelPart = modelQueue.poll();
 			if (notApproximatedExprs.contains(modelPart.getItem().get())) {
-				System.out.println("changed");
 				modelPart.setScore(minPriority - 1);
 
 			}
 			toBeUpdated.add(modelPart);
 		}
 		modelQueue.addAll(toBeUpdated);
-		System.out.println("modelQueu after:");
-		modelQueue.stream().forEach(
-				m -> System.out.println(m.getItem().get() + " " + m.getScore().get()));
 
 	}
 
