@@ -636,7 +636,7 @@ public abstract class DebuggerAlgorithm {
 			} else {
 				approximatedProperty = "(not " + property + " and "
 						+ approximationProperty + ")";
-				notApproximatedProperty = "(not " + approximatedProperty + ")";
+				notApproximatedProperty = "(not " + approximationProperty + ")";
 			}
 		}
 
@@ -678,6 +678,7 @@ public abstract class DebuggerAlgorithm {
 				+ notPred + "\n" + newCommandName + "\n" + newCommandNameNot;
 		File newCodeFile = new File(destinationDir, predName + ".als");
 		try {
+			System.out.println("The mutated file is: "+ newCodeFile.getAbsolutePath());
 			Util.writeAll(newCodeFile.getAbsolutePath(), newCode);
 		} catch (Err e) {
 			e.printStackTrace();
