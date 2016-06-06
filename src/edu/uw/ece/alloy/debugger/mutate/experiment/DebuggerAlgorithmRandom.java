@@ -32,7 +32,7 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected boolean afterInquiryOracle() {
-		return false;
+	    return false;
 	}
 
 	/*
@@ -132,7 +132,7 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected boolean beforePickApproximation() {
-		return false;
+	    return false;
 	}
 
 	/*

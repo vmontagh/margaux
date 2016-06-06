@@ -30,7 +30,7 @@ import edu.uw.ece.alloy.util.Utils;
  */
 public class Field2ConstraintMapper extends VisitReturn<Object> {
 
-	public static String getSigDeclationViaPos(Module sol) throws Err {
+	public static String getSigDeclarationViaPos(Module sol) throws Err {
 		
 		StringBuilder allSigs = new StringBuilder();
 		for(Sig sig: sol.getAllReachableSigs()) {

@@ -80,12 +80,30 @@ public abstract class ReportLiveness<T extends LivenessMessage> implements Runna
 				processed, tobeProcessed, sendInterval, maxFailed, interfacE);
 	}
 
+	public int getProcessed() {
+		return this.processed;
+	}
+	
 	public void setProcessed(int processed) {
 		this.processed = processed;
 	}
 
+	public int getTobeProcessed() {
+		return this.tobeProcessed;
+	}
+	
 	public void setTobeProcessed(int tobeProcessed) {
 		this.tobeProcessed = tobeProcessed;
+	}
+		
+	/**
+	 * Increment the number processed and decrement the number to be processed.
+	 */
+	public void incrementProcessed() {
+		synchronized(this) {
+			this.processed++;
+			this.tobeProcessed--;
+		}
 	}
 	
 	protected abstract T createLivenessMessage();
