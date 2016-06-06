@@ -370,5 +370,18 @@ public class DebuggerRunnerTest {
 
 		runner.debuggerAlgorithm.run();
 	}
+	
+	
+	@Test
+	public void testDikjstraBug1Random(){
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"/home/vajih/eclipse/eclipse-workspace/alloy/models/debugger/casestudy/journal/dijkstra_bug1.als");
+		File correctedModel = new File(
+				"/home/vajih/eclipse/eclipse-workspace/alloy/models/debugger/casestudy/journal/correcteddijkstra_bug1.als");
+		
+	}
+	
+	
 
 }
