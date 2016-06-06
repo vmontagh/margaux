@@ -136,16 +136,24 @@ public class Approximator {
 				field.label, scope);
 	}
 
+	public Boolean isInconsistent(File toBeAnalyzedCode,Expr statement, Field field, String scope)
+			throws Err {
+		return isInconsistent(toBeAnalyzedCode, PrettyPrintExpression.makeString(statement),
+				field.label, scope);
+	}
+	
 	StringBuilder sb_strongestImplicationApproximation = new StringBuilder(
 			"Map<String, List<Pair<String, String>> > strongestImpl = new HashMap<>();\n");
-	
+
 	public List<Pair<String, String>> strongestImplicationApproximation(
 			String statement, String fieldLabel, String scope) {
-		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel, scope,
-				IfPropertyToAlloyCode.EMPTY_CONVERTOR, filterWeakerApproximations);
-		
-		makeNewRecordInCacheResult(sb_strongestImplicationApproximation, "strongestImpl", statement, fieldLabel, scope, approx);
-		
+		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel,
+				scope, IfPropertyToAlloyCode.EMPTY_CONVERTOR,
+				filterWeakerApproximations);
+
+		makeNewRecordInCacheResult(sb_strongestImplicationApproximation,
+				"strongestImpl", statement, fieldLabel, scope, approx);
+
 		return approx;
 	}
 
@@ -158,7 +166,8 @@ public class Approximator {
 				scope, AndPropertyToAlloyCode.EMPTY_CONVERTOR,
 				filterWeakerApproximations);
 
-		makeNewRecordInCacheResult(sb_strongestConsistentApproximation, "strongestCon", statement, fieldLabel, scope, approx);
+		makeNewRecordInCacheResult(sb_strongestConsistentApproximation,
+				"strongestCon", statement, fieldLabel, scope, approx);
 
 		return approx;
 	}
@@ -171,57 +180,82 @@ public class Approximator {
 		List<Pair<String, String>> approx = findApproximation(statement, fieldLabel,
 				scope, InconPropertyToAlloyCode.EMPTY_CONVERTOR,
 				filterStrongerApproximations);
-		
-		makeNewRecordInCacheResult(sb_weakestInconsistentApproximation, "weakestIncon", statement, fieldLabel, scope, approx);
-		
+
+		makeNewRecordInCacheResult(sb_weakestInconsistentApproximation,
+				"weakestIncon", statement, fieldLabel, scope, approx);
+
 		return approx;
 	}
 
 	private void makeNewRecordInCacheResult(StringBuilder sb, String name,
-			String statement, String fieldLabel, String scope, List<Pair<String, String>> approx) {
+			String statement, String fieldLabel, String scope,
+			List<Pair<String, String>> approx) {
 		// Converting to Cache.
 		String key = statement + fieldLabel + scope;
-		sb.append(name+".put(\"")
-				.append(key).append("\", Arrays.asList(")
+		sb.append(name + ".put(\"").append(key).append("\", Arrays.asList(")
 				.append(approx.stream()
 						.map(p -> "new Pair<>(\"" + p.a + "\", \"" + p.b + "\")")
 						.collect(Collectors.joining(", ")))
 				.append("));\n");
 	}
 
-	public String getAllChachedResults(){
-		return sb_strongestImplicationApproximation.toString() +
-				sb_strongestConsistentApproximation.toString() +
-				sb_weakestInconsistentApproximation.toString() +
-				sb_isInconsistent.toString();
-				
+	public String getAllChachedResults() {
+		return sb_strongestImplicationApproximation.toString()
+				+ sb_strongestConsistentApproximation.toString()
+				+ sb_weakestInconsistentApproximation.toString()
+				+ sb_isInconsistent.toString();
+
 	}
+
 	public StringBuilder sb_isInconsistent = new StringBuilder(
 			"Map<String, Boolean > isIncon = new HashMap<>();\n");
-	
+
 	public Boolean isInconsistent(String statement, String fieldLabel,
 			String scope) {
-		Boolean result =  !findApproximation(statement, fieldLabel, scope,
+		Boolean result = !findApproximation(statement, fieldLabel, scope,
 				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity())
 						.isEmpty();
 		// Converting to Cache.
 		String key = statement + fieldLabel + scope;
-		sb_isInconsistent.append("isIncon.put(\"")
-		.append(key).append("\", ").append(result)
-		.append(");\n");
-		
+		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ")
+				.append(result).append(");\n");
+
 		return result;
+	}
+
+	public Boolean isInconsistent(File toBeAnalyzedCode, String statement,
+			String fieldLabel, String scope) {
+		Boolean result = !findApproximation(toBeAnalyzedCode, statement, fieldLabel,
+				scope, InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity())
+						.isEmpty();
+		// Converting to Cache.
+		String key = statement + fieldLabel + scope;
+		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ")
+				.append(result).append(");\n");
+
+		return result;
+	}
+
+	protected List<Pair<String, String>> findApproximation(String statement,
+			String fieldLabel, String scope, PropertyToAlloyCode coder,
+			Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
+		return findApproximation(this.toBeAnalyzedCode, statement, fieldLabel,
+				scope, coder, filter);
 	}
 
 	/**
 	 * 
+	 * @param toBeAnalyzedCode
 	 * @param statement
 	 * @param fieldLabel
 	 * @param scope
-	 * @return pattern and property
+	 * @param coder
+	 * @param filter
+	 * @return
 	 */
-	protected List<Pair<String, String>> findApproximation(String statement,
-			String fieldLabel, String scope, PropertyToAlloyCode coder,
+	protected List<Pair<String, String>> findApproximation(File toBeAnalyzedCode,
+			String statement, String fieldLabel, String scope,
+			PropertyToAlloyCode coder,
 			Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
 		// Creating a request message
 		Map<String, LazyFile> files = new HashMap<>();

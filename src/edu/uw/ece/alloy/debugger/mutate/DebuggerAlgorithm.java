@@ -3,6 +3,7 @@ package edu.uw.ece.alloy.debugger.mutate;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -424,24 +425,21 @@ public abstract class DebuggerAlgorithm {
 						File mutatedFile = makeMutation(toBeingAnalyzedModelPartString,
 								toBeingWeakenOrStrengthenedApproximation.b,
 								approximationProperty, strengthened, restModel).get();
+						System.out.println("mutation:--->"+mutatedFile.getAbsolutePath());
 						afterMutating();
-
 						beforeCallingExampleFinder();
 						// the examples are in Alloy format.
 						inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 								mutatedFile.getName().replace(".als", ""),
 								"NOT_" + mutatedFile.getName().replace(".als", ""));
 						afterCallingExampleFinder();
-
 						beforeInquiryOracle();
 						// ask the user
-
 						// Interpreting the result
 						inExampleIsInteded = inAndOutExamples.a.isPresent()
 								? oracle.isIntended(inAndOutExamples.a.get()) : false;
 						outExampleIsInteded = inAndOutExamples.b.isPresent()
 								? oracle.isIntended(inAndOutExamples.b.get()) : false;
-
 						StringBuilder rowRoport = new StringBuilder();
 
 						rowRoport.append("toBeingAnalyzedModelPart=")
@@ -529,10 +527,12 @@ public abstract class DebuggerAlgorithm {
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
 		}
+		
+
 		System.out.println("--------------------------");
 		System.out.println(reportHeader);
 		System.out.println(report);
-		
+
 		System.out.println(approximator.getAllChachedResults());
 		try {
 			Util.writeAll("tmp/" + sourceFile.getName() + ".csv",
@@ -640,11 +640,21 @@ public abstract class DebuggerAlgorithm {
 			}
 		}
 
+		final List<String> generatedExamples = new LinkedList<>();
+		final String acceptedGeneratedExamples = getAllNoAcceptedExamples(); 
+		if (!acceptedGeneratedExamples.isEmpty())
+			generatedExamples.add(acceptedGeneratedExamples);
+		/*final String rejectedGeneratedExamples = getAllNoRejectedExamples();
+		if (!rejectedGeneratedExamples.isEmpty())
+			generatedExamples.add(rejectedGeneratedExamples);
+		*/
+		String notExistingExamples = Arrays.asList(getAllNoAcceptedExamples(), getAllNoRejectedExamples()).stream().filter(a->!a.isEmpty()).collect(Collectors.joining(" and "));
+		notExistingExamples = notExistingExamples.isEmpty() ? "" : " and (" + notExistingExamples + ")" ;
 		String modelPartialApproximation = approximatedProperty
-				+ (!restModel.trim().isEmpty() ? " and " + restModel : "");
+				+ (!restModel.trim().isEmpty() ? " and " + restModel : "") + notExistingExamples;
 
 		String notModelPartialApproximation = notApproximatedProperty
-				+ (!restModel.trim().isEmpty() ? " and " + restModel : "");
+				+ (!restModel.trim().isEmpty() ? " and " + restModel : "") + notExistingExamples;
 
 		System.out.println("*************");
 		System.out.println("toBeingAnalyzedModelPart=" + toBeingAnalyzedModelPart);
@@ -678,7 +688,8 @@ public abstract class DebuggerAlgorithm {
 				+ notPred + "\n" + newCommandName + "\n" + newCommandNameNot;
 		File newCodeFile = new File(destinationDir, predName + ".als");
 		try {
-			System.out.println("The mutated file is: "+ newCodeFile.getAbsolutePath());
+			System.out
+					.println("The mutated file is: " + newCodeFile.getAbsolutePath());
 			Util.writeAll(newCodeFile.getAbsolutePath(), newCode);
 		} catch (Err e) {
 			e.printStackTrace();
@@ -725,6 +736,40 @@ public abstract class DebuggerAlgorithm {
 					+ " cannot be converted to an inorder form.");
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * A conjunction of accepted instances is returned (some ..) and (some ..) If
+	 * the accepted examples is empty the return is an empty string.
+	 * 
+	 * @return
+	 */
+	public String getAllSomeAcceptedExamples() {
+		return acceptedExamples.stream().filter(a->!a.isEmpty()).map(a -> "(" + a + ")")
+				.collect(Collectors.joining(" and "));
+	}
+
+	public String getAllNoAcceptedExamples() {
+		return acceptedExamples.stream().filter(a->!a.isEmpty())
+				.map(a -> "(" + a.replaceFirst("some ", "no ") + ")")
+				.collect(Collectors.joining(" and "));
+	}
+
+	/**
+	 * A conjunction of rejected examples is returned: (no ...) and (no ..) If the
+	 * rejected examples is empty the return is an empty string.
+	 * 
+	 * @return
+	 */
+	public String getAllNoRejectedExamples() {
+		return rejectedExamples.stream().filter(a->!a.isEmpty())
+				.map(a -> "(" + a.replaceFirst("some ", "no ") + ")")
+				.collect(Collectors.joining(" and "));
+	}
+
+	public String getAllSomeRejectedExamples() {
+		return rejectedExamples.stream().filter(a->!a.isEmpty()).map(a -> "(" + a + ")")
+				.collect(Collectors.joining(" and "));
 	}
 
 	protected Optional<Field> pickField() {
