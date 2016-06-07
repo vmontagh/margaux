@@ -105,6 +105,10 @@ pred GrabbedInOrder  {
            some grabbed => grabbed in (no had implies Mutex else mo/nexts[had])
 }
 
+pred lowerBoundProcess{
+	some Process
+}
+
 check{ 
-(some Process && GrabOrRelease && GrabbedInOrder) => ! Deadlock
-}for 5 State, 5 Process, 4 Mutex expect 0
+(lowerBoundProcess && GrabOrRelease && GrabbedInOrder) => ! Deadlock
+}for 2 State, 2 Process, 1 Mutex

@@ -191,7 +191,7 @@ public class PatternToProperty {
 	public String getProperty(Pair<String, String> patternNamefieldName) {
 		if (!hasProperty(patternNamefieldName)) {
 			logger.warning(
-					Utils.threadName() + "The pattern and field is not the chache.");
+					Utils.threadName() + "The pattern and field is not the chache:" + patternNamefieldName);
 			throw new RuntimeException();
 		}
 

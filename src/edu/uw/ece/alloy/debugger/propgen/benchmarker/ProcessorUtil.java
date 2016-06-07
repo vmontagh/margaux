@@ -162,7 +162,7 @@ public class ProcessorUtil {
 
 		try {
 			ProcessBuilder pb = new ProcessBuilder(java, "-Xmx" + SubMemory + "m",
-					"-Xss" + SubStack + "k", "-Ddebug=" + debug,
+					"-Xss" + SubStack + "k", "-Ddebug=" + debug,  "-XX:-UseConcMarkSweepGC", "-XX:-UseGCOverheadLimit",
 					"-Djava.util.logging.config.file=" + ProcessLoggerConfig, "-cp",
 					System.getProperty("java.class.path"), clazz.getName(),
 					"" + remoteSocket.getPort(),

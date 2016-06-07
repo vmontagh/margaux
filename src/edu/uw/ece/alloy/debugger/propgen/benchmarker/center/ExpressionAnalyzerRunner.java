@@ -529,9 +529,9 @@ public final class ExpressionAnalyzerRunner extends Runner {
 				});
 
 		// Queue that are shared between feeder and generator
-		feedingQueue = new Queue<>();
+		feedingQueue = new Queue<>(10);
 		// Queue that is shared between monitor and feeder
-		backlogFeedingQueue = new Queue<>();
+		backlogFeedingQueue = new Queue<>(100);
 
 		processManager = new RemoteProcessManager(
 				distributerInterface.getHostProcess().address, AlloyRunner.class,

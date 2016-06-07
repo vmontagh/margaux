@@ -55,17 +55,16 @@ public class DebuggerRunnerTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-
-	//@formatter:off
+		//@formatter:off
 		listProperties = new HashMap<>();
 		listProperties.put(" lowerBoud[ ]nxt for 3", Collections.emptyList());
-
+	
 		listProperties.put(" acyclic[ ]nxt for 3", new ArrayList<>());
 		listProperties.get(" acyclic[ ]nxt for 3").add(new Pair<>("acyclic", "acyclic[nxt, Node]"));
-
+	
 		listProperties.put(" structuralConstraint[ ]nxt for 3", new ArrayList<>());
 		listProperties.get(" structuralConstraint[ ]nxt for 3").add(new Pair<>("function", "function[nxt, Node]"));
-
+	
 		listWeakestIncon = new HashMap<>();
 		listWeakestIncon.put(" structuralConstraint[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
 		listWeakestIncon.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
@@ -96,7 +95,6 @@ public class DebuggerRunnerTest {
 		binaryTreeIsIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )right for 3", true);
 		binaryTreeIsIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )left for 3", true);
 		//@formatter:on
-
 	}
 
 	@AfterClass
@@ -379,6 +377,13 @@ public class DebuggerRunnerTest {
 				"/home/vajih/eclipse/eclipse-workspace/alloy/models/debugger/casestudy/journal/dijkstra_bug1.als");
 		File correctedModel = new File(
 				"/home/vajih/eclipse/eclipse-workspace/alloy/models/debugger/casestudy/journal/correcteddijkstra_bug1.als");
+		
+		
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+		runner.debuggerAlgorithm.run();
 		
 	}
 	
