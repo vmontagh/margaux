@@ -36,23 +36,19 @@ import edu.uw.ece.alloy.util.Utils;
  *
  */
 public class RemoteProcessManager /*
-																	 * TODO it should only run Runner objects
-																	 * "extends [Something]Runner"
-																	 */
+									 * TODO it should only run Runner objects
+									 * "extends [Something]Runner"
+									 */
 		implements RemoteProcessLogger, ProcessDistributer {
 
-	protected final static Logger logger = Logger.getLogger(
-			RemoteProcessManager.class.getName() + "--" + Utils.threadName());;
+	protected final static Logger logger = Logger
+			.getLogger(RemoteProcessManager.class.getName() + "--" + Utils.threadName());;
 
-	final static int SubMemory = Integer
-			.parseInt(Configuration.getProp("sub_memory"));
-	final static int SubStack = Integer
-			.parseInt(Configuration.getProp("sub_stak"));
-	final static String ProcessLoggerConfig = Configuration
-			.getProp("process_logger_config");
+	final static int SubMemory = Integer.parseInt(Configuration.getProp("sub_memory"));
+	final static int SubStack = Integer.parseInt(Configuration.getProp("sub_stak"));
+	final static String ProcessLoggerConfig = Configuration.getProp("process_logger_config");
 
-	public final static int MaxFeedThreashold = Integer
-			.valueOf(Configuration.getProp("max_feed_treashold"));
+	public final static int MaxFeedThreashold = Integer.valueOf(Configuration.getProp("max_feed_treashold"));
 
 	final public InetSocketAddress localSocket;
 	final public int maxActiveProcessNumbers;
@@ -64,40 +60,36 @@ public class RemoteProcessManager /*
 	 */
 	final protected Class<?> remoteRunnerClass;
 	/*
-	 * How many message are sent to a remote process and waiting for the response
+	 * How many message are sent to a remote process and waiting for the
+	 * response
 	 */
 	/* Active process */
 	final ConcurrentMap<RemoteProcess, RemoteProcessRecord> activeProcesses = new ConcurrentHashMap<>();
 	/* Process that */
 	final ConcurrentMap<RemoteProcess, RemoteProcessRecord> deadProcesses = new ConcurrentHashMap<>();
 
-	public RemoteProcessManager(InetSocketAddress localSocket,
-			Class<?> remoteRunnerClass, int proccessNumber) {
+	public RemoteProcessManager(InetSocketAddress localSocket, Class<?> remoteRunnerClass, int proccessNumber) {
 		// InetSocketAddress is immutable.
 		this(localSocket, proccessNumber, MaxFeedThreashold, remoteRunnerClass);
 	}
 
 	public RemoteProcessManager(Class<?> remoteRunnerClass, int proccessNumber) {
-		this(ProcessorUtil.findEmptyLocalSocket(), proccessNumber,
-				MaxFeedThreashold, remoteRunnerClass);
+		this(ProcessorUtil.findEmptyLocalSocket(), proccessNumber, MaxFeedThreashold, remoteRunnerClass);
 	}
 
 	public RemoteProcessManager() {
 		this(ProcessorUtil.findEmptyLocalSocket(), 0, MaxFeedThreashold, null);
 	}
 
-	public RemoteProcessManager(InetSocketAddress localSocket,
-			int proccessNumber) {
+	public RemoteProcessManager(InetSocketAddress localSocket, int proccessNumber) {
 		this(localSocket, proccessNumber, MaxFeedThreashold, null);
 	}
 
-	public RemoteProcessManager(InetSocketAddress localSocket,
-			int maxActiveProcessNumbers, int maxDoingTasks) {
+	public RemoteProcessManager(InetSocketAddress localSocket, int maxActiveProcessNumbers, int maxDoingTasks) {
 		this(localSocket, maxActiveProcessNumbers, maxDoingTasks, null);
 	}
 
-	public RemoteProcessManager(InetSocketAddress localSocket,
-			int maxActiveProcessNumbers, int maxDoingTasks,
+	public RemoteProcessManager(InetSocketAddress localSocket, int maxActiveProcessNumbers, int maxDoingTasks,
 			Class<?> remoteRunnerClass) {
 		// InetSocketAddress is immutable.
 		this.localSocket = localSocket;
@@ -106,10 +98,9 @@ public class RemoteProcessManager /*
 		this.remoteRunnerClass = remoteRunnerClass;
 	}
 
-	final Process bootProcess(RemoteProcess remoteSocket, Class<?> clazz)
-			throws IOException {
-		return ProcessorUtil.createNewJVM(SubMemory, SubStack, ProcessLoggerConfig,
-				remoteSocket.address, localSocket, clazz);
+	final Process bootProcess(RemoteProcess remoteSocket, Class<?> clazz) throws IOException {
+		return ProcessorUtil.createNewJVM(SubMemory, SubStack, ProcessLoggerConfig, remoteSocket.address, localSocket,
+				clazz);
 	}
 
 	protected Optional<Class<?>> getRemoteRunnerClass() {
@@ -117,8 +108,8 @@ public class RemoteProcessManager /*
 	}
 
 	final Process bootProcess(RemoteProcess remoteSocket) throws IOException {
-		return bootProcess(remoteSocket, getRemoteRunnerClass().orElseThrow(
-				() -> new RuntimeException("The remote runner class is not given")));
+		return bootProcess(remoteSocket,
+				getRemoteRunnerClass().orElseThrow(() -> new RuntimeException("The remote runner class is not given")));
 	}
 
 	/**
@@ -129,15 +120,14 @@ public class RemoteProcessManager /*
 	 */
 	public void changeStatus(final RemoteProcess process, Status status) {
 		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
-					+ "Changing the status of PID:" + process + " to: " + status);
+			logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] " + "Changing the status of PID:"
+					+ process + " to: " + status);
 		synchronized (activeProcesses) {
 			if (activeProcesses.containsKey(process)) {
-				activeProcesses.replace(process,
-						activeProcesses.get(process).changeStatus(status));
+				activeProcesses.replace(process, activeProcesses.get(process).changeStatus(status));
 				if (Configuration.IsInDeubbungMode)
-					logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] "
-							+ "The status is chanaged PID:" + process + " to: " + status);
+					logger.log(Level.INFO, "[" + Thread.currentThread().getName() + "] " + "The status is chanaged PID:"
+							+ process + " to: " + status);
 			} else {
 				logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]"
 						+ "The process is not found to be changed its status. ");
@@ -149,6 +139,11 @@ public class RemoteProcessManager /*
 	@Override
 	public void changeStatusToIDLE(final RemoteProcess process) {
 		changeStatus(process, Status.IDLE);
+	}
+
+	@Override
+	public void changeStatusToSETUP(final RemoteProcess process) {
+		changeStatus(process, Status.SETUP);
 	}
 
 	@Override
@@ -172,28 +167,24 @@ public class RemoteProcessManager /*
 	 * @param process
 	 * @param newRecord
 	 */
-	protected void changeRecord(final RemoteProcess process,
-			RemoteProcessRecord newRecord) {
+	protected void changeRecord(final RemoteProcess process, RemoteProcessRecord newRecord) {
 		if (activeProcesses.containsKey(process)) {
 			activeProcesses.replace(process, newRecord);
 		} else {
-			throw new RuntimeException(
-					"The process is not found: " + activeProcesses);
+			throw new RuntimeException("The process is not found: " + activeProcesses);
 		}
 	}
 
 	@Override
 	public void changeSentTasks(final RemoteProcess process, int sentTasks) {
 		synchronized (activeProcesses) {
-			changeRecord(process,
-					activeProcesses.get(process).changeSentTasks(sentTasks));
+			changeRecord(process, activeProcesses.get(process).changeSentTasks(sentTasks));
 		}
 	}
 
 	@Override
 	public void IncreaseSentTasks(final RemoteProcess process, int sentTasks) {
-		changeSentTasks(process,
-				activeProcesses.get(process).sentTasks + sentTasks);
+		changeSentTasks(process, activeProcesses.get(process).sentTasks + sentTasks);
 	}
 
 	@Override
@@ -204,15 +195,13 @@ public class RemoteProcessManager /*
 	@Override
 	public void changeDoingTasks(final RemoteProcess process, int doingTasks) {
 		synchronized (activeProcesses) {
-			changeRecord(process,
-					activeProcesses.get(process).changeDoingTasks(doingTasks));
+			changeRecord(process, activeProcesses.get(process).changeDoingTasks(doingTasks));
 		}
 	}
 
 	@Override
 	public void IncreaseDoingTasks(final RemoteProcess process, int doingTasks) {
-		changeDoingTasks(process,
-				activeProcesses.get(process).doingTasks + doingTasks);
+		changeDoingTasks(process, activeProcesses.get(process).doingTasks + doingTasks);
 	}
 
 	@Override
@@ -222,8 +211,7 @@ public class RemoteProcessManager /*
 
 	@Override
 	public void DecreaseDoingTasks(final RemoteProcess process, int doingTasks) {
-		changeDoingTasks(process,
-				activeProcesses.get(process).doingTasks - doingTasks);
+		changeDoingTasks(process, activeProcesses.get(process).doingTasks - doingTasks);
 	}
 
 	@Override
@@ -234,15 +222,13 @@ public class RemoteProcessManager /*
 	@Override
 	public void changeDoneTasks(final RemoteProcess process, int doneTasks) {
 		synchronized (activeProcesses) {
-			changeRecord(process,
-					activeProcesses.get(process).changeDoneTasks(doneTasks));
+			changeRecord(process, activeProcesses.get(process).changeDoneTasks(doneTasks));
 		}
 	}
 
 	@Override
 	public void IncreaseDoneTasks(final RemoteProcess process, int doneTasks) {
-		changeDoneTasks(process,
-				activeProcesses.get(process).doingTasks + doneTasks);
+		changeDoneTasks(process, activeProcesses.get(process).doingTasks + doneTasks);
 	}
 
 	@Override
@@ -251,11 +237,9 @@ public class RemoteProcessManager /*
 	}
 
 	@Override
-	public void changeLastLiveTimeReported(final RemoteProcess process,
-			long lastLiveTimeReported) {
+	public void changeLastLiveTimeReported(final RemoteProcess process, long lastLiveTimeReported) {
 		synchronized (activeProcesses) {
-			changeRecord(process, activeProcesses.get(process)
-					.changeLastLiveTimeReported(lastLiveTimeReported));
+			changeRecord(process, activeProcesses.get(process).changeLastLiveTimeReported(lastLiveTimeReported));
 		}
 	}
 
@@ -265,11 +249,9 @@ public class RemoteProcessManager /*
 	}
 
 	@Override
-	public void changeLastLiveTimeRecieved(final RemoteProcess process,
-			long lastLiveTimeRecieved) {
+	public void changeLastLiveTimeRecieved(final RemoteProcess process, long lastLiveTimeRecieved) {
 		synchronized (activeProcesses) {
-			changeRecord(process, activeProcesses.get(process)
-					.changeLastLiveTimeRecieved(lastLiveTimeRecieved));
+			changeRecord(process, activeProcesses.get(process).changeLastLiveTimeRecieved(lastLiveTimeRecieved));
 		}
 	}
 
@@ -285,8 +267,7 @@ public class RemoteProcessManager /*
 	 * @return
 	 */
 	@Override
-	public RemoteProcessRecord getRemoteProcessRecord(
-			final RemoteProcess process) {
+	public RemoteProcessRecord getRemoteProcessRecord(final RemoteProcess process) {
 		return activeProcesses.get(process);
 	}
 
@@ -299,18 +280,16 @@ public class RemoteProcessManager /*
 	 * Find which processors are timed out.
 	 * 
 	 * @param threshold
-	 *          in milliseconds
+	 *            in milliseconds
 	 * @return
 	 */
 	public List<RemoteProcess> getTimedoutProcess(int threshold) {
-		List<RemoteProcess> result = Collections
-				.synchronizedList(new LinkedList<>());
+		List<RemoteProcess> result = Collections.synchronizedList(new LinkedList<>());
 		// No need to synchronized. The time is loose.
 		long currentMoment = System.currentTimeMillis();
 		for (RemoteProcess process : activeProcesses.keySet()) {
 			RemoteProcessRecord record = activeProcesses.get(process);
-			if (currentMoment - Math.max(record.lastLiveTimeReported,
-					record.lastLiveTimeRecieved) > threshold)
+			if (currentMoment - Math.max(record.lastLiveTimeReported, record.lastLiveTimeRecieved) > threshold)
 				result.add(process);
 		}
 		return Collections.unmodifiableList(result);
@@ -365,16 +344,13 @@ public class RemoteProcessManager /*
 
 	public String getStatus() {
 		final StringBuilder result = new StringBuilder();
-		final SimpleDateFormat sdf = new SimpleDateFormat(
-				"yyyy-MM-dd HH:mm:ss.SSS");
-		int sent = 0, done = 0, doing = 0, doneForProcess = 0, doingForProcess = 0,
-				sentForProcess = 0;
+		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+		int sent = 0, done = 0, doing = 0, doneForProcess = 0, doingForProcess = 0, sentForProcess = 0;
 		for (RemoteProcess process : activeProcesses.keySet()) {
 
 			doneForProcess = activeProcesses.get(process).doneTasks;
 			done += doneForProcess;
-			result.append("Current reported DONE Meessages for PID=<" + process
-					+ "> is:" + done).append("\n");
+			result.append("Current reported DONE Meessages for PID=<" + process + "> is:" + done).append("\n");
 
 			doingForProcess = activeProcesses.get(process).doingTasks;
 			doing += doingForProcess;
@@ -382,26 +358,19 @@ public class RemoteProcessManager /*
 
 			sentForProcess = activeProcesses.get(process).doingTasks;
 			sent += sentForProcess;
-			result.append("Current reported Sent Meessages for PID=<" + process
-					+ "> is:" + sentForProcess).append("\n");
+			result.append("Current reported Sent Meessages for PID=<" + process + "> is:" + sentForProcess)
+					.append("\n");
 
-			result
-					.append("Current last message was recieved from PID=<" + process
-							+ "> was at:"
-							+ sdf.format(activeProcesses.get(process).lastLiveTimeRecieved))
-					.append("\n");
-			result
-					.append("Current last message was reported from PID=<" + process
-							+ "> was at:"
-							+ sdf.format(activeProcesses.get(process).lastLiveTimeReported))
-					.append("\n");
-			result.append("Current reported Sent Meessages for PID=<" + process
-					+ "> is:" + activeProcesses.get(process).sentTasks).append("\n");
+			result.append("Current last message was recieved from PID=<" + process + "> was at:"
+					+ sdf.format(activeProcesses.get(process).lastLiveTimeRecieved)).append("\n");
+			result.append("Current last message was reported from PID=<" + process + "> was at:"
+					+ sdf.format(activeProcesses.get(process).lastLiveTimeReported)).append("\n");
+			result.append("Current reported Sent Meessages for PID=<" + process + "> is:"
+					+ activeProcesses.get(process).sentTasks).append("\n");
 		}
 
-		result.append("Total not responded:").append(doing).append("\n")
-				.append("The current total sent: ").append(sent).append("\n")
-				.append("The current total Done: ").append(done).append("\n");
+		result.append("Total not responded:").append(doing).append("\n").append("The current total sent: ").append(sent)
+				.append("\n").append("The current total Done: ").append(done).append("\n");
 
 		return result.toString();
 	}
@@ -412,17 +381,15 @@ public class RemoteProcessManager /*
 	 * @return
 	 */
 	protected Class<?> getGenericTypeAsClass() {
-		return (Class<?>) ((ParameterizedType) getClass().getGenericSuperclass())
-				.getActualTypeArguments()[0];
+		return (Class<?>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 	}
 
 	public void addProcess(RemoteProcess remoteProcess) throws IOException {
-		RemoteProcessRecord record = new RemoteProcessRecord(remoteProcess,
-				bootProcess(remoteProcess));
+		RemoteProcessRecord record = new RemoteProcessRecord(remoteProcess, bootProcess(remoteProcess));
 		activeProcesses.putIfAbsent(remoteProcess, record);
 		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO, Utils.threadName() + "A process:" + remoteProcess
-					+ " is added to the process list " + activeProcesses);
+			logger.log(Level.INFO, Utils.threadName() + "A process:" + remoteProcess + " is added to the process list "
+					+ activeProcesses);
 	}
 
 	/**
@@ -432,8 +399,7 @@ public class RemoteProcessManager /*
 	 */
 	public void addProcess() throws IOException {
 
-		RemoteProcess emptyPort = new RemoteProcess(
-				ProcessorUtil.findEmptyLocalSocket());
+		RemoteProcess emptyPort = new RemoteProcess(ProcessorUtil.findEmptyLocalSocket());
 		addProcess(emptyPort);
 	}
 
@@ -452,16 +418,13 @@ public class RemoteProcessManager /*
 				if (activeProcesses.size() == maxActiveProcessNumbers)
 					break;
 				if (i > maxActiveProcessNumbers)
-					throw new RuntimeException("Invalid state: i=" + i
-							+ " Should not be more than ProcessNumbers="
+					throw new RuntimeException("Invalid state: i=" + i + " Should not be more than ProcessNumbers="
 							+ maxActiveProcessNumbers);
 				try {
 					addProcess();
 					++i;
-					logger.log(Level.WARNING,
-							"[" + Thread.currentThread().getName() + "] "
-									+ "A process is added to the processes list:"
-									+ activeProcesses);
+					logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "] "
+							+ "A process is added to the processes list:" + activeProcesses);
 				} catch (IOException e) {
 					logger.severe("[" + Thread.currentThread().getName() + "]"
 							+ "Processes cannot be created in setUpAllProcesses");
@@ -471,8 +434,8 @@ public class RemoteProcessManager /*
 			}
 
 			if (i != maxActiveProcessNumbers)
-				throw new RuntimeException("Cannot create all processes: "
-						+ maxActiveProcessNumbers + " after " + maxAttempts + " attempts.");
+				throw new RuntimeException("Cannot create all processes: " + maxActiveProcessNumbers + " after "
+						+ maxAttempts + " attempts.");
 		}
 
 	}
@@ -484,32 +447,25 @@ public class RemoteProcessManager /*
 	 */
 	public boolean killProcess(final RemoteProcess process) {
 		if (Configuration.IsInDeubbungMode)
-			logger.log(Level.INFO,
-					Utils.threadName() + "Kill a remote Process: " + process);
+			logger.log(Level.INFO, Utils.threadName() + "Kill a remote Process: " + process);
 		boolean result = false;
 		synchronized (activeProcesses) {
 			if (!activeProcesses.containsKey(process)) {
 				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "]"
 						+ "The process is not found to be active: " + process);
-			} else if (activeProcesses
-					.get(process).status != RemoteProcessRecord.Status.KILLING) {
-				logger.log(Level.WARNING,
-						"[" + Thread.currentThread().getName() + "]" + "The process: "
-								+ process
-								+ " is not in the killing state and cannot be killed: "
-								+ getRemoteProcessStatus(process));
+			} else if (activeProcesses.get(process).status != RemoteProcessRecord.Status.KILLING) {
+				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "]" + "The process: " + process
+						+ " is not in the killing state and cannot be killed: " + getRemoteProcessStatus(process));
 			} else {
-				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "] "
-						+ "Killing a process:" + process);
+				logger.log(Level.WARNING,
+						"[" + Thread.currentThread().getName() + "] " + "Killing a process:" + process);
 				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "] "
 						+ "Entering a lock for killing a process:" + process);
 				activeProcesses.get(process).process.destroyForcibly();
 				deadProcesses.putIfAbsent(process, activeProcesses.get(process));
 				activeProcesses.remove(process);
-				logger.log(Level.WARNING,
-						"[" + Thread.currentThread().getName() + "] " + "A process:"
-								+ process + " is killed to the process list "
-								+ activeProcesses);
+				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "] " + "A process:" + process
+						+ " is killed to the process list " + activeProcesses);
 				result = true;
 			}
 		}
@@ -537,8 +493,7 @@ public class RemoteProcessManager /*
 	@Override
 	public RemoteProcess getRandomProcess() {
 		synchronized (activeProcesses) {
-			List<RemoteProcess> randomArray = new ArrayList<RemoteProcess>(
-					activeProcesses.keySet());
+			List<RemoteProcess> randomArray = new ArrayList<RemoteProcess>(activeProcesses.keySet());
 			final int max = randomArray.size();
 			final int randomIndex = (new Random()).nextInt(max);
 			return randomArray.get(randomIndex);
@@ -558,8 +513,8 @@ public class RemoteProcessManager /*
 	protected boolean isAccepting(final RemoteProcess process) {
 
 		if (!activeProcesses.containsKey(process)) {
-			logger.log(Level.SEVERE, Utils.threadName() + "Process " + process
-					+ " not found in activeProcesses list: " + activeProcesses);
+			logger.log(Level.SEVERE, Utils.threadName() + "Process " + process + " not found in activeProcesses list: "
+					+ activeProcesses);
 			throw new RuntimeException("Not working process was found.");
 		}
 
@@ -568,8 +523,7 @@ public class RemoteProcessManager /*
 		if (!record.isActive())
 			return false;
 
-		if (record.status.equals(Status.WORKING)
-				&& record.doingTasks > maxDoingTasks) {
+		if (record.status.equals(Status.WORKING) && record.doingTasks > maxDoingTasks) {
 			return false;
 		}
 		return true;
@@ -583,9 +537,7 @@ public class RemoteProcessManager /*
 		do {
 			if (retry > maxRetry) {
 				logger.log(Level.SEVERE,
-						Utils.threadName()
-								+ "Not able to find a random working process after atempting: "
-								+ retry);
+						Utils.threadName() + "Not able to find a random working process after atempting: " + retry);
 				throw new RuntimeException("Not working process was found.");
 			}
 			result = getRandomProcess();
@@ -593,13 +545,18 @@ public class RemoteProcessManager /*
 			try {
 				Thread.sleep(retry);
 			} catch (InterruptedException e) {
-				logger.log(Level.SEVERE, Utils.threadName()
-						+ "Interrupted while waiting for an active process. ");
+				logger.log(Level.SEVERE, Utils.threadName() + "Interrupted while waiting for an active process. ");
 			}
 
 		} while (!isAccepting(result));
 
 		return result;
+	}
+	
+	public Boolean allProcessesIDLE(){
+		synchronized (activeProcesses) {
+			return activeProcesses.keySet().stream().allMatch(p->activeProcesses.get(p).status.equals(Status.IDLE));
+		}
 	}
 
 }

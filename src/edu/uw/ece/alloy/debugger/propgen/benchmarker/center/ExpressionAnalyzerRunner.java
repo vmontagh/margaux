@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
@@ -34,21 +35,26 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.agent.AlloyRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Publisher;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.DiedMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.DoneMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.InvalidParameterException;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.LivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.SetupMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloySetupMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternLivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternResponseMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternSetupDoneMesssage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.RemoteProcessMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadMonitor;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
+import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.SendOnServerSocketInterface;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
@@ -82,44 +88,42 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		/* Queue for caching the responses */
 		final Queue<ResponseMessage> responseQueue = new Queue<>();
 		/*
-		 * The task that is processing the responses. It is shared to end the task.
+		 * The task that is processing the responses. It is shared to end the
+		 * task.
 		 */
 		final Future<?> processingResponseTask;
 		final ExecutorService threadExecutor;
 		final SendOnServerSocketInterface interfacE;
 		/*
-		 * A set containing Valid result done by analysis. They encapsulated in the
-		 * PatternProcessedREsult and returned later.
+		 * A set containing Valid result done by analysis. They encapsulated in
+		 * the PatternProcessedREsult and returned later.
 		 */
 		final Set<AlloyProcessedResult> validResults;
 		/*
-		 * A thread sleep for a given time, then wakes up and finishes the session.
+		 * A thread sleep for a given time, then wakes up and finishes the
+		 * session.
 		 */
 		final Thread timeoutThread;
 
-		public ExpressionAnalyzingSession(final PatternProcessingParam param)
-				throws Exception {
+		public ExpressionAnalyzingSession(final PatternProcessingParam param) throws Exception {
 			this(param, tmpLocalDirectory, sessionThreadExecutor, inputInterface);
 		}
 
-		public ExpressionAnalyzingSession(final PatternProcessingParam param,
-				final File tmpLocalDirectory, ExecutorService threadExecutor,
-				SendOnServerSocketInterface interfacE) throws Exception {
+		public ExpressionAnalyzingSession(final PatternProcessingParam param, final File tmpLocalDirectory,
+				ExecutorService threadExecutor, SendOnServerSocketInterface interfacE) throws Exception {
 			this.creationTime = System.currentTimeMillis();
 			this.id = param.getAnalyzingSessionID().get();
 			this.timeout = param.getTimeout().orElse(Long.MAX_VALUE);
-			this.param = param.changeTmpLocalDirectory(tmpLocalDirectory)
-					.prepareToUse();
+			this.param = param.changeTmpLocalDirectory(tmpLocalDirectory).prepareToUse();
 
-			this.generatedProperties = Collections
-					.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+			this.generatedProperties = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
 			expressionGeneratorBuilder = new Builder(id,
 					param.getFile("toBeAnalyzedCode").orElseThrow(RuntimeException::new),
-					param.getFile("relationalPropModuleOriginal")
-							.orElseThrow(RuntimeException::new),
-					param.getFile("temporalPropModuleOriginal")
-							.orElseThrow(RuntimeException::new),
+					dependentFiles.stream().filter(f -> f.getName().startsWith("relational_properties_tagged"))
+							.findFirst().orElseThrow(RuntimeException::new),
+					dependentFiles.stream().filter(f -> f.getName().startsWith("temporal_properties_tagged"))
+							.findFirst().orElseThrow(RuntimeException::new),
 					param.getFieldName().orElseGet(String::new),
 					param.getPropertyToAlloyCode().orElseThrow(RuntimeException::new),
 					param.getExpression().orElseThrow(RuntimeException::new),
@@ -138,14 +142,12 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					try {
 						Thread.sleep(timeout);
 						if (Configuration.IsInDeubbungMode)
-							logger.warning(Utils.threadName() + " session " + getSessionID()
-									+ " is timed out after "
-									+ (System.currentTimeMillis() - creationTime)
-									+ " millisecond");
+							logger.warning(Utils.threadName() + " session " + getSessionID() + " is timed out after "
+									+ (System.currentTimeMillis() - creationTime) + " millisecond");
 						doneOnWait();
 					} catch (InterruptedException e) {
 						logger.warning(
-								Utils.threadName() + "timeout thread is interrupted!" + e);
+								Utils.threadName() + "timeout thread is interrupted in Expression Analyzer!" + e);
 					}
 				}
 			});
@@ -181,8 +183,8 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		}
 
 		/**
-		 * Processing the following response. A queue is shared between the session
-		 * and response follow up action.
+		 * Processing the following response. A queue is shared between the
+		 * session and response follow up action.
 		 */
 		void processResponseMessaes() {
 			while (true) {
@@ -190,35 +192,36 @@ public final class ExpressionAnalyzerRunner extends Runner {
 				try {
 					int generatedPropsCount = 0;
 					message = responseQueue.take();
-					AlloyProcessedResult result = (AlloyProcessedResult) message
-							.getResult();
+					AlloyProcessingParam param = (AlloyProcessingParam) message.getResult().getParam();
+
+					AlloyProcessedResult result = (AlloyProcessedResult) message.getResult();
 					if (message.getResult().isNormal()
 							&& result.getParam().getAlloyCoder()
-									.orElseThrow(() -> new RuntimeException(
-											"Alloy Coder cannot be Null int a response."))
-									.isDesiredSAT(result.sat))
+									.orElseThrow(
+											() -> new RuntimeException("Alloy Coder cannot be Null int a response."))
+									.isDesiredSAT(result.sat)
+							&& (expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predBodyA)
+									|| expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predBodyB))) {
 						validResults.add(result);
+					}
 
-					// second: find out whether more properties are required to be
+					// second: find out whether more properties are required to
+					// be
 					// checked.
 					try {
-						AlloyProcessingParam param = (AlloyProcessingParam) message
-								.getResult().getParam();
-						Set<String> nextProperties = new HashSet<>(
-								param.getAlloyCoder().get().createItself()
-										.getToBeCheckedProperties(message.getResult().sat));
+
+						Set<String> nextProperties = new HashSet<>(param.getAlloyCoder().get().createItself()
+								.getToBeCheckedProperties(message.getResult().sat));
 						if (!nextProperties.isEmpty()) {
 							generatedPropsCount = expressionGeneratorBuilder
-									.createWithHistory(feedingQueue, nextProperties,
-											generatedProperties)
+									.createWithHistory(feedingQueue, nextProperties, generatedProperties)
 									.generatePatternCheckers();
 						} else {
-							logger.log(Level.INFO, Utils.threadName()
-									+ "The next properties are empty for:" + message.getResult());
+							logger.log(Level.INFO,
+									Utils.threadName() + "The next properties are empty for:" + message.getResult());
 						}
 					} catch (Err | IOException e) {
-						logger.log(Level.SEVERE,
-								Utils.threadName() + "Next properties failed to be added.", e);
+						logger.log(Level.SEVERE, Utils.threadName() + "Next properties failed to be added.", e);
 						e.printStackTrace();
 					}
 					if (0 == generatedPropsCount && monitor.sessionIsDone(getSessionID())
@@ -229,8 +232,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 				} catch (InterruptedException e1) {
 					// e1.printStackTrace();
-					logger.log(Level.SEVERE,
-							Utils.threadName() + "The thread is interrupted.", e1);
+					logger.log(Level.SEVERE, Utils.threadName() + "The thread is interrupted.", e1);
 				}
 			}
 		}
@@ -241,10 +243,8 @@ public final class ExpressionAnalyzerRunner extends Runner {
 				responseQueue.put(message);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-				logger.log(Level.SEVERE,
-						Utils.threadName() + "Fail on putting a new response message: <"
-								+ message + "> in the Processing queue",
-						e);
+				logger.log(Level.SEVERE, Utils.threadName() + "Fail on putting a new response message: <" + message
+						+ "> in the Processing queue", e);
 			}
 		}
 
@@ -254,16 +254,14 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		protected void sendResult() {
 			PatternProcessedResult result = new PatternProcessedResult(param,
 					Collections.unmodifiableSet(validResults));
-			PatternResponseMessage message = new PatternResponseMessage(result,
-					interfacE.getHostProcess());
+			PatternResponseMessage message = new PatternResponseMessage(result, interfacE.getHostProcess());
 			interfacE.sendMessage(message);
 		}
 
 		@Override
 		public void done() {
 			sendResult();
-			getProcessingTask().orElseThrow(
-					() -> new RuntimeException("The Processing Task should not be NULL!"))
+			getProcessingTask().orElseThrow(() -> new RuntimeException("The Processing Task should not be NULL!"))
 					.cancel(true);
 			// finish the timeout thread.
 			timeoutThread.interrupt();
@@ -271,8 +269,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 		@Override
 		public void doneOnWait() {
-			getProcessingTask().orElseThrow(
-					() -> new RuntimeException("The Processing Task should not be NULL!"))
+			getProcessingTask().orElseThrow(() -> new RuntimeException("The Processing Task should not be NULL!"))
 					.cancel(true);
 			sendResult();
 		}
@@ -282,20 +279,14 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	// Configuration parameters
 	final public static long PriodicalMonitoringThreadsReportInMS = Long
 			.parseLong(Configuration.getProp("monitoring_report_period"));
-	final public static long LivenessIntervalInMS = Long
-			.parseLong(Configuration.getProp("liveness_interval"));
-	final public static int MaxLivenessFailTry = Integer
-			.parseInt(Configuration.getProp("liveness_max_fail"));
-	final public static long SelfMonitorInterval = Long
-			.parseLong(Configuration.getProp("self_monitor_interval"));
-	final public static String TemporaryLocalDirectory = Configuration
-			.getProp("temporary_directory");
-	final static int ProccessNumber = Integer
-			.parseInt(Configuration.getProp("alloy_processes_number"));
+	final public static long LivenessIntervalInMS = Long.parseLong(Configuration.getProp("liveness_interval"));
+	final public static int MaxLivenessFailTry = Integer.parseInt(Configuration.getProp("liveness_max_fail"));
+	final public static long SelfMonitorInterval = Long.parseLong(Configuration.getProp("self_monitor_interval"));
+	final public static String TemporaryLocalDirectory = Configuration.getProp("temporary_directory");
+	final static int ProccessNumber = Integer.parseInt(Configuration.getProp("alloy_processes_number"));
 
 	protected final static Logger logger = Logger
-			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
 
 	/* Given socket from input */
 	protected final InetSocketAddress localSocket;
@@ -320,7 +311,12 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	 * A local directory that stores the required files such as alloy file or
 	 * libraries.
 	 */
-	protected final File tmpLocalDirectory;
+	protected File tmpLocalDirectory;
+	/*
+	 * Dependency file path is relative to the Alloy source file. Combined with
+	 * tmpLocalDirectory, the local path is determined.
+	 */
+	protected List<LazyFile> dependentFiles;
 	protected final long reportInterval;
 	protected final long threadMonitoringInterval;
 	protected final long livenessInterval;
@@ -333,12 +329,10 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	List<ThreadToBeMonitored> monitoredThreads = new LinkedList<>();
 	protected Thread reporterThread;
 
-	protected ExpressionAnalyzerRunner(final InetSocketAddress localSocket,
-			final InetSocketAddress remoteSocket,
+	protected ExpressionAnalyzerRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket,
 			final InetSocketAddress distributorSocket, final File tmpLocalDirectory,
-			final long reportInterval, final long threadMonitoringInterval,
-			final long livenessInterval, final int maxLivenessFailed,
-			final ExecutorService sessionThreadExecutor) {
+			final List<LazyFile> dependencyFiles, final long reportInterval, final long threadMonitoringInterval,
+			final long livenessInterval, final int maxLivenessFailed, final ExecutorService sessionThreadExecutor) {
 		this.localSocket = localSocket;
 		this.remoteSocket = remoteSocket;
 		this.distributorSocket = distributorSocket;
@@ -348,16 +342,14 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		this.livenessInterval = livenessInterval;
 		this.maxLivenessFailed = maxLivenessFailed;
 		this.sessionThreadExecutor = sessionThreadExecutor;
+		this.dependentFiles = dependencyFiles;
 		initiate();
 	}
 
-	protected ExpressionAnalyzerRunner(InetSocketAddress localSocket,
-			InetSocketAddress remoteSocket) {
-		this(localSocket, remoteSocket,
-				ProcessorUtil.findEmptyLocalSocket(localSocket.getPort()),
-				new File(TemporaryLocalDirectory), PriodicalMonitoringThreadsReportInMS,
-				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry,
-				Executors.newFixedThreadPool(10));
+	protected ExpressionAnalyzerRunner(InetSocketAddress localSocket, InetSocketAddress remoteSocket) {
+		this(localSocket, remoteSocket, ProcessorUtil.findEmptyLocalSocket(localSocket.getPort()),
+				new File(TemporaryLocalDirectory), new LinkedList<>(), PriodicalMonitoringThreadsReportInMS,
+				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry, Executors.newFixedThreadPool(10));
 	}
 
 	/**
@@ -373,17 +365,37 @@ public final class ExpressionAnalyzerRunner extends Runner {
 			// for the sake of reporting
 			liveness.tobeProcessed++;
 		} catch (Exception e) {
-			logger.severe(
-					Utils.threadName() + "A seesion cannot be created for: " + param);
+			logger.severe(Utils.threadName() + "A seesion cannot be created for: " + param);
+			e.printStackTrace();
 			throw new RuntimeException();
 		}
 		return session;
 	};
 
-	protected Consumer<PatternResponseMessage> sessionDone = (
-			PatternResponseMessage message) -> {
+	protected Consumer<PatternResponseMessage> sessionDone = (PatternResponseMessage message) -> {
 		liveness.tobeProcessed--;
 		liveness.processed++;
+	};
+
+	protected Consumer<RemoteProcess> processIsSetup = (RemoteProcess process) -> {
+		processManager.changeStatusToIDLE(process);
+		if (processManager.allProcessesIDLE())
+			inputInterface.sendMessage(new PatternSetupDoneMesssage(inputInterface.getHostProcess()));
+	};
+
+	protected Consumer<RemoteProcess> processIsReady = (RemoteProcess process) -> {
+		distributerInterface.sendMessage(new AlloySetupMessage(distributerInterface.getHostProcess(),
+				dependentFiles.stream().map(f -> f.load()).collect(Collectors.toList())), process);
+		processManager.changeStatusToSETUP(process);
+	};
+
+	protected Consumer<List<LazyFile>> copyDependecyFiles = (List<LazyFile> files) -> {
+		files.stream().forEach(file -> {
+			file.unload(tmpLocalDirectory);
+			// Only the file name is stored.
+			dependentFiles.add(new LazyFile(tmpLocalDirectory, file.getName()));
+		});
+		processManager.addAllProcesses();
 	};
 
 	/**
@@ -391,173 +403,170 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	 */
 	protected Function<AlloyProcessingParam, Optional<ExpressionAnalyzingSession>> getSession = (
 			AlloyProcessingParam param) -> {
-		return Optional
-				.ofNullable(analyzingSessions.get(param.getAnalyzingSessionID().get()));
+		return Optional.ofNullable(analyzingSessions.get(param.getAnalyzingSessionID().get()));
 	};
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected void initiate() {
-		inputInterface = new ServerSocketInterface(this.localSocket,
-				this.remoteSocket);
+		inputInterface = new ServerSocketInterface(this.localSocket, this.remoteSocket);
 
-		inputInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(RequestMessage requestMessage,
-							MessageReceivedEventArgs messageArgs) {
-						final Map<String, Object> context = new HashMap<>();
-						// it is expected to see a request message. The request creates a
-						// new
-						// session and puts it in the analyzingSessions
-						context.put("createNewSession", createNewSession);
-						try {
-							requestMessage.onAction(context);
-						} catch (InvalidParameterException e) {
-							logger.severe(Utils.threadName()
-									+ "request cannot be processed:\n" + e.getStackTrace());
-						}
-					}
-				});
+		inputInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(RequestMessage requestMessage, MessageReceivedEventArgs messageArgs) {
+				final Map<String, Object> context = new HashMap<>();
+				// it is expected to see a request message. The request creates
+				// a new session and puts it in the analyzingSessions
+				context.put("createNewSession", createNewSession);
+				try {
+					requestMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					logger.severe(Utils.threadName() + "request cannot be processed:\n" + e.getStackTrace());
+				}
+			}
+		});
 
-		inputInterface.MessageSent
-				.addListener(new MessageEventListener<MessageSentEventArgs>() {
-					@Override
-					public void actionOn(ResponseMessage responsetMessage,
-							MessageSentEventArgs messageArgs) {
-						final Map<String, Object> context = new HashMap<>();
-						// it is expected to see a request message. The request creates a
-						// new
-						// session and puts it in the analyzingSessions
-						context.put("sessionDone", sessionDone);
-						super.actionOn(responsetMessage, messageArgs);
-						try {
-							responsetMessage.onAction(context);
-						} catch (InvalidParameterException e) {
-							logger.severe(Utils.threadName()
-									+ "reponse cannot be processed:\n" + e.getStackTrace());
-						}
-					}
-				});
+		inputInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(SetupMessage setupMessage, MessageReceivedEventArgs messageArgs) {
+				final Map<String, Object> context = new HashMap<>();
+				context.put("copyDependecyFiles", copyDependecyFiles);
+				try {
+					setupMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					logger.severe(Utils.threadName() + "request cannot be processed:\n" + e.getStackTrace());
+				}
+			}
+		});
+
+		inputInterface.MessageSent.addListener(new MessageEventListener<MessageSentEventArgs>() {
+			@Override
+			public void actionOn(ResponseMessage responsetMessage, MessageSentEventArgs messageArgs) {
+				final Map<String, Object> context = new HashMap<>();
+				// it is expected to see a request message. The request creates
+				// a new session and puts it in the analyzingSessions
+				context.put("sessionDone", sessionDone);
+				super.actionOn(responsetMessage, messageArgs);
+				try {
+					responsetMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					logger.severe(Utils.threadName() + "reponse cannot be processed:\n" + e.getStackTrace());
+				}
+			}
+		});
 
 		// interface for distributing tasks among alloy executers.
 		distributerInterface = new ServerSocketInterface(this.distributorSocket);
 
 		// Any request that is sent should be registered to be monitored and
 		// recorded to prevent duplication
-		distributerInterface.MessageSent
-				.addListener(new MessageEventListener<MessageSentEventArgs>() {
-					@Override
-					public void actionOn(RequestMessage requestMessage,
-							MessageSentEventArgs event) {
-						AlloyRequestMessage alloyRequestMessage = (AlloyRequestMessage) requestMessage;
-						AlloyProcessingParam alloyProcessingParam = (AlloyProcessingParam) alloyRequestMessage
-								.getProcessingParam();
-						String predName = alloyProcessingParam.getAlloyCoder().get()
-								.getPredName();
-						UUID sessionID = alloyProcessingParam.getAnalyzingSessionID().get();
-						analyzingSessions.get(sessionID).addGeneratedProperties(predName);
+		distributerInterface.MessageSent.addListener(new MessageEventListener<MessageSentEventArgs>() {
+			@Override
+			public void actionOn(RequestMessage requestMessage, MessageSentEventArgs event) {
+				AlloyRequestMessage alloyRequestMessage = (AlloyRequestMessage) requestMessage;
+				AlloyProcessingParam alloyProcessingParam = (AlloyProcessingParam) alloyRequestMessage
+						.getProcessingParam();
+				String predName = alloyProcessingParam.getAlloyCoder().get().getPredName();
+				UUID sessionID = alloyProcessingParam.getAnalyzingSessionID().get();
+				analyzingSessions.get(sessionID).addGeneratedProperties(predName);
 
-						// register the message in the monitor
-						monitor.addMessage(event.getRemoteProcess(),
-								requestMessage.getProcessingParam());
-					}
-				});
+				// register the message in the monitor
+				monitor.addMessage(event.getRemoteProcess(), requestMessage.getProcessingParam());
+			}
+		});
 
 		// continue the session
-		distributerInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(ResponseMessage responseMessage,
-							MessageReceivedEventArgs event) {
-						// monitor has to process a result.
-						monitor.processResponded(responseMessage.getResult(),
-								responseMessage.process);
-						final Map<String, Object> context = new HashMap<>();
-						context.put("getSession", getSession);
-						try {
-							responseMessage.onAction(context);
-						} catch (InvalidParameterException e) {
-							logger.severe(Utils.threadName()
-									+ "response cannot be processed:\n" + e.getStackTrace());
-						}
-					}
-				});
+		distributerInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(ResponseMessage responseMessage, MessageReceivedEventArgs event) {
+				// monitor has to process a result.
+				monitor.processResponded(responseMessage.getResult(), responseMessage.process);
+				final Map<String, Object> context = new HashMap<>();
+				context.put("getSession", getSession);
+				try {
+					responseMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					logger.severe(Utils.threadName() + "response cannot be processed:\n" + e.getStackTrace());
+				}
+			}
+		});
 
-		// Livensess or readyness message message is received from a remote process.
-		distributerInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(LivenessMessage livenessMessage,
-							MessageReceivedEventArgs event) {
-						final Map<String, Object> context = new HashMap<>();
-						context.put("RemoteProcessLogger", processManager);
-						try {
-							System.out.println("livenessMessage-E--->" + livenessMessage);
-							livenessMessage.onAction(context);
-						} catch (InvalidParameterException e) {
-							e.printStackTrace();
-						}
-					}
+		// Livensess or readyness message message is received from a remote
+		// process.
+		distributerInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(LivenessMessage livenessMessage, MessageReceivedEventArgs event) {
+				final Map<String, Object> context = new HashMap<>();
+				context.put("RemoteProcessLogger", processManager);
+				try {
+					System.out.println("livenessMessage-E--->" + livenessMessage);
+					livenessMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					e.printStackTrace();
+				}
+			}
 
-					@Override
-					public void actionOn(ReadyMessage readyMessage,
-							MessageReceivedEventArgs event) {
-						final Map<String, Object> context = new HashMap<>();
-						context.put("RemoteProcessLogger", processManager);
-						try {
-							readyMessage.onAction(context);
-						} catch (InvalidParameterException e) {
-							e.printStackTrace();
-						}
-					}
-				});
+			@Override
+			public void actionOn(ReadyMessage readyMessage, MessageReceivedEventArgs event) {
+				final Map<String, Object> context = new HashMap<>();
+				context.put("processIsReady", processIsReady);
+				try {
+					readyMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					e.printStackTrace();
+				}
+			}
+
+			@Override
+			public void actionOn(DoneMessage doneMessage, MessageReceivedEventArgs messageArgs) {
+				final Map<String, Object> context = new HashMap<>();
+				context.put("processIsSetup", processIsSetup);
+				try {
+					doneMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 
 		// A remote process was killed itself
-		distributerInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(DiedMessage diedMessage,
-							MessageReceivedEventArgs event) {
-						final Map<String, Object> context = new HashMap<>();
-						context.put("RemoteProcessLogger", processManager);
-						try {
-							diedMessage.onAction(context);
-						} catch (InvalidParameterException e) {
-							e.printStackTrace();
-						}
-					}
-				});
+		distributerInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(DiedMessage diedMessage, MessageReceivedEventArgs event) {
+				final Map<String, Object> context = new HashMap<>();
+				context.put("RemoteProcessLogger", processManager);
+				try {
+					diedMessage.onAction(context);
+				} catch (InvalidParameterException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 
 		// Queue that are shared between feeder and generator
 		feedingQueue = new Queue<>(10);
 		// Queue that is shared between monitor and feeder
 		backlogFeedingQueue = new Queue<>(100);
 
-		processManager = new RemoteProcessManager(
-				distributerInterface.getHostProcess().address, AlloyRunner.class,
+		processManager = new RemoteProcessManager(distributerInterface.getHostProcess().address, AlloyRunner.class,
 				ProccessNumber);
-		feeder = new Feeder<AlloyProcessingParam>(processManager,
-				distributerInterface, feedingQueue, backlogFeedingQueue) {
+		feeder = new Feeder<AlloyProcessingParam>(processManager, distributerInterface, feedingQueue,
+				backlogFeedingQueue) {
 			@Override
-			protected RequestMessage createRequestMessage(RemoteProcess process,
-					AlloyProcessingParam param) {
+			protected RequestMessage createRequestMessage(RemoteProcess process, AlloyProcessingParam param) {
 				return new AlloyRequestMessage(process, param);
 			}
 		};
 
 		// liveness messages are sent to the initiator
-		liveness = new ReportLiveness<PatternLivenessMessage>(localSocket,
-				remoteSocket, 0, 0, livenessInterval, maxLivenessFailed,
-				inputInterface) {
+		liveness = new ReportLiveness<PatternLivenessMessage>(localSocket, remoteSocket, 0, 0, livenessInterval,
+				maxLivenessFailed, inputInterface) {
 			@Override
 			protected PatternLivenessMessage createLivenessMessage() {
-				return new PatternLivenessMessage(super.localProcess, super.processed,
-						super.tobeProcessed);
+				return new PatternLivenessMessage(super.localProcess, super.processed, super.tobeProcessed);
 			}
 		};
 
-		monitor = new RemoteProcessMonitor((Publisher) feedingQueue,
-				(Publisher) backlogFeedingQueue, processManager);
+		monitor = new RemoteProcessMonitor((Publisher) feedingQueue, (Publisher) backlogFeedingQueue, processManager);
 		localThreadsMonitor = new ThreadMonitor(threadMonitoringInterval, 0);
 
 		reporterThread = new Thread(new Runnable() {
@@ -596,28 +605,19 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		liveness.startThread();
 		reporterThread.start();
 
-		/*
-		 * try { Thread.sleep(500); } catch (InterruptedException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); }
-		 */
-		processManager.addAllProcesses();
-
 		// Everything should be ready now, so the booter should be notified.
 		// send a readyness message
-		inputInterface
-				.sendMessage(new PatternReadyMessage(inputInterface.getHostProcess()));
+		inputInterface.sendMessage(new PatternReadyMessage(inputInterface.getHostProcess()));
 
 	}
 
 	public static void main(String[] args) throws Exception {
 
-		Pair<InetSocketAddress, InetSocketAddress> ports = extractPortsfromCommand(
-				args);
+		Pair<InetSocketAddress, InetSocketAddress> ports = extractPortsfromCommand(args);
 
 		System.out.println("local::" + ports.a);
 		System.out.println("remoteSocket::" + ports.b);
-		ExpressionAnalyzerRunner runner = new ExpressionAnalyzerRunner(ports.a,
-				ports.b);
+		ExpressionAnalyzerRunner runner = new ExpressionAnalyzerRunner(ports.a, ports.b);
 		runner.start();
 		// create(ports.a, ports.b).start();
 

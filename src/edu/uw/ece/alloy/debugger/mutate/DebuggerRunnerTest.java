@@ -119,7 +119,7 @@ public class DebuggerRunnerTest {
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
 
 		File relationalPropModuleOriginal = new LazyFile(tmpLocalDirectory,
-				"relationalPropModuleOriginal.als");
+				"relational_properties_tagged.als");
 		Util.writeAll(relationalPropModuleOriginal.getAbsolutePath(),
 				"pred weaklyConnected [ r :univ->univ,  left:univ, right:univ ] {\n"
 						+ "\tall d: right | all g: left - d  | d in g.^(r + ~r)\n" + "}\n"
@@ -127,7 +127,7 @@ public class DebuggerRunnerTest {
 						+ "\tone root:left | right in root.*r" + "}");
 
 		File temporalPropModuleOriginal = new LazyFile(tmpLocalDirectory,
-				"temporalPropModuleOriginal.als");
+				"temporal_properties_tagged.als");
 		Util.writeAll(temporalPropModuleOriginal.getAbsolutePath(),
 				"open relational_lib as relational_properties\n"
 						+ "pred OrdDcrsStrc_SzGrwtStrc_Glbl_SdEnd_EmptNon_[r: univ->univ->univ, left, middle, right: univ, left_first: univ, left_next: univ->univ, right_first: univ, right_next: univ->univ]{\n"

@@ -55,6 +55,8 @@ public interface RemoteProcessLogger {
 	void changeStatusToWORKING(final RemoteProcess process);
 
 	void changeStatusToIDLE(final RemoteProcess process);
+	
+	public void changeStatusToSETUP(final RemoteProcess process);
 
 	String getStatus();
 

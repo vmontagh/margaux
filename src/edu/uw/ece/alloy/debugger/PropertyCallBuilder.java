@@ -16,21 +16,18 @@ public class PropertyCallBuilder {
 	public final static String PROPERTY_CALL_FORMAT = "%s[%s]";
 
 	final static Logger logger = Logger
-			.getLogger(PropertyCallBuilder.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(PropertyCallBuilder.class.getName() + "--" + Thread.currentThread().getName());
 
 	public PropertyCallBuilder() {
 
 	}
 
-	public void addPropertyDeclration(final Func function)
-			throws IllegalArgumentException {
+	public void addPropertyDeclration(final Func function) throws IllegalArgumentException {
 
 		PropertyDeclaration pd = new PropertyDeclaration(function);
 
 		if (!pd.isAPropertyDefinition()) {
-			throw new IllegalArgumentException(
-					"The passed func/pred is not a property declration: " + pd);
+			throw new IllegalArgumentException("The passed func/pred is not a property declration: " + pd);
 		} else {
 			properties.add(pd);
 		}
@@ -43,8 +40,7 @@ public class PropertyCallBuilder {
 	 * @return
 	 * @throws IllegalArgumentException
 	 */
-	public List<String> makeAllBinaryProperties(final Field field)
-			throws IllegalArgumentException {
+	public List<String> makeAllBinaryProperties(final Field field) throws IllegalArgumentException {
 		if (2 != field.type().arity()) {
 			throw new IllegalArgumentException("Field is not Binary");
 		}
@@ -54,8 +50,6 @@ public class PropertyCallBuilder {
 		final String relationName = field.label;
 		final String leftName = field.type().extract(2).fold().get(0).get(0).label;
 		final String rightName = field.type().extract(2).fold().get(0).get(1).label;
-
-		// System.out.println(getAllBinaryPropertyDeclrations());
 
 		for (PropertyDeclaration pd : getAllBinaryPropertyDeclrations()) {
 			final String propertyName = pd.getPropertyName();
@@ -73,8 +67,7 @@ public class PropertyCallBuilder {
 	}
 
 	public List<PropertyDeclaration> getAllNaryPropertyDeclrations(int n) {
-		return properties.stream().filter(p -> p.getRelationArity() == n)
-				.collect(Collectors.toList());
+		return properties.stream().filter(p -> p.getRelationArity() == n).collect(Collectors.toList());
 	}
 
 	public List<PropertyDeclaration> getAllBinaryPropertyDeclrations() {
@@ -92,8 +85,8 @@ public class PropertyCallBuilder {
 	 * @return
 	 * @throws IllegalArgumentException
 	 */
-	public List<String> makeAllTernaryProperties(final Field field,
-			final List<Open> opens) throws IllegalArgumentException {
+	public List<String> makeAllTernaryProperties(final Field field, final List<Open> opens)
+			throws IllegalArgumentException {
 		if (3 != field.type().arity()) {
 			throw new IllegalArgumentException("Field is not Ternary");
 		}
@@ -115,8 +108,7 @@ public class PropertyCallBuilder {
 			// Orders of the Signatures in the field
 			for (int i = 0; i < 3; ++i) {
 				if (pd.hasOrder(i)) {
-					final String orderName = PropertyDeclaration.findOrderingName(field,
-							i, opens);
+					final String orderName = PropertyDeclaration.findOrderingName(field, i, opens);
 					if (orderName.isEmpty()) {
 						notOrdered = true;
 						break;

@@ -19,11 +19,9 @@ import edu.uw.ece.alloy.util.Utils;
 
 public class AlloyProcessingParam extends ProcessingParam {
 
-	final public static boolean reWrite = Boolean
-			.valueOf(Configuration.getProp("is_rewrite_enable_on_agent"));
+	final public static boolean reWrite = Boolean.valueOf(Configuration.getProp("is_rewrite_enable_on_agent"));
 	final static Logger logger = Logger
-			.getLogger(AlloyProcessingParam.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(AlloyProcessingParam.class.getName() + "--" + Thread.currentThread().getName());
 	/**
 	 * 
 	 */
@@ -38,73 +36,65 @@ public class AlloyProcessingParam extends ProcessingParam {
 		this(UUID.randomUUID());
 	}
 
-	protected AlloyProcessingParam(UUID analyzingSessionID, Integer priority,
-			Long timeout, File tmpLocalDirectory, PropertyToAlloyCode alloyCoder,
-			DBConnectionInfo dBConnectionInfo) {
+	protected AlloyProcessingParam(UUID analyzingSessionID, Integer priority, Long timeout, File tmpLocalDirectory,
+			PropertyToAlloyCode alloyCoder, DBConnectionInfo dBConnectionInfo) {
 		super(priority, tmpLocalDirectory, analyzingSessionID, timeout);
 		this.alloyCoder = alloyCoder;
 		this.dBConnectionInfo = dBConnectionInfo;
 	}
 
-	protected AlloyProcessingParam(UUID analyzingSessionID, int priority,
-			File tmpLocalDirectory, PropertyToAlloyCode alloyCoder) {
+	protected AlloyProcessingParam(UUID analyzingSessionID, int priority, File tmpLocalDirectory,
+			PropertyToAlloyCode alloyCoder) {
 		this(analyzingSessionID, priority, Long.MAX_VALUE, tmpLocalDirectory, alloyCoder,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
-	
-	protected AlloyProcessingParam(UUID analyzingSessionID, int priority, long timeout,
-			File tmpLocalDirectory, PropertyToAlloyCode alloyCoder) {
+
+	protected AlloyProcessingParam(UUID analyzingSessionID, int priority, long timeout, File tmpLocalDirectory,
+			PropertyToAlloyCode alloyCoder) {
 		this(analyzingSessionID, priority, timeout, tmpLocalDirectory, alloyCoder,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
-	public AlloyProcessingParam(UUID analyzingSessionID, int priority, long timeout,
-			PropertyToAlloyCode alloyCoder) {
+	public AlloyProcessingParam(UUID analyzingSessionID, int priority, long timeout, PropertyToAlloyCode alloyCoder) {
 		this(analyzingSessionID, priority, timeout, Compressor.EMPTY_FILE, alloyCoder,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
-	public AlloyProcessingParam(UUID analyzingSessionID, int priority,
-			PropertyToAlloyCode alloyCoder) {
+	public AlloyProcessingParam(UUID analyzingSessionID, int priority, PropertyToAlloyCode alloyCoder) {
 		this(analyzingSessionID, priority, Long.MAX_VALUE, Compressor.EMPTY_FILE, alloyCoder,
 				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
-	
+
 	protected AlloyProcessingParam(UUID analyzingSessionID) {
-		this(analyzingSessionID, Integer.MIN_VALUE,  Long.MAX_VALUE, Compressor.EMPTY_FILE,
-				PropertyToAlloyCode.EMPTY_CONVERTOR,
-				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
+		this(analyzingSessionID, Integer.MIN_VALUE, Long.MAX_VALUE, Compressor.EMPTY_FILE,
+				PropertyToAlloyCode.EMPTY_CONVERTOR, DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
 	/**
-	 * The following create methods are added in order to make an instance of the
-	 * object itself. It will be used for composition. The subclasses also have
-	 * such methods and their functionality will be composed at runtime with the
-	 * property generators.
+	 * The following create methods are added in order to make an instance of
+	 * the object itself. It will be used for composition. The subclasses also
+	 * have such methods and their functionality will be composed at runtime
+	 * with the property generators.
 	 */
 
-	protected AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder, int priority, long timeout,
-			File tmpLocalDirectory, DBConnectionInfo dBConnectionInfo) {
-		return new AlloyProcessingParam(analyzingSessionID, priority, timeout,
-				tmpLocalDirectory, alloyCoder, dBConnectionInfo);
+	protected AlloyProcessingParam createIt(UUID analyzingSessionID, final PropertyToAlloyCode alloyCoder, int priority,
+			long timeout, File tmpLocalDirectory, DBConnectionInfo dBConnectionInfo) {
+		return new AlloyProcessingParam(analyzingSessionID, priority, timeout, tmpLocalDirectory, alloyCoder,
+				dBConnectionInfo);
 	}
 
-	protected AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder, int priority, long timeout,
-			File tmpLocalDirectory) {
-		return new AlloyProcessingParam(analyzingSessionID, priority, timeout,
-				tmpLocalDirectory, alloyCoder, DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
+	protected AlloyProcessingParam createIt(UUID analyzingSessionID, final PropertyToAlloyCode alloyCoder, int priority,
+			long timeout, File tmpLocalDirectory) {
+		return new AlloyProcessingParam(analyzingSessionID, priority, timeout, tmpLocalDirectory, alloyCoder,
+				DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
 
-	public AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder, int priority) {
+	public AlloyProcessingParam createIt(UUID analyzingSessionID, final PropertyToAlloyCode alloyCoder, int priority) {
 		return new AlloyProcessingParam(analyzingSessionID, priority, alloyCoder);
 	}
 
 	public AlloyProcessingParam createIt(final PropertyToAlloyCode alloyCoder) {
-		return new AlloyProcessingParam(this.analyzingSessionID, this.priority,
-				alloyCoder);
+		return new AlloyProcessingParam(this.analyzingSessionID, this.priority, alloyCoder);
 	}
 
 	public AlloyProcessingParam createIt(AlloyProcessingParam param) {
@@ -112,10 +102,9 @@ public class AlloyProcessingParam extends ProcessingParam {
 				param.tmpLocalDirectory, param.dBConnectionInfo);
 	}
 
-	public AlloyProcessingParam createIt(UUID analyzingSessionID,
-			final PropertyToAlloyCode alloyCoder) {
-		return createIt(analyzingSessionID, PropertyToAlloyCode.EMPTY_CONVERTOR,
-				this.priority, this.timeout, this.tmpLocalDirectory, this.dBConnectionInfo);
+	public AlloyProcessingParam createIt(UUID analyzingSessionID, final PropertyToAlloyCode alloyCoder) {
+		return createIt(analyzingSessionID, PropertyToAlloyCode.EMPTY_CONVERTOR, this.priority, this.timeout,
+				this.tmpLocalDirectory, this.dBConnectionInfo);
 	}
 
 	public AlloyProcessingParam createItself() {
@@ -130,17 +119,13 @@ public class AlloyProcessingParam extends ProcessingParam {
 	public Optional<File> getSrcPath() {
 		return !this.tmpLocalDirectory.equals(EMPTY_PARAM.tmpLocalDirectory)
 				&& !this.alloyCoder.equals(EMPTY_PARAM.alloyCoder)
-						? Optional
-								.of(new File(tmpLocalDirectory, this.alloyCoder.srcPath()))
-						: Optional.empty();
+						? Optional.of(new File(tmpLocalDirectory, this.alloyCoder.srcPath())) : Optional.empty();
 	}
 
 	public Optional<File> getDestPath() {
 		return !this.tmpLocalDirectory.equals(EMPTY_PARAM.tmpLocalDirectory)
 				&& !this.alloyCoder.equals(EMPTY_PARAM.alloyCoder)
-						? Optional
-								.of(new File(tmpLocalDirectory, this.alloyCoder.destPath()))
-						: Optional.empty();
+						? Optional.of(new File(tmpLocalDirectory, this.alloyCoder.destPath())) : Optional.empty();
 	}
 
 	public Optional<PropertyToAlloyCode> getAlloyCoder() {
@@ -157,22 +142,19 @@ public class AlloyProcessingParam extends ProcessingParam {
 		final List<Dependency> result = new LinkedList<Dependency>();
 
 		for (Dependency dependency : this.alloyCoder.dependencies) {
-			result.add(dependency.createIt(
-					new File(tmpLocalDirectory, dependency.path.getPath()),
-					dependency.content));
+			result.add(dependency.createIt(new File(tmpLocalDirectory, dependency.path.getPath())));
 		}
 
 		return Collections.unmodifiableList(result);
 	}
 
 	public void dumpContent() {
-		dumpFile(getSrcPath().orElseThrow(RuntimeException::new),
-				content().orElseThrow(RuntimeException::new));
+		dumpFile(getSrcPath().orElseThrow(RuntimeException::new), content().orElseThrow(RuntimeException::new));
 	}
 
 	/**
-	 * Write the content of the dependency on a disk. If the path exists, it does
-	 * not overwrite it.
+	 * Write the content of the dependency on a disk. If the path exists, it
+	 * does not overwrite it.
 	 **/
 	public void dumpDependecies() throws IOException {
 		for (Dependency dependency : dependencies()) {
@@ -189,7 +171,7 @@ public class AlloyProcessingParam extends ProcessingParam {
 	}
 
 	public AlloyProcessingParam dumpAll() throws IOException {
-		dumpDependecies();
+		// dumpDependecies();
 		dumpContent();
 		return this;
 	}
@@ -199,8 +181,7 @@ public class AlloyProcessingParam extends ProcessingParam {
 			if (getSrcPath().orElseThrow(RuntimeException::new).exists())
 				Files.delete(getSrcPath().orElseThrow(RuntimeException::new).toPath());
 		} catch (IOException e) {
-			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
-					+ "Unable to remove the file.", e);
+			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] " + "Unable to remove the file.", e);
 			e.printStackTrace();
 		}
 		return this;
@@ -212,8 +193,8 @@ public class AlloyProcessingParam extends ProcessingParam {
 				if (dependency.path.exists())
 					Utils.deleteRecursivly(dependency.path);
 			} catch (IOException e) {
-				logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
-						+ "Unable to remove the file.", e);
+				logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] " + "Unable to remove the file.",
+						e);
 				e.printStackTrace();
 			}
 		}
@@ -222,24 +203,23 @@ public class AlloyProcessingParam extends ProcessingParam {
 
 	public AlloyProcessingParam removeAll() {
 		removeContent();
-		removeDependecies();
+		// removeDependecies();
 		return this;
 	}
 
 	public AlloyProcessingParam changeTmpLocalDirectory(final File tmpDirectory) {
-		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout,
-				tmpDirectory, this.dBConnectionInfo);
+		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout, tmpDirectory,
+				this.dBConnectionInfo);
 	}
 
-	public AlloyProcessingParam changeDBConnectionInfo(
-			final DBConnectionInfo dBConnectionIno) {
-		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout,
-				this.tmpLocalDirectory, dBConnectionIno);
+	public AlloyProcessingParam changeDBConnectionInfo(final DBConnectionInfo dBConnectionIno) {
+		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout, this.tmpLocalDirectory,
+				dBConnectionIno);
 	}
 
 	public AlloyProcessingParam resetToEmptyTmpLocalDirectory() {
-		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout,
-				Compressor.EMPTY_FILE, this.dBConnectionInfo);
+		return createIt(this.analyzingSessionID, this.alloyCoder, this.priority, this.timeout, Compressor.EMPTY_FILE,
+				this.dBConnectionInfo);
 	}
 
 	/**
@@ -266,8 +246,7 @@ public class AlloyProcessingParam extends ProcessingParam {
 		try {
 			Util.writeAll(path.getAbsolutePath(), content);
 		} catch (Err e) {
-			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
-					+ "Unable to dump the file.", e);
+			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] " + "Unable to dump the file.", e);
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -277,6 +256,7 @@ public class AlloyProcessingParam extends ProcessingParam {
 	// The default behavior is to eagerly store the file on the disk
 	public AlloyProcessingParam prepareToUse() throws Exception {
 		dumpAll();
+		// TODO(vajih) check whether the dependencies are in place.
 		// final File srcParent = new File(srcPath.getParent());
 		return this;// prepareToUse(srcParent);
 	}
@@ -299,8 +279,7 @@ public class AlloyProcessingParam extends ProcessingParam {
 
 	@Override
 	public boolean isEmptyParam() {
-		return priority.equals(Integer.MIN_VALUE)
-				&& tmpLocalDirectory.equals(EMPTY_PARAM.tmpLocalDirectory)
+		return priority.equals(Integer.MIN_VALUE) && tmpLocalDirectory.equals(EMPTY_PARAM.tmpLocalDirectory)
 				&& alloyCoder.equals(PropertyToAlloyCode.EMPTY_CONVERTOR)
 				&& !dBConnectionInfo.equals(DBConnectionInfo.EMPTY_DBCONNECTIONINFO);
 	}
@@ -309,10 +288,8 @@ public class AlloyProcessingParam extends ProcessingParam {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result
-				+ ((alloyCoder == null) ? 0 : alloyCoder.hashCode());
-		result = prime * result
-				+ ((dBConnectionInfo == null) ? 0 : dBConnectionInfo.hashCode());
+		result = prime * result + ((alloyCoder == null) ? 0 : alloyCoder.hashCode());
+		result = prime * result + ((dBConnectionInfo == null) ? 0 : dBConnectionInfo.hashCode());
 		return result;
 	}
 
@@ -347,9 +324,8 @@ public class AlloyProcessingParam extends ProcessingParam {
 
 	@Override
 	public String toString() {
-		return "AlloyProcessingParam [alloyCoder=" + alloyCoder.toString()
-				+ ", dBConnectionInfo=" + dBConnectionInfo + ", priority=" + priority
-				+ ", tmpLocalDirectory=" + tmpLocalDirectory + ", analyzingSessionID="
+		return "AlloyProcessingParam [alloyCoder=" + alloyCoder.toString() + ", dBConnectionInfo=" + dBConnectionInfo
+				+ ", priority=" + priority + ", tmpLocalDirectory=" + tmpLocalDirectory + ", analyzingSessionID="
 				+ analyzingSessionID + "]";
 	}
 }

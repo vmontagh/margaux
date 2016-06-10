@@ -268,45 +268,28 @@ public abstract class DebuggerAlgorithm {
 
 		onStartLoop();
 		beforePickField();
-		System.out.println(">>>>>>>>>>>>>>>>>>>>>>1");
 		while (!fieldsQueue.isEmpty()) {
-			System.out.println(">>>>>>>>>>>>>>>>>>>>>>2");
 			DecisionQueueItem<Field> field = fieldsQueue.poll();
-			System.out.println(">>>>>>>>>>>>>>>>>>>>>>3");
 			toBeingAnalyzedField = field.getItem().get();
-			System.out.println(">>>>>>>>>>>>>>>>>>>>>>4");
 			afterPickField();
 			PriorityQueue<DecisionQueueItem<Expr>> modelQueue = fieldToModelQueues.get(toBeingAnalyzedField);
-			System.out.println(">>>>>>>>>>>>>>>>>>>>>>5");
 			beforePickModelPart();
-			System.out.println(">>>>>>>>>>>>>>>>>>>>>>6");
 			while (!modelQueue.isEmpty()) {
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>7");
 				DecisionQueueItem<Expr> modelPart = modelQueue.poll();
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>8");
 				afterPickModelPart();
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>9");
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>10");
 				String toBeingAnalyzedModelPartString = toBeingAnalyzedModelPart.toString();
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>11");
 				try {
 					toBeingAnalyzedModelPartString = PrettyPrintExpression.makeString(toBeingAnalyzedModelPart);
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>12");
 				} catch (Err e) {
 					e.printStackTrace();
 				}
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>13");
 				restModelParts = model.stream().filter(m -> !m.equals(toBeingAnalyzedModelPart))
 						.collect(Collectors.toList());
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>14");
 				String restModel = restModelParts.stream().map(m -> m.toString()).collect(Collectors.joining(" and "));
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>15");
 				fillApproximations(toBeingAnalyzedModelPart, toBeingAnalyzedField);
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>16");
 				List<Pair<String, String>> approximation = approximations.get(toBeingAnalyzedField)
 						.get(toBeingAnalyzedModelPart);
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>17");
 				logger.info(Utils.threadName() + "The approximations for Expr:<" + toBeingAnalyzedModelPart + "> is: "
 						+ approximation);
 
@@ -316,13 +299,10 @@ public abstract class DebuggerAlgorithm {
 				System.out.println(scope);
 				System.out.println(approximation);
 				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>18");
 				if (!approximationQueues.containsKey(toBeingAnalyzedField)) {
 					approximationQueues.put(toBeingAnalyzedField, new HashMap<>());
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>19");
 				}
 				if (!approximationQueues.get(toBeingAnalyzedField).containsKey(toBeingAnalyzedModelPart)) {
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>20");
 					// initializing the priority queue.
 					approximationQueues.get(toBeingAnalyzedField)
 							.put(toBeingAnalyzedModelPart,
@@ -330,23 +310,16 @@ public abstract class DebuggerAlgorithm {
 											.map(m -> DecisionQueueItem
 													.<Pair<String, String>> createwithRandomPriority(m))
 											.collect(Collectors.toCollection(PriorityQueue::new)));
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>21");
 				}
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>22");
 				// converting the approximations into a PQ.
 				PriorityQueue<DecisionQueueItem<Pair<String, String>>> approximationQueue = approximationQueues
 						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
 
-				System.out.println("approximationQueue->" + approximationQueue);
-
 				beforePickApproximation();
 				while (!approximationQueue.isEmpty()) {
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>23");
 					DecisionQueueItem<Pair<String, String>> approx = approximationQueue.poll();
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>24");
 					toBeingWeakenOrStrengthenedApproximation = approx.getItem().get();
 					afterPickApproximation();
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>25");
 					if (!strongerApproxQueues.containsKey(toBeingAnalyzedField))
 						strongerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
 					if (!strongerApproxQueues.get(toBeingAnalyzedField).containsKey(toBeingAnalyzedModelPart))
@@ -360,7 +333,6 @@ public abstract class DebuggerAlgorithm {
 												toBeingAnalyzedField.label)
 										.stream().map(s -> DecisionQueueItem.<String> createwithRandomPriority(s.b))
 										.collect(Collectors.toCollection(PriorityQueue::new)));
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>26");
 					if (!weakerApproxQueues.containsKey(toBeingAnalyzedField))
 						weakerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
 					if (!weakerApproxQueues.get(toBeingAnalyzedField).containsKey(toBeingAnalyzedModelPart))
@@ -378,7 +350,6 @@ public abstract class DebuggerAlgorithm {
 												toBeingAnalyzedField.label).stream())
 										.map(s -> DecisionQueueItem.<String> createwithRandomPriority(s.b))
 										.collect(Collectors.toCollection(PriorityQueue::new)));
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>27");
 					beforePickWeakenOrStrengthened();
 
 					PriorityQueue<DecisionQueueItem<String>> strongerApproxQueue = strongerApproxQueues
@@ -387,26 +358,22 @@ public abstract class DebuggerAlgorithm {
 					PriorityQueue<DecisionQueueItem<String>> weakerApproxQueue = weakerApproxQueues
 							.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
 							.get(toBeingWeakenOrStrengthenedApproximation);
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>28");
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
 					while (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty()) {
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 						strengthened = true;
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>29");
 						if (!weakerApproxQueue.isEmpty()
 								&& (strongerApproxQueue.isEmpty() || DecisionQueueItem.RandomGenerator.nextBoolean())) {
 							toBePickedQueueFromWeakenOrStrengthened = weakerApproxQueue;
 							strengthened = false;
 						}
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>30");
 						afterPickWeakenOrStrengthened();
 
 						beforePickWeakenOrStrengthenedApprox();
 						String approximationProperty = toBePickedQueueFromWeakenOrStrengthened.poll().getItem()
 								.orElseThrow(() -> new RuntimeException("The stronger form cannot be null"));
 						beforePickWeakenOrStrengthenedApprox();
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>31");
 						beforeMutating();
 						File mutatedFile = makeMutation(toBeingAnalyzedModelPartString,
 								toBeingWeakenOrStrengthenedApproximation.b, approximationProperty, strengthened,
@@ -427,7 +394,6 @@ public abstract class DebuggerAlgorithm {
 						outExampleIsInteded = inAndOutExamples.b.isPresent()
 								? oracle.isIntended(inAndOutExamples.b.get()) : false;
 						StringBuilder rowRoport = new StringBuilder();
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>32");
 						rowRoport.append("toBeingAnalyzedModelPart=")
 								.append("\"" + toBeingAnalyzedModelPartString + "\"").append(",");
 						rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
@@ -443,7 +409,6 @@ public abstract class DebuggerAlgorithm {
 						rowRoport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
 
 						rowRoport.append("strengthened=").append(strengthened).append(",");
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>33");
 						if (strengthened) {
 							if (inExampleIsInteded) {
 								logger.info("The model is correct so far.");
@@ -483,7 +448,6 @@ public abstract class DebuggerAlgorithm {
 								rejectedExamples.add(inAndOutExamples.b.orElse(""));
 							}
 						}
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>34");
 						String row = rowRoport.toString();
 						row = row.replaceAll("\n", " and ");
 						Pair<String, String> headerRow = Utils.extractHeader(row);
@@ -495,20 +459,16 @@ public abstract class DebuggerAlgorithm {
 						// Call APIs to change the priority of the next steps
 						if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 							beforePickWeakenOrStrengthened();
-						System.out.println(">>>>>>>>>>>>>>>>>>>>>>35");
 					}
 					if (!approximationQueue.isEmpty())
 						if (beforePickApproximation())
 							break;
-					System.out.println(">>>>>>>>>>>>>>>>>>>>>>36");
 				}
 				if (!modelQueue.isEmpty())
 					beforePickModelPart();
-				System.out.println(">>>>>>>>>>>>>>>>>>>>>>37");
 			}
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
-			System.out.println(">>>>>>>>>>>>>>>>>>>>>>38");
 		}
 
 		System.out.println("--------------------------");

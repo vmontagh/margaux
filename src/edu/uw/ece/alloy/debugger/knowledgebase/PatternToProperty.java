@@ -32,15 +32,14 @@ import edu.uw.ece.alloy.util.Utils;
 public class PatternToProperty {
 
 	final static Logger logger = Logger
-			.getLogger(PatternToProperty.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(PatternToProperty.class.getName() + "--" + Thread.currentThread().getName());
 
 	final public File relationalPropModuleOriginal;
 	final public File temporalPropModuleOriginal;
 
 	/*
-	 * A map from (patternName,field/Name) to property(i.e. property call). Once a
-	 * property is inferred, its call does not necessarily have the same
+	 * A map from (patternName,field/Name) to property(i.e. property call). Once
+	 * a property is inferred, its call does not necessarily have the same
 	 * parameters as the original has. So that, the property calls are cached,
 	 * then used for changing the inferred properties.
 	 */
@@ -53,21 +52,18 @@ public class PatternToProperty {
 
 	protected static PatternToProperty self = null;
 
-	public PatternToProperty(File relationalPropModuleOriginal,
-			File temporalPropModuleOriginal, File tobeAnalyzedCode) throws Err {
-		this(relationalPropModuleOriginal, temporalPropModuleOriginal,
-				tobeAnalyzedCode, Optional.empty());
+	public PatternToProperty(File relationalPropModuleOriginal, File temporalPropModuleOriginal, File tobeAnalyzedCode)
+			throws Err {
+		this(relationalPropModuleOriginal, temporalPropModuleOriginal, tobeAnalyzedCode, Optional.empty());
 	}
 
-	public PatternToProperty(File relationalPropModuleOriginal,
-			File temporalPropModuleOriginal, File tobeAnalyzedCode, String fieldName)
-					throws Err {
-		this(relationalPropModuleOriginal, temporalPropModuleOriginal,
-				tobeAnalyzedCode, Optional.ofNullable(fieldName));
+	public PatternToProperty(File relationalPropModuleOriginal, File temporalPropModuleOriginal, File tobeAnalyzedCode,
+			String fieldName) throws Err {
+		this(relationalPropModuleOriginal, temporalPropModuleOriginal, tobeAnalyzedCode,
+				Optional.ofNullable(fieldName));
 	}
 
-	public PatternToProperty(File relationalPropModuleOriginal,
-			File temporalPropModuleOriginal, File tobeAnalyzedCode,
+	public PatternToProperty(File relationalPropModuleOriginal, File temporalPropModuleOriginal, File tobeAnalyzedCode,
 			Optional<String> fieldName) {
 		this.relationalPropModuleOriginal = relationalPropModuleOriginal;
 		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
@@ -78,8 +74,8 @@ public class PatternToProperty {
 		// the filed and fields in the
 		try {
 
-			CompModule world = ((CompModule) A4CommandExecuter.getInstance()
-					.parse(tobeAnalyzedCode.getAbsolutePath(), A4Reporter.NOP));
+			CompModule world = ((CompModule) A4CommandExecuter.getInstance().parse(tobeAnalyzedCode.getAbsolutePath(),
+					A4Reporter.NOP));
 
 			List<Field> fields = new ArrayList<>();
 			// just for making a log.
@@ -94,10 +90,8 @@ public class PatternToProperty {
 
 			if (fieldName.isPresent()) {
 				if (fields.isEmpty()) {
-					logger.severe(Utils.threadName() + "Field:" + fieldName
-							+ " not found in:" + allfields);
-					throw new RuntimeException(
-							"Field:" + fieldName + " not found in:" + allfields);
+					logger.severe(Utils.threadName() + "Field:" + fieldName + " not found in:" + allfields);
+					throw new RuntimeException("Field:" + fieldName + " not found in:" + allfields);
 				}
 			} else {
 				fields.addAll(allfields);
@@ -113,8 +107,7 @@ public class PatternToProperty {
 			this.propertyCalls = Collections.unmodifiableMap(propertyCalls);
 
 		} catch (Err e) {
-			logger.log(Level.WARNING,
-					Utils.threadName() + "Failling to add make properties", e);
+			logger.log(Level.WARNING, Utils.threadName() + "Failling to add make properties", e);
 			throw new RuntimeException(e);
 		}
 	}
@@ -129,9 +122,8 @@ public class PatternToProperty {
 		return field.label;
 	}
 
-	void generateRelationalPropertyCalls(
-			Map<Pair<String, String>, String> propertyCalls, List<Field> fields)
-					throws Err {
+	void generateRelationalPropertyCalls(Map<Pair<String, String>, String> propertyCalls, List<Field> fields)
+			throws Err {
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(relationalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
 		for (Func func : world.getAllFunc()) {
@@ -140,11 +132,12 @@ public class PatternToProperty {
 			try {
 				pcb.addPropertyDeclration(func);
 			} catch (IllegalArgumentException ia) {
-				/*logger.log(Level.WARNING,
-						Utils.threadName() + "Failling to add a property declaration:", ia);*/
+				/*
+				 * logger.log(Level.WARNING, Utils.threadName() +
+				 * "Failling to add a property declaration:", ia);
+				 */
 			}
-			for (Field field : fields.stream().filter(f -> f.type().arity() == 2)
-					.collect(Collectors.toList())) {
+			for (Field field : fields.stream().filter(f -> f.type().arity() == 2).collect(Collectors.toList())) {
 				for (String PropertyCall : pcb.makeAllBinaryProperties(field)) {
 					propertyCalls.put(new Pair<>(funcName, field.label), PropertyCall);
 				}
@@ -152,8 +145,7 @@ public class PatternToProperty {
 		}
 	}
 
-	void generateTemporalPropertyCalls(
-			Map<Pair<String, String>, String> propertyCalls, List<Field> fields,
+	void generateTemporalPropertyCalls(Map<Pair<String, String>, String> propertyCalls, List<Field> fields,
 			final List<Open> opens) throws Err {
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(temporalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
@@ -163,16 +155,14 @@ public class PatternToProperty {
 			try {
 				pcb.addPropertyDeclration(func);
 			} catch (IllegalArgumentException ia) {
-				logger.log(Level.WARNING, "[" + Thread.currentThread().getName() + "] "
-						+ "Failling to add a property declaration:", ia);
+				logger.log(Level.WARNING,
+						"[" + Thread.currentThread().getName() + "] " + "Failling to add a property declaration:", ia);
 			}
-			for (Field field : fields.stream().filter(f -> f.type().arity() == 3)
-					.collect(Collectors.toList())) {
+			for (Field field : fields.stream().filter(f -> f.type().arity() == 3).collect(Collectors.toList())) {
 				for (String PropertyCall : pcb.makeAllTernaryProperties(field, opens)) {
 					propertyCalls.put(new Pair<>(funcName, field.label), PropertyCall);
 				}
 			}
-
 		}
 	}
 
@@ -190,8 +180,7 @@ public class PatternToProperty {
 
 	public String getProperty(Pair<String, String> patternNamefieldName) {
 		if (!hasProperty(patternNamefieldName)) {
-			logger.warning(
-					Utils.threadName() + "The pattern and field is not the chache:" + patternNamefieldName);
+			logger.warning(Utils.threadName() + "The pattern and field is not the chache:" + patternNamefieldName);
 			throw new RuntimeException();
 		}
 

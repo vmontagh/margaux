@@ -24,4 +24,6 @@ public interface MessageListenerAction<T extends MessageEventArgs> {
 	void actionOn(DoneMessage doneMessage, T messageArgs);
 
 	void actionOn(DiedMessage diedMessage, T messageArgs);
+	
+	void actionOn(SetupMessage setupMessage, T messageArgs);
 }

@@ -13,8 +13,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator
 public class BinaryImplicationLattic extends ImplicationLattic {
 
 	final static String sourceFolderPath = Configuration.getProp("kb_folder");
-	final static String[] moduleNames = Configuration.getProp("kb_modules")
-			.split(";");
+	final static String[] moduleNames = Configuration.getProp("kb_modules").split(";");
 
 	public BinaryImplicationLattic() {
 		this(sourceFolderPath, moduleNames);
@@ -26,12 +25,10 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 	}
 
 	public List<String> getAllSources() throws Err {
-		final String alloyCode = "open binary_implication\n"
-				+ "pred run_getSourcesImplication[]{\n"
-				+ "  some p: prop | getSourcesImplication[p]}\n"
-				+ "run run_getSourcesImplication for 0";
-		final File file = new File(this.TEMPORARY_FOLDER, "sources_"
-				+ System.currentTimeMillis() + "_" + rand.nextInt() + ".als");
+		final String alloyCode = "open binary_implication\n" + "pred run_getSourcesImplication[]{\n"
+				+ "  some p: prop | getSourcesImplication[p]}\n" + "run run_getSourcesImplication for 0";
+		final File file = new File(this.TEMPORARY_FOLDER,
+				"sources_" + System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 
 		List<String> result = new ArrayList<>();
 		for (A4Solution sol : writeAndFind(alloyCode, file)) {
@@ -42,14 +39,12 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getNextImpliedProperties(String property) throws Err {
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(
-				ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
 			final String alloyCode = String.format("open binary_implication\n"
-					+ "pred run_getNextImplications[p: prop]{\n"
-					+ "	some p': prop | getNextImplications[p, p']}\n"
+					+ "pred run_getNextImplications[p: prop]{\n" + "	some p': prop | getNextImplications[p, p']}\n"
 					+ "run {run_getNextImplications[%s]} for 0", property);
-			final File file = new File(this.TEMPORARY_FOLDER, "implied_"
-					+ System.currentTimeMillis() + "_" + rand.nextInt() + ".als");
+			final File file = new File(this.TEMPORARY_FOLDER,
+					"implied_" + System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 			for (A4Solution sol : writeAndFind(alloyCode, file)) {
 				result.add(extractSkolemedValue(sol));
 			}
@@ -59,14 +54,13 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getNextRevImpliedProperties(String property) throws Err {
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(
-				ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
 			final String alloyCode = String.format("open binary_implication\n"
 					+ "pred run_getPreviousImplications[p: prop]{\n"
-					+ "	some p': prop | getNextImplications[p', p]}\n"
-					+ "run {run_getPreviousImplications[%s]} for 0", property);
-			final File file = new File(this.TEMPORARY_FOLDER, "revimplied_"
-					+ System.currentTimeMillis() + "_" + rand.nextInt() + ".als");
+					+ "	some p': prop | getNextImplications[p', p]}\n" + "run {run_getPreviousImplications[%s]} for 0",
+					property);
+			final File file = new File(this.TEMPORARY_FOLDER,
+					"revimplied_" + System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 			for (A4Solution sol : writeAndFind(alloyCode, file)) {
 				result.add(extractSkolemedValue(sol));
 			}
@@ -75,12 +69,10 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 	}
 
 	public List<String> getAllSinks() throws Err {
-		final String alloyCode = "open binary_implication\n"
-				+ "pred run_getFinalSinksImplication[]{\n"
-				+ "  some p: prop | getFinalSinksImplication[p]}\n"
-				+ "run run_getFinalSinksImplication for 0";
+		final String alloyCode = "open binary_implication\n" + "pred run_getFinalSinksImplication[]{\n"
+				+ "  some p: prop | getFinalSinksImplication[p]}\n" + "run run_getFinalSinksImplication for 0";
 		final File file = new File(this.TEMPORARY_FOLDER,
-				"sinks_" + System.currentTimeMillis() + "_" + rand.nextInt() + ".als");
+				"sinks_" + System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 		List<String> result = new ArrayList<>();
 		for (A4Solution sol : writeAndFind(alloyCode, file)) {
 			result.add(extractSkolemedValue(sol));
@@ -90,16 +82,14 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getAllImpliedProperties(String property) throws Err {
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(
-				ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
 
 			final String alloyCode = String.format(
 					"open binary_implication\n" + "pred run_getAllImplied[p: prop]{\n"
-							+ "  some p': prop | getAllImplied[p,p']\n}"
-							+ "run {run_getAllImplied[%s]} for 0",
+							+ "  some p': prop | getAllImplied[p,p']\n}" + "run {run_getAllImplied[%s]} for 0",
 					property);
-			final File file = new File(this.TEMPORARY_FOLDER, "allimplied_"
-					+ System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
+			final File file = new File(this.TEMPORARY_FOLDER,
+					"allimplied_" + System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 			for (A4Solution sol : writeAndFind(alloyCode, file)) {
 				result.add(extractSkolemedValue(sol));
 			}
@@ -109,15 +99,13 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public List<String> getAllRevImpliedProperties(String property) throws Err {
 		List<String> result = new ArrayList<>();
-		if (!property.startsWith(
-				ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
+		if (!property.startsWith(ExpressionPropertyGenerator.ExpressionPredicate.predNamePrefix)) {
 			final String alloyCode = String.format(
 					"open binary_implication\n" + "pred run_getAllRevImplied[p: prop]{\n"
-							+ "  some p': prop | getAllRevImplied[p,p']\n}"
-							+ "run {run_getAllRevImplied[%s]} for 0",
+							+ "  some p': prop | getAllRevImplied[p,p']\n}" + "run {run_getAllRevImplied[%s]} for 0",
 					property);
-			final File file = new File(this.TEMPORARY_FOLDER, "allimplied_"
-					+ System.currentTimeMillis() + "_" + rand.nextInt() + ".als");
+			final File file = new File(this.TEMPORARY_FOLDER,
+					"allimplied_" + System.currentTimeMillis() + "_" + Math.abs(rand.nextInt()) + ".als");
 			for (A4Solution sol : writeAndFind(alloyCode, file)) {
 				result.add(extractSkolemedValue(sol));
 			}

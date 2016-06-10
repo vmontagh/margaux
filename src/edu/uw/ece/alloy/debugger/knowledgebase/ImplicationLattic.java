@@ -1,6 +1,8 @@
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,7 +63,7 @@ public abstract class ImplicationLattic {
 	}
 
 	protected List<A4Solution> getAllproperties(String path) throws Err {
-
+		
 		Map<Command, A4Solution> executionResult = A4CommandExecuter.getInstance()
 				.runThenGetAnswers(new String[] { path }, A4Reporter.NOP);
 
