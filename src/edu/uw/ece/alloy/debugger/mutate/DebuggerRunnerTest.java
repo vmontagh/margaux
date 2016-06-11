@@ -146,7 +146,7 @@ public class DebuggerRunnerTest {
 		List<File> dependentFiles = new ArrayList<>();
 		dependentFiles.add(relationalLib);
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");
+				"models/debugger/casestudy/journal/corrected.list.v0.als");
 
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				dependentFiles, testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -172,7 +172,7 @@ public class DebuggerRunnerTest {
 		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");
+				"models/debugger/casestudy/journal/corrected.list.v0.als");
 
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
@@ -186,9 +186,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestApproximationList() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.als");
+				"models/debugger/casestudy/journal/list.v0.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");
+				"models/debugger/casestudy/journal/corrected.list.v0.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -201,9 +201,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestApproximationListConsistent() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.als");
+				"models/debugger/casestudy/journal/list.v0.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");
+				"models/debugger/casestudy/journal/corrected.list.v0.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -219,9 +219,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestRandomApproximationListMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.als");
+				"models/debugger/casestudy/journal/list.v0.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");
+				"models/debugger/casestudy/journal/corrected.list.v0.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -248,9 +248,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestHeuristicApproximationListMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.als");
+				"models/debugger/casestudy/journal/list.v0.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/correctedlist.als");
+				"models/debugger/casestudy/journal/corrected.list.v0.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
@@ -295,9 +295,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestApproximationBinaryTreeRadonom() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary_tree.als");
+				"models/debugger/casestudy/journal/binary.tree.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+				"models/debugger/casestudy/journal/corrected.binary.tree.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -310,9 +310,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestApproximationBinaryTreeHeuristicMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary_tree.als");
+				"models/debugger/casestudy/journal/binary.tree.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+				"models/debugger/casestudy/journal/corrected.binary.tree.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
@@ -358,9 +358,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestApproximationBinaryTreeHeuristic() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary_tree.als");
+				"models/debugger/casestudy/journal/binary.tree.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected_binary_tree.als");
+				"models/debugger/casestudy/journal/corrected.binary.tree.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
@@ -374,9 +374,9 @@ public class DebuggerRunnerTest {
 	public void testDikjstraBug1Random(){
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"/home/vajih/eclipse/eclipse-workspace/alloy/models/debugger/casestudy/journal/dijkstra_bug1.als");
+				"models/debugger/casestudy/journal/dijkstra.bug1.als");
 		File correctedModel = new File(
-				"/home/vajih/eclipse/eclipse-workspace/alloy/models/debugger/casestudy/journal/correcteddijkstra_bug1.als");
+				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
 		
 		
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
