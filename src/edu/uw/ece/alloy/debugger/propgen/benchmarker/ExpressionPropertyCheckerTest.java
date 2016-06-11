@@ -18,9 +18,11 @@ import org.junit.Test;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
 import edu.uw.ece.alloy.debugger.knowledgebase.TemporalImplicationLatticeGenerator;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
@@ -33,8 +35,7 @@ public class ExpressionPropertyCheckerTest {
 
 	final String AlloyTmpTestPath = "tmp/testing.als";
 	final String sourceFolderPath = "models/debugger/knowledge_base";
-	final String[] moduleNames = { "binary_implication.als",
-			"property_structure.als" };
+	final String[] moduleNames = { "binary_implication.als", "property_structure.als" };
 	final static String tempFolderPath = "tmp/kb";
 	ImplicationLattic bil, til;
 	ExpressionPropertyGenerator epc;
@@ -60,19 +61,12 @@ public class ExpressionPropertyCheckerTest {
 	@Before
 	public void setUp() throws Exception {
 		// @formatter:off
-		final String alloyTestCode = 
-				"open util/ordering [A] \n"
-						+ "sig B{c: B}\n"
-						+ "sig A{r:B, s: B->C}\n"
-						+ "sig C{}\n"
-						+ "pred p1[r:univ->univ, left:univ]{one c}\n"
-						+ "fact{\n " + BlocksExtractorByComments.ExtractExpression.BEGIN 
-						+ "\n some r and some s" + BlocksExtractorByComments.ExtractExpression.END + " \n}\n"
-						+ "fact{\n "
-						+ " p1[univ->univ, univ] and all a: A| some a.r " 
-						+ "}\n"
-						+ "run{} " +  BlocksExtractorByComments.ExtractScope.BEGIN
-						+ " for 5" + BlocksExtractorByComments.ExtractScope.END;
+		final String alloyTestCode = "open util/ordering [A] \n" + "sig B{c: B}\n" + "sig A{r:B, s: B->C}\n"
+				+ "sig C{}\n" + "pred p1[r:univ->univ, left:univ]{one c}\n" + "fact{\n "
+				+ BlocksExtractorByComments.ExtractExpression.BEGIN + "\n some r and some s"
+				+ BlocksExtractorByComments.ExtractExpression.END + " \n}\n" + "fact{\n "
+				+ " p1[univ->univ, univ] and all a: A| some a.r " + "}\n" + "run{} "
+				+ BlocksExtractorByComments.ExtractScope.BEGIN + " for 5" + BlocksExtractorByComments.ExtractScope.END;
 		// @formatter:on
 
 		Util.writeAll(AlloyTmpTestPath, alloyTestCode);
@@ -89,20 +83,16 @@ public class ExpressionPropertyCheckerTest {
 		for (String module : moduleNames) {
 			File source = new File(sourceFolderPath, module);
 			File dest = new File(tempFolder, module);
-			Files.copy(source.toPath(), dest.toPath(),
-					StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 
 		bil = new BinaryImplicationLattic(tempFolderPath, moduleNames);
-		til = new TernaryImplicationLattic(
-				TemporalImplicationLatticeGenerator.pathToLegend,
-				TemporalImplicationLatticeGenerator.pathToImplication,
-				TemporalImplicationLatticeGenerator.pathToIff);
+		til = new TernaryImplicationLattic(TemporalImplicationLatticeGenerator.pathToLegend,
+				TemporalImplicationLatticeGenerator.pathToImplication, TemporalImplicationLatticeGenerator.pathToIff);
 
-		epc = new ExpressionPropertyGenerator(UUID.randomUUID(), new Queue<>(),
-				new File(AlloyTmpTestPath), tempFolder, tempFolder, "field",
-				IfPropertyToAlloyCode.EMPTY_CONVERTOR, "expresson", "scope",
-				Collections.emptyList());
+		epc = new ExpressionPropertyGenerator(UUID.randomUUID(), new Queue<>(), new File(AlloyTmpTestPath), tempFolder,
+				tempFolder, "s", IfPropertyToAlloyCode.EMPTY_CONVERTOR, "expresson", "scope",
+				Collections.emptyList(), new PatternToProperty(new File(Configuration.getProp("relational_properties_tagged")), new File(Configuration.getProp("temporal_properties_tagged")), new File(AlloyTmpTestPath)));
 	}
 
 	/**

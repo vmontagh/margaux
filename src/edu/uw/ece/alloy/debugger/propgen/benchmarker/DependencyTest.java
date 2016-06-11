@@ -91,8 +91,7 @@ public class DependencyTest {
 
 	@Test
 	public void testBigCompressionDecmpressionTemporalLib() throws Exception {
-		File bigFile = new File(
-				Configuration.getProp("temporal_properties_tagged"));
+		File bigFile = new File(Configuration.getProp("temporal_properties_tagged"));
 
 		System.out.println(bigFile.getAbsolutePath());
 		System.out.println(bigFile.length());

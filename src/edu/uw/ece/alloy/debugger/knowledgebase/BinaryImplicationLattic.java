@@ -21,7 +21,6 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 
 	public BinaryImplicationLattic(String tempPath, String[] moduleName) {
 		super(tempPath, moduleName);
-		// TODO Auto-generated constructor stub
 	}
 
 	public List<String> getAllSources() throws Err {

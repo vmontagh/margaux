@@ -10,6 +10,7 @@ import edu.uw.ece.alloy.Compressor;
  * It is very much like LazyFile but compresses the content.
  * 
  * @author vajih
+ * @deprecated The class should be replaced with LazyFile
  *
  */
 public class Dependency implements Serializable {
@@ -40,11 +41,11 @@ public class Dependency implements Serializable {
 
 	/**
 	 * The default value of the content is the content hashcode.
+	 * 
 	 * @param path
 	 */
 	protected Dependency(final File path) {
-		this(path, Compressor.EMPTY_STRING, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
-				Compressor.STATE.DEOMPRESSED);
+		this(path, Compressor.EMPTY_STRING, Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.STATE.DEOMPRESSED);
 	}
 
 	protected Dependency() {
@@ -56,12 +57,12 @@ public class Dependency implements Serializable {
 			final byte[] contentCompressed, final Compressor.STATE compressedStatus) {
 		return new Dependency(path, content, pathCompressed, contentCompressed, compressedStatus);
 	}
-	
+
 	public Dependency createIt(final File path) {
 		return new Dependency(path);
 	}
 
-	private Dependency createIt(final File path, final String content) {
+	protected Dependency createIt(final File path, final String content) {
 		return new Dependency(path, content);
 	}
 

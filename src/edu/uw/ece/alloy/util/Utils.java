@@ -50,11 +50,10 @@ public class Utils {
 		return "[" + Thread.currentThread().getName() + "]" + " ";
 	}
 
-	public static String appendFileName(final String folderName,
-			final String fileName) {
-		return folderName + ((folderName != null
-				&& folderName.substring(folderName.length() - 1).equals(File.separator))
-						? "" : File.separator)
+	public static String appendFileName(final String folderName, final String fileName) {
+		return folderName
+				+ ((folderName != null && folderName.substring(folderName.length() - 1).equals(File.separator)) ? ""
+						: File.separator)
 				+ fileName;
 	}
 
@@ -84,8 +83,7 @@ public class Utils {
 	}
 
 	public static void appendFile(final String path, final String content) {
-		try (PrintWriter out = new PrintWriter(
-				new BufferedWriter(new FileWriter(path, true)))) {
+		try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
 			out.println(content);
 		} catch (IOException e) {
 			throw new RuntimeException("CAnnot append to the file " + path);
@@ -105,8 +103,7 @@ public class Utils {
 
 		try {
 
-			final BufferedReader bufferedReader = new BufferedReader(
-					new FileReader(pos.filename));
+			final BufferedReader bufferedReader = new BufferedReader(new FileReader(pos.filename));
 
 			String line = bufferedReader.readLine();
 			for (int i = 1; line != null && i <= pos.y2; ++i) {
@@ -144,8 +141,7 @@ public class Utils {
 	public static List<String> readFileLines(final String inputFileName) {
 		try {
 
-			final BufferedReader bufferedReader = new BufferedReader(
-					new FileReader(inputFileName));
+			final BufferedReader bufferedReader = new BufferedReader(new FileReader(inputFileName));
 			final List<String> lines = new ArrayList<String>();
 
 			String line = null;
@@ -163,12 +159,10 @@ public class Utils {
 		}
 	}
 
-	public static List<String> readFileLinesWithEmptyLines(
-			final String inputFileName) {
+	public static List<String> readFileLinesWithEmptyLines(final String inputFileName) {
 		try {
 
-			final BufferedReader bufferedReader = new BufferedReader(
-					new FileReader(inputFileName));
+			final BufferedReader bufferedReader = new BufferedReader(new FileReader(inputFileName));
 			final List<String> lines = new ArrayList<String>();
 
 			String line = null;
@@ -206,9 +200,7 @@ public class Utils {
 		for (final File file : files) {
 
 			try {
-				Files.move(file.toPath(),
-						dest.toPath()
-								.resolve(file.toPath().getParent().relativize(file.toPath())),
+				Files.move(file.toPath(), dest.toPath().resolve(file.toPath().getParent().relativize(file.toPath())),
 						StandardCopyOption.ATOMIC_MOVE);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -275,15 +267,13 @@ public class Utils {
 
 		Files.walkFileTree(root.toPath(), new SimpleFileVisitor<Path>() {
 			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-					throws IOException {
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 				Files.delete(file);
 				return FileVisitResult.CONTINUE;
 			}
 
 			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException exc)
-					throws IOException {
+			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 				Files.delete(dir);
 				return FileVisitResult.CONTINUE;
 			}
@@ -292,8 +282,7 @@ public class Utils {
 
 	}
 
-	public static DirectoryStream<Path> filesStream(final File dir,
-			final String regex) {
+	public static DirectoryStream<Path> filesStream(final File dir, final String regex) {
 		assert dir.isDirectory() : "not a directory: " + dir;
 		final Pattern p = Pattern.compile(regex);
 		final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
@@ -315,46 +304,40 @@ public class Utils {
 
 	}
 
-	public static void replaceTextFiles(final File dir,
-			final String regexFileName, final String resultFile,
+	public static void replaceTextFiles(final File dir, final String regexFileName, final String resultFile,
 			final Map<String, String> replaceMapping) throws Err {
 
 		assert dir.isDirectory() : "not a directory: " + dir;
 
-		Function<String, String> mapper = replaceMapping.entrySet().stream()
-				.reduce(Function.identity(), (func, entry) -> {
+		Function<String, String> mapper = replaceMapping.entrySet().stream().reduce(Function.identity(),
+				(func, entry) -> {
 					String key = entry.getKey();
 					String value = entry.getValue();
 					return func.compose(s -> s.replaceAll(key, value));
 				} , Function::compose);
 
-		String resultString = Arrays
-				.stream(files(dir.getAbsolutePath(), regexFileName)).
+		String resultString = Arrays.stream(files(dir.getAbsolutePath(), regexFileName)).
 				// parallelStream().
 				// stream().
-		map(p -> Utils.readFile(p.getAbsolutePath()).trim().concat("\n"))
-				.map(mapper).collect(Collectors.joining());
+		map(p -> Utils.readFile(p.getAbsolutePath()).trim().concat("\n")).map(mapper).collect(Collectors.joining());
 
 		// System.out.println(resultString);
-		// System.out.println(files(dir,regex)[0].getAbsoluteFile().getParent() );
-		edu.mit.csail.sdg.alloy4.Util
-				.writeAll((new File(dir, resultFile)).getAbsolutePath(), resultString);
+		// System.out.println(files(dir,regex)[0].getAbsoluteFile().getParent()
+		// );
+		edu.mit.csail.sdg.alloy4.Util.writeAll((new File(dir, resultFile)).getAbsolutePath(), resultString);
 
 	}
 
-	public static void readFile(final File file,
-			final Consumer<List<String>> toMaps) {
+	public static void readFile(final File file, final Consumer<List<String>> toMaps) {
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-			reader.lines().skip(1).map(line -> Arrays.asList(line.split(",")))
-					.forEach(toMaps);
+			reader.lines().skip(1).map(line -> Arrays.asList(line.split(","))).forEach(toMaps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public static void setFinalStatic(Field field, Object newValue)
-			throws Exception {
+	public static void setFinalStatic(Field field, Object newValue) throws Exception {
 		field.setAccessible(true);
 
 		// remove final modifier from field
@@ -368,8 +351,7 @@ public class Utils {
 	public static String ClobToString(Object obj) {
 		try {
 
-			if (obj.getClass().getName()
-					.equals(javax.sql.rowset.serial.SerialClob.class.getName())) {
+			if (obj.getClass().getName().equals(javax.sql.rowset.serial.SerialClob.class.getName())) {
 				javax.sql.rowset.serial.SerialClob clob = (javax.sql.rowset.serial.SerialClob) obj;
 				int len;
 				len = (int) clob.length();
@@ -390,20 +372,18 @@ public class Utils {
 	 * @return
 	 */
 	public static boolean posWithin(Pos a, Pos b) {
-		if (a == null || a == Pos.UNKNOWN || b == null || b == Pos.UNKNOWN
-				|| !a.filename.equals(b.filename))
+		if (a == null || a == Pos.UNKNOWN || b == null || b == Pos.UNKNOWN || !a.filename.equals(b.filename))
 			return false;
-		return (b.y < a.y && a.y2 < b.y2)
-				|| (b.y == a.y && b.x <= a.x && a.y2 < b.y2)
+		return (b.y < a.y && a.y2 < b.y2) || (b.y == a.y && b.x <= a.x && a.y2 < b.y2)
 				|| (b.y < a.y && a.y2 == b.y2 && a.x2 <= b.x2)
 				|| (b.y == a.y && b.x <= a.x && a.y2 == b.y2 && a.x2 <= b.x2)
 				|| (b.y == a.y && b.x == a.x && a.y2 == b.y2 && a.x2 == b.x2);
 	}
 
 	/**
-	 * This wraps the given InputStream such that the resulting object's "close()"
-	 * method does nothing; if stream==null, we get an InputStream that always
-	 * returns EOF.
+	 * This wraps the given InputStream such that the resulting object's
+	 * "close()" method does nothing; if stream==null, we get an InputStream
+	 * that always returns EOF.
 	 */
 	public static InputStream wrap(final InputStream stream) {
 		return new InputStream() {
@@ -458,7 +438,8 @@ public class Utils {
 				if (stream != null)
 					stream.flush();
 			}
-			// The close() method above INTENTIONALLY does not actually close the file
+			// The close() method above INTENTIONALLY does not actually close
+			// the file
 		};
 	}
 
