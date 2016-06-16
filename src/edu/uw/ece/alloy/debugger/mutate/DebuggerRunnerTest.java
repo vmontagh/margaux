@@ -186,9 +186,11 @@ public class DebuggerRunnerTest {
 	public void testStrongestApproximationList() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v0.als");
+				"models/debugger/casestudy/journal/list.v1.bug2.als");
+				//"models/debugger/casestudy/journal/list.v0.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v0.als");
+				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+				//"models/debugger/casestudy/journal/corrected.list.v0.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -248,9 +250,9 @@ public class DebuggerRunnerTest {
 	public void testStrongestHeuristicApproximationListMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v0.als");
+				"models/debugger/casestudy/journal/list.v1.bug1.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v0.als");
+				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
@@ -262,7 +264,7 @@ public class DebuggerRunnerTest {
 
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
+		/*Approximator approximatorMock = new Approximator(
 				runner.approximator.interfacE, runner.approximator.processManager,
 				runner.approximator.tmpLocalDirectory,
 				runner.approximator.toBeAnalyzedCode,
@@ -287,7 +289,7 @@ public class DebuggerRunnerTest {
 			}
 		};
 
-		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.approximator = approximatorMock;*/
 		runner.debuggerAlgorithm.run();
 	}
 

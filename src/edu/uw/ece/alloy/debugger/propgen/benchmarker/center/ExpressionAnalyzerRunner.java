@@ -195,13 +195,14 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					AlloyProcessingParam param = (AlloyProcessingParam) message.getResult().getParam();
 
 					AlloyProcessedResult result = (AlloyProcessedResult) message.getResult();
+					
 					if (message.getResult().isNormal()
 							&& result.getParam().getAlloyCoder()
 									.orElseThrow(
 											() -> new RuntimeException("Alloy Coder cannot be Null int a response."))
 									.isDesiredSAT(result.sat)
-							&& (expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predBodyA)
-									|| expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predBodyB))) {
+							&& (expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predNameA)
+									|| expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predNameB))) {
 						validResults.add(result);
 					}
 

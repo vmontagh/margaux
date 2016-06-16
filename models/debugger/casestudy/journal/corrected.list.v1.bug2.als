@@ -3,34 +3,29 @@
 **/
 
 sig Node{
-	nxt:  set  Node}
+	nxt:  set  Node,
+	val: Int}
 
-pred acyclic{
-	all n: Node| !( n in n.^(nxt) )
+pred noLoop{all n: Node| !(n in n.^nxt)}
+pred structuralConstraint{all n: Node| lone n.nxt}
+pred lowerBound{some Node}
+
+pred allreachable{
+	one n: Node | n.^nxt + n = Node
 }
 
-pred structuralConstraint{
-	all n:Node | lone n.nxt
+pred sorted{
+	all n:Node | some n.nxt implies gt[ n.nxt.val, n.val]
 }
 
-pred lowerBoud[]{
-	some Node
+pred rootIsLowest{
+	one n: Node |all n': Node-n | gt[n'.val, n.val]
 }
 
-pred listModel[]{
-	structuralConstraint
-	acyclic
-	lowerBoud
-}
-
-pred allReachable[]{
-	some n: Node| Node = n.*(nxt)
-}
-
-//run genBinaryTree for 3
-
-run {
-	(structuralConstraint and
-	acyclic and
-	lowerBoud) implies allReachable 
-} for 3
+check {
+(noLoop and 
+structuralConstraint and
+lowerBound and
+allreachable and
+sorted
+) implies rootIsLowest}

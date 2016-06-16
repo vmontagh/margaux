@@ -90,7 +90,7 @@ public abstract class ImplicationLattic {
 		try {
 			Util.writeAll(file.getAbsolutePath(), content);
 			result.addAll(getAllproperties(file.getAbsolutePath()));
-		} catch (Throwable e) {
+		} catch (Exception e) {
 			logger
 					.log(Level.SEVERE,
 							"[" + Thread.currentThread().getName() + "] "

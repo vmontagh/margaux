@@ -258,12 +258,14 @@ public abstract class DebuggerAlgorithm {
 		StringBuilder report = new StringBuilder();
 		String reportHeader = new String();
 
+		
 		// The private fields are not considered. The Order/next fields are
 		// private.
 		fields.stream().filter(f -> f.isPrivate == null).forEach(field -> {
 			fieldsQueue.add(DecisionQueueItem.<Field> createwithRandomPriority(field));
 			fieldToModelQueues.put(field, model.stream().map(m -> DecisionQueueItem.<Expr> createwithRandomPriority(m))
 					.collect(Collectors.toCollection(PriorityQueue::new)));
+			
 		});
 
 		onStartLoop();

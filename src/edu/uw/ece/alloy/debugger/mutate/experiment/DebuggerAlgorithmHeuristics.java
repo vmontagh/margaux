@@ -230,25 +230,32 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 					notApproximatedExprs.add(expr);
 				}
 			}
-		}
+			
+			// RULE: if a given expression does not approximated by any pattern,
+			// then it should be weaken by its negation. Such expression has lower
+			// priority compared to the expressions that could be approximated by
+			// one or more predefined patterns.
 
-		// RULE: if a given expression does not approximated by any pattern,
-		// then it
-		// should be weaken by its negation. Such expression has lower priority
-		// compared to the expressions that could be approximated by one or more
-		// predefined patterns.
-		final int minPriority = super.fieldToModelQueues.get(toBeingAnalyzedField).stream()
-				.mapToInt(a -> a.getScore().get()).min().orElse(DecisionQueueItem.MinUniformScore);
-		final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
-		while (!fieldToModelQueues.get(toBeingAnalyzedField).isEmpty()) {
-			DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(toBeingAnalyzedField).poll();
-			if (notApproximatedExprs.contains(modelPart.getItem().get())) {
-				modelPart.setScore(minPriority - 1);
+			System.out.println("field->" + field);
+			System.out.println("fieldToModelQueues->" + fieldToModelQueues);
+			System.out.println(
+					"fieldToModelQueues.get(field)->" + fieldToModelQueues.get(field));
+			final int minPriority = super.fieldToModelQueues.get(field).stream()
+					.mapToInt(a -> a.getScore().get()).min().orElse(DecisionQueueItem.MinUniformScore);
+			final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
+			while (!fieldToModelQueues.get(field).isEmpty()) {
+				DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(field).poll();
+				if (notApproximatedExprs.contains(modelPart.getItem().get())) {
+					modelPart.setScore(minPriority - 1);
 
+				}
+				toBeUpdated.add(modelPart);
 			}
-			toBeUpdated.add(modelPart);
+			fieldToModelQueues.get(field).addAll(toBeUpdated);
+			
 		}
-		fieldToModelQueues.get(toBeingAnalyzedField).addAll(toBeUpdated);
+
+
 
 	}
 
