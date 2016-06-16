@@ -57,20 +57,36 @@ public class DebuggerRunnerTest {
 	public static void setUpBeforeClass() throws Exception {
 		//@formatter:off
 		listProperties = new HashMap<>();
-		listProperties.put(" lowerBoud[ ]nxt for 3", Collections.emptyList());
-	
+		
+		
+		listProperties.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		listProperties.put(" noLoop[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		listProperties.put(" sorted[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		listProperties.put(" structuralConstraint[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		listProperties.put(" structuralConstraint[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
+		listProperties.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		listProperties.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
+		listProperties.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		listProperties.put(" structuralConstraintFixed[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		listProperties.put(" structuralConstraintFixed[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		listProperties.put(" lowerBoud[ ]nxt for 3", Collections.emptyList());	
 		listProperties.put(" acyclic[ ]nxt for 3", new ArrayList<>());
 		listProperties.get(" acyclic[ ]nxt for 3").add(new Pair<>("acyclic", "acyclic[nxt, Node]"));
-	
 		listProperties.put(" structuralConstraint[ ]nxt for 3", new ArrayList<>());
 		listProperties.get(" structuralConstraint[ ]nxt for 3").add(new Pair<>("function", "function[nxt, Node]"));
-	
+
 		listWeakestIncon = new HashMap<>();
-		listWeakestIncon.put(" structuralConstraint[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listWeakestIncon.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
-		listWeakestIncon.put(" lowerBoud[ ]nxt for 3", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listIsIncon = new HashMap<>();
-		listIsIncon.put( "( ( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] )  ) )nxt for 3", false);
+		listWeakestIncon.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
+		listWeakestIncon.put(" structuralConstraint[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		listWeakestIncon.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("partialOrder", "partialOrder[nxt, Node, Node]"), new Pair<>("function", "function[nxt, Node]"), new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" noLoop[ ]val", Arrays.asList(new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("stronglyConnected", "stronglyConnected[val, Node, Int]")));
+		listWeakestIncon.put(" structuralConstraint[ ]val", Arrays.asList(new Pair<>("bijective", "bijective[val, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]")));
+		listWeakestIncon.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		listWeakestIncon.put(" sorted[ ]val", Arrays.asList(new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("function", "function[val, Node]"), new Pair<>("surjective", "surjective[val, Int]")));
+		Map<String, Boolean > listIsIncon = new HashMap<>();
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraint[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraint[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
 		
 		binaryTreeStrongestImpl = new HashMap<>();
 		binaryTreeStrongestImpl.put(" structuralConstraint[ ]right for 3", Arrays.asList(new Pair<>("functional", "functional[right, Node]")));
@@ -183,14 +199,12 @@ public class DebuggerRunnerTest {
 	}
 
 	@Test
-	public void testStrongestApproximationList() throws Err {
+	public void testStrongestRandomApproximationRandomListBug1() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug2.als");
-				//"models/debugger/casestudy/journal/list.v0.als");
+				"models/debugger/casestudy/journal/list.v1.bug1.als");
 		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-				//"models/debugger/casestudy/journal/corrected.list.v0.als");
+				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
 				Collections.emptyList(), testingHost,
 				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
@@ -199,6 +213,164 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.run();
 	}
 
+	@Test
+	public void testStrongestRandomApproximationListBug1Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listProperties.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestHeuristicApproximationListBug1() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestHeuristicApproximationListBug1Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listProperties.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+	}
+
+	@Test
+	public void testStrongestRandomApproximationRandomListBug2() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
+
+	@Test
+	public void testStrongestRandomApproximationListBug2Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listProperties.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestHeuristicRandomListBug2() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
+
+	@Test
+	public void testStrongestHeuristicListBug2Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listProperties.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+	}
+
+	
 	@Test
 	public void testStrongestApproximationListConsistent() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
