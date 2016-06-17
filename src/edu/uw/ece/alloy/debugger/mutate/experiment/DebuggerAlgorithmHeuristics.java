@@ -31,19 +31,16 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	final public static DebuggerAlgorithmHeuristics EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristics();
 	protected final static Logger logger = Logger
-			.getLogger(DebuggerAlgorithmHeuristics.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(DebuggerAlgorithmHeuristics.class.getName() + "--" + Thread.currentThread().getName());
 
 	boolean breakApproximationSelection = false;
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 	// A map from an expression and weakest inconsistent properties.
-	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps,
-			allInconsistentProps;
+	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps, allInconsistentProps;
 
-	protected DebuggerAlgorithmHeuristics(File sourceFile,
-			File destinationDir, Approximator approximator, Oracle oracle,
-			ExampleFinder exampleFinder) {
+	protected DebuggerAlgorithmHeuristics(File sourceFile, File destinationDir, Approximator approximator,
+			Oracle oracle, ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
 		weakestInconsistentProps = new HashMap<>();
 		allInconsistentProps = new HashMap<>();
@@ -57,23 +54,23 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean afterInquiryOracle() {
-		// RULE: if weakened and other approximation remained and the inExample is
+		// RULE: if weakened and other approximation remained and the inExample
+		// is
 		// correct, then the expression's priority is degraded.
 
 		if (!strengthened && !inExampleIsInteded) {
-			modelQueue.add(new DecisionQueueItem<Expr>(toBeingAnalyzedModelPart,
-					modelQueue.stream().mapToInt(a -> a.getScore().get()).min()
-							.orElse(DecisionQueueItem.MinUniformScore) - 1));
-			approximationQueues.get(toBeingAnalyzedField)
-					.get(toBeingAnalyzedModelPart)
-					.add(new DecisionQueueItem<Pair<String, String>>(
-							toBeingWeakenOrStrengthenedApproximation,
+			fieldToModelQueues
+					.get(toBeingAnalyzedField).add(
+							new DecisionQueueItem<Expr>(toBeingAnalyzedModelPart,
+									fieldToModelQueues.get(toBeingAnalyzedField).stream()
+											.mapToInt(a -> a.getScore().get()).min()
+											.orElse(DecisionQueueItem.MinUniformScore) - 1));
+			approximationQueues.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
+					.add(new DecisionQueueItem<Pair<String, String>>(toBeingWeakenOrStrengthenedApproximation,
 
-							approximationQueues.get(toBeingAnalyzedField)
-									.get(toBeingAnalyzedModelPart).stream()
+							approximationQueues.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart).stream()
 									.min((a1, a2) -> a1.compare(a1, a2))
-									.map(a -> a.getScore()
-											.orElse(DecisionQueueItem.MinUniformScore) - 1)
+									.map(a -> a.getScore().orElse(DecisionQueueItem.MinUniformScore) - 1)
 									.orElse(DecisionQueueItem.MinUniformScore) - 1)
 
 			);
@@ -114,44 +111,36 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	@Override
 	protected void beforePickWeakenOrStrengthened() {
 
-		// RULE: if an expression is inconsistent by itself, then do not Strengthen
+		// RULE: if an expression is inconsistent by itself, then do not
+		// Strengthen
 		// it.
 		if (inconsistentExpressions) {
 			// emptying the strongerApproxQueue prevents any strengthening
-			strongerApproxQueues.get(super.toBeingAnalyzedField)
-					.get(toBeingAnalyzedModelPart)
+			strongerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
 					.get(toBeingWeakenOrStrengthenedApproximation).clear();
 		}
 		// RULE: any approximation that is inconsistent with other expressions
 		// should be removed or has lower priority.
-		strongerApproxQueues.get(super.toBeingAnalyzedField)
-				.get(toBeingAnalyzedModelPart)
-				.put(toBeingWeakenOrStrengthenedApproximation,
-						strongerApproxQueues.get(super.toBeingAnalyzedField)
-								.get(toBeingAnalyzedModelPart)
-								.get(toBeingWeakenOrStrengthenedApproximation).stream()
-								.filter(prop -> !isInconsistentWithOtherStatments(
-										prop.getItem().get()))
-								.collect(Collectors.toCollection(PriorityQueue::new)));
+		strongerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart).put(
+				toBeingWeakenOrStrengthenedApproximation,
+				strongerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
+						.get(toBeingWeakenOrStrengthenedApproximation).stream()
+						.filter(prop -> !isInconsistentWithOtherStatments(prop.getItem().get()))
+						.collect(Collectors.toCollection(PriorityQueue::new)));
 
-		weakerApproxQueues.get(super.toBeingAnalyzedField)
-				.get(toBeingAnalyzedModelPart)
-				.put(toBeingWeakenOrStrengthenedApproximation,
-						weakerApproxQueues.get(super.toBeingAnalyzedField)
-								.get(toBeingAnalyzedModelPart)
-								.get(toBeingWeakenOrStrengthenedApproximation).stream()
-								.filter(prop -> !isInconsistentWithOtherStatments(
-										prop.getItem().get()))
-								.collect(Collectors.toCollection(PriorityQueue::new)));
+		weakerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart).put(
+				toBeingWeakenOrStrengthenedApproximation,
+				weakerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
+						.get(toBeingWeakenOrStrengthenedApproximation).stream()
+						.filter(prop -> !isInconsistentWithOtherStatments(prop.getItem().get()))
+						.collect(Collectors.toCollection(PriorityQueue::new)));
 
 	}
 
 	protected boolean isInconsistentWithOtherStatments(String pattern) {
 
-		return allInconsistentProps.keySet().stream()
-				.map(f -> allInconsistentProps.get(f)).map(e -> e.values())
-				.flatMap(Collection::stream).flatMap(Collection::stream)
-				.anyMatch(p -> p.b.equals(pattern));
+		return allInconsistentProps.keySet().stream().map(f -> allInconsistentProps.get(f)).map(e -> e.values())
+				.flatMap(Collection::stream).flatMap(Collection::stream).anyMatch(p -> p.b.equals(pattern));
 	}
 
 	@Override
@@ -180,12 +169,10 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		// find out whether an expression is inconsistent by itself
 		try {
 
-			inconsistentExpressions = super.approximator.isInconsistent(constraint,
-					toBeingAnalyzedField, scope);
+			inconsistentExpressions = super.approximator.isInconsistent(constraint, toBeingAnalyzedField, scope);
 		} catch (Err e) {
 			e.printStackTrace();
-			logger.severe(Utils.threadName() + constraint
-					+ " cannot be converted to an inorder form.");
+			logger.severe(Utils.threadName() + constraint + " cannot be converted to an inorder form.");
 			throw new RuntimeException(e);
 		}
 	}
@@ -208,25 +195,23 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 							weakestInconsistentProps.put(field, new HashMap<>());
 						if (!weakestInconsistentProps.get(field).containsKey(expr))
 							weakestInconsistentProps.get(field).put(expr, new LinkedList<>());
-						weakestInconsistentProps.get(field).get(expr).addAll(approximator
-								.weakestInconsistentApproximation(expr, field, scope));
+						weakestInconsistentProps.get(field).get(expr)
+								.addAll(approximator.weakestInconsistentApproximation(expr, field, scope));
 
 						if (!allInconsistentProps.containsKey(field))
 							allInconsistentProps.put(field, new HashMap<>());
 						if (!allInconsistentProps.get(field).containsKey(expr))
 							allInconsistentProps.get(field).put(expr, new LinkedList<>());
 
-						for (Pair<String, String> val : weakestInconsistentProps.get(field)
-								.get(expr)) {
+						for (Pair<String, String> val : weakestInconsistentProps.get(field).get(expr)) {
 							allInconsistentProps.get(field).get(expr).add(val);
-							for (Pair<String, String> sotrongerProp : approximator
-									.strongerProperties(val.a, field.label)) {
+							for (Pair<String, String> sotrongerProp : approximator.strongerProperties(val.a,
+									field.label)) {
 								allInconsistentProps.get(field).get(expr).add(sotrongerProp);
 							}
 						}
 					} catch (Err e) {
-						logger.severe(Utils.threadName()
-								+ " could not find incosistent properties for " + field + " "
+						logger.severe(Utils.threadName() + " could not find incosistent properties for " + field + " "
 								+ expr);
 						e.printStackTrace();
 					}
@@ -234,47 +219,50 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 				// find all implication approximations
 				fillApproximations(expr, field);
-				List<Pair<String, String>> approximatedExpr = super.approximations
-						.get(field).get(expr);
+				List<Pair<String, String>> approximatedExpr = super.approximations.get(field).get(expr);
 				String exprString = expr.toString();
 				try {
 					exprString = PrettyPrintExpression.makeString(expr);
 				} catch (Err e) {
 					e.printStackTrace();
 				}
-				if (approximatedExpr.size() == 1
-						&& approximatedExpr.get(0).b.equals(exprString)) {
+				if (approximatedExpr.size() == 1 && approximatedExpr.get(0).b.equals(exprString)) {
 					notApproximatedExprs.add(expr);
 				}
 			}
-		}
+			
+			// RULE: if a given expression does not approximated by any pattern,
+			// then it should be weaken by its negation. Such expression has lower
+			// priority compared to the expressions that could be approximated by
+			// one or more predefined patterns.
 
-		// RULE: if a given expression does not approximated by any pattern, then it
-		// should be weaken by its negation. Such expression has lower priority
-		// compared to the expressions that could be approximated by one or more
-		// predefined patterns.
-		final int minPriority = super.modelQueue.stream()
-				.mapToInt(a -> a.getScore().get()).min()
-				.orElse(DecisionQueueItem.MinUniformScore);
-		final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
-		while (!modelQueue.isEmpty()) {
-			DecisionQueueItem<Expr> modelPart = modelQueue.poll();
-			if (notApproximatedExprs.contains(modelPart.getItem().get())) {
-				modelPart.setScore(minPriority - 1);
+			System.out.println("field->" + field);
+			System.out.println("fieldToModelQueues->" + fieldToModelQueues);
+			System.out.println(
+					"fieldToModelQueues.get(field)->" + fieldToModelQueues.get(field));
+			final int minPriority = super.fieldToModelQueues.get(field).stream()
+					.mapToInt(a -> a.getScore().get()).min().orElse(DecisionQueueItem.MinUniformScore);
+			final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
+			while (!fieldToModelQueues.get(field).isEmpty()) {
+				DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(field).poll();
+				if (notApproximatedExprs.contains(modelPart.getItem().get())) {
+					modelPart.setScore(minPriority - 1);
 
+				}
+				toBeUpdated.add(modelPart);
 			}
-			toBeUpdated.add(modelPart);
+			fieldToModelQueues.get(field).addAll(toBeUpdated);
+			
 		}
-		modelQueue.addAll(toBeUpdated);
+
+
 
 	}
 
 	@Override
-	public DebuggerAlgorithmHeuristics createIt(File sourceFile,
-			File destinationDir, Approximator approximator, Oracle oracle,
-			ExampleFinder exampleFinder) {
-		return new DebuggerAlgorithmHeuristics(sourceFile, destinationDir,
-				approximator, oracle, exampleFinder);
+	public DebuggerAlgorithmHeuristics createIt(File sourceFile, File destinationDir, Approximator approximator,
+			Oracle oracle, ExampleFinder exampleFinder) {
+		return new DebuggerAlgorithmHeuristics(sourceFile, destinationDir, approximator, oracle, exampleFinder);
 	}
 
 }

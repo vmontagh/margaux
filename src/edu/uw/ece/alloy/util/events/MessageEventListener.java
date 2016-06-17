@@ -10,6 +10,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.MessageListenerAction
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RequestMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.SetupMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.TerminateMessage;
 
 /**
@@ -19,8 +20,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.TerminateMessage;
  * @author vajih
  *
  */
-public class MessageEventListener<T extends MessageEventArgs>
-		implements EventListener<T>, MessageListenerAction<T> {
+public class MessageEventListener<T extends MessageEventArgs> implements EventListener<T>, MessageListenerAction<T> {
 
 	@Override
 	public void onEvent(Object sender, T e) {
@@ -28,28 +28,23 @@ public class MessageEventListener<T extends MessageEventArgs>
 	}
 
 	@Override
-	public void actionOn(RequestMessage requestMessage,
-			MessageEventArgs messageArgs) {
+	public void actionOn(RequestMessage requestMessage, MessageEventArgs messageArgs) {
 	}
 
 	@Override
-	public void actionOn(ResponseMessage responsetMessage,
-			MessageEventArgs messageArgs) {
+	public void actionOn(ResponseMessage responsetMessage, MessageEventArgs messageArgs) {
 	}
 
 	@Override
-	public void actionOn(TerminateMessage terminateMessage,
-			MessageEventArgs messageArgs) {
+	public void actionOn(TerminateMessage terminateMessage, MessageEventArgs messageArgs) {
 	}
 
 	@Override
-	public void actionOn(LivenessMessage livenessMessage,
-			MessageEventArgs messageArgs) {
+	public void actionOn(LivenessMessage livenessMessage, MessageEventArgs messageArgs) {
 	}
 
 	@Override
-	public void actionOn(ReadyMessage readyMessage,
-			MessageEventArgs messageArgs) {
+	public void actionOn(ReadyMessage readyMessage, MessageEventArgs messageArgs) {
 	}
 
 	@Override
@@ -58,6 +53,10 @@ public class MessageEventListener<T extends MessageEventArgs>
 
 	@Override
 	public void actionOn(DiedMessage diedMessage, MessageEventArgs messageArgs) {
+	}
+
+	@Override
+	public void actionOn(SetupMessage setupMessage, T messageArgs) {
 	}
 
 }

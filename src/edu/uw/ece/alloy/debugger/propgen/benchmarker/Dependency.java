@@ -7,8 +7,10 @@ import java.util.Arrays;
 import edu.uw.ece.alloy.Compressor;
 
 /**
- * It is very much like LazyFile but compresses the content. 
+ * It is very much like LazyFile but compresses the content.
+ * 
  * @author vajih
+ * @deprecated The class should be replaced with LazyFile
  *
  */
 public class Dependency implements Serializable {
@@ -24,73 +26,86 @@ public class Dependency implements Serializable {
 
 	final public static Dependency EMPTY_DEPENDENCY = new Dependency();
 
-	protected Dependency(
-			final File path, final String content,
-			final byte[] pathCompressed, final byte[] contentCompressed, 
-			final Compressor.STATE compressedStatus) {
+	protected Dependency(final File path, final String content, final byte[] pathCompressed,
+			final byte[] contentCompressed, final Compressor.STATE compressedStatus) {
 		this.path = new File(path.getPath());
 		this.content = content;
-		this.pathCompressed = Arrays.copyOf(pathCompressed, pathCompressed.length) ;
-		this.contentCompressed = Arrays.copyOf(contentCompressed, contentCompressed.length) ;
+		this.pathCompressed = Arrays.copyOf(pathCompressed, pathCompressed.length);
+		this.contentCompressed = Arrays.copyOf(contentCompressed, contentCompressed.length);
 		this.compressedStatus = compressedStatus;
 	}
 
-	protected Dependency(
-			final File path, final String content) {
+	protected Dependency(final File path, final String content) {
 		this(path, content, Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.STATE.DEOMPRESSED);
 	}
 
-	protected Dependency() {
-		this(Compressor.EMPTY_FILE,Compressor.EMPTY_STRING,  Compressor.EMPTY_1D,Compressor.EMPTY_1D, Compressor.STATE.DEOMPRESSED);
+	/**
+	 * The default value of the content is the content hashcode.
+	 * 
+	 * @param path
+	 */
+	protected Dependency(final File path) {
+		this(path, Compressor.EMPTY_STRING, Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.STATE.DEOMPRESSED);
 	}
 
-	protected Dependency createIt(final File path, final String content,
-			final byte[] pathCompressed, final byte[] contentCompressed, 
-			final Compressor.STATE compressedStatus) {
+	protected Dependency() {
+		this(Compressor.EMPTY_FILE, Compressor.EMPTY_STRING, Compressor.EMPTY_1D, Compressor.EMPTY_1D,
+				Compressor.STATE.DEOMPRESSED);
+	}
+
+	protected Dependency createIt(final File path, final String content, final byte[] pathCompressed,
+			final byte[] contentCompressed, final Compressor.STATE compressedStatus) {
 		return new Dependency(path, content, pathCompressed, contentCompressed, compressedStatus);
 	}
 
+	public Dependency createIt(final File path) {
+		return new Dependency(path);
+	}
 
-	public Dependency createIt(final File path, final String content) {
+	protected Dependency createIt(final File path, final String content) {
 		return new Dependency(path, content);
 	}
 
 	public Dependency createItsef() {
-		return this.createIt(this.path, this.content, this.pathCompressed, this.contentCompressed, this.compressedStatus );
-	}
-	
-	public Dependency compress() throws Exception{
-		if( compressedStatus.equals(Compressor.STATE.COMPRESSED) ) throw new RuntimeException("The object is already compressed.");
-		
-		if(path == null) throw new RuntimeException("The path is null and cannot be compressed.");
-		if(content == null) throw new RuntimeException("The content is null and cannot be compressed.");
-		
-		final byte[] pathCompressed = Compressor.compress(path.getPath());
-		final byte[] contentCompressed = Compressor.compress(content);
-		
-		return createIt(Compressor.EMPTY_FILE, Compressor.EMPTY_STRING, pathCompressed, contentCompressed, Compressor.STATE.COMPRESSED);
+		return this.createIt(this.path, this.content, this.pathCompressed, this.contentCompressed,
+				this.compressedStatus);
 	}
 
-	public Dependency deCompress() throws Exception{
-		
-		if( compressedStatus.equals(Compressor.STATE.DEOMPRESSED) ) throw new RuntimeException("The object is not compressed.");
-		
-		if(pathCompressed == null) throw new RuntimeException("The pathCompressed is null and cannot be decompressed.");
-		if(contentCompressed == null) throw new RuntimeException("The contentCompressed is null and cannot be decompressed.");
-		
-		final File path  = new File(Compressor.decompress(pathCompressed) );
+	public Dependency compress() throws Exception {
+		if (compressedStatus.equals(Compressor.STATE.COMPRESSED))
+			throw new RuntimeException("The object is already compressed.");
+
+		if (path == null)
+			throw new RuntimeException("The path is null and cannot be compressed.");
+		if (content == null)
+			throw new RuntimeException("The content is null and cannot be compressed.");
+
+		final byte[] pathCompressed = Compressor.compress(path.getPath());
+		final byte[] contentCompressed = Compressor.compress(content);
+
+		return createIt(Compressor.EMPTY_FILE, Compressor.EMPTY_STRING, pathCompressed, contentCompressed,
+				Compressor.STATE.COMPRESSED);
+	}
+
+	public Dependency deCompress() throws Exception {
+
+		if (compressedStatus.equals(Compressor.STATE.DEOMPRESSED))
+			throw new RuntimeException("The object is not compressed.");
+
+		if (pathCompressed == null)
+			throw new RuntimeException("The pathCompressed is null and cannot be decompressed.");
+		if (contentCompressed == null)
+			throw new RuntimeException("The contentCompressed is null and cannot be decompressed.");
+
+		final File path = new File(Compressor.decompress(pathCompressed));
 		final String content = Compressor.decompress(contentCompressed);
-		
-		
+
 		return createIt(path, content, Compressor.EMPTY_1D, Compressor.EMPTY_1D, Compressor.STATE.DEOMPRESSED);
 	}
-	
-	
 
 	@Override
 	public String toString() {
-		return "Dependency[path=" + path +"compressed?"
-				+ compressedStatus + "]";
+		return "Dependency[path=" + path + "compressed?" + compressedStatus + "]";
 	}
 
 	@Override
@@ -104,8 +119,8 @@ public class Dependency implements Serializable {
 		result = prime * result + Arrays.hashCode(pathCompressed);
 		return result;
 	}
-	
-	protected boolean isEqual(Dependency other){
+
+	protected boolean isEqual(Dependency other) {
 		if (content == null) {
 			if (other.content != null)
 				return false;
@@ -113,7 +128,7 @@ public class Dependency implements Serializable {
 			return false;
 		if (!Arrays.equals(contentCompressed, other.contentCompressed))
 			return false;
-		if (!compressedStatus.equals(other.compressedStatus ))
+		if (!compressedStatus.equals(other.compressedStatus))
 			return false;
 		if (path == null) {
 			if (other.path != null)
@@ -136,7 +151,5 @@ public class Dependency implements Serializable {
 		Dependency other = (Dependency) obj;
 		return isEqual(other);
 	}
-	
-	
 
 }

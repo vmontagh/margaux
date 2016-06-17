@@ -15,6 +15,7 @@ public class RemoteProcessRecord {
 	public static enum Status {
 		INITIATED, // Initial state is when the process is created but not get an
 							 // ack from the actual process.
+		SETUP, // Once a process is in the setup step.
 		IDLE, // Once the process gets the ack or no more process are ready to be
 					// processed.
 		WORKING, // Working

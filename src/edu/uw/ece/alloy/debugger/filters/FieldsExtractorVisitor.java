@@ -38,7 +38,7 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 		FieldsExtractorVisitor obj = new FieldsExtractorVisitor();
 
 		obj.visitThis(expr);
-
+		
 		return obj.fields;
 	}
 
@@ -67,6 +67,10 @@ public final class FieldsExtractorVisitor extends VisitReturn<Expr> {
 			visitThis(decl.expr);
 		}
 
+		for (Expr arg: x.args){
+			visitThis(arg);
+		}
+		
 		visitThis(x.fun.getBody());
 
 		return x;

@@ -26,7 +26,6 @@ public class PropertyToAlloyCode implements Serializable {
 	final public String predBodyA, predBodyB, predCallA, predCallB, predNameA,
 			predNameB, header, scope, field;
 
-	// pair.a is the file and pair.b is the content
 	public final List<Dependency> dependencies;
 
 	final transient List<ImplicationLattic> implications;

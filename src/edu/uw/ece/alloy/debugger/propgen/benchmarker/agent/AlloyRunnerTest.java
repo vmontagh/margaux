@@ -20,12 +20,17 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.Dependency;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunnerTest.NotifiableInteger;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.DoneMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.LivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternSetupMessage;
+import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
+import edu.uw.ece.alloy.util.events.MessageEventArgs;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 
@@ -45,6 +50,9 @@ public class AlloyRunnerTest {
 	final NotifiableInteger livenessReceived = new NotifiableInteger();
 	final NotifiableInteger readynessReceived = new NotifiableInteger();
 	final NotifiableInteger responseReceived = new NotifiableInteger();
+	final NotifiableInteger doneReceived = new NotifiableInteger();
+
+	LazyFile fileA, fileB;
 
 	final long startTime = System.currentTimeMillis();
 
@@ -74,11 +82,22 @@ public class AlloyRunnerTest {
 		livenessReceived.val = 0;
 		readynessReceived.val = 0;
 		responseReceived.val = 0;
+		doneReceived.val = 0;
+		fileA = new LazyFile("tmp/a.als");
+		fileB = new LazyFile("tmp/b.als");
+		try {
+			Util.writeAll(fileA.getAbsolutePath(), "contentA");
+			Util.writeAll(fileB.getAbsolutePath(), "contentB");
+		} catch (Err e1) {
+			e1.printStackTrace();
+			fail(e1.getMessage());
+		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		// testingInterface.cancelThread();
+		fileA.deleteOnExit();
+		fileB.deleteOnExit();
 	}
 
 	@Test
@@ -88,18 +107,16 @@ public class AlloyRunnerTest {
 		AlloyRunner runner = new AlloyRunner(runnerHost, testingHost);
 		runner.initiate();
 
-		testingInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(ReadyMessage readyMessage,
-							MessageReceivedEventArgs messageArgs) {
-						print("a readyness message is received", readyMessage + "");
-						++readynessReceived.val;
-						synchronized (readynessReceived) {
-							readynessReceived.notify();
-						}
-					}
-				});
+		testingInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(ReadyMessage readyMessage, MessageReceivedEventArgs messageArgs) {
+				print("a readyness message is received", readyMessage + "");
+				++readynessReceived.val;
+				synchronized (readynessReceived) {
+					readynessReceived.notify();
+				}
+			}
+		});
 
 		runner.start();
 
@@ -122,26 +139,67 @@ public class AlloyRunnerTest {
 		AlloyRunner runner = new AlloyRunner(runnerHost, testingHost);
 		runner.initiate();
 
-		testingInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(LivenessMessage livenessMessage,
-							MessageReceivedEventArgs messageArgs) {
-						print("a liveness message is received", livenessMessage + "");
-						++livenessReceived.val;
-						synchronized (livenessReceived) {
-							livenessReceived.notify();
-						}
-					}
-				});
+		testingInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(LivenessMessage livenessMessage, MessageReceivedEventArgs messageArgs) {
+				print("a liveness message is received", livenessMessage + "");
+				++livenessReceived.val;
+				synchronized (livenessReceived) {
+					livenessReceived.notify();
+				}
+			}
+		});
 
 		runner.start();
 
 		try {
 			synchronized (livenessReceived) {
-				livenessReceived.wait(2000);
+				livenessReceived.wait(20000);
 			}
-			assertTrue(0 < readynessReceived.val);
+			assertTrue(0 < livenessReceived.val);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+
+	@Test
+	public void testStartAlloyReadyGetDone() {
+
+		// Start an AlloyRunner and wait till a readyness message is received.
+		AlloyRunner runner = new AlloyRunner(runnerHost, testingHost);
+		runner.initiate();
+
+		testingInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(ReadyMessage readyMessage, MessageReceivedEventArgs messageArgs) {
+				print("a readnyness message is received", readyMessage + "");
+				// send a setup message
+				testingInterface.sendMessage(new PatternSetupMessage(testingInterface.getHostProcess(),
+						Arrays.asList(fileA.load(), fileB.load())));
+				++readynessReceived.val;
+				synchronized (readynessReceived) {
+					readynessReceived.notify();
+				}
+			}
+
+			@Override
+			public void actionOn(DoneMessage doneMessage, MessageReceivedEventArgs messageArgs) {
+				print("a done message is received", doneMessage + "");
+				++doneReceived.val;
+				synchronized (doneReceived) {
+					doneReceived.notify();
+				}
+			}
+		});
+
+		runner.start();
+
+		try {
+			synchronized (doneReceived) {
+				doneReceived.wait(20000);
+			}
+			assertTrue(0 < doneReceived.val);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			fail();
@@ -153,66 +211,52 @@ public class AlloyRunnerTest {
 		AlloyRunner runner = new AlloyRunner(runnerHost, testingHost);
 		runner.initiate();
 
-		testingInterface.MessageReceived
-				.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
-					@Override
-					public void actionOn(ReadyMessage readyMessage,
-							MessageReceivedEventArgs messageArgs) {
-						++readynessReceived.val;
-						synchronized (readynessReceived) {
-							readynessReceived.notify();
-						}
-					}
+		testingInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+			@Override
+			public void actionOn(ReadyMessage readyMessage, MessageReceivedEventArgs messageArgs) {
+				print("a readnyness message is received", readyMessage + "");
+				// send a setup message
+				testingInterface.sendMessage(new PatternSetupMessage(testingInterface.getHostProcess(),
+						Arrays.asList(fileA.load(), fileB.load())));
+				++readynessReceived.val;
+				synchronized (readynessReceived) {
+					readynessReceived.notify();
+				}
+			}
 
-					@Override
-					public void actionOn(ResponseMessage responseMessage,
-							MessageReceivedEventArgs messageArgs) {
-						print("a resonse is recieved", responseMessage + "");
-						++responseReceived.val;
-						synchronized (responseReceived) {
-							responseReceived.notify();
-						}
-					}
-				});
+			@Override
+			public void actionOn(DoneMessage doneMessage, MessageReceivedEventArgs messageArgs) {
+				print("a done message is received", doneMessage + "");
+				++doneReceived.val;
+				synchronized (doneReceived) {
+					doneReceived.notify();
+				}
+			}
+		});
 
 		runner.start();
 
-		synchronized (readynessReceived) {
-			try {
-				readynessReceived.wait(2000);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-				fail();
-			}
-		}
-
-		File depFile1 = new File("tmp/testing", "dep1.als");
-		File depFile2 = new File("tmp/testing", "dep2.als");
-
 		try {
-			Util.writeAll(depFile1.getAbsolutePath(), "dep1 content");
-			Util.writeAll(depFile2.getAbsolutePath(), "dep2 content");
-		} catch (Err e) {
+			synchronized (doneReceived) {
+				doneReceived.wait(20000);
+			}
+			assertTrue(0 < doneReceived.val);
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 			fail();
 		}
 
-		Dependency dep1 = Dependency.EMPTY_DEPENDENCY.createIt(depFile1,
-				Utils.readFile(depFile1.getAbsolutePath()));
-		Dependency dep2 = Dependency.EMPTY_DEPENDENCY.createIt(depFile2,
-				Utils.readFile(depFile2.getAbsolutePath()));
+		Dependency dep1 = Dependency.EMPTY_DEPENDENCY.createIt(new File(fileA.getAbsolutePath()));
+		Dependency dep2 = Dependency.EMPTY_DEPENDENCY.createIt(new File(fileB.getAbsolutePath()));
 
-		IfPropertyToAlloyCode coder = (IfPropertyToAlloyCode) IfPropertyToAlloyCode.EMPTY_CONVERTOR
-				.createIt("pred pred_A[]{some A}", "pred pred_B[]{some B}", "pred_A[]",
-						"pred_B[]", "pred_A", "pred_B",
-						Arrays.asList(new Dependency[] { dep1, dep2 }),
-						/*AlloyProcessingParam.EMPTY_PARAM,*/ "sig A{}\nsig B{}", " for 5",
-						"field");
-		/*AlloyProcessingParam param = coder.generate(UUID.randomUUID());*/
-		AlloyProcessingParam param = new AlloyProcessingParam(UUID.randomUUID(), 0, coder );
+		IfPropertyToAlloyCode coder = (IfPropertyToAlloyCode) IfPropertyToAlloyCode.EMPTY_CONVERTOR.createIt(
+				"pred pred_A[]{some A}", "pred pred_B[]{some B}", "pred_A[]", "pred_B[]", "pred_A", "pred_B",
+				Arrays.asList(dep1, dep2),
+				/* AlloyProcessingParam.EMPTY_PARAM, */ "sig A{}\nsig B{}", " for 5", "field");
+		/* AlloyProcessingParam param = coder.generate(UUID.randomUUID()); */
+		AlloyProcessingParam param = new AlloyProcessingParam(UUID.randomUUID(), 0, coder);
 
-		AlloyRequestMessage request = new AlloyRequestMessage(
-				testingInterface.getHostProcess(), param);
+		AlloyRequestMessage request = new AlloyRequestMessage(testingInterface.getHostProcess(), param);
 
 		testingInterface.sendMessage(request);
 
@@ -222,9 +266,6 @@ public class AlloyRunnerTest {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				fail();
-			} finally {
-				depFile1.delete();
-				depFile2.delete();
 			}
 		}
 	}

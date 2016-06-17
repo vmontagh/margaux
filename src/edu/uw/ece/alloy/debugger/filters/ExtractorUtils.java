@@ -1,5 +1,6 @@
 package edu.uw.ece.alloy.debugger.filters;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,13 +30,11 @@ public class ExtractorUtils {
 	public static String extractScopeFromCommand(Command command) {
 		boolean first = true;
 		StringBuilder sb = new StringBuilder();
-		if (command.overall >= 0 && (command.bitwidth >= 0 || command.maxseq >= 0
-				|| command.scope.size() > 0))
+		if (command.overall >= 0 && (command.bitwidth >= 0 || command.maxseq >= 0 || command.scope.size() > 0))
 			sb.append(" for ").append(command.overall).append(" but");
 		else if (command.overall >= 0)
 			sb.append(" for ").append(command.overall);
-		else if (command.bitwidth >= 0 || command.maxseq >= 0
-				|| command.scope.size() > 0)
+		else if (command.bitwidth >= 0 || command.maxseq >= 0 || command.scope.size() > 0)
 			sb.append(" for");
 		if (command.bitwidth >= 0) {
 			sb.append(" ").append(command.bitwidth).append(" int");
@@ -54,6 +53,11 @@ public class ExtractorUtils {
 		return sb.toString();
 	}
 
+	private static boolean isOrdering(Sig sig) {
+		return sig.isPrivate != null && sig.isOne != null
+				&& new File(sig.pos().filename).getName().equals("ordering.als");
+	}
+
 	/**
 	 * Given an A4solution object from AlloyExecuter, it converts it to a Alloy
 	 * syntax
@@ -68,6 +72,11 @@ public class ExtractorUtils {
 		for (Sig sig : solution.getAllReachableSigs()) {
 			if (sig.builtin)
 				continue;
+
+			// The ordering sig should be skipped
+			if (isOrdering(sig))
+				continue;
+
 			String sigName = sig.label.replace("this/", "");
 
 			if (solution.eval(sig).size() == 0) {
@@ -75,12 +84,10 @@ public class ExtractorUtils {
 			} else {
 				List<String> atoms = new ArrayList<>();
 				for (A4Tuple tuple : solution.eval(sig)) {
-					atoms.add(tuple.toString().replace("$", "_"));
+					atoms.add(tuple.toString().replace("$", "_").replace("/", "_"));
 				}
-				quantifiers.add("some disj "
-						+ atoms.stream().collect(Collectors.joining(", ")) + ": univ");
-				constraints.add("\t(" + atoms.stream().collect(Collectors.joining("+"))
-						+ ") in " + sigName);
+				quantifiers.add("some disj " + atoms.stream().collect(Collectors.joining(", ")) + ": univ");
+				constraints.add("\t(" + atoms.stream().collect(Collectors.joining("+")) + ") in " + sigName);
 			}
 		}
 
@@ -91,20 +98,29 @@ public class ExtractorUtils {
 		for (Sig sig : solution.getAllReachableSigs()) {
 			if (sig.builtin)
 				continue;
-
-			for (Field field : sig.getFields()) {
-				A4TupleSet fieldsTuples = solution.eval(field);
-				String fieldName = field.label;
-				if (fieldsTuples.size() == 0) {
-					constraints.add("\tno " + fieldName);
-				} else {
-					final List<String> tuples = new ArrayList<>();
-					fieldsTuples.forEach(t -> tuples.add(t.toString().replace("$", "_")));
-					constraints
-							.add("\t(" + tuples.stream().collect(Collectors.joining("+"))
-									+ ") in " + fieldName);
+			else
+				for (Field field : sig.getFields()) {
+					A4TupleSet fieldsTuples = solution.eval(field);
+					String fieldName = field.label;
+					if (isOrdering(sig)) {
+						fieldName = (sig.label.contains("/") ? sig.label.split("/")[0] + "/" : "")
+								+ field.label.toLowerCase();
+					}
+					String constraint = "";
+					if (fieldsTuples.size() == 0) {
+						constraints.add("\tno " + fieldName);
+					} else {
+						final List<String> tuples = new ArrayList<>();
+						fieldsTuples.forEach(t -> tuples.add(t.toString().replace("$", "_")));
+						constraint = "\t(" + tuples.stream().collect(Collectors.joining("+")) + ") in " + fieldName;
+					}
+					if (isOrdering(sig)) {
+						String orderingAtom = solution.eval(sig).iterator().next().toString().replace("$", "_");
+						constraint = constraint.replaceAll(orderingAtom + "->", "");
+					}
+					if (!constraint.isEmpty())
+						constraints.add(constraint);
 				}
-			}
 		}
 
 		String result = "{";
@@ -112,8 +128,7 @@ public class ExtractorUtils {
 			result = quantifiers.stream().collect(Collectors.joining("| ")) + "| {";
 		}
 
-		result = result + constraints.stream().collect(Collectors.joining("\n"))
-				+ "}";
+		result = result + constraints.stream().collect(Collectors.joining("\n")) + "}";
 		return result;
 	}
 }
