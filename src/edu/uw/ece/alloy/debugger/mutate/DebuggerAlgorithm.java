@@ -3,7 +3,6 @@ package edu.uw.ece.alloy.debugger.mutate;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -258,7 +257,7 @@ public abstract class DebuggerAlgorithm {
 		StringBuilder report = new StringBuilder();
 		String reportHeader = new String();
 
-		
+		System.out.println("fields->"+fields);
 		// The private fields are not considered. The Order/next fields are
 		// private.
 		fields.stream().filter(f -> f.isPrivate == null).forEach(field -> {
@@ -267,7 +266,7 @@ public abstract class DebuggerAlgorithm {
 					.collect(Collectors.toCollection(PriorityQueue::new)));
 			
 		});
-
+		System.out.println("fieldsQueue->"+fieldsQueue);
 		onStartLoop();
 		beforePickField();
 		while (!fieldsQueue.isEmpty()) {
@@ -278,9 +277,11 @@ public abstract class DebuggerAlgorithm {
 			beforePickModelPart();
 			while (!modelQueue.isEmpty()) {
 				DecisionQueueItem<Expr> modelPart = modelQueue.poll();
-				afterPickModelPart();
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-				String toBeingAnalyzedModelPartString = toBeingAnalyzedModelPart.toString();
+				if (afterPickModelPart())
+					continue;
+
+				String toBeingAnalyzedModelPartString = toBeingAnalyzedModelPart.toString();				
 				try {
 					toBeingAnalyzedModelPartString = PrettyPrintExpression.makeString(toBeingAnalyzedModelPart);
 				} catch (Err e) {
@@ -362,6 +363,8 @@ public abstract class DebuggerAlgorithm {
 							.get(toBeingWeakenOrStrengthenedApproximation);
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
+					System.out.println("strongerApproxQueue->"+strongerApproxQueue);
+					System.out.println("weakerApproxQueue->"+weakerApproxQueue);
 					while (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty()) {
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 						strengthened = true;
@@ -508,7 +511,7 @@ public abstract class DebuggerAlgorithm {
 
 	protected abstract boolean beforePickApproximation();
 
-	protected abstract void afterPickModelPart();
+	protected abstract boolean afterPickModelPart();
 
 	protected abstract void beforePickModelPart();
 
@@ -562,8 +565,14 @@ public abstract class DebuggerAlgorithm {
 			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")";
 			notApproximatedProperty = "(not " + toBeingAnalyzedModelPart + ")";
 		} else if (property.equals(approximationProperty)) {
-			approximatedProperty = "(not " + toBeingAnalyzedModelPart + " and " + property + ")";
-			notApproximatedProperty = "(not " + approximatedProperty + ")";
+			if (strengthened) {
+				approximatedProperty = "(" + toBeingAnalyzedModelPart + " and not " + property + ")";
+				notApproximatedProperty = "(" + property + ")";
+			} else {
+				approximatedProperty = "(not " + toBeingAnalyzedModelPart + " and " + property + ")";
+				//notApproximatedProperty = "(not " + approximatedProperty + ")";
+				notApproximatedProperty = "(not " + property + ")";
+			}
 		} else {
 			if (strengthened) {
 				// need to be extended.

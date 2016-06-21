@@ -15,8 +15,10 @@ import java.util.stream.Collectors;
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
+import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
 import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
@@ -112,8 +114,9 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	protected void beforePickWeakenOrStrengthened() {
 
 		// RULE: if an expression is inconsistent by itself, then do not
-		// Strengthen
-		// it.
+		// Strengthen it.
+		
+		System.out.println("inconsistentExpressions->"+ inconsistentExpressions);
 		if (inconsistentExpressions) {
 			// emptying the strongerApproxQueue prevents any strengthening
 			strongerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
@@ -157,7 +160,18 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	}
 
 	@Override
-	protected void afterPickModelPart() {
+	protected boolean afterPickModelPart() {
+		boolean result = false;
+		try {
+			Set<Sig.Field> mentionedFields = FieldsExtractorVisitor.getReferencedFields(toBeingAnalyzedModelPart);
+			result = !mentionedFields.isEmpty() && !mentionedFields.contains(toBeingAnalyzedField);
+			System.out.println("Expr->" + toBeingAnalyzedModelPart + "\nfield->" + toBeingAnalyzedField
+					+ "\nmentionedFields->" + mentionedFields + "\nresult->" + result);
+		} catch (Err e) {
+			logger.severe(Utils.threadName() + " cannot extract the mentioned fields.");
+			e.printStackTrace();
+		}
+		return result;
 	}
 
 	@Override
@@ -168,7 +182,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	protected void afterPickField() {
 		// find out whether an expression is inconsistent by itself
 		try {
-
 			inconsistentExpressions = super.approximator.isInconsistent(constraint, toBeingAnalyzedField, scope);
 		} catch (Err e) {
 			e.printStackTrace();
@@ -230,18 +243,17 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 					notApproximatedExprs.add(expr);
 				}
 			}
-			
+
 			// RULE: if a given expression does not approximated by any pattern,
-			// then it should be weaken by its negation. Such expression has lower
-			// priority compared to the expressions that could be approximated by
-			// one or more predefined patterns.
+			// then it should be weaken by its negation. Such expression has
+			// lower priority compared to the expressions that could be
+			// approximated by one or more predefined patterns.
 
 			System.out.println("field->" + field);
 			System.out.println("fieldToModelQueues->" + fieldToModelQueues);
-			System.out.println(
-					"fieldToModelQueues.get(field)->" + fieldToModelQueues.get(field));
-			final int minPriority = super.fieldToModelQueues.get(field).stream()
-					.mapToInt(a -> a.getScore().get()).min().orElse(DecisionQueueItem.MinUniformScore);
+			System.out.println("fieldToModelQueues.get(field)->" + fieldToModelQueues.get(field));
+			final int minPriority = super.fieldToModelQueues.get(field).stream().mapToInt(a -> a.getScore().get()).min()
+					.orElse(DecisionQueueItem.MinUniformScore);
 			final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
 			while (!fieldToModelQueues.get(field).isEmpty()) {
 				DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(field).poll();
@@ -252,10 +264,25 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 				toBeUpdated.add(modelPart);
 			}
 			fieldToModelQueues.get(field).addAll(toBeUpdated);
-			
+
 		}
 
+		// HEURISTIC: A field with more references should be picked first.
+		List<DecisionQueueItem<Sig.Field>> changedPriorityList = new LinkedList<>();
+		for (DecisionQueueItem<Sig.Field> field : fieldsQueue) {
+			field.setScore(
+					-1 * model.stream().map(e -> {
+						try {
+							return FieldsExtractorVisitor.getReferencedCountField(e, field.getItem().get());
+						} catch (Exception e1) {
+							e1.printStackTrace();
+							return 0;
+						}
+					}).collect(Collectors.summingInt(Integer::intValue)));
 
+			changedPriorityList.add(field);
+		}
+		fieldsQueue.addAll(changedPriorityList);
 
 	}
 

@@ -3,12 +3,24 @@
 **/
 
 sig Node{
-	nxt:  set  Node,
-	val: Int}
+	nxt: set Node,
+	val: set Int
+}
 
-pred noLoop{all n: Node| !(n in n.^nxt)}
-pred structuralConstraint{all n: Node| one n.nxt}
-pred lowerBound{some Node}
+pred noLoop{
+	all n: Node| !(n in n.^nxt)
+}
+pred structuralConstraintNxt{
+	all n: Node| one n.nxt
+}
+
+pred structuralConstraintVal{
+	all n: Node| one n.val
+}
+
+pred lowerBound{
+some Node 
+}
 
 pred sorted{
 	all n:Node | some n.nxt implies gt[ n.nxt.val, n.val]
@@ -20,7 +32,8 @@ pred rootIsLowest{
 
 check {
 (noLoop and 
-structuralConstraint and
+structuralConstraintNxt and
+structuralConstraintVal and
 lowerBound and
 sorted
 ) implies rootIsLowest}

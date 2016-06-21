@@ -151,6 +151,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					}
 				}
 			});
+			System.out.println("Session is created for " + param.getExpression().get() + " over field="+ param.getFieldName().get() + " coder=" + param.getPropertyToAlloyCode().get());
 		}
 
 		public void addGeneratedProperties(String propertyName) {
@@ -195,11 +196,11 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					AlloyProcessingParam param = (AlloyProcessingParam) message.getResult().getParam();
 
 					AlloyProcessedResult result = (AlloyProcessedResult) message.getResult();
-					
+
 					if (message.getResult().isNormal()
 							&& result.getParam().getAlloyCoder()
 									.orElseThrow(
-											() -> new RuntimeException("Alloy Coder cannot be Null int a response."))
+											() -> new RuntimeException("Alloy Coder cannot be Null in a response."))
 									.isDesiredSAT(result.sat)
 							&& (expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predNameA)
 									|| expressionGeneratorBuilder.inPatterns(param.getAlloyCoder().get().predNameB))) {

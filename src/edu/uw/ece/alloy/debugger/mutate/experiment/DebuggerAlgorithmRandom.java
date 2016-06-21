@@ -142,7 +142,8 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 * edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#afterPickModelPart()
 	 */
 	@Override
-	protected void afterPickModelPart() {
+	protected boolean afterPickModelPart() {
+		return false;
 	}
 
 	/*
