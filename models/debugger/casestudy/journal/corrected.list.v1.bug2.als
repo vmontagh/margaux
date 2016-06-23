@@ -3,11 +3,17 @@
 **/
 
 sig Node{
-	nxt:  set  Node,
-	val: Int}
+	nxt: set  Node,
+	val: set Int}
 
 pred noLoop{all n: Node| !(n in n.^nxt)}
-pred structuralConstraintFixed{all n: Node| lone n.nxt}
+pred structuralConstraintNxtFixed{
+	all n: Node| lone n.nxt
+}
+
+pred structuralConstraintVal{
+	all n: Node| one n.val
+}
 pred lowerBound{some Node}
 
 pred allreachable{
@@ -24,7 +30,8 @@ pred rootIsLowest{
 
 check {
 (noLoop and 
-structuralConstraintFixed and
+structuralConstraintNxtFixed and
+structuralConstraintVal and
 lowerBound and
 allreachable and
 sorted

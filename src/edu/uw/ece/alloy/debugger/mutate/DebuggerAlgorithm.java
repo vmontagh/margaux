@@ -482,7 +482,7 @@ public abstract class DebuggerAlgorithm {
 
 		System.out.println(approximator.getAllChachedResults());
 		try {
-			Util.writeAll("tmp/" + sourceFile.getName() + ".csv", reportHeader + "\n" + report);
+			Util.writeAll("tmp/" + sourceFile.getName() +"." + this.getClass().getSimpleName() + ".csv", reportHeader + "\n" + report);
 		} catch (Err e) {
 			e.printStackTrace();
 		}
