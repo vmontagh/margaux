@@ -417,6 +417,9 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 			} catch (Err e) {
 				e.printStackTrace();
 			}
+			
+			System.out.println("new propertyCache is created for "+fieldName);
+			
 		};
 
 		protected PatternToProperty getPatterToProperty(File toBeAnalyzedCode, File relationalPropModuleOriginal,

@@ -45,8 +45,8 @@ public class DebuggerRunnerTest {
 		System.out.println();
 	}
 
-	static Map<String, List<Pair<String, String>>> listProperties;
 	static Map<String, List<Pair<String, String>>> listWeakestIncon;
+	static Map<String, List<Pair<String, String>> > listStrongestImpl;
 	static Map<String, Boolean> listIsIncon;
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestImpl;
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestCon;
@@ -55,39 +55,49 @@ public class DebuggerRunnerTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		//@formatter:off
-		listProperties = new HashMap<>();
-		
-		
-		listProperties.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
-		listProperties.put(" noLoop[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
-		listProperties.put(" sorted[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
-		listProperties.put(" structuralConstraint[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
-		listProperties.put(" structuralConstraint[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
-		listProperties.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listProperties.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
-		listProperties.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listProperties.put(" structuralConstraintFixed[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
-		listProperties.put(" structuralConstraintFixed[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listProperties.put(" lowerBoud[ ]nxt for 3", Collections.emptyList());	
-		listProperties.put(" acyclic[ ]nxt for 3", new ArrayList<>());
-		listProperties.get(" acyclic[ ]nxt for 3").add(new Pair<>("acyclic", "acyclic[nxt, Node]"));
-		listProperties.put(" structuralConstraint[ ]nxt for 3", new ArrayList<>());
-		listProperties.get(" structuralConstraint[ ]nxt for 3").add(new Pair<>("function", "function[nxt, Node]"));
-
+		//@formatter:off		
+		listIsIncon = new HashMap<>();
+		listStrongestImpl = new HashMap<>();
 		listWeakestIncon = new HashMap<>();
-		listWeakestIncon.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
-		listWeakestIncon.put(" structuralConstraint[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listWeakestIncon.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("partialOrder", "partialOrder[nxt, Node, Node]"), new Pair<>("function", "function[nxt, Node]"), new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" noLoop[ ]val", Arrays.asList(new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("stronglyConnected", "stronglyConnected[val, Node, Int]")));
-		listWeakestIncon.put(" structuralConstraint[ ]val", Arrays.asList(new Pair<>("bijective", "bijective[val, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]")));
-		listWeakestIncon.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" sorted[ ]val", Arrays.asList(new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("function", "function[val, Node]"), new Pair<>("surjective", "surjective[val, Int]")));
-		Map<String, Boolean > listIsIncon = new HashMap<>();
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraint[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraint[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
 		
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( allreachable[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( allreachable[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", false);
+		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", false);
+
+		
+		listStrongestImpl.put(" lowerBound[ ]nxt", Arrays.asList());
+		listStrongestImpl.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		listStrongestImpl.put(" noLoop[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" sorted[ ]nxt", Arrays.asList());
+		listStrongestImpl.put(" sorted[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" structuralConstraintNxt[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
+		listStrongestImpl.put(" structuralConstraintNxt[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" structuralConstraintNxtFixed[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
+		listStrongestImpl.put(" structuralConstraintNxtFixed[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" structuralConstraintVal[ ]nxt", Arrays.asList());
+		listStrongestImpl.put(" structuralConstraintVal[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" allreachable[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		listStrongestImpl.put(" allreachable[ ]nxt", Arrays.asList(new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]")));
+
+		listWeakestIncon.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		listWeakestIncon.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
+		listWeakestIncon.put(" noLoop[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		listWeakestIncon.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("partialOrder", "partialOrder[nxt, Node, Node]"), new Pair<>("function", "function[nxt, Node]"), new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" sorted[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		listWeakestIncon.put(" structuralConstraintNxt[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		listWeakestIncon.put(" structuralConstraintNxt[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]")));
+		listWeakestIncon.put(" structuralConstraintNxtFixed[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" structuralConstraintNxtFixed[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		listWeakestIncon.put(" structuralConstraintVal[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" structuralConstraintVal[ ]val", Arrays.asList(new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		listWeakestIncon.put(" allreachable[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put(" allreachable[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+
 		binaryTreeStrongestImpl = new HashMap<>();
 		binaryTreeStrongestImpl.put(" structuralConstraint[ ]right for 3", Arrays.asList(new Pair<>("functional", "functional[right, Node]")));
 		binaryTreeStrongestImpl.put(" acyclic[ ]right for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[right, Node]")));
@@ -233,8 +243,22 @@ public class DebuggerRunnerTest {
 			@Override
 			public List<Pair<String, String>> strongestImplicationApproximation(
 					String statement, String fieldLabel, String scope) {
-				return listProperties.get(statement + fieldLabel + scope);
+				System.out.println(statement + fieldLabel + scope);
+				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return listIsIncon.get(statement + fieldLabel + scope);
+			}
+
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
@@ -276,8 +300,22 @@ public class DebuggerRunnerTest {
 			@Override
 			public List<Pair<String, String>> strongestImplicationApproximation(
 					String statement, String fieldLabel, String scope) {
-				return listProperties.get(statement + fieldLabel + scope);
+				System.out.println(statement + fieldLabel + scope);
+				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return listIsIncon.get(statement + fieldLabel + scope);
+			}
+
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
@@ -319,8 +357,22 @@ public class DebuggerRunnerTest {
 			@Override
 			public List<Pair<String, String>> strongestImplicationApproximation(
 					String statement, String fieldLabel, String scope) {
-				return listProperties.get(statement + fieldLabel + scope);
+				System.out.println(statement + fieldLabel + scope);
+				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return listIsIncon.get(statement + fieldLabel + scope);
+			}
+
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
@@ -328,7 +380,7 @@ public class DebuggerRunnerTest {
 	}
 	
 	@Test
-	public void testStrongestHeuristicRandomListBug2() throws Err {
+	public void testStrongestHeuristicApproximationListBug2() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
 				"models/debugger/casestudy/journal/list.v1.bug2.als");
@@ -343,7 +395,7 @@ public class DebuggerRunnerTest {
 	}
 
 	@Test
-	public void testStrongestHeuristicListBug2Mocked() throws Err {
+	public void testStrongestHeuristicListApproximationBug2Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
 		File toBeAnalyzedCode = new LazyFile(
 				"models/debugger/casestudy/journal/list.v1.bug2.als");
@@ -359,11 +411,26 @@ public class DebuggerRunnerTest {
 				runner.approximator.tmpLocalDirectory,
 				runner.approximator.toBeAnalyzedCode,
 				runner.approximator.dependentFiles) {
+			
 			@Override
 			public List<Pair<String, String>> strongestImplicationApproximation(
 					String statement, String fieldLabel, String scope) {
-				return listProperties.get(statement + fieldLabel + scope);
+				System.out.println(statement + fieldLabel + scope);
+				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return listIsIncon.get(statement + fieldLabel + scope);
+			}
+
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
@@ -410,8 +477,21 @@ public class DebuggerRunnerTest {
 			public List<Pair<String, String>> strongestImplicationApproximation(
 					String statement, String fieldLabel, String scope) {
 				System.out.println(statement + fieldLabel + scope);
-				return listProperties.get(statement + fieldLabel + scope);
+				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return listWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return listIsIncon.get(statement + fieldLabel + scope);
+			}
+
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;

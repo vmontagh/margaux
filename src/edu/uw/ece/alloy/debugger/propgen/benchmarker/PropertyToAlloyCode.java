@@ -131,7 +131,7 @@ public class PropertyToAlloyCode implements Serializable {
 	}
 
 	public String srcName() {
-		return predNameA + srcNameOperator() + predNameB + ".als";
+		return predNameA + srcNameOperator() + predNameB + "_" + field + ".als";
 	}
 
 	public String srcNameOperator() {

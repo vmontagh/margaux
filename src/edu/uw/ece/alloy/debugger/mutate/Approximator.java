@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -284,11 +285,16 @@ public class Approximator {
 	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterWeakerApproximations = (properties) -> {
 		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
 		properties.stream().forEach(p -> patternMap.put(p.a, p));
+		System.out.println("properties->" + properties);
 		for (Pair<String, String> patternProperty : properties) {
+			System.out.println("patternProperty->" + patternProperty);
 			for (String weakerPattern : weakerPatterns(patternProperty.a)) {
+				System.out.println("weakerPattern->" + weakerPattern);
 				patternMap.remove(weakerPattern);
 			}
 		}
+		System.out.println("patternMap->" + patternMap);
+		System.out.println("patternMap->" + patternMap.values().stream().collect(Collectors.toList()));
 		return patternMap.values().stream().collect(Collectors.toList());
 	};
 

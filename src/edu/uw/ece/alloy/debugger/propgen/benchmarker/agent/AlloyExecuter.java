@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.uw.ece.alloy.Configuration;
+import edu.uw.ece.alloy.MyReporter;
 import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AlloyProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
@@ -22,6 +23,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedR
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.SendOnServerSocketInterface;
 import edu.uw.ece.alloy.util.Utils;
+import kodkod.engine.config.Reporter;
 
 public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 
@@ -145,6 +147,19 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 		return queue.size();
 	}
 
+	public static void main(String...args){
+		try {
+			long start = System.currentTimeMillis();
+			A4CommandExecuter.getInstance().run(
+					"/home/vajih/eclipse/eclipse-workspace/alloy/relational_props/tmp/60364/predName___2000349733_INCON_function_nxt.als", MyReporter.NOP,
+					"check_or_run_assert_or_preicate_name");
+			System.out.println(System.currentTimeMillis() - start );
+		} catch (Err e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * The function has to be synchronized in case more than one thread calls it
 	 * and access to lastProccessing
@@ -193,7 +208,11 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 			A4CommandExecuter.getInstance().run(
 					lastProccessing.getSrcPath().orElseThrow(RuntimeException::new).getAbsolutePath(), rep,
 					PropertyToAlloyCode.COMMAND_BLOCK_NAME);
-
+			int logAfterTime = 10000;
+			if ((rep.trasnalationTime + rep.solveTime ) > logAfterTime){
+				System.out.println("Processing <translation="+rep.trasnalationTime + ", solve=" + rep.solveTime +"> took more than "+logAfterTime + "\t" + lastProccessing.getSrcPath().get().getAbsolutePath());
+			}
+			
 			// stop the timeout timer
 			timeoutThread.interrupt();
 
