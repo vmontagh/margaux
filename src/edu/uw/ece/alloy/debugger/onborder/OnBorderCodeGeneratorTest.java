@@ -9,21 +9,20 @@ public class OnBorderCodeGeneratorTest {
     @Test
     public void testCodeGenerator() throws Err {
 
-        String alloy4Home = "/home/fikayo/Documents/Engineering/Alloy/alloy";
+        String alloy4Home = "/home/ooodunay/workspace/alloy4";
 
         String fileName = "linked_list.als";
         String directory = alloy4Home + "/models/debugger/min_dist/";
-        fileName = "birthday.als";
-        fileName = "ceilingsAndFloors.als";
-        fileName = "railway.als";
-        directory = alloy4Home + "/models/examples/toys/";
+//      directory = alloy4Home + "/models/examples/toys/";
+//        fileName = "birthday.als";
+//        fileName = "ceilingsAndFloors.als";
+//        fileName = "railway.als";
+        fileName = "bare_linked_list.als";
         
         String file = directory + fileName;
-        System.out.println("Testing Code Generation on file: " + fileName);
         
         OnBorderCodeGenerator generator = new OnBorderCodeGenerator(file);
         generator.run();
         
-        System.out.println("Done");
     }
 }
