@@ -2,7 +2,6 @@ package edu.uw.ece.alloy.debugger.onborder;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,41 +21,41 @@ public class ExampleFinderByHola implements ExampleFinder {
 	private final ServerSocketInterface interfacE;
 	private final ProcessDistributer processManager;
 	private final File tmpLocalDirectory;
-
-	public ExampleFinderByHola(ServerSocketInterface interfacE,
-			ProcessDistributer processManager, File tmpLocalDirectory) {
+	
+	// TODO(Fikayo): Document what are the input parameters.
+	public ExampleFinderByHola(ServerSocketInterface interfacE, ProcessDistributer processManager,
+			File tmpLocalDirectory) {
 		this.interfacE = interfacE;
 		this.processManager = processManager;
 		this.tmpLocalDirectory = tmpLocalDirectory;
 	}
 
 	@Override
-	public Pair<Optional<String>, Optional<String>> findOnBorderExamples(
-			File path, String predNameA, String predNameB) {
+	public Pair<Optional<String>, Optional<String>> findOnBorderExamples(File path, String predNameA,
+			String predNameB) {
 
-		OnBorderProcessingParam param = new OnBorderProcessingParam(0,
-				this.tmpLocalDirectory, UUID.randomUUID(), Long.MAX_VALUE,
-				path.getAbsolutePath(), predNameA, predNameB);
-		
+		OnBorderProcessingParam param = new OnBorderProcessingParam(0, this.tmpLocalDirectory, UUID.randomUUID(),
+				Long.MAX_VALUE, path.getAbsolutePath(), predNameA, predNameB);
+
 		OnBorderRequestMessage message = new OnBorderRequestMessage(this.interfacE.getHostProcess(), param);
-		
+
 		final SynchronizedResult<OnBorderProcessedResult> result = new SynchronizedResult<>();
 		MessageEventListener<MessageReceivedEventArgs> receiveListener = new MessageEventListener<MessageReceivedEventArgs>() {
 			@Override
-			public void actionOn(ResponseMessage responseMessage,	MessageReceivedEventArgs messageArgs) {
-				
+			public void actionOn(ResponseMessage responseMessage, MessageReceivedEventArgs messageArgs) {
+
 				result.result = (OnBorderProcessedResult) responseMessage.getResult();
 				synchronized (result) {
 					System.out.println("I have the result at last");
 					result.notify();
 				}
-				
+
 			}
 		};
-		
+
 		interfacE.MessageReceived.addListener(receiveListener);
 		interfacE.sendMessage(message, processManager.getActiveRandomeProcess());
-		
+
 		// Wait for result;
 		synchronized (result) {
 			try {
@@ -69,19 +68,20 @@ public class ExampleFinderByHola implements ExampleFinder {
 				e.printStackTrace();
 			}
 		}
-		
-		interfacE.MessageReceived.removeListener(receiveListener);		
+
+		interfacE.MessageReceived.removeListener(receiveListener);
 		System.out.println("result: " + result.getResult().get().getResults());
-		
+
 		// Right now, the result is the same for both
-		if(result.getResult().get().getResults().isPresent()) {
-		    HashMap<String, String> res = result.getResult().get().getResults().get();
-		    return new Pair<Optional<String>, Optional<String>>(Optional.of(res.get(predNameA)), Optional.of(res.get(predNameB)));
+		if (result.getResult().get().getResults().isPresent()) {
+			HashMap<String, String> res = result.getResult().get().getResults().get();
+			return new Pair<Optional<String>, Optional<String>>(Optional.of(res.get(predNameA)),
+					Optional.of(res.get(predNameB)));
 		}
-		
+
 		return new Pair<Optional<String>, Optional<String>>(Optional.empty(), Optional.empty());
 	}
-	
+
 	public class SynchronizedResult<T> {
 		T result = null;
 
