@@ -183,11 +183,13 @@ public class OnBorderCodeGenerator {
         StringBuilder isInstanceCall = new StringBuilder();
         StringBuilder isNotInstanceCall = new StringBuilder();
         StringBuilder deltaCalls = new StringBuilder();
+        StringBuilder sigmaCall = new StringBuilder();
         
         StringBuilder quantifier_1 = new StringBuilder();
         StringBuilder isInstanceCall_1 = new StringBuilder();
         StringBuilder isNotInstanceCall_1 = new StringBuilder();
         StringBuilder deltaCalls_1 = new StringBuilder();
+        StringBuilder sigmaCall_1 = new StringBuilder();
         
         println("pred findMarginalInstances[] {");
         indent();
@@ -204,20 +206,24 @@ public class OnBorderCodeGenerator {
             
             isInstanceCall.append(sigName);
             isNotInstanceCall.append(sigName + "'");
+            sigmaCall.append("#" + sigName + "''");
             deltaCalls.append(String.format("and delta%1$s[%2$s, %2$s', %2$s'']\n", this.getPascalCase(sigWrap.getSig()), sigName));
             
             isInstanceCall_1.append(sigName + "1");
             isNotInstanceCall_1.append(sigName + "1'");
+            sigmaCall_1.append("#" + sigName + "1''");
             deltaCalls_1.append(String.format("and delta%1$s[%2$s1, %2$s1', %2$s1'']\n", this.getPascalCase(sigWrap.getSig()), sigName));
             
             if (sigItr.hasNext()) {
                 print(", ");
                 isInstanceCall.append(", ");
                 isNotInstanceCall.append(", ");
+                sigmaCall.append(", ");
                 
                 quantifier_1.append(", ");
                 isInstanceCall_1.append(", ");
                 isNotInstanceCall_1.append(", ");
+                sigmaCall_1.append(", ");
             }
             
             Iterator<FieldInfo> itr = sigWrap.getFields().iterator();
@@ -229,20 +235,24 @@ public class OnBorderCodeGenerator {
                 
                 isInstanceCall.append(field.getLabel());
                 isNotInstanceCall.append(field.getLabel() + "'");
+                sigmaCall.append("#" + field.getLabel() + "''");
                 deltaCalls.append(String.format("and delta%1$s[%2$s, %2$s', %2$s'']\n", this.getPascalCase(field.getLabel()), field.getLabel()));
                 
                 isInstanceCall_1.append(field.getLabel() + "1");
                 isNotInstanceCall_1.append(field.getLabel() + "1'");
+                sigmaCall_1.append("#" + field.getLabel() + "1''");
                 deltaCalls_1.append(String.format("and delta%1$s[%2$s1, %2$s1', %2$s1'']\n", this.getPascalCase(field.getLabel()), field.getLabel()));
                 
                 if (itr.hasNext()) {
                     print(", ");
                     isInstanceCall.append(", ");
                     isNotInstanceCall.append(", ");
+                    sigmaCall.append(", ");
                     
                     quantifier_1.append(", ");
                     isInstanceCall_1.append(", ");
                     isNotInstanceCall_1.append(", ");
+                    sigmaCall_1.append(", ");
                 }
             }
             
@@ -276,7 +286,7 @@ public class OnBorderCodeGenerator {
         indent();
         
         println("(");
-        
+        println("sigma[%s] <= sigma[%s]", sigmaCall.toString(), sigmaCall_1.toString());
         println(")");
         
         // Close inner quantifier
@@ -334,6 +344,8 @@ public class OnBorderCodeGenerator {
         
         outdent();
         println("}");
+        
+        this.generateSigmaFunction(params.length(), out);
     }
     
     private void generateStructuralConstraint(String params, PrintWriter out) throws Err, IOException {
@@ -402,6 +414,28 @@ public class OnBorderCodeGenerator {
             
         }
         
+        outdent();
+        println("}");
+    }
+    
+    private void generateSigmaFunction(final int paramLength, PrintWriter out) {
+        
+        this.out = out;
+        
+        ln();
+        print("func sigma [");
+        for(int i = 1; i < paramLength; i++) {
+            print("a%d, ", i);
+        }
+        
+        println("n%d: Int] : Int {", paramLength);
+        indent();
+        print("a1");
+        for(int i = 2; i <= paramLength; i++) {
+            print(".add[a%d]", 1);
+        }
+        
+        ln();
         outdent();
         println("}");
     }
