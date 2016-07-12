@@ -13,6 +13,8 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.mysql.fabric.xmlrpc.base.Param;
+
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.Configuration;
@@ -83,6 +85,7 @@ public final class AlloyRunner extends Runner {
 	 */
 	protected Consumer<AlloyProcessingParam> addNewParamInQueue = (AlloyProcessingParam param) -> {
 		try {
+			//System.out.println("addNewParamInQueue->"+param.getAlloyCoder().get().srcName());
 			feedingQueue.put(param);
 		} catch (Exception ie) {
 			logger.severe(Utils.threadName() + " Cannot add a new task to the queue.");

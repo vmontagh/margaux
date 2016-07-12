@@ -35,6 +35,7 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 	final Publisher<AlloyProcessingParam> generatedStorage;
 
 	final public UUID sessionID;
+	final public long alloyProcessingTime;
 
 	/* The field that is going to be transformed to property */
 	final Sig.Field field;
@@ -91,11 +92,11 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 	public ExpressionPropertyGenerator(final UUID sessionID, final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal, File temporalPropModuleOriginal, String fieldName,
 			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope, List<File> dependecyFiles,
-			PatternToProperty patternToProperty) throws Err, IOException {
+			PatternToProperty patternToProperty, long alloyProcessingTime) throws Err, IOException {
 
 		this(sessionID, generatedStorage, toBeAnalyzedCode, relationalPropModuleOriginal, temporalPropModuleOriginal,
 				fieldName, propertyToAlloyCode, expression, scope, Collections.emptySet(), Optional.empty(),
-				dependecyFiles, patternToProperty);
+				dependecyFiles, patternToProperty, alloyProcessingTime);
 	}
 
 	/**
@@ -107,11 +108,11 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 	public ExpressionPropertyGenerator(final UUID sessionID, final Publisher<AlloyProcessingParam> generatedStorage,
 			File toBeAnalyzedCode, File relationalPropModuleOriginal, File temporalPropModuleOriginal, String fieldName,
 			PropertyToAlloyCode propertyToAlloyCode, String expression, String scope, Set<String> excludedChecks,
-			List<File> dependecyFiles, PatternToProperty patternToProperty) throws Err, IOException {
+			List<File> dependecyFiles, PatternToProperty patternToProperty, long alloyProcessingTime) throws Err, IOException {
 
 		this(sessionID, generatedStorage, toBeAnalyzedCode, relationalPropModuleOriginal, temporalPropModuleOriginal,
 				fieldName, propertyToAlloyCode, expression, scope, excludedChecks, Optional.empty(), dependecyFiles,
-				patternToProperty);
+				patternToProperty, alloyProcessingTime);
 	}
 
 	public ExpressionPropertyGenerator(final UUID sessionID, final Publisher<AlloyProcessingParam> generatedStorage,
@@ -120,10 +121,10 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 			String fieldName, PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
 
 			Set<String> excludedChecks, Set<String> toBeCheckProperties, List<File> dependecyFiles,
-			PatternToProperty patternToProperty) throws Err, IOException {
+			PatternToProperty patternToProperty, long alloyProcessingTime) throws Err, IOException {
 		this(sessionID, generatedStorage, toBeAnalyzedCode, relationalPropModuleOriginal, temporalPropModuleOriginal,
 				fieldName, propertyToAlloyCode, expression, scope, excludedChecks,
-				Optional.ofNullable(toBeCheckProperties), dependecyFiles, patternToProperty);
+				Optional.ofNullable(toBeCheckProperties), dependecyFiles, patternToProperty, alloyProcessingTime);
 	}
 
 	/**
@@ -153,10 +154,10 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 			String fieldName, PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
 
 			Set<String> excludedChecks, Optional<Set<String>> toBeCheckProperties, List<File> dependecyFiles,
-			PatternToProperty patternToProperty) throws Err, IOException {
+			PatternToProperty patternToProperty, long alloyProcessingTime) throws Err, IOException {
 
 		this.sessionID = sessionID;
-
+		this.alloyProcessingTime = alloyProcessingTime;
 		this.relationalPropModuleOriginal = relationalPropModuleOriginal;
 		this.temporalPropModuleOriginal = temporalPropModuleOriginal;
 
@@ -264,7 +265,7 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 					continue;
 				}
 				try {
-					final AlloyProcessingParam generatedParam = new AlloyProcessingParam(sessionID, 0,
+					final AlloyProcessingParam generatedParam = new AlloyProcessingParam(sessionID, 0, alloyProcessingTime,
 							alloyCodeGenerator);
 					result.put(generatedParam);
 					++numberOfGeneratedParams;
@@ -377,23 +378,23 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 		String scope;
 		UUID sessionID;
 		List<File> dependecyFiles;
+		long alloyProcessingTime;
 
 		Map<String, PatternToProperty> propertyCache;
 
-		public boolean inPatterns(String patternName){
-			return propertyCache.keySet().stream().anyMatch(k-> propertyCache.get(k).hasProperty(patternName, fieldName));
+		public boolean inPatterns(String patternName) {
+			return propertyCache.keySet().stream()
+					.anyMatch(k -> propertyCache.get(k).hasProperty(patternName, fieldName));
 		}
-		
+
 		/**
 		 * The method provides singleton, but it is not the only way to create
 		 * and object. There might be a case that cache becomes invalid and a
 		 * new object is needed.
 		 */
 
-		public Builder(final UUID sessionID,
-
+		public Builder(final UUID sessionID, long alloyProcessingTime,
 				File toBeAnalyzedCode, File relationalPropModuleOriginal, File temporalPropModuleOriginal,
-
 				String fieldName, PropertyToAlloyCode propertyToAlloyCode, String expression, String scope,
 				List<File> dependecyFiles) {
 
@@ -406,7 +407,7 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 			this.scope = scope;
 			this.sessionID = sessionID;
 			this.dependecyFiles = dependecyFiles;
-
+			this.alloyProcessingTime = alloyProcessingTime;
 			this.propertyCache = new TreeMap<>();
 
 			final String key = relationalPropModuleOriginal.getName() + temporalPropModuleOriginal.getName()
@@ -417,9 +418,9 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 			} catch (Err e) {
 				e.printStackTrace();
 			}
-			
-			System.out.println("new propertyCache is created for "+fieldName);
-			
+
+			System.out.println("new propertyCache is created for " + fieldName);
+
 		};
 
 		protected PatternToProperty getPatterToProperty(File toBeAnalyzedCode, File relationalPropModuleOriginal,
@@ -448,7 +449,7 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 											 * object should be recreated.
 											 */,
 					expression, scope, dependecyFiles, getPatterToProperty(toBeAnalyzedCode,
-							relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName));
+							relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName), alloyProcessingTime);
 		}
 
 		public ExpressionPropertyGenerator createWithHistory(final Publisher<AlloyProcessingParam> generatedStorage,
@@ -458,7 +459,7 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 					relationalPropModuleOriginal, temporalPropModuleOriginal, fieldName,
 					propertyToAlloyCode.createItself(), expression, scope, excludedChecks, toBeCheckProperties,
 					dependecyFiles, getPatterToProperty(toBeAnalyzedCode, relationalPropModuleOriginal,
-							temporalPropModuleOriginal, fieldName));
+							temporalPropModuleOriginal, fieldName), alloyProcessingTime);
 		}
 	}
 }

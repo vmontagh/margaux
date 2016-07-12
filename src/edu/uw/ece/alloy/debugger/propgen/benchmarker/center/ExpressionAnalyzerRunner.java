@@ -44,6 +44,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.SetupMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyRequestMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloySetupMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternLivenessMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
@@ -105,12 +106,14 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		 */
 		final Thread timeoutThread;
 
-		public ExpressionAnalyzingSession(final PatternProcessingParam param) throws Exception {
-			this(param, tmpLocalDirectory, sessionThreadExecutor, inputInterface);
+		public ExpressionAnalyzingSession(final PatternProcessingParam param, final long alloyProcessingTime)
+				throws Exception {
+			this(param, alloyProcessingTime, tmpLocalDirectory, sessionThreadExecutor, inputInterface);
 		}
 
-		public ExpressionAnalyzingSession(final PatternProcessingParam param, final File tmpLocalDirectory,
-				ExecutorService threadExecutor, SendOnServerSocketInterface interfacE) throws Exception {
+		public ExpressionAnalyzingSession(final PatternProcessingParam param, final long alloyProcessingTime,
+				final File tmpLocalDirectory, ExecutorService threadExecutor, SendOnServerSocketInterface interfacE)
+				throws Exception {
 			this.creationTime = System.currentTimeMillis();
 			this.id = param.getAnalyzingSessionID().get();
 			this.timeout = param.getTimeout().orElse(Long.MAX_VALUE);
@@ -118,7 +121,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 			this.generatedProperties = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
-			expressionGeneratorBuilder = new Builder(id,
+			expressionGeneratorBuilder = new Builder(id, alloyProcessingTime,
 					param.getFile("toBeAnalyzedCode").orElseThrow(RuntimeException::new),
 					dependentFiles.stream().filter(f -> f.getName().startsWith("relational_properties_tagged"))
 							.findFirst().orElseThrow(RuntimeException::new),
@@ -151,7 +154,8 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					}
 				}
 			});
-			System.out.println("Session is created for " + param.getExpression().get() + " over field="+ param.getFieldName().get() + " coder=" + param.getPropertyToAlloyCode().get());
+			System.out.println("Session is created for " + param.getExpression().get() + " over field="
+					+ param.getFieldName().get() + " coder=" + param.getPropertyToAlloyCode().get());
 		}
 
 		public void addGeneratedProperties(String propertyName) {
@@ -177,6 +181,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 			try {
 				timeoutThread.start();
 				// Start generating Alloy processing params
+				System.out.println("Start session............");
 				expressionGeneratorBuilder.create(feedingQueue).startThread();
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -192,7 +197,29 @@ public final class ExpressionAnalyzerRunner extends Runner {
 				ResponseMessage message;
 				try {
 					int generatedPropsCount = 0;
+					// System.out.println("before
+					// responseQueue.take()?"+responseQueue.size());
 					message = responseQueue.take();
+					// System.out.println("after
+					// responseQueue.take()?"+responseQueue.size());
+					// System.out.println("message.isEmptyResponseMessage()?"+message.isEmptyResponseMessage());
+					// System.out.println("sessions
+					// status->"+monitor.getStatusOnSessions());
+					// System.out.println("sessions
+					// status->"+monitor.getStatus());
+					if (message.isEmptyResponseMessage()) {
+						// System.out.println("responseQueue.isEmpty()?"+responseQueue.isEmpty());
+						if (responseQueue.isEmpty()) {
+							// System.out.println("done");
+							done();
+							// System.out.println("break");
+							break;
+						}
+						// System.out.println("continue");
+						continue;
+					}
+
+					// System.out.println("after");
 					AlloyProcessingParam param = (AlloyProcessingParam) message.getResult().getParam();
 
 					AlloyProcessedResult result = (AlloyProcessedResult) message.getResult();
@@ -226,13 +253,9 @@ public final class ExpressionAnalyzerRunner extends Runner {
 						logger.log(Level.SEVERE, Utils.threadName() + "Next properties failed to be added.", e);
 						e.printStackTrace();
 					}
-					if (0 == generatedPropsCount && monitor.sessionIsDone(getSessionID())
-							&& responseQueue.size() == 0) {
-						done();
-						break;
-					}
 
 				} catch (InterruptedException e1) {
+					// System.out.println("Errrorr->"+e1);
 					// e1.printStackTrace();
 					logger.log(Level.SEVERE, Utils.threadName() + "The thread is interrupted.", e1);
 				}
@@ -242,7 +265,14 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		@Override
 		public void followUp(ResponseMessage message) {
 			try {
+				// System.out.print("resonse process in
+				// Session->"+message.getResult().getParam().hashCode());
 				responseQueue.put(message);
+				// System.out.println("System is
+				// done?"+monitor.sessionIsDone(getSessionID()));
+				if (monitor.sessionIsDone(getSessionID())) {
+					responseQueue.put(ResponseMessage.createEmptyResponseMessage());
+				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				logger.log(Level.SEVERE, Utils.threadName() + "Fail on putting a new response message: <" + message
@@ -286,6 +316,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	final public static long SelfMonitorInterval = Long.parseLong(Configuration.getProp("self_monitor_interval"));
 	final public static String TemporaryLocalDirectory = Configuration.getProp("temporary_directory");
 	final static int ProccessNumber = Integer.parseInt(Configuration.getProp("alloy_processes_number"));
+	final static long AlloyProcessingTime = Long.valueOf(Configuration.getProp("alloy_prcessing_timeout"));
 
 	protected final static Logger logger = Logger
 			.getLogger(ExpressionAnalyzerRunner.class.getName() + "--" + Thread.currentThread().getName());
@@ -323,6 +354,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	protected final long threadMonitoringInterval;
 	protected final long livenessInterval;
 	protected final int maxLivenessFailed;
+	protected long alloyProcessingTime;
 
 	/*
 	 * All monitorable threads have to be registered in the list. A periodical
@@ -334,7 +366,8 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	protected ExpressionAnalyzerRunner(final InetSocketAddress localSocket, final InetSocketAddress remoteSocket,
 			final InetSocketAddress distributorSocket, final File tmpLocalDirectory,
 			final List<LazyFile> dependencyFiles, final long reportInterval, final long threadMonitoringInterval,
-			final long livenessInterval, final int maxLivenessFailed, final ExecutorService sessionThreadExecutor) {
+			final long livenessInterval, final int maxLivenessFailed, final long alloyProcessingTime,
+			final ExecutorService sessionThreadExecutor) {
 		this.localSocket = localSocket;
 		this.remoteSocket = remoteSocket;
 		this.distributorSocket = distributorSocket;
@@ -345,13 +378,15 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		this.maxLivenessFailed = maxLivenessFailed;
 		this.sessionThreadExecutor = sessionThreadExecutor;
 		this.dependentFiles = dependencyFiles;
+		this.alloyProcessingTime = alloyProcessingTime;
 		initiate();
 	}
 
 	protected ExpressionAnalyzerRunner(InetSocketAddress localSocket, InetSocketAddress remoteSocket) {
 		this(localSocket, remoteSocket, ProcessorUtil.findEmptyLocalSocket(localSocket.getPort()),
 				new File(TemporaryLocalDirectory), new LinkedList<>(), PriodicalMonitoringThreadsReportInMS,
-				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry, Executors.newFixedThreadPool(10));
+				SelfMonitorInterval, LivenessIntervalInMS, MaxLivenessFailTry, AlloyProcessingTime,
+				Executors.newFixedThreadPool(10));
 	}
 
 	/**
@@ -361,8 +396,19 @@ public final class ExpressionAnalyzerRunner extends Runner {
 	protected Function<PatternProcessingParam, Optional<ExpressionAnalyzingSession>> createNewSession = (
 			PatternProcessingParam param) -> {
 		Optional<ExpressionAnalyzingSession> session = Optional.empty();
+
+		processManager.replaceAllProcesses();
+
+		while (processManager.allProcessesIDLE()) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
 		try {
-			session = Optional.of(new ExpressionAnalyzingSession(param));
+			session = Optional.of(new ExpressionAnalyzingSession(param, alloyProcessingTime));
 			analyzingSessions.put(param.getAnalyzingSessionID().get(), session.get());
 			// for the sake of reporting
 			liveness.tobeProcessed++;
@@ -481,7 +527,11 @@ public final class ExpressionAnalyzerRunner extends Runner {
 			@Override
 			public void actionOn(ResponseMessage responseMessage, MessageReceivedEventArgs event) {
 				// monitor has to process a result.
+				// System.out.println("resonse
+				// dm->"+((AlloyProcessingParam)responseMessage.getResult().getParam()).getAlloyCoder().get().srcName());
 				monitor.processResponded(responseMessage.getResult(), responseMessage.process);
+				// System.out.println("resonse after
+				// dm->"+((AlloyProcessingParam)responseMessage.getResult().getParam()).getAlloyCoder().get().srcName());
 				final Map<String, Object> context = new HashMap<>();
 				context.put("getSession", getSession);
 				try {
@@ -490,11 +540,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					logger.severe(Utils.threadName() + "response cannot be processed:\n" + e.getStackTrace());
 				}
 			}
-		});
 
-		// Livensess or readyness message message is received from a remote
-		// process.
-		distributerInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
 			@Override
 			public void actionOn(LivenessMessage livenessMessage, MessageReceivedEventArgs event) {
 				final Map<String, Object> context = new HashMap<>();
@@ -545,7 +591,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		});
 
 		// Queue that are shared between feeder and generator
-		feedingQueue = new Queue<>(10);
+		feedingQueue = new Queue<>(20);
 		// Queue that is shared between monitor and feeder
 		backlogFeedingQueue = new Queue<>(100);
 
@@ -587,7 +633,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					for (ThreadToBeMonitored t : monitoredThreads) {
 						sb.append(t.getStatus()).append("\n");
 					}
-					System.out.println(sb);
+					// System.out.println(sb);
 					logger.info(sb.toString());
 					sb.delete(0, sb.length() - 1);
 

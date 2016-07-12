@@ -223,6 +223,7 @@ public abstract class PostProcess implements Runnable, ThreadToBeMonitored {
 		@Override
 		protected void action(AlloyProcessedResult result)
 				throws InterruptedException {
+			//System.out.println("Alloy Executer Socket Writer->"+result.getParam().getAlloyCoder().get().srcName() +" ->"+interfacE.getHostProcess());
 			
 			AlloyResponseMessage message = new AlloyResponseMessage(result,
 					interfacE.getHostProcess());
@@ -233,7 +234,9 @@ public abstract class PostProcess implements Runnable, ThreadToBeMonitored {
 			interfacE.sendMessage(message);
 			if (Configuration.IsInDeubbungMode)
 				logger.info(Utils.threadName() + "message sent: " + message);
-
+			
+			
+			//System.out.println("Alloy Executer Socket Writer sent->"+result.getParam().getAlloyCoder().get().srcName());
 		}
 	}
 

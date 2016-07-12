@@ -171,7 +171,8 @@ public class RemoteProcessManager /*
 		if (activeProcesses.containsKey(process)) {
 			activeProcesses.replace(process, newRecord);
 		} else {
-			throw new RuntimeException("The process is not found: " + activeProcesses);
+			logger.severe("The process is not found: " + activeProcesses);
+			//throw new RuntimeException();
 		}
 	}
 
@@ -483,6 +484,16 @@ public class RemoteProcessManager /*
 		}
 	}
 
+	
+	public void replaceAllProcesses(){
+		List<RemoteProcess> prceosses = new ArrayList<>(activeProcesses.keySet());
+		for (RemoteProcess process: prceosses){
+			// change the status to killing
+			changeStatusToKILLING(process);
+			killAndReplaceProcess(process);
+		}
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -515,7 +526,8 @@ public class RemoteProcessManager /*
 		if (!activeProcesses.containsKey(process)) {
 			logger.log(Level.SEVERE, Utils.threadName() + "Process " + process + " not found in activeProcesses list: "
 					+ activeProcesses);
-			throw new RuntimeException("Not working process was found.");
+			//throw new RuntimeException("Not working process was found.");
+			return false;
 		}
 
 		RemoteProcessRecord record = activeProcesses.get(process);

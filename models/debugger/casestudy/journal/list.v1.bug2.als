@@ -37,3 +37,7 @@ structuralConstraintVal and
 lowerBound and
 sorted
 ) implies rootIsLowest}
+
+pred _accepted{
+	some disj Node_1: univ| {	(Node_1) in Node and 	no nxt and 	(Node_1->0) in val}
+}

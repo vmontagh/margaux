@@ -23,7 +23,6 @@ public class PropertyCallBuilder {
 	}
 
 	public void addPropertyDeclration(final Func function) throws IllegalArgumentException {
-
 		PropertyDeclaration pd = new PropertyDeclaration(function);
 
 		if (!pd.isAPropertyDefinition()) {

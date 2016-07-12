@@ -1,7 +1,10 @@
 package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,10 +17,15 @@ import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprList;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprList.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
+import edu.uw.ece.alloy.MyReporter;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
+import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
 import edu.uw.ece.alloy.debugger.filters.FieldsExtractorVisitor;
 import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
@@ -34,6 +42,9 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	final public static DebuggerAlgorithmHeuristics EMPTY_ALGORITHM = new DebuggerAlgorithmHeuristics();
 	protected final static Logger logger = Logger
 			.getLogger(DebuggerAlgorithmHeuristics.class.getName() + "--" + Thread.currentThread().getName());
+
+	final public static String ACCECPTED_INSTANCES_PRED_NAME = "_accepted";
+	final public static String REJECTED_INSTANCES_PRED_NAME = "_rejected";
 
 	boolean breakApproximationSelection = false;
 	// Whether an expression is inconsistent by itself.
@@ -57,8 +68,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	@Override
 	protected boolean afterInquiryOracle() {
 		// RULE: if weakened and other approximation remained and the inExample
-		// is
-		// correct, then the expression's priority is degraded.
+		// is correct, then the expression's priority is degraded.
 
 		if (!strengthened && !inExampleIsInteded) {
 			fieldToModelQueues
@@ -81,7 +91,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		}
 		return false;
 	}
-
+	
 	@Override
 	protected void beforeInquiryOracle() {
 	}
@@ -95,7 +105,41 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	}
 
 	@Override
-	protected void afterMutating() {
+	protected boolean afterMutating() {
+		boolean result = false;
+		final boolean hasAccepted = sourceCode.contains("pred " + ACCECPTED_INSTANCES_PRED_NAME + "{");
+		final boolean hasRejcted = sourceCode.contains("pred " + REJECTED_INSTANCES_PRED_NAME + "{");
+		String content = "";
+		final String predName = mutatedFile.getName().replace(".als", "");
+
+		try {
+			content = Util.readAll(mutatedFile.getAbsolutePath());
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		if (!content.isEmpty() && hasAccepted) {
+			final String acceptedPredName = predName + ACCECPTED_INSTANCES_PRED_NAME;
+			final File acceptedFile = new File(mutatedFile.getParentFile(), acceptedPredName + ".als");
+			final String acceptedPredContent = String.format("pred %1$s {\n%2$s\n%3$s}\nrun %1$s", acceptedPredName,
+					ACCECPTED_INSTANCES_PRED_NAME, predName);
+			try {
+				Util.writeAll(acceptedFile.getAbsolutePath(), content + "\n" + acceptedPredContent);
+				MyReporter rep = new MyReporter();
+				A4CommandExecuter.getInstance().runThenGetAnswers(acceptedFile.getAbsolutePath(), rep,
+						acceptedPredName);
+				System.out.println("acceptedFile->" + acceptedFile);
+				result = rep.sat == -1;
+			} catch (Err e) {
+				e.printStackTrace();
+			} finally {
+				// acceptedFile.deleteOnExit();
+			}
+		}
+
+		return result;
 	}
 
 	@Override
@@ -113,10 +157,12 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	@Override
 	protected void beforePickWeakenOrStrengthened() {
 
+		System.out.println("before strongerApproxQueues->" + strongerApproxQueues);
+
 		// RULE: if an expression is inconsistent by itself, then do not
 		// Strengthen it.
-		
-		System.out.println("inconsistentExpressions->"+ inconsistentExpressions);
+
+		System.out.println("inconsistentExpressions->" + inconsistentExpressions);
 		if (inconsistentExpressions) {
 			// emptying the strongerApproxQueue prevents any strengthening
 			strongerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
@@ -130,6 +176,8 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 						.get(toBeingWeakenOrStrengthenedApproximation).stream()
 						.filter(prop -> !isInconsistentWithOtherStatments(prop.getItem().get()))
 						.collect(Collectors.toCollection(PriorityQueue::new)));
+
+		System.out.println("after strongerApproxQueues->" + strongerApproxQueues);
 
 		weakerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart).put(
 				toBeingWeakenOrStrengthenedApproximation,
@@ -152,6 +200,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean beforePickApproximation() {
+		System.out.println("breakApproximationSelection?"+breakApproximationSelection);
 		if (breakApproximationSelection) {
 			breakApproximationSelection = false;
 			return true;
@@ -171,23 +220,80 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 			logger.severe(Utils.threadName() + " cannot extract the mentioned fields.");
 			e.printStackTrace();
 		}
+
+		if (!result) {
+			String toBeingAnalyzedModelPartString = convertModelPartToString();
+			result = convertModelPartToString().startsWith("ACCECPTED_INSTANCES_PRED_NAME")
+					|| toBeingAnalyzedModelPartString.startsWith("REJECTED_INSTANCES_PRED_NAME");
+		}
+
+		System.out.println("Continue on afterPickModelPart?"+result);
+		
 		return result;
 	}
 
 	@Override
 	protected void beforePickModelPart() {
+
+
 	}
 
 	@Override
-	protected void afterPickField() {
+	protected boolean afterPickField() {
+
 		// find out whether an expression is inconsistent by itself
 		try {
-			inconsistentExpressions = super.approximator.isInconsistent(constraint, toBeingAnalyzedField, scope);
+			inconsistentExpressions = super.approximator.isInconsistent(
+					ExprList.make(model.get(0).pos(), model.get(model.size() - 1).pos(), Op.AND, model),
+					toBeingAnalyzedField, scope);
 		} catch (Err e) {
 			e.printStackTrace();
 			logger.severe(Utils.threadName() + constraint + " cannot be converted to an inorder form.");
 			throw new RuntimeException(e);
 		}
+
+		// Heuristic: If a constraint is inconsistent with approximations of
+		// another constraint, then the former constraint might be
+		// overconstrained and need to be weakened. Hence, weakening the former
+		// constraint has a higher priority compared to latter one.
+
+		List<DecisionQueueItem<Expr>> changedPriorityList = new LinkedList<>();
+		final PriorityQueue<DecisionQueueItem<Expr>> modelQueue_ = fieldToModelQueues.get(toBeingAnalyzedField);
+		while (!modelQueue_.isEmpty()) {
+			DecisionQueueItem<Expr> modelPartD = modelQueue_.poll();
+			Expr modelPart = modelPartD.getItem().get();
+			List<Expr> restModelParts = model.stream().filter(m -> !m.equals(toBeingAnalyzedModelPart))
+					.collect(Collectors.toList());
+
+			List<Pair<String, String>> weakestIncon = weakestInconsistentProps.get(toBeingAnalyzedField).get(modelPart);
+			Set<String> allImplieds = new HashSet<>();
+			for (Expr restModelPart : restModelParts) {
+				List<Pair<String, String>> implieds = approximations.get(toBeingAnalyzedField).get(restModelPart);
+				for (Pair<String, String> implied : implieds) {
+					allImplieds.add(implied.a);
+					allImplieds.addAll(approximator.weakerPatterns(implied.a));
+				}
+			}
+
+			if (weakestIncon.stream().anyMatch(p -> allImplieds.contains(p.a))) {
+				modelPartD.setScore(
+						Math.max(changedPriorityList.stream().map(w -> w.getScore().get()).max(Integer::compare).get(),
+								modelQueue_.stream().map(w -> w.getScore().get()).max(Integer::compare)
+										.orElse(Integer.MIN_VALUE))
+								+ 1);
+			}
+			changedPriorityList.add(modelPartD);
+
+		}
+
+		fieldToModelQueues.put(toBeingAnalyzedField, new PriorityQueue<DecisionQueueItem<Expr>>(changedPriorityList));
+
+		if (toBeingAnalyzedField.label.contains("waits")) {
+			return true;
+		}
+
+		return false;
+
 	}
 
 	@Override
@@ -198,6 +304,8 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	protected void onStartLoop() {
 		Set<Expr> notApproximatedExprs = new HashSet<>();
 		for (Field field : super.fields) {
+			if (field.isPrivate != null)
+				continue;
 			for (Expr expr : model) {
 				// Pair<Expr, Field> key = new Pair<>(expr, field);
 				// fill in weakestInconsistentProps and allInconsistentProps
@@ -264,25 +372,29 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 				toBeUpdated.add(modelPart);
 			}
 			fieldToModelQueues.get(field).addAll(toBeUpdated);
-
+			System.out.println("after fieldToModelQueues.get(" + field + ")->" + fieldToModelQueues.get(field));
 		}
 
+		System.out.println("after the loop");
+		System.out.println("before heurists:" + fieldsQueue);
 		// HEURISTIC: A field with more references should be picked first.
 		List<DecisionQueueItem<Sig.Field>> changedPriorityList = new LinkedList<>();
 		for (DecisionQueueItem<Sig.Field> field : fieldsQueue) {
-			field.setScore(
-					-1 * model.stream().map(e -> {
-						try {
-							return FieldsExtractorVisitor.getReferencedCountField(e, field.getItem().get());
-						} catch (Exception e1) {
-							e1.printStackTrace();
-							return 0;
-						}
-					}).collect(Collectors.summingInt(Integer::intValue)));
+			field.setScore(/*-1 */ model.stream().map(e -> {
+				try {
+					return FieldsExtractorVisitor.getReferencedCountField(e, field.getItem().get());
+				} catch (Exception e1) {
+					e1.printStackTrace();
+					return 0;
+				}
+			}).collect(Collectors.summingInt(Integer::intValue)));
 
 			changedPriorityList.add(field);
 		}
+		fieldsQueue.clear();
 		fieldsQueue.addAll(changedPriorityList);
+		System.out.println("fieldsQueue before exit->" + fieldsQueue);
+		System.out.println("End of OnStartLoop");
 
 	}
 

@@ -1,9 +1,14 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import edu.mit.csail.sdg.alloy4.Err;
+import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 
 /**
  * The class is for determining whether an expression is inconsistent by itself.
@@ -109,7 +114,19 @@ public class InconExpressionToAlloyCode extends PropertyToAlloyCode {
 	 * Whatever is returned should be neutral 
 	 */
 	public List<String> getInitialProperties() {
-		return Arrays.asList("noop");
+		List<String> result = new ArrayList<>();
+		for (ImplicationLattic il : getImplicationLattices()
+				.orElseThrow(() -> new RuntimeException(
+						"Implication List is null.Since it is a trinsient property, recreating the object might be effective"))) {
+			try {
+				result.add(il.getAllSources().get(0));
+			} catch (Err e) {
+				logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
+						+ "Cannot find the initial properties ", e);
+				e.printStackTrace();
+			}
+		}
+		return Collections.unmodifiableList(result);
 	}
 
 	/**

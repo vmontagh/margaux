@@ -93,8 +93,12 @@ pred GrabOrRelease  {
 }
 
 pred Deadlock  {
-         some Process
-         some s: State | all p: Process | some p.(s.waits)
+	some Process
+	some s: State | all p: Process | some p.(s.waits)
+}
+
+pred Not_Deadlock  {
+	! Deadlock
 }
 
 pred GrabbedInOrder  {
@@ -109,5 +113,5 @@ pred lowerBoundProcess{
 	some Process
 }
 check{ 
-(lowerBoundProcess && GrabOrRelease && GrabbedInOrder) => ! Deadlock
-}for 2 State, 2 Process, 1 Mutex
+(lowerBoundProcess && GrabOrRelease && GrabbedInOrder) => Not_Deadlock
+}for 5 State, 5 Process, 4 Mutex

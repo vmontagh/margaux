@@ -21,8 +21,7 @@ public abstract class ResponseMessage extends RemoteMessage {
 
 	protected final ProcessedResult result;
 
-	public ResponseMessage(RemoteProcess process, long creationTime,
-			final ProcessedResult result) {
+	public ResponseMessage(RemoteProcess process, long creationTime, final ProcessedResult result) {
 		super(process, creationTime);
 		this.result = result;
 	}
@@ -35,12 +34,28 @@ public abstract class ResponseMessage extends RemoteMessage {
 	public abstract ProcessedResult getResult();
 
 	@Override
-	public abstract void onAction(Map<String, Object> context)
-			throws InvalidParameterException;
+	public abstract void onAction(Map<String, Object> context) throws InvalidParameterException;
 
 	@Override
 	public void onEvent(MessageListenerAction listener, MessageEventArgs args) {
 		listener.actionOn(this, args);
+	}
+
+	public static ResponseMessage createEmptyResponseMessage() {
+		return new ResponseMessage(null, 0, null) {
+			@Override
+			public void onAction(Map<String, Object> context) throws InvalidParameterException {
+			}
+
+			@Override
+			public ProcessedResult getResult() {
+				return null;
+			}
+		};
+	}
+
+	public boolean isEmptyResponseMessage() {
+		return process == null && creationTime == 0 && result == null;
 	}
 
 }

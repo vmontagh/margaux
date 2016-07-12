@@ -1,33 +1,39 @@
 package edu.uw.ece.alloy.util;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.InetSocketAddress;
+import java.net.SocketOption;
+import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
+import java.nio.channels.CompletionHandler;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.RemoteMessage;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.watchdogs.ThreadToBeMonitored;
 import edu.uw.ece.alloy.util.events.Event;
 import edu.uw.ece.alloy.util.events.EventArgs;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 import edu.uw.ece.alloy.util.events.MessageSentEventArgs;
 
-public class ServerSocketInterface
-		implements Runnable, ThreadToBeMonitored, SendOnServerSocketInterface {
+public class ServerSocketInterface implements Runnable, ThreadToBeMonitored, SendOnServerSocketInterface {
 
 	protected final static Logger logger = Logger
-			.getLogger(ServerSocketInterface.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(ServerSocketInterface.class.getName() + "--" + Thread.currentThread().getName());
 
 	protected final Thread listeningThread;
 	protected final RemoteProcess hostProcess;
@@ -43,24 +49,20 @@ public class ServerSocketInterface
 		this(new InetSocketAddress(hostPort), new InetSocketAddress(remotePort));
 	}
 
-	public ServerSocketInterface(final String hostName, final int hostPort,
-			final String remoteName, final int remotePort) {
-		this(new InetSocketAddress(hostName, hostPort),
-				new InetSocketAddress(remoteName, remotePort));
+	public ServerSocketInterface(final String hostName, final int hostPort, final String remoteName,
+			final int remotePort) {
+		this(new InetSocketAddress(hostName, hostPort), new InetSocketAddress(remoteName, remotePort));
 	}
 
-	public ServerSocketInterface(final InetSocketAddress hostAddress,
-			final InetSocketAddress remoteAddress) {
-		this(new RemoteProcess(hostAddress),
-				Optional.ofNullable(new RemoteProcess(remoteAddress)));
+	public ServerSocketInterface(final InetSocketAddress hostAddress, final InetSocketAddress remoteAddress) {
+		this(new RemoteProcess(hostAddress), Optional.ofNullable(new RemoteProcess(remoteAddress)));
 	}
 
 	public ServerSocketInterface(final InetSocketAddress hostAddress) {
 		this(new RemoteProcess(hostAddress), Optional.empty());
 	}
 
-	public ServerSocketInterface(final RemoteProcess hostProcess,
-			final Optional<RemoteProcess> remoteProcess) {
+	public ServerSocketInterface(final RemoteProcess hostProcess, final Optional<RemoteProcess> remoteProcess) {
 		this.hostProcess = hostProcess;
 		this.remoteProcess = remoteProcess;
 		this.listeningThread = new Thread(this);
@@ -99,12 +101,13 @@ public class ServerSocketInterface
 	}
 
 	public void sendMessage(RemoteMessage message) {
-		this.sendMessage(message, this.getRemoteProcess().orElseThrow(
-				() -> new RuntimeException("Remote address should be set.")));
+		this.sendMessage(message,
+				this.getRemoteProcess().orElseThrow(() -> new RuntimeException("Remote address should be set.")));
 	}
 
 	/**
-	 * A portal to send a message. Appropriate events are called before or after.
+	 * A portal to send a message. Appropriate events are called before or
+	 * after.
 	 * 
 	 * @param message
 	 * @param remoteProcess
@@ -119,15 +122,15 @@ public class ServerSocketInterface
 			throw new RuntimeException("The reciever message cannot be null");
 		}
 
-		MessageSentEventArgs eventArgs = new MessageSentEventArgs(message,
-				remoteProcess);
+		MessageSentEventArgs eventArgs = new MessageSentEventArgs(message, remoteProcess);
 		try {
 			this.onMessageAttempt(eventArgs);
 			message.sendMe(remoteProcess);
 			this.onMessageSent(eventArgs);
 		} catch (Exception e) {
-			logger.log(Level.SEVERE,
-					Utils.threadName() + "Failed to send command: " + message, e);
+			System.err.println("fail to sent:" + e + "  " + message);
+			e.printStackTrace();
+			logger.log(Level.SEVERE, Utils.threadName() + "Failed to send command: " + message, e);
 			this.onMessageFailed(eventArgs);
 		}
 	}
@@ -138,63 +141,78 @@ public class ServerSocketInterface
 
 	protected final void startListening() {
 
-		AsynchronousServerSocketChannel serverSocketChannel = null;
+		 AsynchronousServerSocketChannel serverSocketChannel = null;
 		try {
 			if (Configuration.IsInDeubbungMode) {
-				logger.info(Utils.threadName()
-						+ "Starting listening fornt runner for pId: " + hostProcess);
+				logger.info(Utils.threadName() + "Starting listening fornt runner for pId: " + hostProcess);
 			}
 
 			// Open socket for listening
 			serverSocketChannel = AsynchronousServerSocketChannel.open()
 					.bind(hostProcess.getAddress());
+			//System.out.println("Options0>" + serverSocketChannel.supportedOptions());
+			
+			serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, false);
+
+			// serverSocketChannel.
 
 			this.onListeningStarted();
 
 			Future<AsynchronousSocketChannel> serverFuture = null;
+			
 			AsynchronousSocketChannel clientSocket = null;
 			InputStream connectionInputStream = null;
 			ObjectInputStream ois = null;
 
 			while (!Thread.currentThread().isInterrupted()) {
+				//System.out.println("Thread count:"+java.lang.Thread.activeCount());
 				try {
 					if (Configuration.IsInDeubbungMode) {
-						logger.info(
-								Utils.threadName() + "waiting for a request: " + hostProcess);
+						logger.info(Utils.threadName() + "waiting for a request: " + hostProcess);
 					}
 
-					serverFuture = serverSocketChannel.accept();
+					
+					 serverFuture = serverSocketChannel.accept();
 					if (Configuration.IsInDeubbungMode) {
-						logger.info(Utils.threadName() + "a message is received on: "
-								+ hostProcess);
+						logger.info(Utils.threadName() + "a message is received on: " + hostProcess);
 					}
-
+					
+					
+					//try{
 					clientSocket = serverFuture.get();
+					/*}catch (TimeoutException te){
+						te.printStackTrace();
+					}*/
+					//System.out.println("clientSocket->"+ clientSocket.isOpen() + " ,"+clientSocket.getLocalAddress()+", "+clientSocket.getRemoteAddress() );
 					if ((clientSocket != null) && (clientSocket.isOpen())) {
+						
 						connectionInputStream = Channels.newInputStream(clientSocket);
 						ois = new ObjectInputStream(connectionInputStream);
-						
-						this.onMessageReceived(new MessageReceivedEventArgs(
-								(RemoteMessage) ois.readObject(), new RemoteProcess(
-										(InetSocketAddress) clientSocket.getRemoteAddress())));
-					}
 
-				} catch (IOException | InterruptedException | ExecutionException
-						| ClassNotFoundException e) {
-					logger.log(Level.SEVERE,
-							Utils.threadName() + "Error while listening for request: ", e);
+						RemoteMessage message = (RemoteMessage) ois.readObject();
+
+						//System.out.println("recevied message is->" + message.toString());
+
+						
+
+						this.onMessageReceived(new MessageReceivedEventArgs(message,
+								new RemoteProcess((InetSocketAddress) clientSocket.getRemoteAddress())));
+
+						
+					}
+				} catch (IOException | InterruptedException | ExecutionException e) {
+					logger.log(Level.SEVERE, Utils.threadName() + "Error while listening for request: ", e);
 					e.printStackTrace();
 					e.fillInStackTrace();
 					e.printStackTrace();
-					throw new RuntimeException(e);
+					//throw new RuntimeException(e);
 				} finally {
 
 					if (ois != null) {
 						try {
 							ois.close();
 						} catch (IOException e) {
-							logger.log(Level.SEVERE, Utils.threadName()
-									+ "Error while closing InputOutputstream: ", e);
+							logger.log(Level.SEVERE, Utils.threadName() + "Error while closing InputOutputstream: ", e);
 						}
 					}
 
@@ -202,11 +220,8 @@ public class ServerSocketInterface
 						try {
 							connectionInputStream.close();
 						} catch (IOException e) {
-							logger
-									.log(Level.SEVERE,
-											Utils.threadName()
-													+ "Error while closing Connection Inputputstream: ",
-											e);
+							logger.log(Level.SEVERE,
+									Utils.threadName() + "Error while closing Connection Inputputstream: ", e);
 						}
 					}
 
@@ -214,32 +229,27 @@ public class ServerSocketInterface
 						try {
 							clientSocket.close();
 						} catch (IOException e) {
-							logger.log(Level.SEVERE,
-									Utils.threadName() + "Error while closing Client socket: ",
-									e);
+							logger.log(Level.SEVERE, Utils.threadName() + "Error while closing Client socket: ", e);
 						}
 					}
+					
 				}
 			}
 
 		} catch (Throwable t) {
-			logger.log(Level.SEVERE, Utils.threadName()
-					+ "A serious error breaks the Front Processor listener: ", t);
+			logger.log(Level.SEVERE, Utils.threadName() + "A serious error breaks the Front Processor listener: ", t);
 			t.printStackTrace();
 			throw new RuntimeException(t);
 
 		} finally {
 
-			if (serverSocketChannel != null && serverSocketChannel.isOpen()) {
-				try {
-					serverSocketChannel.close();
-				} catch (IOException e) {
-					logger.log(Level.SEVERE,
-							Utils.threadName()
-									+ "Error while closing AsynchronousServerSocketChannel socket: ",
-							e);
-				}
-			}
+			
+			  if (serverSocketChannel != null && serverSocketChannel.isOpen())
+			  { try { serverSocketChannel.close(); } catch (IOException e) {
+			  logger.log(Level.SEVERE, Utils.threadName() +
+			  "Error while closing AsynchronousServerSocketChannel socket: ",
+			  e); } }
+			 
 		}
 
 	}

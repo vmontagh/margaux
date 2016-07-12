@@ -52,6 +52,11 @@ public class DebuggerRunnerTest {
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestCon;
 	static Map<String, List<Pair<String, String>>> binaryWeakestIncon;
 	static Map<String, Boolean> binaryTreeIsIncon;
+	static Map<String, List<Pair<String, String>> > DPhStrongestImpl;
+	static Map<String, List<Pair<String, String>> > DPhStrongestCon;
+	static Map<String, List<Pair<String, String>> > DPhWeakestIncon;
+	static Map<String, Boolean > DPhIsIncon;
+
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -120,7 +125,62 @@ public class DebuggerRunnerTest {
 		binaryTreeIsIncon = new HashMap<>();
 		binaryTreeIsIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )right for 3", true);
 		binaryTreeIsIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )left for 3", true);
+
+		DPhStrongestImpl = new HashMap<>();
+		DPhStrongestImpl.put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhStrongestImpl.put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhStrongestImpl.put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhStrongestImpl.put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhStrongestImpl.put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhStrongestImpl.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhStrongestCon = new HashMap<>();
+		DPhWeakestIncon = new HashMap<>();
+		DPhWeakestIncon.put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhWeakestIncon.put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptNon_", "SzGrwtStrc_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
+		DPhWeakestIncon.put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhWeakestIncon.put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		
+		DPhWeakestIncon.put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
+		DPhWeakestIncon.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("OrdIncrsStrc_SzGrwtStrc_Glbl_SdMdl_EmptNon_", "OrdIncrsStrc_SzGrwtStrc_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptStrt_", "SzGrwtStrc_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrsStrc_SzGrwtStrc_Glbl_SdMdl_EmptNon_", "OrdDcrsStrc_SzGrwtStrc_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
+
+		DPhIsIncon = new HashMap<>();
+		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
+		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
+		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", false);
+		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", false);
+		
 		//@formatter:on
+	}
+	
+	@Test
+	public void test(){
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		
+		for (Pair<String, String> implied: DPhStrongestImpl.get(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex")){
+			for (String key: DPhWeakestIncon.keySet()){
+				for (Pair<String, String> incon: DPhWeakestIncon.get(key)){
+					
+					if (implied.b.equals(incon.b)){
+						System.out.println(key + "..." + implied.b );
+					}
+					
+					for (String strongerInc: runner.approximator.strongerPatterns(incon.a) ){
+						if (implied.a.equals(strongerInc)){
+							System.out.println(key + /*"..." + implied.b + */" <<< " + implied.a + "---" + strongerInc + " <<< " + incon.a);
+						}
+						
+					}
+					
+				}
+			}
+		}
 	}
 
 	@AfterClass
@@ -642,5 +702,73 @@ public class DebuggerRunnerTest {
 	}
 	
 	
+	@Test
+	public void testDikjstraBug1Heuristic(){
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+		
+		
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+		runner.debuggerAlgorithm.run();
+	}
+	
 
+	@Test
+	public void testDikjstraBug1HeuristicMocked(){
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile(
+				"models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File(
+				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+		
+		
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
+				Collections.emptyList(), testingHost,
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+		
+		Approximator approximatorMock = new Approximator(
+				runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(
+					String statement, String fieldLabel, String scope) {
+				System.out.println(statement + fieldLabel + scope);
+				return DPhStrongestImpl.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return DPhWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel,
+					String scope) {
+				return DPhIsIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> strongestConsistentApproximation(
+					String statement, String fieldLabel, String scope) {
+				return DPhStrongestCon.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+		
+		
+	}
+
+	
 }

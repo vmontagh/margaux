@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.alloy.AlloyResponseMessage;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.alloy.util.events.MessageEventArgs;
 
@@ -34,8 +35,8 @@ public abstract class RemoteMessage implements Serializable {
 	/* The time of the message creation */
 	public final long creationTime;
 
-	final static Logger logger = Logger.getLogger(
-			RemoteMessage.class.getName() + "--" + Thread.currentThread().getName());;
+	final static Logger logger = Logger
+			.getLogger(RemoteMessage.class.getName() + "--" + Thread.currentThread().getName());;
 
 	public RemoteMessage(RemoteProcess process, long creationTime) {
 		super();
@@ -47,55 +48,60 @@ public abstract class RemoteMessage implements Serializable {
 		this(process, System.currentTimeMillis());
 	}
 
-	public static void sendAMessage(final RemoteProcess remoteProcess,
-			Serializable message) throws InterruptedException {
+	public static void sendAMessage(final RemoteProcess remoteProcess, Serializable message)
+			throws InterruptedException {
 
 		final Logger logger = Logger.getAnonymousLogger();
 
 		AsynchronousSocketChannel clientSocketChannel = null;
 		ObjectOutputStream oos = null;
+		OutputStream os = null;
 		try {
 			clientSocketChannel = AsynchronousSocketChannel.open();
 
-			Future<Void> connectFuture = clientSocketChannel
-					.connect(remoteProcess.getAddress());
+			Future<Void> connectFuture = clientSocketChannel.connect(remoteProcess.getAddress());
 			connectFuture.get(); // Wait until connection is done.
-			OutputStream os = Channels.newOutputStream(clientSocketChannel);
+			os = Channels.newOutputStream(clientSocketChannel);
 			oos = new ObjectOutputStream(os);
+
 			oos.writeObject(message);
+
 			oos.flush();
+
 			os.flush();
+
 		} catch (IOException | ExecutionException e) {
 			logger.log(Level.SEVERE,
-					Utils.threadName() + "Failed on sending the done message " + message
-							+ " TO =" + remoteProcess,
-					e);
-			throw new RuntimeException(
-					"Unseccesful sending message " + e.getMessage());
+					Utils.threadName() + "Failed on sending the done message " + message + " TO =" + remoteProcess, e);
+			throw new RuntimeException("Unseccesful sending message " + e.getMessage());
 		} catch (InterruptedException e) {
-			logger.log(Level.SEVERE,
-					Utils.threadName() + "Sending the done message is interrupted: "
-							+ message + " TO =" + remoteProcess,
-					e);
+			logger.log(Level.SEVERE, Utils.threadName() + "Sending the done message is interrupted: " + message
+					+ " TO =" + remoteProcess, e);
 			throw e;
 		} finally {
+
 			if (oos != null)
 				try {
 					oos.close();
 				} catch (IOException e) {
-					logger.log(Level.SEVERE,
-							Utils.threadName() + "Failed to close the output stream" + message
-									+ " TO =" + remoteProcess,
-							e);
+					logger.log(Level.SEVERE, Utils.threadName() + "Failed to close the output stream" + message
+							+ " TO =" + remoteProcess, e);
 				}
+
+			if (os != null)
+				try {
+					os.close();
+				} catch (IOException e) {
+					logger.log(Level.SEVERE, Utils.threadName() + "Failed to close the output stream" + message
+							+ " TO =" + remoteProcess, e);
+				}
+
 			if (clientSocketChannel != null && clientSocketChannel.isOpen())
 				try {
 					clientSocketChannel.close();
 				} catch (IOException e) {
 					logger.log(Level.SEVERE,
-							Utils.threadName() + "Failed to close the socket" + message
-									+ " TO =" + remoteProcess,
-							e);
+							Utils.threadName() + "Failed to close the socket" + message + " TO =" + remoteProcess, e);
 				}
 		}
 	}
@@ -109,21 +115,19 @@ public abstract class RemoteMessage implements Serializable {
 	}
 
 	/**
-	 * Prepares a message before sending a messing. Request and Response Messages
-	 * overwrites this API
+	 * Prepares a message before sending a messing. Request and Response
+	 * Messages overwrites this API
 	 * 
 	 * @param remoteProcess
 	 * @throws InterruptedException
 	 * @throws Exception
 	 */
-	public void prepareThenSend(final RemoteProcess remoteProcess)
-			throws InterruptedException, Exception {
+	public void prepareThenSend(final RemoteProcess remoteProcess) throws InterruptedException, Exception {
 		sendMe(remoteProcess);
 	}
 
 	@SuppressWarnings("static-access")
-	public void sendMe(final RemoteProcess remoteProcess)
-			throws InterruptedException {
+	public void sendMe(final RemoteProcess remoteProcess) throws InterruptedException {
 		beforeSend(process);
 		this.sendAMessage(remoteProcess, this);
 		afterSend(process);
@@ -136,16 +140,15 @@ public abstract class RemoteMessage implements Serializable {
 	}
 
 	/**
-	 * The action happens once a message is processed on the callee side. A caller
-	 * makes an object of the message and send to the callee. The callee has to
-	 * take an action and changes it state w.r.t to the message. The current state
-	 * is passed through the context.
+	 * The action happens once a message is processed on the callee side. A
+	 * caller makes an object of the message and send to the callee. The callee
+	 * has to take an action and changes it state w.r.t to the message. The
+	 * current state is passed through the context.
 	 * 
 	 * @param context
 	 * @throws InvalidParameterException
 	 */
-	public abstract void onAction(final Map<String, Object> context)
-			throws InvalidParameterException;
+	public abstract void onAction(final Map<String, Object> context) throws InvalidParameterException;
 
 	@Override
 	public int hashCode() {
@@ -187,7 +190,6 @@ public abstract class RemoteMessage implements Serializable {
 	 * 
 	 * @param listener
 	 */
-	public abstract void onEvent(MessageListenerAction listener,
-			MessageEventArgs args);
+	public abstract void onEvent(MessageListenerAction listener, MessageEventArgs args);
 
 }

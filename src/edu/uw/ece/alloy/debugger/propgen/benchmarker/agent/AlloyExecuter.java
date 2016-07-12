@@ -130,6 +130,7 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "] " + "The timeout is recorded for "
 						+ lastProccessing);
+			System.out.println("Time out->"+lastProccessing.hashCode());
 			runPostProcesses(new AlloyProcessedResult(lastProccessing, Status.TIMEOUT));
 			lastProccessing = lastProccessing.EMPTY_PARAM;
 		} catch (InterruptedException e) {
@@ -169,6 +170,7 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 	private synchronized void runAlloy() throws InterruptedException {
 
 		AlloyProcessingParam lastProccessing = queue.take();
+		//System.out.println("runAlloy taken->"+lastProccessing.getAlloyCoder().get().srcName());
 		final AlloyProcessingParam originalLastProcessing = lastProccessing;
 		try {
 			lastProccessing = originalLastProcessing.changeTmpLocalDirectory(tmpLocalDirectory).prepareToUse();
@@ -219,7 +221,7 @@ public class AlloyExecuter implements Runnable, ThreadToBeMonitored {
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "]" + " Prcessing " + lastProccessing + " took "
 						+ (System.currentTimeMillis() - time) + " sec and result is: " + rep);
-
+			//System.out.println("in Alloy executoer----->"+rep.getParam().getAlloyCoder().get().srcName());
 			runPostProcesses(rep);
 			processed.incrementAndGet();
 			livenessStatus.setProcessed(processed.get());

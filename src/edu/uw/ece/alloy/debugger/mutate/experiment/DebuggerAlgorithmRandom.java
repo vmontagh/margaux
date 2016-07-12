@@ -71,7 +71,8 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 * @see edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#afterMutating()
 	 */
 	@Override
-	protected void afterMutating() {
+	protected boolean afterMutating() {
+		return false;
 	}
 
 	/*
@@ -162,7 +163,8 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 * @see edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#afterPickField()
 	 */
 	@Override
-	protected void afterPickField() {
+	protected boolean afterPickField() {
+		return false;
 	}
 
 	/*

@@ -324,8 +324,9 @@ public class AlloyProcessingParam extends ProcessingParam {
 
 	@Override
 	public String toString() {
-		return "AlloyProcessingParam [alloyCoder=" + alloyCoder.toString() + ", dBConnectionInfo=" + dBConnectionInfo
+		// TODO(vajih) change tit back.
+		return alloyCoder.srcName()/*"AlloyProcessingParam [alloyCoder=" + alloyCoder.toString() + ", dBConnectionInfo=" + dBConnectionInfo
 				+ ", priority=" + priority + ", tmpLocalDirectory=" + tmpLocalDirectory + ", analyzingSessionID="
-				+ analyzingSessionID + "]";
+				+ analyzingSessionID + "]"*/;
 	}
 }

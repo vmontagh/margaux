@@ -58,9 +58,9 @@ public class InconPropertyToAlloyCode extends PropertyToAlloyCode {
 	}
 
 	String commandStatement(final String predCallA, final String predCallB) {
-
+		
 		final String block = commandKeyWordBody() + " " + COMMAND_BLOCK_NAME
-				+ " {\n" + " (  not empty[" + field + "] implies not (" + predCallA + " "
+				+ " {\n" + " (  some " + field + " implies not (" + predCallA + " "
 				+ commandOperator() + " " + predCallB + "))" + "\n}\n";
 
 		return block + commandKeyword() + " " + COMMAND_BLOCK_NAME;

@@ -149,12 +149,17 @@ public class PatternToProperty {
 			final List<Open> opens) throws Err {
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(temporalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
+		StringBuilder sb = new StringBuilder();
+		final PropertyCallBuilder pcb = new PropertyCallBuilder();
+
 		for (Func func : world.getAllFunc()) {
 			String funcName = func.label.replace("this/", "");
-			final PropertyCallBuilder pcb = new PropertyCallBuilder();
+			sb.append(funcName).append(", ");
 			try {
 				pcb.addPropertyDeclration(func);
 			} catch (IllegalArgumentException ia) {
+				
+				System.out.println("Error->"+ia);
 				logger.log(Level.WARNING,
 						"[" + Thread.currentThread().getName() + "] " + "Failling to add a property declaration:", ia);
 			}

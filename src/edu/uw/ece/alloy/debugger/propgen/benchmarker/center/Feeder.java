@@ -151,7 +151,7 @@ public abstract class Feeder<T extends ProcessingParam>
 			// take a request, if something is in the queue. Otherwise the thread
 			// parks here.
 			e = queue.take();
-
+			//System.out.println("feeder 1->"+e.hashCode());
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "]"
 						+ "Queue object: " + e);
@@ -172,10 +172,11 @@ public abstract class Feeder<T extends ProcessingParam>
 			logger.info(
 					"[" + Thread.currentThread().getName() + "]" + "got a process " + e);
 		try {
+			//System.out.println("feeder 2->"+e.hashCode());
 			// TODO register monitor as a listener to message that are sent
 			RequestMessage message = createRequestMessage(process, e);
 			distributerInterface.sendMessage(message, process);
-
+			//System.out.println("feeder 3->"+message.getProcessingParam().hashCode());
 			if (Configuration.IsInDeubbungMode)
 				logger.info("[" + Thread.currentThread().getName() + "]"
 						+ "Message sent to " + process.address);
@@ -248,7 +249,7 @@ public abstract class Feeder<T extends ProcessingParam>
 		} catch (InterruptedException e) {
 			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "]"
 					+ "The thread is interuppted.", e);
-			throw new RuntimeException(e);
+			//throw new RuntimeException(e);
 		}
 	}
 

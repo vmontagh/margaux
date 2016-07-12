@@ -30,6 +30,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.InconExpressionToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.InconPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.PropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
+import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
@@ -70,6 +71,8 @@ public class Approximator {
 	final List<File> dependentFiles;
 	final List<ImplicationLattic> implications;
 
+	int approximationRequestCount = 1;
+	
 	public Approximator(ServerSocketInterface interfacE, ProcessDistributer processManager,
 			PatternToProperty patternToProperty, File tmpLocalDirectory, File toBeAnalyzedCode,
 			File relationalPropModuleOriginal, File temporalPropModuleOriginal, List<File> dependentFiles) {
@@ -228,6 +231,18 @@ public class Approximator {
 	protected List<Pair<String, String>> findApproximation(File toBeAnalyzedCode, String statement, String fieldLabel,
 			String scope, PropertyToAlloyCode coder,
 			Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
+		
+		if (approximationRequestCount % 6 == 0){
+			((RemoteProcessManager)processManager).replaceAllProcesses();
+			while(!((RemoteProcessManager)processManager).allProcessesIDLE()){
+				try{
+					Thread.sleep(30);
+				} catch(InterruptedException e){
+					e.printStackTrace();
+				}
+			}
+		}
+		
 		// Creating a request message
 		Map<String, LazyFile> files = new HashMap<>();
 
@@ -267,6 +282,8 @@ public class Approximator {
 		}
 		interfacE.MessageReceived.removeListener(receiveListener);
 
+		approximationRequestCount++;
+		
 		return filter.apply(result.getResult().get().getResults().get().stream()
 				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
 						b.getParam().getAlloyCoder().get().predCallB))
@@ -285,16 +302,11 @@ public class Approximator {
 	Function<List<Pair<String, String>>, List<Pair<String, String>>> filterWeakerApproximations = (properties) -> {
 		final Map<String, Pair<String, String>> patternMap = new HashMap<>();
 		properties.stream().forEach(p -> patternMap.put(p.a, p));
-		System.out.println("properties->" + properties);
 		for (Pair<String, String> patternProperty : properties) {
-			System.out.println("patternProperty->" + patternProperty);
 			for (String weakerPattern : weakerPatterns(patternProperty.a)) {
-				System.out.println("weakerPattern->" + weakerPattern);
 				patternMap.remove(weakerPattern);
 			}
 		}
-		System.out.println("patternMap->" + patternMap);
-		System.out.println("patternMap->" + patternMap.values().stream().collect(Collectors.toList()));
 		return patternMap.values().stream().collect(Collectors.toList());
 	};
 
@@ -320,7 +332,7 @@ public class Approximator {
 		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getAllRevImpliedProperties(pattern));
-			} catch (Err e) {
+			} catch (Throwable e) {
 				// e.printStackTrace();
 			}
 		}
@@ -341,11 +353,10 @@ public class Approximator {
 
 	public List<String> weakerPatterns(String pattern) {
 		List<String> result = new ArrayList<>();
-		System.out.println("implications->" + implications);
 		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getAllImpliedProperties(pattern));
-			} catch (Err e) {
+			} catch (Throwable e) {
 			}
 		}
 		return Collections.unmodifiableList(result);

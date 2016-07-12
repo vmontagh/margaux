@@ -92,7 +92,7 @@ public class ExpressionPropertyCheckerTest {
 
 		epc = new ExpressionPropertyGenerator(UUID.randomUUID(), new Queue<>(), new File(AlloyTmpTestPath), tempFolder,
 				tempFolder, "s", IfPropertyToAlloyCode.EMPTY_CONVERTOR, "expresson", "scope",
-				Collections.emptyList(), new PatternToProperty(new File(Configuration.getProp("relational_properties_tagged")), new File(Configuration.getProp("temporal_properties_tagged")), new File(AlloyTmpTestPath)));
+				Collections.emptyList(), new PatternToProperty(new File(Configuration.getProp("relational_properties_tagged")), new File(Configuration.getProp("temporal_properties_tagged")), new File(AlloyTmpTestPath)), Long.MAX_VALUE);
 	}
 
 	/**

@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.ErrorSyntax;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
@@ -90,12 +91,18 @@ public abstract class ImplicationLattic {
 		try {
 			Util.writeAll(file.getAbsolutePath(), content);
 			result.addAll(getAllproperties(file.getAbsolutePath()));
-		} catch (Exception e) {
-			logger
-					.log(Level.SEVERE,
+		} catch (ErrorSyntax es) {
+			/*logger
+					.log(Level.WARNING,
 							"[" + Thread.currentThread().getName() + "] "
-									+ "Error while getting all sources in implication lattice: ",
-							e);
+									+ "Syntax Error while getting all sources in implication lattice: ",
+							es);*/
+		}catch (Exception e){
+			logger
+			.log(Level.SEVERE,
+					"[" + Thread.currentThread().getName() + "] "
+							+ "Error while getting all sources in implication lattice: ",
+					e);
 			throw e;
 		} finally{
 			file.delete();

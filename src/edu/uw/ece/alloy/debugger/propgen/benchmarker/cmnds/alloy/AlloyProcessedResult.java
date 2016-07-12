@@ -27,9 +27,8 @@ public class AlloyProcessedResult extends ProcessedResult {
 		this.sat = result.sat;
 	}
 
-	public AlloyProcessedResult(AlloyProcessingParam param, Status status,
-			long clauses, long evalInsts, long trasnalationTime, long totalVaraibles,
-			long solveTime, long evalTime, int sat) {
+	public AlloyProcessedResult(AlloyProcessingParam param, Status status, long clauses, long evalInsts,
+			long trasnalationTime, long totalVaraibles, long solveTime, long evalTime, int sat) {
 		this(param, status);
 		this.clauses = clauses;
 		this.evalInsts = evalInsts;
@@ -45,13 +44,13 @@ public class AlloyProcessedResult extends ProcessedResult {
 	}
 
 	public String asRecord() {
-		return trasnalationTime + "," + totalVaraibles + "," + clauses + ","
-				+ solveTime + "," + evalTime + "," + evalInsts + "," + sat;
+		return trasnalationTime + "," + totalVaraibles + "," + clauses + "," + solveTime + "," + evalTime + ","
+				+ evalInsts + "," + sat;
 	}
 
 	public AlloyProcessedResult changeParams(final AlloyProcessingParam param) {
-		return new AlloyProcessedResult(param, status, clauses, evalInsts,
-				trasnalationTime, totalVaraibles, solveTime, evalTime, sat);
+		return new AlloyProcessedResult(param, status, clauses, evalInsts, trasnalationTime, totalVaraibles, solveTime,
+				evalTime, sat);
 	}
 
 	public String asRecordHeader() {
@@ -67,4 +66,11 @@ public class AlloyProcessedResult extends ProcessedResult {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return "AlloyProcessedResult [getParam()=" + getParam() + "]";
+	}
+
+	
+	
 }

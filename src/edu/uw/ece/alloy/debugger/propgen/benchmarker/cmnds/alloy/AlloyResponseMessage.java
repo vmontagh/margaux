@@ -48,4 +48,11 @@ public class AlloyResponseMessage extends ResponseMessage {
 		return (AlloyProcessedResult) result;
 	}
 
+	@Override
+	public String toString() {
+		return "AlloyResponseMessage [getResult()=" + getResult() + "]";
+	}
+	
+	
+
 }
