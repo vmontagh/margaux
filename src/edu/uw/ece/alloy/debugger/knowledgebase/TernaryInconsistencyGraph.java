@@ -59,12 +59,13 @@ public class TernaryInconsistencyGraph extends InconsistencyGraph {
 		for (String line : Utils.readFileLines(pathToIff)) {
 			String[] splittedRow = line.split(",");
 			assert splittedRow.length == 2;
-			assert legends.containsKey(splittedRow[0]);
-			assert legends.containsKey(splittedRow[1]);
 			// codeA <=> codeB
 			int codeA = Integer.parseInt(splittedRow[0]);
 			int codeB = Integer.parseInt(splittedRow[0]);
-			assert iffMap.containsKey(legends.get(splittedRow[0]));
+			assert legends.containsKey(codeA);
+			assert legends.containsKey(codeB);
+
+			assert iffMap.containsKey(codeA);
 			iffMap.get(codeA).add(codeB);
 		}
 
