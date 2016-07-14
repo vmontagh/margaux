@@ -265,6 +265,7 @@ public abstract class DebuggerAlgorithm {
 	public void run() {
 
 		StringBuilder report = new StringBuilder();
+		StringBuilder MutationsPath = new StringBuilder();
 		String reportHeader = new String();
 
 		System.out.println("fields->" + fields);
@@ -289,14 +290,14 @@ public abstract class DebuggerAlgorithm {
 			beforePickModelPart();
 			final PriorityQueue<DecisionQueueItem<Expr>> modelQueue = fieldToModelQueues.get(toBeingAnalyzedField);
 			while (!fieldToModelQueues.get(toBeingAnalyzedField).isEmpty()) {
-				System.out.println("before--->"+modelQueue);
-				System.out.println("before 2--->"+fieldToModelQueues.get(toBeingAnalyzedField));
+				System.out.println("before--->" + modelQueue);
+				System.out.println("before 2--->" + fieldToModelQueues.get(toBeingAnalyzedField));
 				DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(toBeingAnalyzedField).poll();
-				System.out.println("after--->"+modelQueue);
-				System.out.println("after 2--->"+fieldToModelQueues.get(toBeingAnalyzedField));
-				
+				System.out.println("after--->" + modelQueue);
+				System.out.println("after 2--->" + fieldToModelQueues.get(toBeingAnalyzedField));
+
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-				System.out.println("picked model part before after is:"+toBeingAnalyzedModelPart);
+				System.out.println("picked model part before after is:" + toBeingAnalyzedModelPart);
 				if (afterPickModelPart())
 					continue;
 
@@ -393,8 +394,6 @@ public abstract class DebuggerAlgorithm {
 							.get(toBeingWeakenOrStrengthenedApproximation);
 					toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 
-					System.out.println("strongerApproxQueue->" + strongerApproxQueue);
-					System.out.println("weakerApproxQueue->" + weakerApproxQueue);
 					while (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty()) {
 						toBePickedQueueFromWeakenOrStrengthened = strongerApproxQueue;
 						strengthened = true;
@@ -415,14 +414,16 @@ public abstract class DebuggerAlgorithm {
 						if (!notApproximationedButInconsistent.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
 								.isEmpty()) {
 
-							for(Pair<String, String> incon: notApproximationedButInconsistent.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)){
-								System.out.println("incon->"+incon);
-								// The mutatedFile is global to be accessible within
+							for (Pair<String, String> incon : notApproximationedButInconsistent
+									.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)) {
+								// The mutatedFile is global to be accessible
+								// within
 								// other functions.
 								mutatedFile = makeMutation(toBeingAnalyzedModelPartString,
-										toBeingWeakenOrStrengthenedApproximation.b, incon.b, strengthened,
-										restModel).get();
+										toBeingWeakenOrStrengthenedApproximation.b, incon.b, strengthened, restModel)
+												.get();
 								System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
+								MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 								if (afterMutating())
 									continue;
 								beforeCallingExampleFinder();
@@ -432,20 +433,20 @@ public abstract class DebuggerAlgorithm {
 										"NOT_" + mutatedFile.getName().replace(".als", ""));
 								afterCallingExampleFinder();
 								beforeInquiryOracle();
-								
-								Pair<String, String> headerRow = Utils.extractHeader(interpretMutationResult(approximationProperty+"_"+incon.a));
+
+								Pair<String, String> headerRow = Utils
+										.extractHeader(interpretMutationResult(approximationProperty + "_" + incon.a));
 								reportHeader = headerRow.a;
 								report.append(headerRow.b).append("\n");
 								// store the answer
-								//if (afterInquiryOracle())
-								//	break;
+								// if (afterInquiryOracle())
+								// break;
 								// Call APIs to change the priority of the next
 								// steps
 								if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 									beforePickWeakenOrStrengthened();
 							}
-							
-							
+
 						} else {
 
 							// The mutatedFile is global to be accessible within
@@ -454,6 +455,7 @@ public abstract class DebuggerAlgorithm {
 									toBeingWeakenOrStrengthenedApproximation.b, approximationProperty, strengthened,
 									restModel).get();
 							System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
+							MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 							if (afterMutating())
 								continue;
 							beforeCallingExampleFinder();
@@ -465,7 +467,8 @@ public abstract class DebuggerAlgorithm {
 							beforeInquiryOracle();
 							// ask the user
 							// Interpreting the result
-							Pair<String, String> headerRow = Utils.extractHeader(interpretMutationResult(approximationProperty));
+							Pair<String, String> headerRow = Utils
+									.extractHeader(interpretMutationResult(approximationProperty));
 							reportHeader = headerRow.a;
 							report.append(headerRow.b).append("\n");
 							// store the answer
@@ -476,20 +479,14 @@ public abstract class DebuggerAlgorithm {
 							if (!strongerApproxQueue.isEmpty() || !weakerApproxQueue.isEmpty())
 								beforePickWeakenOrStrengthened();
 						}
-						System.out.println("end1");
 					}
-					System.out.println("end2");
 					if (!approximationQueue.isEmpty())
 						if (beforePickApproximation())
 							break;
 				}
-				System.out.println("end3");
-				System.out.println("modelQueue->"+modelQueue);
 				if (!modelQueue.isEmpty())
 					beforePickModelPart();
-				System.out.println("modelQueue after->"+modelQueue);
 			}
-			System.out.println("end4");
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
 		}
@@ -497,6 +494,8 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("--------------------------");
 		System.out.println(reportHeader);
 		System.out.println(report);
+		
+		System.out.println(MutationsPath.toString());
 
 		System.out.println(approximator.getAllChachedResults());
 		try {
@@ -540,27 +539,21 @@ public abstract class DebuggerAlgorithm {
 
 	protected abstract void onStartLoop();
 
-	protected String interpretMutationResult( String approximationProperty){
+	protected String interpretMutationResult(String approximationProperty) {
 		// ask the user
 		// Interpreting the result
-		inExampleIsInteded = inAndOutExamples.a.isPresent()
-				? oracle.isIntended(inAndOutExamples.a.get()) : false;
-		outExampleIsInteded = inAndOutExamples.b.isPresent()
-				? oracle.isIntended(inAndOutExamples.b.get()) : false;
+		inExampleIsInteded = inAndOutExamples.a.isPresent() ? oracle.isIntended(inAndOutExamples.a.get()) : false;
+		outExampleIsInteded = inAndOutExamples.b.isPresent() ? oracle.isIntended(inAndOutExamples.b.get()) : false;
 		StringBuilder rowRoport = new StringBuilder();
-		rowRoport.append("toBeingAnalyzedModelPart=")
-				.append("\"" + convertModelPartToString() + "\"").append(",");
+		rowRoport.append("toBeingAnalyzedModelPart=").append("\"" + convertModelPartToString() + "\"").append(",");
 		rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
 				.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"").append(",");
-		rowRoport.append("approximationProperty=").append("\"" + approximationProperty + "\"")
-				.append(",");
+		rowRoport.append("approximationProperty=").append("\"" + approximationProperty + "\"").append(",");
 
-		rowRoport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("") + "\"")
-				.append(",");
+		rowRoport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("") + "\"").append(",");
 		rowRoport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
 
-		rowRoport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("") + "\"")
-				.append(",");
+		rowRoport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("") + "\"").append(",");
 		rowRoport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
 
 		rowRoport.append("strengthened=").append(strengthened).append(",");
@@ -605,7 +598,7 @@ public abstract class DebuggerAlgorithm {
 		}
 		return rowRoport.toString().replaceAll("\n", " and ");
 	}
-	
+
 	/**
 	 * 
 	 * @param toBeingAnalyzedModelPart
@@ -646,27 +639,28 @@ public abstract class DebuggerAlgorithm {
 
 		String approximatedProperty = new String();
 		String notApproximatedProperty = new String();
+		final String restModels = !restModel.trim().isEmpty() ? " and " + restModel : "";
 		if (toBeingAnalyzedModelPart.equals(property)) {
-			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")";
-			notApproximatedProperty = "( " + approximationProperty+ " )";
+			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")" ;
+			notApproximatedProperty = "( " + approximationProperty + " )" + restModels;
 		} else if (property.equals(approximationProperty)) {
 			if (strengthened) {
-				approximatedProperty = "(" + toBeingAnalyzedModelPart + " and not " + property + ")";
-				notApproximatedProperty = "(" + property + ")";
+				approximatedProperty = "(" + toBeingAnalyzedModelPart + " and not " + property + ")" + restModels;
+				notApproximatedProperty = "(" + property + ")" + restModels;
 			} else {
-				approximatedProperty = "(not " + toBeingAnalyzedModelPart + " and " + property + ")";
+				approximatedProperty = "(not " + toBeingAnalyzedModelPart + " and " + property + ")" + restModels;
 				// notApproximatedProperty = "(not " + approximatedProperty +
 				// ")";
-				notApproximatedProperty = "(not " + property + ")";
+				notApproximatedProperty = "(not " + property + ")" + restModels;
 			}
 		} else {
 			if (strengthened) {
 				// need to be extended.
-				approximatedProperty = toBeingAnalyzedModelPart + " and " + approximationProperty;
-				notApproximatedProperty = "(not " + approximationProperty + " and " + toBeingAnalyzedModelPart + ")";
+				approximatedProperty = toBeingAnalyzedModelPart + " and " + approximationProperty + restModels;
+				notApproximatedProperty = "(not " + approximationProperty + " and " + toBeingAnalyzedModelPart + ")" + restModels;
 			} else {
-				approximatedProperty = "(not " + property + " and " + approximationProperty + ")";
-				notApproximatedProperty = "(not " + approximationProperty + ")";
+				approximatedProperty = "(not " + property + " and " + approximationProperty + ")" + restModels;
+				notApproximatedProperty = "(not " + approximationProperty + ")" + restModels;
 			}
 		}
 
@@ -682,11 +676,10 @@ public abstract class DebuggerAlgorithm {
 		String notExistingExamples = Arrays.asList(getAllNoAcceptedExamples(), getAllNoRejectedExamples()).stream()
 				.filter(a -> !a.isEmpty()).map(a -> "not(" + a + ")").collect(Collectors.joining(" and "));
 		notExistingExamples = notExistingExamples.isEmpty() ? "" : " and (" + notExistingExamples + ")";
-		String modelPartialApproximation = approximatedProperty + (!restModel.trim().isEmpty() ? " and " + restModel
-				: "") /* + notExistingExamples */ + " some " + toBeingAnalyzedField.label;
+		String modelPartialApproximation = approximatedProperty
+				/* + notExistingExamples */ + " some " + toBeingAnalyzedField.label;
 
-		String notModelPartialApproximation = notApproximatedProperty + (!restModel.trim().isEmpty()
-				? " and " + restModel : "") /* + notExistingExamples */ + " some " + toBeingAnalyzedField.label;
+		String notModelPartialApproximation = notApproximatedProperty + " some " + toBeingAnalyzedField.label;
 
 		System.out.println("*************");
 		System.out.println("toBeingAnalyzedModelPart=" + toBeingAnalyzedModelPart);
@@ -699,7 +692,8 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("*************");
 
 		// Make a new Model
-		String predName = "approximate_" + Math.abs(modelPartialApproximation.hashCode() + approximationProperty.hashCode());
+		String predName = "approximate_"
+				+ Math.abs(modelPartialApproximation.hashCode() + approximationProperty.hashCode());
 		String pred = String.format("pred %s[]{%s}\n", predName, modelPartialApproximation);
 
 		String predNameNot = "NOT_" + predName;
@@ -764,9 +758,9 @@ public abstract class DebuggerAlgorithm {
 			logger.severe(Utils.threadName() + expr + " cannot be converted to an inorder form.");
 			throw new RuntimeException(e);
 		}
-		
-		System.out.println("notApproximationedButInconsistent-->"+notApproximationedButInconsistent);
-		
+
+		System.out.println("notApproximationedButInconsistent-->" + notApproximationedButInconsistent);
+
 	}
 
 	/**
