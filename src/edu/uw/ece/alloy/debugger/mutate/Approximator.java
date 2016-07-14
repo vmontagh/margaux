@@ -22,8 +22,11 @@ import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.InconsistencyGraph;
+import edu.uw.ece.alloy.debugger.knowledgebase.InconsistencyGraph.STATUS;
 import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.TernaryInconsistencyGraph;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AndPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.InconExpressionToAlloyCode;
@@ -70,6 +73,7 @@ public class Approximator {
 	final File temporalPropModule;
 	final List<File> dependentFiles;
 	final List<ImplicationLattic> implications;
+	final List<InconsistencyGraph> inconsistencies;
 
 	int approximationRequestCount = 1;
 	
@@ -92,6 +96,10 @@ public class Approximator {
 		// message
 		implications.add(new BinaryImplicationLattic());
 		implications.add(new TernaryImplicationLattic());
+		
+		inconsistencies = new LinkedList<>();
+		inconsistencies.add(new TernaryInconsistencyGraph());
+		
 	}
 
 	public Approximator(ServerSocketInterface interfacE, ProcessDistributer processManager, File tmpLocalDirectory,
@@ -360,6 +368,10 @@ public class Approximator {
 			}
 		}
 		return Collections.unmodifiableList(result);
+	}
+	
+	public boolean isInconsistent(String patternA, String patternB){
+		return inconsistencies.stream().anyMatch(a->a.isInconsistent(patternA, patternB).equals(STATUS.True));
 	}
 
 }

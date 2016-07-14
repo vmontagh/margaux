@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -46,17 +47,16 @@ public class DebuggerRunnerTest {
 	}
 
 	static Map<String, List<Pair<String, String>>> listWeakestIncon;
-	static Map<String, List<Pair<String, String>> > listStrongestImpl;
+	static Map<String, List<Pair<String, String>>> listStrongestImpl;
 	static Map<String, Boolean> listIsIncon;
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestImpl;
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestCon;
 	static Map<String, List<Pair<String, String>>> binaryWeakestIncon;
 	static Map<String, Boolean> binaryTreeIsIncon;
-	static Map<String, List<Pair<String, String>> > DPhStrongestImpl;
-	static Map<String, List<Pair<String, String>> > DPhStrongestCon;
-	static Map<String, List<Pair<String, String>> > DPhWeakestIncon;
-	static Map<String, Boolean > DPhIsIncon;
-
+	static Map<String, List<Pair<String, String>>> DPhStrongestImpl;
+	static Map<String, List<Pair<String, String>>> DPhStrongestCon;
+	static Map<String, List<Pair<String, String>>> DPhWeakestIncon;
+	static Map<String, Boolean> DPhIsIncon;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -135,14 +135,16 @@ public class DebuggerRunnerTest {
 		DPhStrongestImpl.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
 		DPhStrongestCon = new HashMap<>();
 		DPhWeakestIncon = new HashMap<>();
+
 		DPhWeakestIncon.put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhWeakestIncon.put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptNon_", "SzGrwtStrc_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
+		DPhWeakestIncon.put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptNon_", "SzGrwtStrc_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
 		DPhWeakestIncon.put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
 		DPhWeakestIncon.put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		
 		DPhWeakestIncon.put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
-		DPhWeakestIncon.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("OrdIncrsStrc_SzGrwtStrc_Glbl_SdMdl_EmptNon_", "OrdIncrsStrc_SzGrwtStrc_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptStrt_", "SzGrwtStrc_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrsStrc_SzGrwtStrc_Glbl_SdMdl_EmptNon_", "OrdDcrsStrc_SzGrwtStrc_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
+		DPhWeakestIncon.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptStrt_", "SzGrwt_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdIncrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptStrt_", "SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdIncrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
 
+		
+		
 		DPhIsIncon = new HashMap<>();
 		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
 		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
@@ -151,36 +153,44 @@ public class DebuggerRunnerTest {
 		
 		//@formatter:on
 	}
-	
-	@Test
-	public void test(){
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+	@Test
+	public void test() {
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+
+		Map<String, List<String>> inconMap = new HashMap<>();
+		Map<String, List<String>> weakerMap = new HashMap<>();
+		Map<String, List<String>> strongMap = new HashMap<>();
 		
-		for (Pair<String, String> implied: DPhStrongestImpl.get(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex")){
-			for (String key: DPhWeakestIncon.keySet()){
-				for (Pair<String, String> incon: DPhWeakestIncon.get(key)){
-					
-					if (implied.b.equals(incon.b)){
-						System.out.println(key + "..." + implied.b );
-					}
-					
-					for (String strongerInc: runner.approximator.strongerPatterns(incon.a) ){
-						if (implied.a.equals(strongerInc)){
-							System.out.println(key + /*"..." + implied.b + */" <<< " + implied.a + "---" + strongerInc + " <<< " + incon.a);
-						}
-						
-					}
-					
-				}
+		//for (String key : DPhWeakestIncon.keySet()) {
+			for (Pair<String, String> incon : DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")) {
+
+				inconMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().map(a -> a.a).filter(a -> !a.equals(incon.a))
+						.filter(a -> {
+							return runner.approximator.isInconsistent(a, incon.a);}).collect(Collectors.toList()));
+				weakerMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().map(a -> a.a).filter(a -> !a.equals(incon.a))
+						.filter(a -> {
+							return runner.approximator.weakerPatterns(a).contains(incon.a);}).collect(Collectors.toList()));
+				strongMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().map(a -> a.a).filter(a -> !a.equals(incon.a))
+						.filter(a -> {
+							return runner.approximator.strongerPatterns(a).contains(incon.a);}).collect(Collectors.toList()));
+				
+				DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().filter(a -> !a.a.equals(incon.a)).forEach(a->{
+					System.out.printf("assert %1$s_implies_%2$s{%3$s implies %4$s}\ncheck %1$s_implies_%2$s for 5 State, 5 Process, 4 Mutex\n", incon.a, a.a, incon.b,a.b);
+				});
+
+				
 			}
-		}
+		//}
+
+			
+		System.out.println(inconMap);
+		System.out.println(weakerMap);
+		System.out.println(strongMap);
 	}
 
 	@AfterClass
@@ -199,21 +209,18 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestApproximationOneProp() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(tmpLocalDirectory,
-				"toBeAnalyzedCode.als");
+		File toBeAnalyzedCode = new LazyFile(tmpLocalDirectory, "toBeAnalyzedCode.als");
 		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
 
-		File relationalPropModuleOriginal = new LazyFile(tmpLocalDirectory,
-				"relational_properties_tagged.als");
+		File relationalPropModuleOriginal = new LazyFile(tmpLocalDirectory, "relational_properties_tagged.als");
 		Util.writeAll(relationalPropModuleOriginal.getAbsolutePath(),
 				"pred weaklyConnected [ r :univ->univ,  left:univ, right:univ ] {\n"
 						+ "\tall d: right | all g: left - d  | d in g.^(r + ~r)\n" + "}\n"
 						+ "pred rootedOne [r: univ->univ, left:univ, right: univ]{"
 						+ "\tone root:left | right in root.*r" + "}");
 
-		File temporalPropModuleOriginal = new LazyFile(tmpLocalDirectory,
-				"temporal_properties_tagged.als");
+		File temporalPropModuleOriginal = new LazyFile(tmpLocalDirectory, "temporal_properties_tagged.als");
 		Util.writeAll(temporalPropModuleOriginal.getAbsolutePath(),
 				"open relational_lib as relational_properties\n"
 						+ "pred OrdDcrsStrc_SzGrwtStrc_Glbl_SdEnd_EmptNon_[r: univ->univ->univ, left, middle, right: univ, left_first: univ, left_next: univ->univ, right_first: univ, right_next: univ->univ]{\n"
@@ -222,27 +229,23 @@ public class DebuggerRunnerTest {
 						+ "}");
 
 		File relationalLib = new LazyFile(tmpLocalDirectory, "relational_lib.als");
-		Util.writeAll(relationalLib.getAbsolutePath(), "module relational_lib\n"
-				+ "fun last[elem: univ, next:univ->univ]: one univ { elem - (next.elem) }\n"
-				+ "fun max [es: set univ, next: univ->univ ]: lone univ { es - es.^(~(next)) }\n"
-				+ "fun min [es: set univ, next: univ->univ ]: lone univ { es - es.^(next) }\n"
-				+ "pred lt [e1, e2: univ, next:univ->univ ] { e1 in this/prevs[e2, next] }\n"
-				+ "fun prevs [e: univ, next:univ->univ ]: set univ { e.^(~(next)) }\n");
+		Util.writeAll(relationalLib.getAbsolutePath(),
+				"module relational_lib\n" + "fun last[elem: univ, next:univ->univ]: one univ { elem - (next.elem) }\n"
+						+ "fun max [es: set univ, next: univ->univ ]: lone univ { es - es.^(~(next)) }\n"
+						+ "fun min [es: set univ, next: univ->univ ]: lone univ { es - es.^(next) }\n"
+						+ "pred lt [e1, e2: univ, next:univ->univ ] { e1 in this/prevs[e2, next] }\n"
+						+ "fun prevs [e: univ, next:univ->univ ]: set univ { e.^(~(next)) }\n");
 
 		List<File> dependentFiles = new ArrayList<>();
 		dependentFiles.add(relationalLib);
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v0.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				dependentFiles, testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, dependentFiles, testingHost,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 
-		runner.approximator = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager,
-				runner.approximator.patternToProperty,
-				runner.approximator.tmpLocalDirectory, toBeAnalyzedCode,
-				relationalPropModuleOriginal, temporalPropModuleOriginal,
-				dependentFiles);
+		runner.approximator = new Approximator(runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.patternToProperty, runner.approximator.tmpLocalDirectory, toBeAnalyzedCode,
+				relationalPropModuleOriginal, temporalPropModuleOriginal, dependentFiles);
 		runner.debuggerAlgorithm.approximator = runner.approximator;
 		assertEquals(1, runner.debuggerAlgorithm.model.size());
 		assertEquals(1, runner.debuggerAlgorithm.fields.size());
@@ -253,16 +256,13 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestApproximationAllProps() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(tmpLocalDirectory,
-				"toBeAnalyzedCode.als");
+		File toBeAnalyzedCode = new LazyFile(tmpLocalDirectory, "toBeAnalyzedCode.als");
 		Util.writeAll(toBeAnalyzedCode.getAbsolutePath(),
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v0.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -271,13 +271,10 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestRandomApproximationRandomListBug1() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -286,36 +283,30 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestRandomApproximationListBug1Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return listWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return listIsIncon.get(statement + fieldLabel + scope);
 			}
 
@@ -324,55 +315,46 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
 	}
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationListBug1() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
 	}
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationListBug1Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return listWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return listIsIncon.get(statement + fieldLabel + scope);
 			}
 
@@ -385,13 +367,10 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestRandomApproximationRandomListBug2() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -400,36 +379,30 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestRandomApproximationListBug2Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return listWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return listIsIncon.get(statement + fieldLabel + scope);
 			}
 
@@ -438,17 +411,14 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
 	}
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationListBug2() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -457,37 +427,31 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestHeuristicListApproximationBug2Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
-			
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
+
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return listWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return listIsIncon.get(statement + fieldLabel + scope);
 			}
 
@@ -497,21 +461,17 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.run();
 	}
 
-	
 	@Test
 	public void testStrongestApproximationListConsistent() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v0.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v0.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
-		System.out.println(runner.debuggerAlgorithm.approximator
-				.weakestInconsistentApproximation("acyclic", "nxt", ""));
+		System.out
+				.println(runner.debuggerAlgorithm.approximator.weakestInconsistentApproximation("acyclic", "nxt", ""));
 
 		// runner.debuggerAlgorithm.run();
 	}
@@ -519,36 +479,30 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestRandomApproximationListMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v0.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v0.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return listStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return listWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return listIsIncon.get(statement + fieldLabel + scope);
 			}
 
@@ -561,60 +515,51 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestHeuristicApproximationListMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 
 		// change the debugger algorithm in runner
-		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM
-				.createIt(runner.toBeAnalyzedCode, runner.tmpLocalDirectory,
-						runner.approximator, runner.oracle, runner.exampleFinder);
+		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM.createIt(runner.toBeAnalyzedCode,
+				runner.tmpLocalDirectory, runner.approximator, runner.oracle, runner.exampleFinder);
 
 		runner.start();
 
-		/*Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return listProperties.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;*/
+		/*
+		 * Approximator approximatorMock = new Approximator(
+		 * runner.approximator.interfacE, runner.approximator.processManager,
+		 * runner.approximator.tmpLocalDirectory,
+		 * runner.approximator.toBeAnalyzedCode,
+		 * runner.approximator.dependentFiles) {
+		 * 
+		 * @Override public List<Pair<String, String>>
+		 * strongestImplicationApproximation( String statement, String
+		 * fieldLabel, String scope) { System.out.println(statement + fieldLabel
+		 * + scope); return listProperties.get(statement + fieldLabel + scope);
+		 * }
+		 * 
+		 * @Override public List<Pair<String, String>>
+		 * weakestInconsistentApproximation( String statement, String
+		 * fieldLabel, String scope) { return listWeakestIncon.get(statement +
+		 * fieldLabel + scope); }
+		 * 
+		 * @Override public Boolean isInconsistent(String statement, String
+		 * fieldLabel, String scope) { return listIsIncon.get(statement +
+		 * fieldLabel + scope); } };
+		 * 
+		 * runner.debuggerAlgorithm.approximator = approximatorMock;
+		 */
 		runner.debuggerAlgorithm.run();
 	}
 
 	@Test
 	public void testStrongestApproximationBinaryTreeRadonom() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary.tree.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.binary.tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/binary.tree.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.binary.tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
@@ -623,42 +568,36 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestApproximationBinaryTreeHeuristicMocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary.tree.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.binary.tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/binary.tree.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.binary.tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return binaryTreeStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return binaryWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return binaryTreeIsIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> strongestConsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestConsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return binaryTreeStrongestCon.get(statement + fieldLabel + scope);
 			}
 		};
@@ -671,104 +610,81 @@ public class DebuggerRunnerTest {
 	@Test
 	public void testStrongestApproximationBinaryTreeHeuristic() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/binary.tree.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.binary.tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/binary.tree.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.binary.tree.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
 	}
-	
-	
-	@Test
-	public void testDikjstraBug1Random(){
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
-		
-		
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-		runner.debuggerAlgorithm.run();
-		
-	}
-	
-	
-	@Test
-	public void testDikjstraBug1Heuristic(){
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
-		
-		
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-		runner.debuggerAlgorithm.run();
-	}
-	
 
 	@Test
-	public void testDikjstraBug1HeuristicMocked(){
+	public void testDikjstraBug1Random() {
 		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile(
-				"models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File(
-				"models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
-		
-		
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel,
-				Collections.emptyList(), testingHost,
-				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
-		
-		Approximator approximatorMock = new Approximator(
-				runner.approximator.interfacE, runner.approximator.processManager,
-				runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode,
-				runner.approximator.dependentFiles) {
+		runner.debuggerAlgorithm.run();
+
+	}
+
+	@Test
+	public void testDikjstraBug1Heuristic() {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+		runner.debuggerAlgorithm.run();
+	}
+
+	@Test
+	public void testDikjstraBug1HeuristicMocked() {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
 			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
 				System.out.println(statement + fieldLabel + scope);
 				return DPhStrongestImpl.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return DPhWeakestIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel,
-					String scope) {
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
 				return DPhIsIncon.get(statement + fieldLabel + scope);
 			}
 
 			@Override
-			public List<Pair<String, String>> strongestConsistentApproximation(
-					String statement, String fieldLabel, String scope) {
+			public List<Pair<String, String>> strongestConsistentApproximation(String statement, String fieldLabel,
+					String scope) {
 				return DPhStrongestCon.get(statement + fieldLabel + scope);
 			}
 		};
 
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
-		
-		
+
 	}
 
-	
 }
