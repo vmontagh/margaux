@@ -1,8 +1,10 @@
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -15,10 +17,8 @@ import edu.uw.ece.alloy.Configuration;
 
 public class TemporalImplicationLatticeGeneratorTest {
 
-	public static String pathToLegend = Configuration
-			.getProp("kb_temporal_legend");
-	public static String pathToImplication = Configuration
-			.getProp("kb_temporal_imply");
+	public static String pathToLegend = Configuration.getProp("kb_temporal_legend");
+	public static String pathToImplication = Configuration.getProp("kb_temporal_imply");
 	public static String pathToIff = Configuration.getProp("kb_temporal_iff");
 
 	File legendsFile = new File("tmp/legends.test.csv");
@@ -53,23 +53,20 @@ public class TemporalImplicationLatticeGeneratorTest {
 	@Test
 	public void testAllreachablesOfB() {
 		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
-				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(),
-				iffsFile.getAbsolutePath());
+				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(), iffsFile.getAbsolutePath());
 
-		assertArrayEquals(
-				generator.findAllReachable().get("B").toArray(new String[] {}),
-				new String[] { "A", "E", "G" });
+		assertArrayEquals(new String[] { "D", "E", "G" },
+				generator.findAllReachable().get("B").toArray(new String[] {}));
 
 	}
 
 	@Test
 	public void testAllrevReachablesOfG() {
 		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
-				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(),
-				iffsFile.getAbsolutePath());
-		assertArrayEquals(
-				generator.findAllRevReachable().get("G").toArray(new String[] {}),
-				new String[] { "A", "B", "C", "E", "F" });
+				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(), iffsFile.getAbsolutePath());
+		assertTrue(
+				Arrays.asList( "D", "B", "C", "E", "F" ).stream().sorted().collect(Collectors.toList()).equals(
+				generator.findAllRevReachable().get("G").stream().sorted().collect(Collectors.toList()) ));
 
 	}
 

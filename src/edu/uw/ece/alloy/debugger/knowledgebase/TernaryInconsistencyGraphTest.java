@@ -144,5 +144,4 @@ public class TernaryInconsistencyGraphTest {
 		System.out.println(tig.getAllInconsistecies("SzGrwtStrc_Glbl_SdMdl_EmptStrt_"));
 	}
 	
-	
 }

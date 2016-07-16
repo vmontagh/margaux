@@ -142,6 +142,9 @@ public class DebuggerRunnerTest {
 		DPhWeakestIncon.put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
 		DPhWeakestIncon.put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
 		DPhWeakestIncon.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptStrt_", "SzGrwt_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdIncrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptStrt_", "SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdIncrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
+		DPhWeakestIncon.put(" GrabbedInOrder_2[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("OrdDcrs_SzGrwtStrc_Glbl_SdEnd_EmptNon_", "OrdDcrs_SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwtStrc_Lcl_SdEnd_EmptNon_", "OrdDcrs_SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwtStrc_Lcl_SdMdl_EmptNon_", "OrdDcrs_SzGrwtStrc_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwtStrc_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwtStrc_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
+		DPhWeakestIncon.put(" GrabbedInOrder_2[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		DPhWeakestIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder_2[ ] ) )holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwtStrc_Lcl_SdEnd_EmptNon_", "OrdDcrs_SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwtStrc_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwtStrc_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwtStrc_Glbl_SdEnd_EmptNon_", "OrdDcrs_SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
 
 		
 		
@@ -687,4 +690,59 @@ public class DebuggerRunnerTest {
 
 	}
 
+	@Test
+	public void testDikjstraBug2Heuristic() {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug2.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+		runner.debuggerAlgorithm.run();
+	}
+
+	@Test
+	public void testDikjstraBug2HeuristicMocked() {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug2.als");
+
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
+				System.out.println(statement + fieldLabel + scope);
+				return DPhStrongestImpl.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
+				return DPhWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
+				return DPhIsIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> strongestConsistentApproximation(String statement, String fieldLabel,
+					String scope) {
+				return DPhStrongestCon.get(statement + fieldLabel + scope);
+			}
+		};
+
+		runner.debuggerAlgorithm.approximator = approximatorMock;
+		runner.debuggerAlgorithm.run();
+
+	}
+	
 }

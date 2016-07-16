@@ -152,6 +152,8 @@ public abstract class DebuggerAlgorithm {
 	 * properties, so is save here
 	 */
 	final protected Map<Field, Map<Expr, List<Pair<String, String>>>> notApproximationedButInconsistent;
+	
+	final protected Map<Field, Map<Expr, List<Pair<String, String>>>> weakestConsistencies;
 
 	protected final Map<Field, Map<Expr, Map<Pair<String, String>, PriorityQueue<DecisionQueueItem<String>>>>> strongerApproxQueues,
 			weakerApproxQueues;
@@ -221,6 +223,7 @@ public abstract class DebuggerAlgorithm {
 
 		approximations = new HashMap<>();
 		notApproximationedButInconsistent = new HashMap<>();
+		weakestConsistencies = new HashMap<>();
 		this.destinationDir = destinationDir;
 
 		acceptedExamples = new HashSet<>();
@@ -245,6 +248,7 @@ public abstract class DebuggerAlgorithm {
 		weakerApproxQueues = null;
 		approximations = null;
 		notApproximationedButInconsistent = null;
+		weakestConsistencies = null;
 		acceptedExamples = null;
 		rejectedExamples = null;
 	}

@@ -3,7 +3,9 @@ package edu.uw.ece.alloy.debugger.knowledgebase;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
@@ -110,5 +112,27 @@ public class BinaryImplicationLattic extends ImplicationLattic {
 			}
 		}
 		return Collections.unmodifiableList(result);
+	}
+
+	final Set<String> allPatternNamesCache = new HashSet<>();
+	@Override
+	public boolean hasPattern(String pattern) throws Err {
+		if (allPatternNamesCache.isEmpty())
+			allPatternNamesCache.addAll(getAllPatternsASSet());
+		return allPatternNamesCache.contains(pattern);
+	}
+
+	@Override
+	public List<String> getAllPatterns() throws Err {
+		return Collections.unmodifiableList(new ArrayList<>(getAllPatternsASSet()));
+	}
+	
+	protected Set<String> getAllPatternsASSet() throws Err{
+		Set<String> patterns = new HashSet<>();
+		for (String source: getAllSources()){
+			patterns.add(source);
+			patterns.addAll(getAllImpliedProperties(source));
+		}
+		return Collections.unmodifiableSet(patterns);
 	}
 }

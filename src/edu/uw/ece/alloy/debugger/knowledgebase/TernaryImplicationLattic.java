@@ -95,8 +95,8 @@ public class TernaryImplicationLattic extends ImplicationLattic {
 		List<String> result = new LinkedList<>();
 		Map<String, Set<String>> implications = generator.findReachable();
 		for (String key : implications.keySet()) {
-			Set<String> revImplied = implications.get(key);
-			if (revImplied.isEmpty()) {
+			Set<String> implied = implications.get(key);
+			if (implied.isEmpty()) {
 				result.add(key);
 			}
 		}
@@ -133,6 +133,17 @@ public class TernaryImplicationLattic extends ImplicationLattic {
 			result.addAll(generator.findAllRevReachable().get(property));
 		}
 		return Collections.unmodifiableList(result);
+	}
+
+	@Override
+	public boolean hasPattern(String pattern) {
+		System.out.println(pattern + "--->" + generator.getAllpatterns());
+		return generator.getAllpatterns().contains(pattern);
+	}
+
+	@Override
+	public List<String> getAllPatterns() {
+		return Collections.unmodifiableList(new ArrayList<>(generator.getAllpatterns()));
 	}
 
 }

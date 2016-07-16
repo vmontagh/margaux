@@ -306,6 +306,34 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		for (Field field : super.fields) {
 			if (field.isPrivate != null)
 				continue;
+			
+			if(field.label.contains("waits"))
+				continue;
+			
+			final StringBuilder sb = new StringBuilder();
+			Expr antecedent = ExprList.make(model.get(0).pos(), model.get(model.size() - 1).pos(), Op.AND, model);
+			try {
+				//sb.append("----------strongestConsistentApproximation----------\n");
+				//approximator.strongestConsistentApproximation(antecedent, field, scope).stream().map(a->a.a).forEach(a->sb.append(a).append("\n"));
+				sb.append("----------weakestConsistentApproximation----------\n");
+				approximator.weakestConsistentApproximation(antecedent, field, scope).stream().map(a->a.a).forEach(a->sb.append(a).append("\n"));
+				/*sb.append("----------allConsistentApproximation----------\n");
+				approximator.allConsistentApproximation(antecedent, field, scope).stream().map(a->a.a).forEach(a->sb.append(a).append("\n"));
+				sb.append("----------weakestInconsistentApproximation----------\n");
+				approximator.weakestInconsistentApproximation(antecedent, field, scope).stream().map(a->a.a).forEach(a->sb.append(a).append("\n"));
+				sb.append("----------weakestInconsistentApproximation----------\n");
+				approximator.allInconsistentApproximation(antecedent, field, scope).stream().map(a->a.a).forEach(a->sb.append(a).append("\n"));
+				 */
+			} catch (Err e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			System.out.println(sb);
+			System.out.println(approximator.getAllChachedResults());
+			
+			System.exit(-10);
+			
 			for (Expr expr : model) {
 				// Pair<Expr, Field> key = new Pair<>(expr, field);
 				// fill in weakestInconsistentProps and allInconsistentProps
