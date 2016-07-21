@@ -7,7 +7,7 @@ public class HolaProcessedResult extends ProcessedResult {
 
 	private static final long serialVersionUID = 2058796798876672112L;
 	
-	private HashMap<String, String> result;
+	private String result;
 	
 	public HolaProcessedResult(HolaProcessedResult result) {
 		this(result.getParam());
@@ -22,12 +22,12 @@ public class HolaProcessedResult extends ProcessedResult {
 		super(param, status);
 	}
 	
-	public HolaProcessedResult(HolaProcessingParam param, Status status, HashMap<String, String> map) {
+	public HolaProcessedResult(HolaProcessingParam param, Status status, String solution) {
 		super(param, status);
-		this.result = map;
+		this.result = solution;
 	}
 	
-	public HashMap<String, String> getResults() {
+	public String getResult() {
 		return result;
 	}
 	

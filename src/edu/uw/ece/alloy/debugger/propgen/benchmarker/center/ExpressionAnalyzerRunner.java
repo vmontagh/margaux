@@ -442,14 +442,12 @@ public final class ExpressionAnalyzerRunner extends Runner {
 
 		inputInterface.MessageSent.addListener(new MessageEventListener<MessageSentEventArgs>() {
 			@Override
-			public void actionOn(ResponseMessage responsetMessage, MessageSentEventArgs messageArgs) {
+			public void actionOn(ResponseMessage responseMessage, MessageSentEventArgs messageArgs) {
 				final Map<String, Object> context = new HashMap<>();
-				// it is expected to see a request message. The request creates
-				// a new session and puts it in the analyzingSessions
 				context.put("sessionDone", sessionDone);
-				super.actionOn(responsetMessage, messageArgs);
+				super.actionOn(responseMessage, messageArgs);
 				try {
-					responsetMessage.onAction(context);
+				    responseMessage.onAction(context);
 				} catch (InvalidParameterException e) {
 					logger.severe(Utils.threadName() + "reponse cannot be processed:\n" + e.getStackTrace());
 				}

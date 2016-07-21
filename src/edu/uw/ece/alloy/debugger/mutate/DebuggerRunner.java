@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.infrastructure.Runner;
 import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByAlloy;
+import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByHolaTest;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
@@ -105,6 +106,19 @@ public class DebuggerRunner extends Runner {
 	protected Consumer<RemoteProcess> processIsSetup = (RemoteProcess process) -> {
 		analyzerProcessManager.changeStatusToIDLE(process);
 	};
+	
+	protected Consumer<RemoteProcess> holaProcessIsReady = (RemoteProcess process) -> {
+	    exampleFinderInterface
+                .sendMessage(
+                        new AlloySetupMessage(exampleFinderInterface.getHostProcess(), dependentFiles.stream()
+                                .map(f -> (new LazyFile(f.getAbsolutePath())).load()).collect(Collectors.toList())),
+                        process);
+        exampleFinderProcessManager.changeStatusToSETUP(process);
+    };
+
+    protected Consumer<RemoteProcess> holaProcessIsSetup = (RemoteProcess process) -> {
+        exampleFinderProcessManager.changeStatusToIDLE(process);
+    };
 
 	@Override
 	protected void initiate() {
@@ -158,32 +172,46 @@ public class DebuggerRunner extends Runner {
 		// process.
 		exampleFinderInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
 
-			// TODO(Fikayo): OnBorerAnalyzerRunner should periodically
-			// send a liveness message to DebuggerRunner.
-			// Once the message is received the appropriate process manager
-			// updates the process's status. See the analyzer example above
-			// as an example and follow the same pattern.
-			// Note: the actual function is called in the related message.
 			@Override
 			public void actionOn(LivenessMessage livenessMessage, MessageReceivedEventArgs event) {
 				System.out.println("Hola livenessMessage---->" + livenessMessage);
+				final Map<String, Object> context = new HashMap<>();
+                context.put("RemoteProcessLogger", exampleFinderProcessManager);
+                try {
+                    livenessMessage.onAction(context);
+                } catch (InvalidParameterException e) {
+                    e.printStackTrace();
+                }
 			}
 
-			// TODO(Fikayo): Implement the readyness message like the one in
-			// distributerInterface.
 			@Override
 			public void actionOn(ReadyMessage readyMessage, MessageReceivedEventArgs event) {
+			    final Map<String, Object> context = new HashMap<>();
+                context.put("processIsReady", holaProcessIsReady);
+                try {
+                    System.out.println("DebuggerRunner actionOn " + readyMessage);
+                    readyMessage.onAction(context);
+                } catch (InvalidParameterException e) {
+                    e.printStackTrace();
+                }
 			}
 
 			// TODO(Fikayo): Implement the setup message to send the library
 			// file before starting the remote process.
 			// The flow between DebuggerRunner(DR) and
 			// OnBorderAnalyzerRunner(OAR) is like:
-			// DR boots a new OAR, OAR sends ready message, DE sends a setup
+			// DR boots a new OAR, OAR sends ready message, DR sends a setup
 			// message, and OAR sends back a Done message.
 			// Now OAR is ready to go.
 			@Override
 			public void actionOn(DoneMessage doneMessage, MessageReceivedEventArgs messageArgs) {
+			    final Map<String, Object> context = new HashMap<>();
+                context.put("processIsSetup", holaProcessIsSetup);
+                try {
+                    doneMessage.onAction(context);
+                } catch (InvalidParameterException e) {
+                    e.printStackTrace();
+                }
 			}
 
 		});
@@ -193,7 +221,7 @@ public class DebuggerRunner extends Runner {
 
 		// TODO(Fikayo): Once the all tests are passed, instantiate from
 		// ExampleFinderByHola
-		exampleFinder = new ExampleFinderByAlloy();
+		exampleFinder = new ExampleFinderByHola(exampleFinderInterface, exampleFinderProcessManager, tmpLocalDirectory);
 
 		oracle = new CorrectModelOracle(correctModel);
 

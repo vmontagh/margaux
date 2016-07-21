@@ -1,7 +1,6 @@
 package edu.uw.ece.alloy.debugger.onborder;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +21,13 @@ public class ExampleFinderByHola implements ExampleFinder {
 	private final ProcessDistributer processManager;
 	private final File tmpLocalDirectory;
 	
-	// TODO(Fikayo): Document what are the input parameters.
+	/**
+	 * Creates a new instance of {@link ExampleFinderByHola}.
+	 * 
+	 * @param interfacE - The socket interface to be used by the example finder.
+	 * @param processManager - The remote process manager used to distribute and manage each hola agent
+	 * @param tmpLocalDirectory - The specified local directory to be used as a temp directory by the hola agent.
+	 */
 	public ExampleFinderByHola(ServerSocketInterface interfacE, ProcessDistributer processManager,
 			File tmpLocalDirectory) {
 		this.interfacE = interfacE;
@@ -53,8 +58,8 @@ public class ExampleFinderByHola implements ExampleFinder {
 			}
 		};
 
-		interfacE.MessageReceived.addListener(receiveListener);
-		interfacE.sendMessage(message, processManager.getActiveRandomeProcess());
+		this.interfacE.MessageReceived.addListener(receiveListener);
+		this.interfacE.sendMessage(message, processManager.getActiveRandomeProcess());
 
 		// Wait for result;
 		synchronized (result) {
@@ -70,13 +75,17 @@ public class ExampleFinderByHola implements ExampleFinder {
 		}
 
 		interfacE.MessageReceived.removeListener(receiveListener);
-		System.out.println("result: " + result.getResult().get().getResults());
+		System.out.println("result: " + result.getResult().get().getResult());
 
 		// Right now, the result is the same for both
-		if (result.getResult().get().getResults().isPresent()) {
-			HashMap<String, String> res = result.getResult().get().getResults().get();
-			return new Pair<Optional<String>, Optional<String>>(Optional.of(res.get(predNameA)),
-					Optional.of(res.get(predNameB)));
+		if (result.getResult().get().getResult().isPresent()) {
+		    
+		    String res = result.getResult().get().getResult().get();
+//			return new Pair<Optional<String>, Optional<String>>(Optional.of(res.get(predNameA)),
+//					Optional.of(res.get(predNameB)));
+		    
+		    // TODO (Vajih): Why is the result a pair? Which result is for predA and for predB?
+		    return new Pair<Optional<String>, Optional<String>>(Optional.of(res), Optional.of(res)); 
 		}
 
 		return new Pair<Optional<String>, Optional<String>>(Optional.empty(), Optional.empty());

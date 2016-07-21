@@ -5,9 +5,12 @@ package edu.uw.ece.alloy.util;
 
 import java.io.File;
 import java.net.URI;
+import java.util.logging.Level;
 
 import edu.mit.csail.sdg.alloy4.Err;
+import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.Compressor;
+import edu.uw.ece.alloy.Configuration;
 
 /**
  * @author vajih
@@ -83,6 +86,28 @@ public class LazyFile extends File {
 		return new LazyFile(pathname);
 	}
 
+	/**
+	 * Dumps the content of this {@link LazyFile} unto the disk using the path represented by the file
+	 * @return self
+	 */
+	public LazyFile dumpFile() {
+        
+	    this.load();
+	    
+        try {
+            if (!this.getParentFile().exists()) {
+                this.getParentFile().mkdirs();
+            }
+            
+            Util.writeAll(this.getAbsolutePath(), this.content);
+        } catch (Err e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        
+        return this;
+    }	
+	
 	public boolean isLoaded() {
 		return !content.equals(Compressor.EMPTY_STRING);
 	}

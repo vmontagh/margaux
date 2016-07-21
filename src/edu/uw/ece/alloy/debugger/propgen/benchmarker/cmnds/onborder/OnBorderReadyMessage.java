@@ -1,9 +1,9 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
-import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessLogger;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.InvalidParameterException;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ReadyMessage;
 
@@ -13,12 +13,10 @@ public class OnBorderReadyMessage extends ReadyMessage {
 
 	public OnBorderReadyMessage(RemoteProcess process, long creationTime) {
 		super(process, creationTime);
-		// TODO Auto-generated constructor stub
 	}
 
 	public OnBorderReadyMessage(RemoteProcess process) {
 		super(process);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -26,8 +24,16 @@ public class OnBorderReadyMessage extends ReadyMessage {
 			throws InvalidParameterException {
 		
 		System.out.println("--OnBorder ready message--");
-		RemoteProcessLogger manager = (RemoteProcessLogger) context.get("RemoteProcessLogger");
-		manager.changeStatusToIDLE(process);
+//		RemoteProcessLogger manager = (RemoteProcessLogger) context.get("RemoteProcessLogger");
+//		manager.changeStatusToIDLE(process);
+		
+		@SuppressWarnings("unchecked")
+        Consumer<RemoteProcess> processIsReady = (Consumer<RemoteProcess>) context.get("processIsReady");
+        try {
+            processIsReady.accept(process);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 }
