@@ -11,7 +11,7 @@ pred acyclic{
 }
 
 pred declarativeFormulaForNext{
-	all n:Node | one n.nxt
+	all n:Node | lone n.nxt
 }
 
 
@@ -30,7 +30,8 @@ pred singleHead{
 
 check{
   ( declarativeFormulaForNext and
-    acyclic and
-    connected and
-    singleHead) implies linearList   
+    acyclic //and
+//    connected and
+//    singleHead
+) implies linearList   
 } for 3

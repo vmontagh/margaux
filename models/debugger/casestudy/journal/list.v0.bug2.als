@@ -10,8 +10,8 @@ pred acyclic{
 	all n: Node| !( n in n.^(nxt) )
 }
 
-pred declarativeFormulaForNext{
-	all n:Node | one n.nxt
+pred declarativeFormulaForNext_fixed{
+	all n:Node | lone n.nxt
 }
 
 
@@ -29,8 +29,9 @@ pred singleHead{
 
 
 check{
-  ( declarativeFormulaForNext and
-    acyclic and
-    connected and
-    singleHead) implies linearList   
+  ( declarativeFormulaForNext_fixed and
+    acyclic //and
+//    connected and
+//    singleHead
+) implies linearList   
 } for 3

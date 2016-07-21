@@ -277,7 +277,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 			if (weakestIncon.stream().anyMatch(p -> allImplieds.contains(p.a))) {
 				modelPartD.setScore(
-						Math.max(changedPriorityList.stream().map(w -> w.getScore().get()).max(Integer::compare).get(),
+						Math.max(changedPriorityList.stream().map(w -> w.getScore().get()).max(Integer::compare).orElse(Integer.MIN_VALUE),
 								modelQueue_.stream().map(w -> w.getScore().get()).max(Integer::compare)
 										.orElse(Integer.MIN_VALUE))
 								+ 1);

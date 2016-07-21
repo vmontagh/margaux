@@ -4,35 +4,33 @@
 
 sig Node{
 	nxt:  set  Node}
+one sig Head extends Node{}
 
 pred acyclic{
 	all n: Node| !( n in n.^(nxt) )
 }
 
-pred structuralConstraint{
+pred declarativeFormulaForNext{
 	all n:Node | one n.nxt
 }
 
-pred lowerBoud[]{
-	some Node
-	// it also could be nxt. I.e `some nxt'
+
+pred linearList{ 
+  one n: Node| Node = n.*nxt
 }
 
-pred listModel[]{
-	structuralConstraint
-	acyclic
-	lowerBoud
+pred connected{
+  one n:Node| no n.nxt and all n':Node-n| one n'.nxt
 }
 
-pred allReachable[]{
-	lone n: Node| Node = n.*(nxt)
+pred singleHead{
+  no Head.~nxt and all n': Node-Head| one n'.~nxt
 }
 
-//run genBinaryTree for 3
 
-run
-{
-	(structuralConstraint and
-	acyclic and
-	lowerBoud) implies allReachable 
+check{
+  ( declarativeFormulaForNext and
+    acyclic and
+    connected and
+    singleHead) implies linearList   
 } for 3
