@@ -20,11 +20,10 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.filters.BlocksExtractorByComments;
-import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLatticDeclarative;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
-import edu.uw.ece.alloy.debugger.knowledgebase.TemporalImplicationLatticeGenerator;
-import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLatticImperative;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.communication.Queue;
 
 /**
@@ -86,13 +85,14 @@ public class ExpressionPropertyCheckerTest {
 			Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 
-		bil = new BinaryImplicationLattic(tempFolderPath, moduleNames);
-		til = new TernaryImplicationLattic(TemporalImplicationLatticeGenerator.pathToLegend,
-				TemporalImplicationLatticeGenerator.pathToImplication, TemporalImplicationLatticeGenerator.pathToIff);
+		bil = new BinaryImplicationLatticDeclarative(tempFolderPath, moduleNames);
+		til = new TernaryImplicationLatticImperative();
 
 		epc = new ExpressionPropertyGenerator(UUID.randomUUID(), new Queue<>(), new File(AlloyTmpTestPath), tempFolder,
-				tempFolder, "s", IfPropertyToAlloyCode.EMPTY_CONVERTOR, "expresson", "scope",
-				Collections.emptyList(), new PatternToProperty(new File(Configuration.getProp("relational_properties_tagged")), new File(Configuration.getProp("temporal_properties_tagged")), new File(AlloyTmpTestPath)), Long.MAX_VALUE);
+				tempFolder, "s", IfPropertyToAlloyCode.EMPTY_CONVERTOR, "expresson", "scope", Collections.emptyList(),
+				new PatternToProperty(new File(Configuration.getProp("relational_properties_tagged")),
+						new File(Configuration.getProp("temporal_properties_tagged")), new File(AlloyTmpTestPath)),
+				Long.MAX_VALUE);
 	}
 
 	/**

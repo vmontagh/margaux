@@ -22,12 +22,12 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
-import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLatticImperative;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.InconsistencyGraph;
 import edu.uw.ece.alloy.debugger.knowledgebase.InconsistencyGraph.STATUS;
 import edu.uw.ece.alloy.debugger.knowledgebase.PatternToProperty;
-import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLatticImperative;
 import edu.uw.ece.alloy.debugger.knowledgebase.TernaryInconsistencyGraph;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.AndPropertyToAlloyCode;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.IfPropertyToAlloyCode;
@@ -96,8 +96,8 @@ public class Approximator {
 		// connected
 		// to the given relational and temporal patterns stored in a request
 		// message
-		implications.add(new BinaryImplicationLattic());
-		implications.add(new TernaryImplicationLattic());
+		implications.add(new BinaryImplicationLatticImperative());
+		implications.add(new TernaryImplicationLatticImperative());
 
 		inconsistencies = new LinkedList<>();
 		inconsistencies.add(new TernaryInconsistencyGraph());

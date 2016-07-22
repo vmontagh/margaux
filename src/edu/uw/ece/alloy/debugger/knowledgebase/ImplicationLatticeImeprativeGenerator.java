@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
 import java.util.Collections;
@@ -10,24 +7,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.alloy.util.graph.AdjMatrixEdgeWeightedDigraph;
 import edu.uw.ece.alloy.util.graph.DirectedEdge;
 import edu.uw.ece.alloy.util.graph.FloydWarshall;
 
-/**
- * Given the implication info, the class generates an Alloy file to infer the
- * implications. The given info,has to be two csv files: 1- Implication relation
- * 2- legend relation
- * 
- * @author vajih
- *
- */
-public class TemporalImplicationLatticeGenerator {
-	public static String pathToLegend = Configuration.getProp("kb_temporal_legend");
-	public static String pathToImplication = Configuration.getProp("kb_temporal_imply");
-	public static String pathToIff = Configuration.getProp("kb_temporal_iff");
+public abstract class ImplicationLatticeImeprativeGenerator {
+
 
 	final Map<Integer, String> legends = new HashMap<>();
 	final Map<String, Integer> revLegends = new HashMap<>();
@@ -38,7 +24,7 @@ public class TemporalImplicationLatticeGenerator {
 	final Map<String, Set<String>> allReachableMaps = new HashMap<>();
 	final Map<String, Set<String>> allRevReachableMaps = new HashMap<>();
 
-	public TemporalImplicationLatticeGenerator(String pathToLegend, String pathToImplication, String pathToIff) {
+	public ImplicationLatticeImeprativeGenerator(String pathToLegend, String pathToImplication, String pathToIff) {
 
 		final Map<Integer, Set<Integer>> implicationMap = new HashMap<>();
 		final Map<Integer, Set<Integer>> revImplicationMap = new HashMap<>();

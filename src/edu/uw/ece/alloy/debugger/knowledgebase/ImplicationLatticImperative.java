@@ -9,30 +9,18 @@ import java.util.Set;
 
 import edu.mit.csail.sdg.alloy4.Err;
 
-/**
- * @author vajih
- *
- */
-public class TernaryImplicationLattic extends ImplicationLattic {
+public abstract class ImplicationLatticImperative extends ImplicationLattic {
 
-	public TernaryImplicationLattic(String tempPath, String[] moduleName) {
+	public ImplicationLatticImperative(String tempPath, String[] moduleName) {
 		super(tempPath, moduleName);
 		generator = null;
 	}
 
-	final TemporalImplicationLatticeGenerator generator;
+	final ImplicationLatticeImeprativeGenerator generator;
 
-	public TernaryImplicationLattic(String pathToLegend, String pathToImplication,
-			String pathToIff) {
+	protected ImplicationLatticImperative(ImplicationLatticeImeprativeGenerator generator) {
 		super();
-		generator = new TemporalImplicationLatticeGenerator(pathToLegend,
-				pathToImplication, pathToIff);
-	}
-
-	public TernaryImplicationLattic() {
-		this(TemporalImplicationLatticeGenerator.pathToLegend,
-				TemporalImplicationLatticeGenerator.pathToImplication,
-				TemporalImplicationLatticeGenerator.pathToIff);
+		this.generator = generator;
 	}
 
 	/*
@@ -146,3 +134,4 @@ public class TernaryImplicationLattic extends ImplicationLattic {
 	}
 
 }
+

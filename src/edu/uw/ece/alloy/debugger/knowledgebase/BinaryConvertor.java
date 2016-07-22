@@ -53,7 +53,7 @@ public class BinaryConvertor {
 		try {
 			Util.writeAll(path.getAbsolutePath(), relationDef);
 
-			final BinaryImplicationLattic bil = new BinaryImplicationLattic();
+			final BinaryImplicationLatticDeclarative bil = new BinaryImplicationLatticDeclarative();
 			final List<String> allBinaryProperties = Collections
 					.unmodifiableList(bil.getAllPatterns().stream().sorted().collect(Collectors.toList()));
 			System.out.printf("%s number of binary patterns!\n", allBinaryProperties.size());

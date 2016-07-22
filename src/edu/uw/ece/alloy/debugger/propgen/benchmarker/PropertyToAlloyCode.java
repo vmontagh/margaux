@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Optional;
 
 import edu.uw.ece.alloy.Compressor;
-import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLatticDeclarative;
+import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLatticImperative;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
-import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLattic;
+import edu.uw.ece.alloy.debugger.knowledgebase.TernaryImplicationLatticImperative;
 
 public class PropertyToAlloyCode implements Serializable {
 
@@ -51,8 +52,8 @@ public class PropertyToAlloyCode implements Serializable {
 		/* The BinaryImplicationLattic and TernaryImplicationLAttice are not
 		* connected to the given relational and temporal patterns stored in a request message
 		*/
-		implications.add(new BinaryImplicationLattic());
-		implications.add(new TernaryImplicationLattic());
+		implications.add(new BinaryImplicationLatticImperative());
+		implications.add(new TernaryImplicationLatticImperative());
 	}
 
 	public PropertyToAlloyCode() {

@@ -52,7 +52,7 @@ public class TemporalImplicationLatticeGeneratorTest {
 
 	@Test
 	public void testAllreachablesOfB() {
-		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
+		TemporalImplicationLatticeImperativeGenerator generator = new TemporalImplicationLatticeImperativeGenerator(
 				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(), iffsFile.getAbsolutePath());
 
 		assertArrayEquals(new String[] { "D", "E", "G" },
@@ -62,7 +62,7 @@ public class TemporalImplicationLatticeGeneratorTest {
 
 	@Test
 	public void testAllrevReachablesOfG() {
-		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
+		TemporalImplicationLatticeImperativeGenerator generator = new TemporalImplicationLatticeImperativeGenerator(
 				legendsFile.getAbsolutePath(), implicationsFile.getAbsolutePath(), iffsFile.getAbsolutePath());
 		assertTrue(
 				Arrays.asList( "D", "B", "C", "E", "F" ).stream().sorted().collect(Collectors.toList()).equals(

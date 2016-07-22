@@ -12,16 +12,17 @@ import edu.mit.csail.sdg.alloy4compiler.translator.A4Solution;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ExpressionPropertyGenerator;
 
-public class BinaryImplicationLattic extends ImplicationLattic {
+@Deprecated
+public class BinaryImplicationLatticDeclarative extends ImplicationLattic {
 
 	final static String sourceFolderPath = Configuration.getProp("kb_folder");
 	final static String[] moduleNames = Configuration.getProp("kb_modules").split(";");
 
-	public BinaryImplicationLattic() {
+	public BinaryImplicationLatticDeclarative() {
 		this(sourceFolderPath, moduleNames);
 	}
 
-	public BinaryImplicationLattic(String tempPath, String[] moduleName) {
+	public BinaryImplicationLatticDeclarative(String tempPath, String[] moduleName) {
 		super(tempPath, moduleName);
 	}
 

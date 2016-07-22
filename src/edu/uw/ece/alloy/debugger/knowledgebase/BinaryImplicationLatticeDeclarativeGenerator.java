@@ -31,7 +31,7 @@ import edu.uw.ece.alloy.util.Utils;
  * @author vajih
  *
  */
-public class BinaryImplicationLatticeGenerator {
+public class BinaryImplicationLatticeDeclarativeGenerator {
 	final public static File relationalPropModuleOriginal = new File(
 			Configuration.getProp("relational_properties_tagged"));
 	final public static File tmpDirectoryRoot = new File(
