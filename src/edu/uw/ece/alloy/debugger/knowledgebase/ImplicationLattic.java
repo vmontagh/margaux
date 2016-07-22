@@ -37,8 +37,7 @@ public abstract class ImplicationLattic {
 	final static Random rand = new Random();
 
 	protected final static Logger logger = Logger
-			.getLogger(ImplicationLattic.class.getName() + "--"
-					+ Thread.currentThread().getName());
+			.getLogger(ImplicationLattic.class.getName() + "--" + Thread.currentThread().getName());
 
 	protected ImplicationLattic() {
 		this.TEMPORARY_FOLDER = "";
@@ -53,18 +52,17 @@ public abstract class ImplicationLattic {
 		if (!(new File(this.TEMPORARY_FOLDER)).exists())
 			throw new RuntimeException(this.TEMPORARY_FOLDER + "does not exists");
 
-		// Modules have to exists in the temp folder
+		// Modules have to exist in the temp folder
 		for (String name : this.MODLUE_NAMES) {
 			File pathToModule = new File(this.TEMPORARY_FOLDER, name);
 			if (!pathToModule.exists())
-				throw new RuntimeException(
-						pathToModule.getAbsolutePath() + "does not exists");
+				throw new RuntimeException(pathToModule.getAbsolutePath() + "does not exists");
 		}
 
 	}
 
 	protected List<A4Solution> getAllproperties(String path) throws Err {
-		
+
 		Map<Command, A4Solution> executionResult = A4CommandExecuter.getInstance()
 				.runThenGetAnswers(new String[] { path }, A4Reporter.NOP);
 
@@ -85,26 +83,23 @@ public abstract class ImplicationLattic {
 
 	}
 
-	protected List<A4Solution> writeAndFind(String content, File file)
-			throws Err {
+	protected List<A4Solution> writeAndFind(String content, File file) throws Err {
 		final List<A4Solution> result = new ArrayList<>();
 		try {
 			Util.writeAll(file.getAbsolutePath(), content);
 			result.addAll(getAllproperties(file.getAbsolutePath()));
 		} catch (ErrorSyntax es) {
-			/*logger
-					.log(Level.WARNING,
-							"[" + Thread.currentThread().getName() + "] "
-									+ "Syntax Error while getting all sources in implication lattice: ",
-							es);*/
-		}catch (Exception e){
-			logger
-			.log(Level.SEVERE,
-					"[" + Thread.currentThread().getName() + "] "
-							+ "Error while getting all sources in implication lattice: ",
-					e);
+			/*
+			 * logger .log(Level.WARNING, "[" + Thread.currentThread().getName()
+			 * + "] " +
+			 * "Syntax Error while getting all sources in implication lattice: "
+			 * , es);
+			 */
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "[" + Thread.currentThread().getName() + "] "
+					+ "Error while getting all sources in implication lattice: ", e);
 			throw e;
-		} finally{
+		} finally {
 			file.delete();
 		}
 
@@ -126,18 +121,18 @@ public abstract class ImplicationLattic {
 
 	public abstract List<String> getAllSources() throws Err;
 
-	public abstract List<String> getNextImpliedProperties(String property)
-			throws Err;
+	public abstract List<String> getNextImpliedProperties(String pattern) throws Err;
 
-	public abstract List<String> getNextRevImpliedProperties(String property)
-			throws Err;
+	public abstract List<String> getNextRevImpliedProperties(String pattern) throws Err;
 
 	public abstract List<String> getAllSinks() throws Err;
 
-	public abstract List<String> getAllImpliedProperties(String property)
-			throws Err;
+	public abstract List<String> getAllImpliedProperties(String pattern) throws Err;
 
-	public abstract List<String> getAllRevImpliedProperties(String property)
-			throws Err;
+	public abstract List<String> getAllRevImpliedProperties(String pattern) throws Err;
+
+	public abstract boolean hasPattern(String pattern) throws Err;
+
+	public abstract List<String> getAllPatterns() throws Err;
 
 }

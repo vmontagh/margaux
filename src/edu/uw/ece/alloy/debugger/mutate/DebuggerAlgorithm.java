@@ -27,6 +27,8 @@ import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprList;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprList.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
@@ -125,6 +127,7 @@ public abstract class DebuggerAlgorithm {
 
 	// A model is a conjunction of constraints. this.constraint = model
 	final protected List<Expr> model;// = Collections.emptyList();
+	final protected Expr modelExpr;
 	// In a model in the form of M => P, P is a conjunction of constraints.
 	// constraint = model => property
 	final protected List<Expr> property;// = Collections.emptyList();
@@ -198,6 +201,7 @@ public abstract class DebuggerAlgorithm {
 
 		Pair<List<Expr>, List<Expr>> propertyChecking = Decompose.decomposetoImplications(constraint);
 		model = Collections.unmodifiableList(propertyChecking.a);
+		modelExpr = ExprList.make(model.get(0).pos(), model.get(model.size() - 1).pos(), Op.AND, model);
 		property = Collections.unmodifiableList(propertyChecking.b);
 		scope = ExtractorUtils.extractScopeFromCommand(command);
 		try {
@@ -235,6 +239,7 @@ public abstract class DebuggerAlgorithm {
 		constraint = null;
 		scope = null;
 		model = null;
+		modelExpr = null;
 		property = null;
 		oracle = null;
 		exampleFinder = null;

@@ -28,5 +28,5 @@ public abstract class InconsistencyGraph {
 
 	public abstract Set<String> getAllInconsistecies(String pattern);
 
-	public abstract Set<String> getAllConsistencies(String pattern);
+	public abstract Set<String> getAllPatterns();
 }

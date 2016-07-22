@@ -61,23 +61,24 @@ public class TernaryInconsistencyGraph extends InconsistencyGraph {
 			assert splittedRow.length == 2;
 			// codeA <=> codeB
 			int codeA = Integer.parseInt(splittedRow[0]);
-			int codeB = Integer.parseInt(splittedRow[0]);
+			int codeB = Integer.parseInt(splittedRow[1]);
 			assert legends.containsKey(codeA);
 			assert legends.containsKey(codeB);
 
 			assert iffMap.containsKey(codeA);
-			iffMap.get(codeA).add(codeB);
+			// Only add one direction
+			if (!iffMap.get(codeB).contains(codeA))
+				iffMap.get(codeA).add(codeB);
 		}
-
-		for (int key : groupingMap.keySet()) {
-			if (groupingMap.get(key) == null) {
-				groupingMap.put(key, key);
-				for (int otherKey : iffMap.get(key)) {
-					groupingMap.put(otherKey, key);
-				}
+		
+		groupingMap.keySet().stream().sorted().forEachOrdered(key -> {
+			int groupKey = key;
+			while (!iffMap.get(groupKey).isEmpty()){
+				groupKey = iffMap.get(groupKey).stream().sorted().findFirst().get();
 			}
-		}
-
+			groupingMap.put(key, groupKey);			
+		});
+		
 		// read inconsistencies
 		for (String line : Utils.readFileLines(pathToInconsistency)) {
 			String[] splittedRow = line.split(",");
@@ -94,14 +95,20 @@ public class TernaryInconsistencyGraph extends InconsistencyGraph {
 			}
 		}
 
+		Set<Integer> toBeRemovedKeys = new HashSet<>();
 		// remove equal properties from legends
 		for (Integer key : groupingMap.keySet()) {
 			if (!key.equals(groupingMap.get(key))) {
-				legends.remove(revLegends.get(key));
-				revLegends.remove(key);
+				revLegends.remove(legends.get(key));
+				legends.remove(key);
 				inconsistencies.remove(key);
+				toBeRemovedKeys.add(key);
 			}
 		}
+		
+		inconsistencies.keySet().stream().forEach(key->inconsistencies.get(key).removeAll(toBeRemovedKeys));
+		
+		
 	}
 
 	public TernaryInconsistencyGraph() {
@@ -143,14 +150,14 @@ public class TernaryInconsistencyGraph extends InconsistencyGraph {
 				: Collections.emptySet();
 	}
 
+	/**
+	 * The result is a view to the pattern names. IF revLegends is changed
+	 * whiting this class, which rarely could happen, the client of this 
+	 * method will be effected. The client cannot change the set.
+	 */
 	@Override
-	public Set<String> getAllConsistencies(String pattern) {
-		if (!revLegends.containsKey(pattern))
-			return Collections.emptySet();
-		final Set<String> patterns = revLegends.keySet();
-		patterns.remove(pattern);
-		patterns.remove(getAllInconsistecies(pattern));
-		return Collections.unmodifiableSet(patterns);
+	public Set<String> getAllPatterns() {
+		return Collections.unmodifiableSet(revLegends.keySet());
 	}
 
 }

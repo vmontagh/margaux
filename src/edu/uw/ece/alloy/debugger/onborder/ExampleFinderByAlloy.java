@@ -48,8 +48,6 @@ public class ExampleFinderByAlloy implements ExampleFinder {
 			throws Err {
 		Optional<String> result = Optional.empty();
 
-		System.out.println(path);
-
 		MyReporter rep = new MyReporter();
 		A4Solution solution = A4CommandExecuter.getInstance()
 				.runThenGetAnswers(path.getAbsolutePath(), rep, predName);

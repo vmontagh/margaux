@@ -177,8 +177,6 @@ public class TemporalImplicationLatticeGenerator {
 
 		this.implicationMap.putAll(decodeMap(implicationMap));
 		this.revImplicationMap.putAll(decodeMap(revImplicationMap));
-		System.out.println(this.revImplicationMap.get("SzGrwt_Glbl_SdEnd_EmptNon_"));
-
 		this.allReachableMaps.putAll(decodeMap(findAllReachables(legends.keySet(), implicationMap)));
 		this.allRevReachableMaps.putAll(decodeMap(findAllReachables(legends.keySet(), revImplicationMap)));
 	}

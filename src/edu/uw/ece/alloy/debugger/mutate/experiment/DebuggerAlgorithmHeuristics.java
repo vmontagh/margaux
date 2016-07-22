@@ -3,8 +3,8 @@ package edu.uw.ece.alloy.debugger.mutate.experiment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -19,8 +19,6 @@ import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
-import edu.mit.csail.sdg.alloy4compiler.ast.ExprList;
-import edu.mit.csail.sdg.alloy4compiler.ast.ExprList.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.MyReporter;
@@ -50,18 +48,21 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	// Whether an expression is inconsistent by itself.
 	boolean inconsistentExpressions = false;
 	// A map from an expression and weakest inconsistent properties.
-	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps, allInconsistentProps;
+	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps, allInconsistentProps,
+			weakestConsistentProps;
 
 	protected DebuggerAlgorithmHeuristics(File sourceFile, File destinationDir, Approximator approximator,
 			Oracle oracle, ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
 		weakestInconsistentProps = new HashMap<>();
+		weakestConsistentProps = new HashMap<>();
 		allInconsistentProps = new HashMap<>();
 	}
 
 	protected DebuggerAlgorithmHeuristics() {
 		super();
 		weakestInconsistentProps = null;
+		weakestConsistentProps = null;
 		allInconsistentProps = null;
 	}
 
@@ -91,7 +92,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		}
 		return false;
 	}
-	
+
 	@Override
 	protected void beforeInquiryOracle() {
 	}
@@ -200,7 +201,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean beforePickApproximation() {
-		System.out.println("breakApproximationSelection?"+breakApproximationSelection);
+		System.out.println("breakApproximationSelection?" + breakApproximationSelection);
 		if (breakApproximationSelection) {
 			breakApproximationSelection = false;
 			return true;
@@ -227,14 +228,13 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 					|| toBeingAnalyzedModelPartString.startsWith("REJECTED_INSTANCES_PRED_NAME");
 		}
 
-		System.out.println("Continue on afterPickModelPart?"+result);
-		
+		System.out.println("Continue on afterPickModelPart?" + result);
+
 		return result;
 	}
 
 	@Override
 	protected void beforePickModelPart() {
-
 
 	}
 
@@ -243,9 +243,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 		// find out whether an expression is inconsistent by itself
 		try {
-			inconsistentExpressions = super.approximator.isInconsistent(
-					ExprList.make(model.get(0).pos(), model.get(model.size() - 1).pos(), Op.AND, model),
-					toBeingAnalyzedField, scope);
+			inconsistentExpressions = super.approximator.isInconsistent(modelExpr, toBeingAnalyzedField, scope);
 		} catch (Err e) {
 			e.printStackTrace();
 			logger.severe(Utils.threadName() + constraint + " cannot be converted to an inorder form.");
@@ -276,11 +274,12 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 			}
 
 			if (weakestIncon.stream().anyMatch(p -> allImplieds.contains(p.a))) {
-				modelPartD.setScore(
-						Math.max(changedPriorityList.stream().map(w -> w.getScore().get()).max(Integer::compare).orElse(Integer.MIN_VALUE),
-								modelQueue_.stream().map(w -> w.getScore().get()).max(Integer::compare)
-										.orElse(Integer.MIN_VALUE))
-								+ 1);
+				modelPartD.setScore(Math.max(
+						changedPriorityList.stream().map(w -> w.getScore().get()).max(Integer::compare)
+								.orElse(Integer.MIN_VALUE),
+						modelQueue_.stream().map(w -> w.getScore().get()).max(Integer::compare)
+								.orElse(Integer.MIN_VALUE))
+						+ 1);
 			}
 			changedPriorityList.add(modelPartD);
 
@@ -306,6 +305,20 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		for (Field field : super.fields) {
 			if (field.isPrivate != null)
 				continue;
+
+			if (!weakestConsistentProps.containsKey(field))
+				weakestConsistentProps.put(field, new HashMap<>());
+			if (!weakestConsistentProps.get(field).containsKey(modelExpr))
+				weakestConsistentProps.get(field).put(modelExpr, new ArrayList<>());
+			// compute the weakest consistent properties with modelExpr
+			try {
+				weakestConsistentProps.get(field).get(modelExpr)
+						.addAll(approximator.weakestConsistentApproximation(modelExpr, field, scope));
+			} catch (Err e) {
+				logger.severe(
+						Utils.threadName() + " could not find incosistent properties for " + field + " " + modelExpr);
+				e.printStackTrace();
+			}
 			for (Expr expr : model) {
 				// Pair<Expr, Field> key = new Pair<>(expr, field);
 				// fill in weakestInconsistentProps and allInconsistentProps

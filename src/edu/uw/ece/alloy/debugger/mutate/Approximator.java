@@ -145,38 +145,18 @@ public class Approximator {
 	 * @throws Err
 	 */
 	public List<Pair<String, String>> allConsistentApproximation(Expr statement, Field field, String scope) throws Err {
-		final List<Pair<String, String>> weakestIncons = weakestInconsistentApproximation(statement, field, scope);
-		final List<String> weakestInconsPatterns = weakestIncons.stream().map(a -> a.a).collect(Collectors.toList());
-		final Set<String> allPatterns = inconsistencies.stream().map(a -> a.getAllPatterns()).flatMap(a -> a.stream())
-				.collect(Collectors.toSet());
 
-		final Set<String> allIncons = new HashSet<>(weakestInconsPatterns);
-		// all stronger patterns of an inconsistent pattern are also
-		// inconsistent.
-		weakestInconsPatterns.stream().forEach(a -> allIncons.addAll(strongerPatterns(a)));
-		final Set<String> allConsists = new HashSet<>(allPatterns);
-		allConsists.removeAll(allIncons);
-
-		return convertPatternToProperty(allConsists, field.label);
+		return allConsistentApproximation(statement, field, scope);
 	}
 
 	public List<Pair<String, String>> allInconsistentApproximation(Expr statement, Field field, String scope)
 			throws Err {
-		return convertPatternToProperty(weakestInconsistentApproximation(statement, field, scope).stream()
-				.map(a -> strongerPatterns(a.a)).flatMap(a -> a.stream()).collect(Collectors.toList()), field.label);
+		return allInconsistentApproximation(PrettyPrintExpression.makeString(statement), field.label, scope);
 	}
 
 	public List<Pair<String, String>> weakestConsistentApproximation(Expr statement, Field field, String scope)
 			throws Err {
-		return allConsistentApproximation(statement, field, scope).stream()
-				.filter(a -> implications.stream().anyMatch(b -> {
-					try {
-						return b.hasPattern(a.a) && b.getNextImpliedProperties(a.a).isEmpty();
-					} catch (Exception e) {
-						e.printStackTrace();
-						return false;
-					}
-				})).collect(Collectors.toList());
+		return weakestConsistentApproximation(PrettyPrintExpression.makeString(statement), field.label, scope);
 	}
 
 	public Boolean isInconsistent(Expr statement, Field field, String scope) throws Err {
@@ -229,6 +209,58 @@ public class Approximator {
 		return approx;
 	}
 
+	public StringBuilder sb_allConsistentApproximation = new StringBuilder(
+			"Map<String, List<Pair<String, String>> > allCon = new HashMap<>();\n");
+
+	public List<Pair<String, String>> allConsistentApproximation(String statement, String fieldLabel, String scope) {
+		final List<Pair<String, String>> weakestIncons = weakestInconsistentApproximation(statement, fieldLabel, scope);
+		final List<String> weakestInconsPatterns = weakestIncons.stream().map(a -> a.a).collect(Collectors.toList());
+		final Set<String> allPatterns = inconsistencies.stream().map(a -> a.getAllPatterns()).flatMap(a -> a.stream())
+				.collect(Collectors.toSet());
+		final Set<String> allIncons = new HashSet<>(weakestInconsPatterns);
+		// all stronger patterns of an inconsistent pattern are also
+		// inconsistent.
+		weakestInconsPatterns.stream().forEach(a -> allIncons.addAll(strongerPatterns(a)));
+		final Set<String> allConsists = new HashSet<>(allPatterns);
+		allConsists.removeAll(allIncons);
+		List<Pair<String, String>> approx = convertPatternToProperty(allConsists, fieldLabel);
+		makeNewRecordInCacheResult(sb_allConsistentApproximation, "allCon", statement, fieldLabel, scope, approx);
+		return approx;
+	}
+
+	public StringBuilder sb_allInconsistentApproximation = new StringBuilder(
+			"Map<String, List<Pair<String, String>> > allInCon = new HashMap<>();\n");
+
+	public List<Pair<String, String>> allInconsistentApproximation(String statement, String fieldLabel, String scope) {
+		List<Pair<String, String>> approx = convertPatternToProperty(
+				weakestInconsistentApproximation(statement, fieldLabel, scope).stream().map(a -> strongerPatterns(a.a))
+						.flatMap(a -> a.stream()).collect(Collectors.toList()),
+				fieldLabel);
+		makeNewRecordInCacheResult(sb_allInconsistentApproximation, "allInCon", statement, fieldLabel, scope, approx);
+		return approx;
+	}
+
+	public StringBuilder sb_weakestConsistentApproximation = new StringBuilder(
+			"Map<String, List<Pair<String, String>> > weakestCon = new HashMap<>();\n");
+
+	public List<Pair<String, String>> weakestConsistentApproximation(String statement, String fieldLabel,
+			String scope) {
+		List<Pair<String, String>> approx = allConsistentApproximation(statement, fieldLabel, scope).stream()
+				.filter(a -> implications.stream().anyMatch(b -> {
+					try {
+						return b.hasPattern(a.a) && b.getNextImpliedProperties(a.a).isEmpty();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return false;
+					}
+				})).collect(Collectors.toList());
+
+		makeNewRecordInCacheResult(sb_weakestConsistentApproximation, "weakestCon", statement, fieldLabel, scope,
+				approx);
+
+		return approx;
+	}
+
 	private void makeNewRecordInCacheResult(StringBuilder sb, String name, String statement, String fieldLabel,
 			String scope, List<Pair<String, String>> approx) {
 		// Converting to Cache.
@@ -240,8 +272,10 @@ public class Approximator {
 	}
 
 	public String getAllChachedResults() {
-		return sb_strongestImplicationApproximation.toString() + sb_strongestConsistentApproximation.toString()
-				+ sb_weakestInconsistentApproximation.toString() + sb_isInconsistent.toString();
+		return sb_allConsistentApproximation.toString() + sb_allInconsistentApproximation.toString()
+				+ sb_weakestConsistentApproximation.toString() + sb_strongestImplicationApproximation.toString()
+				+ sb_strongestConsistentApproximation.toString() + sb_weakestInconsistentApproximation.toString()
+				+ sb_isInconsistent.toString();
 
 	}
 
@@ -392,7 +426,7 @@ public class Approximator {
 		}
 		return Collections.unmodifiableList(result);
 	}
-	
+
 	public List<String> nextStrongerPatterns(String pattern) {
 		List<String> result = new ArrayList<>();
 		for (ImplicationLattic il : implications) {
