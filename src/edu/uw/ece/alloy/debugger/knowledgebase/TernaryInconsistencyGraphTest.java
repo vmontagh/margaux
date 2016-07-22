@@ -134,8 +134,8 @@ public class TernaryInconsistencyGraphTest {
 
 		final TernaryInconsistencyGraph tig = new TernaryInconsistencyGraph(legendPath.getAbsolutePath(),
 				inconPath.getAbsolutePath(), iffPath.getAbsolutePath());
-		assertTrue(tig.getAllInconsistecies("A").stream().sorted().collect(Collectors.toList()).containsAll(Arrays.asList("B")));
-		assertTrue(tig.getAllInconsistecies("B").stream().sorted().collect(Collectors.toList()).containsAll(Arrays.asList("A")));
+		assertTrue(tig.getAllInconsistecies("D").stream().sorted().collect(Collectors.toList()).containsAll(Arrays.asList("B")));
+		assertTrue(tig.getAllInconsistecies("B").stream().sorted().collect(Collectors.toList()).containsAll(Arrays.asList("D")));
 	}
 	
 	@Test
