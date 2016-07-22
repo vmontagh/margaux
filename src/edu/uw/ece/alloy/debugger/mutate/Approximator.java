@@ -2,16 +2,18 @@ package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Err;
@@ -76,7 +78,7 @@ public class Approximator {
 	final List<InconsistencyGraph> inconsistencies;
 
 	int approximationRequestCount = 1;
-	
+
 	public Approximator(ServerSocketInterface interfacE, ProcessDistributer processManager,
 			PatternToProperty patternToProperty, File tmpLocalDirectory, File toBeAnalyzedCode,
 			File relationalPropModuleOriginal, File temporalPropModuleOriginal, List<File> dependentFiles) {
@@ -96,10 +98,10 @@ public class Approximator {
 		// message
 		implications.add(new BinaryImplicationLattic());
 		implications.add(new TernaryImplicationLattic());
-		
+
 		inconsistencies = new LinkedList<>();
 		inconsistencies.add(new TernaryInconsistencyGraph());
-		
+
 	}
 
 	public Approximator(ServerSocketInterface interfacE, ProcessDistributer processManager, File tmpLocalDirectory,
@@ -131,6 +133,50 @@ public class Approximator {
 	public List<Pair<String, String>> weakestInconsistentApproximation(Expr statement, Field field, String scope)
 			throws Err {
 		return weakestInconsistentApproximation(PrettyPrintExpression.makeString(statement), field.label, scope);
+	}
+
+	/**
+	 * Return all the patterns that are consistent with the given statement.
+	 * 
+	 * @param statement
+	 * @param field
+	 * @param scope
+	 * @return
+	 * @throws Err
+	 */
+	public List<Pair<String, String>> allConsistentApproximation(Expr statement, Field field, String scope) throws Err {
+		final List<Pair<String, String>> weakestIncons = weakestInconsistentApproximation(statement, field, scope);
+		final List<String> weakestInconsPatterns = weakestIncons.stream().map(a -> a.a).collect(Collectors.toList());
+		final Set<String> allPatterns = inconsistencies.stream().map(a -> a.getAllPatterns()).flatMap(a -> a.stream())
+				.collect(Collectors.toSet());
+
+		final Set<String> allIncons = new HashSet<>(weakestInconsPatterns);
+		// all stronger patterns of an inconsistent pattern are also
+		// inconsistent.
+		weakestInconsPatterns.stream().forEach(a -> allIncons.addAll(strongerPatterns(a)));
+		final Set<String> allConsists = new HashSet<>(allPatterns);
+		allConsists.removeAll(allIncons);
+
+		return convertPatternToProperty(allConsists, field.label);
+	}
+
+	public List<Pair<String, String>> allInconsistentApproximation(Expr statement, Field field, String scope)
+			throws Err {
+		return convertPatternToProperty(weakestInconsistentApproximation(statement, field, scope).stream()
+				.map(a -> strongerPatterns(a.a)).flatMap(a -> a.stream()).collect(Collectors.toList()), field.label);
+	}
+
+	public List<Pair<String, String>> weakestConsistentApproximation(Expr statement, Field field, String scope)
+			throws Err {
+		return allConsistentApproximation(statement, field, scope).stream()
+				.filter(a -> implications.stream().anyMatch(b -> {
+					try {
+						return b.hasPattern(a.a) && b.getNextImpliedProperties(a.a).isEmpty();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return false;
+					}
+				})).collect(Collectors.toList());
 	}
 
 	public Boolean isInconsistent(Expr statement, Field field, String scope) throws Err {
@@ -239,18 +285,18 @@ public class Approximator {
 	protected List<Pair<String, String>> findApproximation(File toBeAnalyzedCode, String statement, String fieldLabel,
 			String scope, PropertyToAlloyCode coder,
 			Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
-		
-		if (approximationRequestCount % 6 == 0){
-			((RemoteProcessManager)processManager).replaceAllProcesses();
-			while(!((RemoteProcessManager)processManager).allProcessesIDLE()){
-				try{
+
+		if (approximationRequestCount % 6 == 0) {
+			((RemoteProcessManager) processManager).replaceAllProcesses();
+			while (!((RemoteProcessManager) processManager).allProcessesIDLE()) {
+				try {
 					Thread.sleep(30);
-				} catch(InterruptedException e){
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-		
+
 		// Creating a request message
 		Map<String, LazyFile> files = new HashMap<>();
 
@@ -291,7 +337,7 @@ public class Approximator {
 		interfacE.MessageReceived.removeListener(receiveListener);
 
 		approximationRequestCount++;
-		
+
 		return filter.apply(result.getResult().get().getResults().get().stream()
 				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
 						b.getParam().getAlloyCoder().get().predCallB))
@@ -331,8 +377,8 @@ public class Approximator {
 
 	public List<Pair<String, String>> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
-		return strongerPatterns(pattern).stream().map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName)))
-				.collect(Collectors.toList());
+		return convertPatternToProperty(strongerPatterns(pattern), fieldName);
+
 	}
 
 	public List<String> strongerPatterns(String pattern) {
@@ -346,17 +392,22 @@ public class Approximator {
 		}
 		return Collections.unmodifiableList(result);
 	}
+	
+	public List<String> nextStrongerPatterns(String pattern) {
+		List<String> result = new ArrayList<>();
+		for (ImplicationLattic il : implications) {
+			try {
+				result.addAll(il.getNextRevImpliedProperties(pattern));
+			} catch (Throwable e) {
+				// e.printStackTrace();
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
 
 	public List<Pair<String, String>> weakerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
-		return weakerPatterns(pattern).stream().filter(p -> {
-			try {
-				patternToProperty.getProperty(p, fieldName);
-				return true;
-			} catch (RuntimeException re) {
-				return false;
-			}
-		}).map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName))).collect(Collectors.toList());
+		return convertPatternToProperty(weakerPatterns(pattern), fieldName);
 	}
 
 	public List<String> weakerPatterns(String pattern) {
@@ -369,9 +420,27 @@ public class Approximator {
 		}
 		return Collections.unmodifiableList(result);
 	}
-	
-	public boolean isInconsistent(String patternA, String patternB){
-		return inconsistencies.stream().anyMatch(a->a.isInconsistent(patternA, patternB).equals(STATUS.True));
+
+	public boolean isInconsistent(String patternA, String patternB) {
+		return inconsistencies.stream().anyMatch(a -> a.isInconsistent(patternA, patternB).equals(STATUS.True));
+	}
+
+	/**
+	 * property is in the form of A[r]. so that A is pattern
+	 * 
+	 * @param patterns
+	 * @param fieldName
+	 * @return
+	 */
+	protected List<Pair<String, String>> convertPatternToProperty(Collection<String> patterns, String fieldName) {
+		return patterns.stream().filter(p -> {
+			try {
+				patternToProperty.getProperty(p, fieldName);
+				return true;
+			} catch (RuntimeException re) {
+				return false;
+			}
+		}).map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName))).collect(Collectors.toList());
 	}
 
 }

@@ -3,13 +3,12 @@
  */
 package edu.uw.ece.alloy.debugger.knowledgebase;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.util.Utils;
@@ -26,36 +25,37 @@ import edu.uw.ece.alloy.util.graph.FloydWarshall;
  *
  */
 public class TemporalImplicationLatticeGenerator {
-	public static String pathToLegend = Configuration
-			.getProp("kb_temporal_legend");
-	public static String pathToImplication = Configuration
-			.getProp("kb_temporal_imply");
+	public static String pathToLegend = Configuration.getProp("kb_temporal_legend");
+	public static String pathToImplication = Configuration.getProp("kb_temporal_imply");
 	public static String pathToIff = Configuration.getProp("kb_temporal_iff");
+
+	final Map<Integer, String> legends = new HashMap<>();
+	final Map<String, Integer> revLegends = new HashMap<>();
 
 	final Map<String, Set<String>> implicationMap = new HashMap<>();
 	final Map<String, Set<String>> revImplicationMap = new HashMap<>();
-	final Map<String, Set<String>> iffMap = new HashMap<>();
-	final Map<String, String> legends = new HashMap<>();
-	final Map<String, String> revLegends = new HashMap<>();
-	final Map<String, String> groupingMap = new HashMap<>();
 
-	final Map<String, List<String>> allReachableMaps = new HashMap<>();
-	final Map<String, List<String>> allRevReachableMaps = new HashMap<>();
+	final Map<String, Set<String>> allReachableMaps = new HashMap<>();
+	final Map<String, Set<String>> allRevReachableMaps = new HashMap<>();
 
-	public TemporalImplicationLatticeGenerator(String pathToLegend,
-			String pathToImplication, String pathToIff) {
+	public TemporalImplicationLatticeGenerator(String pathToLegend, String pathToImplication, String pathToIff) {
+
+		final Map<Integer, Set<Integer>> implicationMap = new HashMap<>();
+		final Map<Integer, Set<Integer>> revImplicationMap = new HashMap<>();
+		final Map<Integer, Set<Integer>> iffMap = new HashMap<>();
+		final Map<Integer, Integer> groupingMap = new HashMap<>();
 
 		// read the legend first. The CVS format is: Number->Name
 		for (String line : Utils.readFileLines(pathToLegend)) {
 			String[] splittedRow = line.split(",");
 			assert splittedRow.length == 2;
 			try {
-				Integer.parseInt(splittedRow[0]);
-				legends.put(splittedRow[0], splittedRow[1]);
-				revLegends.put(splittedRow[1], splittedRow[0]);
-				implicationMap.put(legends.get(splittedRow[0]), new HashSet<>());
-				iffMap.put(legends.get(splittedRow[0]), new HashSet<>());
-				groupingMap.put(legends.get(splittedRow[0]), "");
+				Integer code = Integer.parseInt(splittedRow[0]);
+				legends.put(code, splittedRow[1]);
+				revLegends.put(splittedRow[1], code);
+				implicationMap.put(code, new HashSet<>());
+				iffMap.put(code, new HashSet<>());
+				groupingMap.put(code, null);
 			} catch (NumberFormatException nfe) {
 			}
 		}
@@ -64,71 +64,123 @@ public class TemporalImplicationLatticeGenerator {
 		for (String line : Utils.readFileLines(pathToIff)) {
 			String[] splittedRow = line.split(",");
 			assert splittedRow.length == 2;
-			assert legends.containsKey(splittedRow[0]);
-			assert legends.containsKey(splittedRow[1]);
-			assert iffMap.containsKey(legends.get(splittedRow[0]));
-			iffMap.get(legends.get(splittedRow[0])).add(legends.get(splittedRow[1]));
+			// codeA <=> codeB
+			int codeA = Integer.parseInt(splittedRow[0]);
+			int codeB = Integer.parseInt(splittedRow[1]);
+			assert legends.containsKey(codeA);
+			assert legends.containsKey(codeB);
+
+			assert iffMap.containsKey(codeA);
+			// Only add one direction
+			if (!iffMap.get(codeB).contains(codeA))
+				iffMap.get(codeA).add(codeB);
 		}
 
-		for (String key : groupingMap.keySet()) {
-			if (groupingMap.get(key).equals("")) {
-				groupingMap.put(key, key);
-				for (String otherKey : iffMap.get(key)) {
-					groupingMap.put(otherKey, key);
-				}
+		groupingMap.keySet().stream().sorted().forEachOrdered(key -> {
+			int groupKey = key;
+			while (!iffMap.get(groupKey).isEmpty()) {
+				groupKey = iffMap.get(groupKey).stream().sorted().findFirst().get();
 			}
-		}
+			groupingMap.put(key, groupKey);
+		});
 
 		// read the implication map
 		for (String line : Utils.readFileLines(pathToImplication)) {
 			String[] splittedRow = line.split(",");
 			assert splittedRow.length == 2;
-			assert legends.containsKey(splittedRow[0]);
-			assert legends.containsKey(splittedRow[1]);
-			assert implicationMap
-					.containsKey(groupingMap.get(legends.get(splittedRow[0])));
-			implicationMap.get(groupingMap.get(legends.get(splittedRow[0])))
-					.add(groupingMap.get(legends.get(splittedRow[1])));
+			Integer codeA = Integer.parseInt(splittedRow[0]);
+			Integer codeB = Integer.parseInt(splittedRow[1]);
+			assert legends.containsKey(codeA);
+			assert legends.containsKey(codeB);
+			assert implicationMap.containsKey(groupingMap.get(codeA));
+			implicationMap.get(groupingMap.get(codeA)).add(groupingMap.get(codeB));
 		}
 
+		Set<Integer> toBeRemovedKeys = new HashSet<>();
 		// remove equal properties from legends
-		for (String key : groupingMap.keySet()) {
+		for (Integer key : groupingMap.keySet()) {
 			if (!key.equals(groupingMap.get(key))) {
-				legends.remove(revLegends.get(key));
-				revLegends.remove(key);
+				revLegends.remove(legends.get(key));
+				legends.remove(key);
 				implicationMap.remove(key);
+				toBeRemovedKeys.add(key);
 			}
 		}
 
-		// rearrenge the legends key-value. start from 0 ends to legends.size()-1
+		implicationMap.keySet().stream().forEach(key -> implicationMap.get(key).removeAll(toBeRemovedKeys));
+
+		// rearrenge the legends key-value. start from 0 ends to
+		// legends.size()-1
+		Map<Integer, Integer> newKeyMap = new HashMap<>();
 		int i = 0;
-		final Map<String, String> tmpLegends = new HashMap<>();
-		final Map<String, String> tmpRevLegends = new HashMap<>();
-		for (String key : legends.keySet()) {
+		final Map<Integer, String> tmpLegends = new HashMap<>();
+		final Map<String, Integer> tmpRevLegends = new HashMap<>();
+		for (Integer key : legends.keySet()) {
 			String name = legends.get(key);
-			String newKey = "" + i++;
+			Integer newKey = i++;
 			tmpLegends.put(newKey, name);
 			tmpRevLegends.put(name, newKey);
+			newKeyMap.put(key, newKey);
 		}
 		legends.clear();
 		legends.putAll(tmpLegends);
 		revLegends.clear();
 		revLegends.putAll(tmpRevLegends);
 
-		for (String key : implicationMap.keySet()) {
-			for (String value : implicationMap.get(key)) {
-				if (!revImplicationMap.containsKey(value)) {
-					revImplicationMap.put(value, new HashSet<>());
+		final Map<Integer, Set<Integer>> tmpImplicationMap = new HashMap<>();
+		for (Integer key : implicationMap.keySet()) {
+			Integer newKey = newKeyMap.get(key);
+			tmpImplicationMap.put(newKey, new HashSet<>());
+			for (Integer value : implicationMap.get(key)) {
+				Integer newValue = newKeyMap.get(value);
+				tmpImplicationMap.get(newKey).add(newValue);
+			}
+		}
+		implicationMap.clear();
+		implicationMap.putAll(tmpImplicationMap);
+
+		
+		// sanitize the implication lattice. The lattice might be also contains
+		// self loops or the transitive edges. The transitive edges are the one 
+		// like A=>B , B=>C, so that A=>C becomes a transitive edge.
+		// Including transitive edges prevents finding the immediate
+		// implication, correctly.
+
+		// remove all self implications
+		for (Integer key : implicationMap.keySet()) {
+			implicationMap.get(key).remove(key);
+		}
+		
+		// To remove the transitive edges, remove all the not immediate neighbors.
+		for (Integer from: implicationMap.keySet()){
+			Set<Integer> tos = new HashSet<>(implicationMap.get(from));
+			for (Integer to: tos){
+				Set<Integer> totos =  new HashSet<>(implicationMap.get(to));
+				for (Integer toto: totos){
+					if (implicationMap.get(from).contains(toto)){
+						implicationMap.get(from).remove(toto);
+					}
 				}
-				if (!revImplicationMap.containsKey(key)) {
-					revImplicationMap.put(key, new HashSet<>());
-				}
+			}
+		}
+		
+
+		legends.keySet().forEach(key -> revImplicationMap.put(key, new HashSet<>()));
+		for (Integer key : legends.keySet()) {
+			for (Integer value : implicationMap.get(key)) {
 				revImplicationMap.get(value).add(key);
 			}
 		}
 
-		allReachableMaps.putAll(findAllReachables(implicationMap));
-		allRevReachableMaps.putAll(findAllReachables(revImplicationMap));
+		assert (legends.values().stream().sorted().collect(Collectors.toList())
+				.equals(revLegends.keySet().stream().sorted().collect(Collectors.toList())));
+
+		this.implicationMap.putAll(decodeMap(implicationMap));
+		this.revImplicationMap.putAll(decodeMap(revImplicationMap));
+		System.out.println(this.revImplicationMap.get("SzGrwt_Glbl_SdEnd_EmptNon_"));
+
+		this.allReachableMaps.putAll(decodeMap(findAllReachables(legends.keySet(), implicationMap)));
+		this.allRevReachableMaps.putAll(decodeMap(findAllReachables(legends.keySet(), revImplicationMap)));
 	}
 
 	public String convertImplicationMapToAlloy() {
@@ -141,9 +193,8 @@ public class TemporalImplicationLatticeGenerator {
 
 		result.append("abstract sig temporal_ternary_prop extends prop{}\n");
 
-		for (String key : legends.keySet()) {
-			result.append(String.format(
-					"one sig %s  extends temporal_ternary_prop{}\n", legends.get(key)));
+		for (Integer key : legends.keySet()) {
+			result.append(String.format("one sig %s  extends temporal_ternary_prop{}\n", legends.get(key)));
 		}
 
 		result.append("fact implication{\n");
@@ -159,8 +210,7 @@ public class TemporalImplicationLatticeGenerator {
 					else
 						impliedProps = impliedProps + " + " + value;
 				}
-				result.append(String.format("\t%s = %s.imply", impliedProps, key))
-						.append("\n");
+				result.append(String.format("\t%s = %s.imply", impliedProps, key)).append("\n");
 			}
 		}
 
@@ -168,45 +218,45 @@ public class TemporalImplicationLatticeGenerator {
 		return result.toString();
 	}
 
-	public Map<String, List<String>> findAllIffs() {
-		Map<String, List<String>> result = new HashMap<>();
-		return Collections.unmodifiableMap(result);
-	}
+	protected Map<Integer, Set<Integer>> findAllReachables(Set<Integer> nodes, Map<Integer, Set<Integer>> input) {
+		Map<Integer, Set<Integer>> result = new HashMap<>();
 
-	protected Map<String, List<String>> findAllReachables(
-			Map<String, Set<String>> input) {
-		Map<String, List<String>> result = new HashMap<>();
-
-		AdjMatrixEdgeWeightedDigraph G = new AdjMatrixEdgeWeightedDigraph(
-				legends.size());
-		for (String from : legends.keySet()) {
-			String fromName = legends.get(from);
-			int fromInt = Integer.parseInt(from);
-			for (String toName : input.get(fromName)) {
-				String to = revLegends.get(toName);
-				int toInt = Integer.parseInt(to);
-				G.addEdge(new DirectedEdge(fromInt, toInt, 1));
+		AdjMatrixEdgeWeightedDigraph G = new AdjMatrixEdgeWeightedDigraph(legends.size());
+		for (Integer from : nodes) {
+			if (!input.containsKey(from))
+				continue;
+			for (Integer to : input.get(from)) {
+				G.addEdge(new DirectedEdge(from, to, 1));
 			}
 		}
 		FloydWarshall spt = new FloydWarshall(G);
 
-		for (String from : legends.keySet()) {
-			String fromName = legends.get(from);
-			int fromInt = Integer.parseInt(from);
-			if (!result.containsKey(fromName))
-				result.put(fromName, new ArrayList<>());
-			for (String to : legends.keySet()) {
+		for (Integer from : nodes) {
+			if (!result.containsKey(from))
+				result.put(from, new HashSet<>());
+			for (Integer to : nodes) {
 				if (from.equals(to))
 					continue;
-				String toName = legends.get(to);
-				int toInt = Integer.parseInt(to);
-				if (spt.hasPath(fromInt, toInt)) {
-					result.get(fromName).add(toName);
+				if (spt.hasPath(from, to)) {
+					result.get(from).add(to);
 				}
 			}
 		}
 
 		return Collections.unmodifiableMap(result);
+	}
+
+	protected Map<String, Set<String>> decodeMap(Map<Integer, Set<Integer>> map) {
+		final Map<String, Set<String>> result = new HashMap<>();
+		for (Integer key : map.keySet()) {
+			String decodedKey = legends.get(key);
+			result.put(decodedKey, new HashSet<>());
+			for (Integer value : map.get(key)) {
+				String decodedValue = legends.get(value);
+				result.get(decodedKey).add(decodedValue);
+			}
+		}
+		return result;
 	}
 
 	public Map<String, Set<String>> findReachable() {
@@ -223,7 +273,7 @@ public class TemporalImplicationLatticeGenerator {
 	 * 
 	 * @return
 	 */
-	public Map<String, List<String>> findAllReachable() {
+	public Map<String, Set<String>> findAllReachable() {
 		return Collections.unmodifiableMap(allReachableMaps);
 	}
 
@@ -233,35 +283,12 @@ public class TemporalImplicationLatticeGenerator {
 	 * 
 	 * @return
 	 */
-	public Map<String, List<String>> findAllRevReachable() {
+	public Map<String, Set<String>> findAllRevReachable() {
 		return Collections.unmodifiableMap(allRevReachableMaps);
 	}
 
-	public static void main(String... args) {
-		TemporalImplicationLatticeGenerator generator = new TemporalImplicationLatticeGenerator(
-				pathToLegend, pathToImplication, pathToIff);
-
-		for (String key : generator.iffMap.keySet()) {
-			if (!generator.iffMap.get(key).isEmpty()) {
-				System.out.println(generator.iffMap.get(key));
-			}
-		}
-		System.out.println("----------------------");
-
-		int notGrouped = 0;
-		for (String key : generator.groupingMap.keySet()) {
-			boolean wasTheSame = key.equals(generator.groupingMap.get(key));
-			if (wasTheSame)
-				++notGrouped;
-			System.out.println("Self?" + (wasTheSame) + "\t" + key + "-->"
-					+ generator.groupingMap.get(key));
-		}
-
-		System.out.println("Not the same:" + notGrouped);
-
-		System.out.println("----------------------");
-
-		System.out.println(generator.findAllReachable());
+	public Set<String> getAllpatterns() {
+		return Collections.unmodifiableSet(revLegends.keySet());
 	}
 
 }
