@@ -23,6 +23,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.knowledgebase.BinaryImplicationLatticImperative;
+import edu.uw.ece.alloy.debugger.knowledgebase.BinaryInconsistencyGraph;
 import edu.uw.ece.alloy.debugger.knowledgebase.ImplicationLattic;
 import edu.uw.ece.alloy.debugger.knowledgebase.InconsistencyGraph;
 import edu.uw.ece.alloy.debugger.knowledgebase.InconsistencyGraph.STATUS;
@@ -101,6 +102,7 @@ public class Approximator {
 
 		inconsistencies = new LinkedList<>();
 		inconsistencies.add(new TernaryInconsistencyGraph());
+		inconsistencies.add(new BinaryInconsistencyGraph());
 
 	}
 

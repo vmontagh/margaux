@@ -45,25 +45,16 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	final public static String REJECTED_INSTANCES_PRED_NAME = "_rejected";
 
 	boolean breakApproximationSelection = false;
-	// Whether an expression is inconsistent by itself.
-	boolean inconsistentExpressions = false;
-	// A map from an expression and weakest inconsistent properties.
-	final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps, allInconsistentProps,
-			weakestConsistentProps;
+
 
 	protected DebuggerAlgorithmHeuristics(File sourceFile, File destinationDir, Approximator approximator,
 			Oracle oracle, ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
-		weakestInconsistentProps = new HashMap<>();
-		weakestConsistentProps = new HashMap<>();
-		allInconsistentProps = new HashMap<>();
 	}
 
 	protected DebuggerAlgorithmHeuristics() {
 		super();
-		weakestInconsistentProps = null;
-		weakestConsistentProps = null;
-		allInconsistentProps = null;
+
 	}
 
 	@Override

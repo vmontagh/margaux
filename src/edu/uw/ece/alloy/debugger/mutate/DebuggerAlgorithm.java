@@ -158,6 +158,13 @@ public abstract class DebuggerAlgorithm {
 
 	protected final Map<Field, Map<Expr, Map<Pair<String, String>, PriorityQueue<DecisionQueueItem<String>>>>> strongerApproxQueues,
 			weakerApproxQueues;
+
+	// Whether an expression is inconsistent by itself.
+	protected boolean inconsistentExpressions = false;
+	// A map from an expression and weakest inconsistent properties.
+	protected final Map<Field, Map<Expr, List<Pair<String, String>>>> weakestInconsistentProps, allInconsistentProps,
+			weakestConsistentProps;
+
 	/*
 	 * A PQ to determine which approximation should be fixed first. It varies at
 	 * each iteration
@@ -229,6 +236,11 @@ public abstract class DebuggerAlgorithm {
 
 		acceptedExamples = new HashSet<>();
 		rejectedExamples = new HashSet<>();
+		weakestInconsistentProps = new HashMap<>();
+		weakestConsistentProps = new HashMap<>();
+		allInconsistentProps = new HashMap<>();
+		resultInterpretaionMap = new HashMap<>();
+
 	}
 
 	protected DebuggerAlgorithm() {
@@ -252,6 +264,10 @@ public abstract class DebuggerAlgorithm {
 		notApproximationedButInconsistent = null;
 		acceptedExamples = null;
 		rejectedExamples = null;
+		weakestInconsistentProps = null;
+		weakestConsistentProps = null;
+		allInconsistentProps = null;
+		resultInterpretaionMap = null;
 	}
 
 	/**
@@ -492,6 +508,49 @@ public abstract class DebuggerAlgorithm {
 				if (!modelQueue.isEmpty())
 					beforePickModelPart();
 			}
+
+			// check the whole statement
+			// The model is sat
+			if (!inconsistentExpressions) {
+				interpretModelMutation();
+				strengthened = true;
+				toBeingAnalyzedModelPart = modelExpr;
+				String modelString = convertModelPartToString();
+				List<Pair<String, String>> weakestConsistentPropsToModelExpr = weakestConsistentProps
+						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
+				for (Pair<String, String> weakestConsistentPropToModelExpr : weakestConsistentPropsToModelExpr) {
+					// mutate to out of bound
+					mutatedFile = makeMutation(modelString, "", weakestConsistentPropToModelExpr.b, true, "").get();
+					MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
+					inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
+							mutatedFile.getName().replace(".als", ""),
+							"NOT_" + mutatedFile.getName().replace(".als", ""));
+					// ask the user
+					// Interpreting the result
+					Pair<String, String> headerRow = Utils
+							.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b));
+					reportHeader = headerRow.a;
+					report.append(headerRow.b).append("\n");
+
+					for (Pair<String, String> strongerWeakestConsistentPropToModelExpr : approximator
+							.strongerProperties(weakestConsistentPropToModelExpr.a, toBeingAnalyzedField.label)) {
+						// mutate to out of bound
+						mutatedFile = makeMutation(strongerWeakestConsistentPropToModelExpr.b, "", weakestConsistentPropToModelExpr.b, true, modelString).get();
+						MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
+						inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
+								mutatedFile.getName().replace(".als", ""),
+								"NOT_" + mutatedFile.getName().replace(".als", ""));
+						// ask the user
+						// Interpreting the result
+						headerRow = Utils
+								.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b));
+						reportHeader = headerRow.a;
+						report.append(headerRow.b).append("\n");
+					}
+
+				}
+			}
+
 			if (!fieldsQueue.isEmpty())
 				beforePickField();
 		}
@@ -499,7 +558,7 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("--------------------------");
 		System.out.println(reportHeader);
 		System.out.println(report);
-		
+
 		System.out.println(MutationsPath.toString());
 
 		System.out.println(approximator.getAllChachedResults());
@@ -510,39 +569,134 @@ public abstract class DebuggerAlgorithm {
 			e.printStackTrace();
 		}
 		System.out.println("--------------------------");
+		System.out.println("resultInterpretaionMap=" + resultInterpretaionMap);
 	}
 
-	protected abstract boolean afterInquiryOracle();
+	protected void interpretModelMutation() {
+		resultInterpretaionMap.clear();
+		// in/out, exampleExists?, intended?, strengthened?
 
-	protected abstract void beforeInquiryOracle();
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.TRUE, true, "correct");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, false, "error");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, false, "error");
 
-	protected abstract void afterCallingExampleFinder();
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, false, "error");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.TRUE, false, "correct");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, false, "error");
 
-	protected abstract void beforeCallingExampleFinder();
+		registerResultInterpretation(REC.DONTCARE, REC.FALSE, REC.DONTCARE, REC.DONTCARE, false, "error");
+	}
 
-	protected abstract boolean afterMutating();
+	final protected Map<Integer, Pair<Boolean, String>> resultInterpretaionMap;
 
-	protected abstract void beforeMutating();
+	public enum REC {
+		TRUE, FALSE, DONTCARE
+	};
 
-	protected abstract void beforePickWeakenOrStrengthenedApprox();
+	/**
+	 * @param in
+	 *            inExample or outExample?
+	 * @param exampleExists
+	 *            Does example exists?
+	 * @param intended
+	 *            Is example intended?
+	 * @param strengthened
+	 *            strengthened/Weakened
+	 * @return
+	 */
+	protected Integer encodeInterpretation(boolean in, boolean exampleExists, boolean intended, boolean strengthened) {
+		int result = 0;
+		result |= in ? 1 << 3 : 0;
+		result |= exampleExists ? 1 << 2 : 0;
+		result |= intended ? 1 << 1 : 0;
+		result |= strengthened ? 1 << 0 : 0;
+		return result;
+	}
 
-	protected abstract void afterPickWeakenOrStrengthened();
+	protected void registerResultInterpretation(REC in, REC exampleExists, REC intended, REC strengthened,
+			Boolean accepted, String message) {
 
-	protected abstract void beforePickWeakenOrStrengthened();
+		if (in.equals(REC.DONTCARE)) {
+			registerResultInterpretation(in.TRUE, exampleExists, intended, strengthened, accepted, message);
+			registerResultInterpretation(in.FALSE, exampleExists, intended, strengthened, accepted, message);
+		}
 
-	protected abstract void afterPickApproximation();
+		if (exampleExists.equals(REC.DONTCARE)) {
+			registerResultInterpretation(in, exampleExists.TRUE, intended, strengthened, accepted, message);
+			registerResultInterpretation(in, exampleExists.FALSE, intended, strengthened, accepted, message);
+		}
 
-	protected abstract boolean beforePickApproximation();
+		if (intended.equals(REC.DONTCARE)) {
+			registerResultInterpretation(in, exampleExists, intended.TRUE, strengthened, accepted, message);
+			registerResultInterpretation(in, exampleExists, intended.FALSE, strengthened, accepted, message);
+		}
 
-	protected abstract boolean afterPickModelPart();
+		if (strengthened.equals(REC.DONTCARE)) {
+			registerResultInterpretation(in, exampleExists, intended, strengthened.TRUE, accepted, message);
+			registerResultInterpretation(in, exampleExists, intended, strengthened.FALSE, accepted, message);
+		}
 
-	protected abstract void beforePickModelPart();
+		registerResultInterpretation(in.equals(REC.TRUE), exampleExists.equals(REC.TRUE), intended.equals(REC.TRUE),
+				strengthened.equals(REC.TRUE), accepted, message);
 
-	protected abstract boolean afterPickField();
+	}
 
-	protected abstract void beforePickField();
+	protected void registerResultInterpretation(boolean in, boolean exampleExists, boolean intended,
+			boolean strengthened, Boolean accepted, String message) {
+		int encoded = encodeInterpretation(in, exampleExists, intended, strengthened);
+		resultInterpretaionMap.put(encoded, new Pair<>(accepted, message + "-" + Integer.toString(encoded, 2)));
+	}
 
-	protected abstract void onStartLoop();
+	protected Pair<Boolean, String> interpretResult(boolean in, boolean exampleExists, boolean intended,
+			boolean strengthened) {
+		Pair<Boolean, String> result = new Pair<>(false, "UNINTERPRETED4-in=" + in + "-exists=" + exampleExists
+				+ "-intended=" + intended + "-strength=" + strengthened);
+		if (resultInterpretaionMap.containsKey(encodeInterpretation(in, exampleExists, intended, strengthened))) {
+			result = resultInterpretaionMap.get(encodeInterpretation(in, exampleExists, intended, strengthened));
+		}
+		return result;
+	}
+
+	protected String interpretMutationResultByMap(String approximationProperty) {
+		StringBuilder rowReport = new StringBuilder();
+		rowReport.append("toBeingAnalyzedModelPart=").append("\"" + convertModelPartToString() + "\"").append(",");
+		rowReport.append("toBeingWeakenOrStrengthenedApproximation=")
+				.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"").append(",");
+		rowReport.append("approximationProperty=").append("\"" + approximationProperty + "\"").append(",");
+
+		rowReport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"")
+				.append(",");
+		rowReport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
+
+		System.out.println("out example=" + inAndOutExamples.b);
+
+		rowReport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("").replaceAll("=", " eq ") + "\"")
+				.append(",");
+		rowReport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
+
+		rowReport.append("strengthened=").append(strengthened).append(",");
+
+		inExampleIsInteded = inAndOutExamples.a.isPresent() ? oracle.isIntended(inAndOutExamples.a.get()) : false;
+		Pair<Boolean, String> result = interpretResult(true, inAndOutExamples.a.isPresent(), inExampleIsInteded,
+				strengthened);
+		if (inAndOutExamples.a.isPresent() && result.a)
+			acceptedExamples.add(inAndOutExamples.a.get());
+		if (inAndOutExamples.a.isPresent() && !result.a)
+			rejectedExamples.add(inAndOutExamples.a.get());
+		rowReport.append("Error=").append(result.b).append(",");
+
+		outExampleIsInteded = inAndOutExamples.b.isPresent() ? oracle.isIntended(inAndOutExamples.b.get()) : false;
+		result = interpretResult(false, inAndOutExamples.b.isPresent(), outExampleIsInteded, strengthened);
+		if (inAndOutExamples.b.isPresent() && result.a)
+			acceptedExamples.add(inAndOutExamples.b.get());
+		if (inAndOutExamples.b.isPresent() && !result.a)
+			rejectedExamples.add(inAndOutExamples.b.get());
+		rowReport.append("Error=").append(result.b).append(",");
+
+		return rowReport.toString().replaceAll("\n", " and ");
+	}
 
 	protected String interpretMutationResult(String approximationProperty) {
 		// ask the user
@@ -646,7 +800,7 @@ public abstract class DebuggerAlgorithm {
 		String notApproximatedProperty = new String();
 		final String restModels = !restModel.trim().isEmpty() ? " and " + restModel : "";
 		if (toBeingAnalyzedModelPart.equals(property)) {
-			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")" ;
+			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")";
 			notApproximatedProperty = "( " + approximationProperty + " )" + restModels;
 		} else if (property.equals(approximationProperty)) {
 			if (strengthened) {
@@ -662,7 +816,8 @@ public abstract class DebuggerAlgorithm {
 			if (strengthened) {
 				// need to be extended.
 				approximatedProperty = toBeingAnalyzedModelPart + " and " + approximationProperty + restModels;
-				notApproximatedProperty = "(not " + approximationProperty + " and " + toBeingAnalyzedModelPart + ")" + restModels;
+				notApproximatedProperty = "(not " + approximationProperty + " and " + toBeingAnalyzedModelPart + ")"
+						+ restModels;
 			} else {
 				approximatedProperty = "(not " + property + " and " + approximationProperty + ")" + restModels;
 				notApproximatedProperty = "(not " + approximationProperty + ")" + restModels;
@@ -850,5 +1005,37 @@ public abstract class DebuggerAlgorithm {
 	 */
 	public abstract DebuggerAlgorithm createIt(final File sourceFile, final File destinationDir,
 			final Approximator approximator, final Oracle oracle, final ExampleFinder exampleFinder);
+
+	protected abstract boolean afterInquiryOracle();
+
+	protected abstract void beforeInquiryOracle();
+
+	protected abstract void afterCallingExampleFinder();
+
+	protected abstract void beforeCallingExampleFinder();
+
+	protected abstract boolean afterMutating();
+
+	protected abstract void beforeMutating();
+
+	protected abstract void beforePickWeakenOrStrengthenedApprox();
+
+	protected abstract void afterPickWeakenOrStrengthened();
+
+	protected abstract void beforePickWeakenOrStrengthened();
+
+	protected abstract void afterPickApproximation();
+
+	protected abstract boolean beforePickApproximation();
+
+	protected abstract boolean afterPickModelPart();
+
+	protected abstract void beforePickModelPart();
+
+	protected abstract boolean afterPickField();
+
+	protected abstract void beforePickField();
+
+	protected abstract void onStartLoop();
 
 }

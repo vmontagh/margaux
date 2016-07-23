@@ -58,6 +58,10 @@ public class ExtractorUtils {
 				&& new File(sig.pos().filename).getName().equals("ordering.als");
 	}
 
+	private static boolean isSubSig(Sig sig) {
+		return sig.isSubsig != null && sig instanceof Sig.PrimSig && !((Sig.PrimSig)sig).parent.builtin;
+	}
+
 	/**
 	 * Given an A4solution object from AlloyExecuter, it converts it to a Alloy
 	 * syntax
@@ -77,6 +81,9 @@ public class ExtractorUtils {
 			if (isOrdering(sig))
 				continue;
 
+			if (isSubSig(sig))
+				continue;
+
 			String sigName = sig.label.replace("this/", "");
 
 			if (solution.eval(sig).size() == 0) {
@@ -87,7 +94,7 @@ public class ExtractorUtils {
 					atoms.add(tuple.toString().replace("$", "_").replace("/", "_"));
 				}
 				quantifiers.add("some disj " + atoms.stream().collect(Collectors.joining(", ")) + ": univ");
-				constraints.add("\t(" + atoms.stream().collect(Collectors.joining("+")) + ") in " + sigName);
+				constraints.add("\t((" + atoms.stream().collect(Collectors.joining("+")) + ") = " + sigName+")");
 			}
 		}
 
@@ -112,7 +119,7 @@ public class ExtractorUtils {
 					} else {
 						final List<String> tuples = new ArrayList<>();
 						fieldsTuples.forEach(t -> tuples.add(t.toString().replace("$", "_")));
-						constraint = "\t(" + tuples.stream().collect(Collectors.joining("+")) + ") in " + fieldName;
+						constraint = "\t((" + tuples.stream().collect(Collectors.joining("+")) + ") = " + fieldName+")";
 					}
 					if (isOrdering(sig)) {
 						String orderingAtom = solution.eval(sig).iterator().next().toString().replace("$", "_");

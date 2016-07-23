@@ -48,6 +48,9 @@ public class DebuggerRunnerTest {
 
 	static Map<String, List<Pair<String, String>>> listWeakestIncon;
 	static Map<String, List<Pair<String, String>>> listStrongestImpl;
+	static Map<String, List<Pair<String, String>>> listAllCon;
+	static Map<String, List<Pair<String, String>>> listAllInCon;
+	static Map<String, List<Pair<String, String>>> listWeakestCon;
 	static Map<String, Boolean> listIsIncon;
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestImpl;
 	static Map<String, List<Pair<String, String>>> binaryTreeStrongestCon;
@@ -64,6 +67,17 @@ public class DebuggerRunnerTest {
 		listIsIncon = new HashMap<>();
 		listStrongestImpl = new HashMap<>();
 		listWeakestIncon = new HashMap<>();
+		listAllCon = new HashMap<>();
+		listAllInCon = new HashMap<>();
+		listWeakestCon = new HashMap<>();
+
+		listAllCon = new HashMap<>();
+		listAllInCon = new HashMap<>();
+		listWeakestCon = new HashMap<>();
+
+		listAllCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		listWeakestCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+
 		
 		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
 		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
@@ -181,29 +195,34 @@ public class DebuggerRunnerTest {
 		Map<String, List<String>> inconMap = new HashMap<>();
 		Map<String, List<String>> weakerMap = new HashMap<>();
 		Map<String, List<String>> strongMap = new HashMap<>();
-		
-		//for (String key : DPhWeakestIncon.keySet()) {
-			for (Pair<String, String> incon : DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")) {
 
-				inconMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().map(a -> a.a).filter(a -> !a.equals(incon.a))
-						.filter(a -> {
-							return runner.approximator.isInconsistent(a, incon.a);}).collect(Collectors.toList()));
-				weakerMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().map(a -> a.a).filter(a -> !a.equals(incon.a))
-						.filter(a -> {
-							return runner.approximator.weakerPatterns(a).contains(incon.a);}).collect(Collectors.toList()));
-				strongMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().map(a -> a.a).filter(a -> !a.equals(incon.a))
-						.filter(a -> {
-							return runner.approximator.strongerPatterns(a).contains(incon.a);}).collect(Collectors.toList()));
-				
-				DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream().filter(a -> !a.a.equals(incon.a)).forEach(a->{
-					System.out.printf("assert %1$s_implies_%2$s{%3$s implies %4$s}\ncheck %1$s_implies_%2$s for 5 State, 5 Process, 4 Mutex\n", incon.a, a.a, incon.b,a.b);
-				});
+		// for (String key : DPhWeakestIncon.keySet()) {
+		for (Pair<String, String> incon : DPhWeakestIncon
+				.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")) {
 
-				
-			}
-		//}
+			inconMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")
+					.stream().map(a -> a.a).filter(a -> !a.equals(incon.a)).filter(a -> {
+						return runner.approximator.isInconsistent(a, incon.a);
+					}).collect(Collectors.toList()));
+			weakerMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")
+					.stream().map(a -> a.a).filter(a -> !a.equals(incon.a)).filter(a -> {
+						return runner.approximator.weakerPatterns(a).contains(incon.a);
+					}).collect(Collectors.toList()));
+			strongMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")
+					.stream().map(a -> a.a).filter(a -> !a.equals(incon.a)).filter(a -> {
+						return runner.approximator.strongerPatterns(a).contains(incon.a);
+					}).collect(Collectors.toList()));
 
-			
+			DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream()
+					.filter(a -> !a.a.equals(incon.a)).forEach(a -> {
+						System.out.printf(
+								"assert %1$s_implies_%2$s{%3$s implies %4$s}\ncheck %1$s_implies_%2$s for 5 State, 5 Process, 4 Mutex\n",
+								incon.a, a.a, incon.b, a.b);
+					});
+
+		}
+		// }
+
 		System.out.println(inconMap);
 		System.out.println(weakerMap);
 		System.out.println(strongMap);
@@ -355,7 +374,7 @@ public class DebuggerRunnerTest {
 
 		runner.debuggerAlgorithm.run();
 	}
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationList0Bug1() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -367,7 +386,7 @@ public class DebuggerRunnerTest {
 
 		runner.debuggerAlgorithm.run();
 	}
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationList0Bug1Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -402,8 +421,7 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
 	}
-	
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationList0Bug2() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -416,7 +434,60 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.run();
 	}
 	
-	
+	protected Approximator createdMockedListApproximator(DebuggerRunner runner){
+		return new Approximator(runner.approximator.interfacE,
+				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
+				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
+			@Override
+			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
+					String scope) {
+				return listStrongestImpl.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
+				return listWeakestIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
+				return listIsIncon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> allConsistentApproximation(String statement, String fieldLabel,
+					String scope) {
+				return listAllCon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> allInconsistentApproximation(String statement, String fieldLabel,
+					String scope) {
+				return listAllInCon.get(statement + fieldLabel + scope);
+			}
+
+			@Override
+			public List<Pair<String, String>> weakestConsistentApproximation(String statement, String fieldLabel,
+					String scope) {
+				return listWeakestCon.get(statement + fieldLabel + scope);
+			}
+		};
+	}
+
+	@Test
+	public void testStrongestHeuristicApproximationList0Bug2Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
+		runner.debuggerAlgorithm.run();
+	}
+
 	@Test
 	public void testStrongestRandomApproximationList0Bug1Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
@@ -451,34 +522,7 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.approximator = approximatorMock;
 		runner.debuggerAlgorithm.run();
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	@Test
 	public void testStrongestHeuristicApproximationListBug1Mocked() throws Err {
 		File tmpLocalDirectory = new File("tmp/testing");
