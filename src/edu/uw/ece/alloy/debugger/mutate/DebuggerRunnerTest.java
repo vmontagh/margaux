@@ -76,7 +76,10 @@ public class DebuggerRunnerTest {
 		listWeakestCon = new HashMap<>();
 
 		listAllCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		listAllCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+
 		listWeakestCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		listWeakestCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
 
 		
 		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
@@ -88,6 +91,7 @@ public class DebuggerRunnerTest {
 		listIsIncon.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt for 3", true);
 		listIsIncon.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) )nxt for 3", true);
 		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", false);
+		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", true);
 
 
 		
@@ -110,6 +114,7 @@ public class DebuggerRunnerTest {
 		listStrongestImpl.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
 		listStrongestImpl.put(" singleHead[ ]nxt for 3", Arrays.asList(new Pair<>("injective", "injective[nxt, Node]")));
 		listStrongestImpl.put(" declarativeFormulaForNext_fixed[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
+		listStrongestImpl.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
 
 		listWeakestIncon.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
 		listWeakestIncon.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
@@ -130,6 +135,8 @@ public class DebuggerRunnerTest {
 		listWeakestIncon.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
 		listWeakestIncon.put(" singleHead[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
 		listWeakestIncon.put(" declarativeFormulaForNext_fixed[ ]nxt for 3", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		listWeakestIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]")));
+		listWeakestIncon.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
 
 		
 		
@@ -482,6 +489,57 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug2.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
 				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestRandomApproximationList0Bug2Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug2.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug2.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestHeuristicApproximationList0Bug3() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug3.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug3.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestHeuristicApproximationList0Bug3Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug3.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug3.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+		runner.start();
+
+		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
+		runner.debuggerAlgorithm.run();
+	}
+	
+	@Test
+	public void testStrongestRandomApproximationList0Bug3Mocked() throws Err {
+		File tmpLocalDirectory = new File("tmp/testing");
+		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug3.als");
+		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug3.als");
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
+				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
 		runner.start();
 
 		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);

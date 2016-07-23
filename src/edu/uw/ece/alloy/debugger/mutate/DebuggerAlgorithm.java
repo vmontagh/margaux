@@ -535,7 +535,8 @@ public abstract class DebuggerAlgorithm {
 					for (Pair<String, String> strongerWeakestConsistentPropToModelExpr : approximator
 							.strongerProperties(weakestConsistentPropToModelExpr.a, toBeingAnalyzedField.label)) {
 						// mutate to out of bound
-						mutatedFile = makeMutation(strongerWeakestConsistentPropToModelExpr.b, "", weakestConsistentPropToModelExpr.b, true, modelString).get();
+						mutatedFile = makeMutation(strongerWeakestConsistentPropToModelExpr.b, "",
+								weakestConsistentPropToModelExpr.b, true, modelString).get();
 						MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 						inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 								mutatedFile.getName().replace(".als", ""),
@@ -698,6 +699,7 @@ public abstract class DebuggerAlgorithm {
 		return rowReport.toString().replaceAll("\n", " and ");
 	}
 
+	@Deprecated
 	protected String interpretMutationResult(String approximationProperty) {
 		// ask the user
 		// Interpreting the result
@@ -709,10 +711,10 @@ public abstract class DebuggerAlgorithm {
 				.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"").append(",");
 		rowRoport.append("approximationProperty=").append("\"" + approximationProperty + "\"").append(",");
 
-		rowRoport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("") + "\"").append(",");
+		rowRoport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"").append(",");
 		rowRoport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
 
-		rowRoport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("") + "\"").append(",");
+		rowRoport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("").replaceAll("=", " eq ") + "\"").append(",");
 		rowRoport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
 
 		rowRoport.append("strengthened=").append(strengthened).append(",");
@@ -888,37 +890,52 @@ public abstract class DebuggerAlgorithm {
 	 */
 	protected void fillApproximations(Expr expr, Field field) {
 
-		if (approximations.containsKey(field) && approximations.get(field).containsKey(expr))
-			return;
-		try {
-			List<Pair<String, String>> approximation_ = approximator.strongestImplicationApproximation(expr, field,
-					scope);
-			List<Pair<String, String>> inconsistencies_ = new ArrayList<>();
-			if (approximation_.isEmpty()) {
-				String toBeingAnalyzedModelPartString = PrettyPrintExpression.makeString(expr);
-				approximation_ = Arrays.asList(new Pair<String, String>(
-						toBeingAnalyzedModelPartString.replace("[", "").replace("]", "").replace(" ", ""),
-						toBeingAnalyzedModelPartString));
+		if (!(approximations.containsKey(field) && approximations.get(field).containsKey(expr))) {
+			try {
+				List<Pair<String, String>> approximation_ = approximator.strongestImplicationApproximation(expr, field,
+						scope);
+				List<Pair<String, String>> inconsistencies_ = new ArrayList<>();
+				if (approximation_.isEmpty()) {
+					String toBeingAnalyzedModelPartString = PrettyPrintExpression.makeString(expr);
+					approximation_ = Arrays.asList(new Pair<String, String>(
+							toBeingAnalyzedModelPartString.replace("[", "").replace("]", "").replace(" ", ""),
+							toBeingAnalyzedModelPartString));
 
-				inconsistencies_.addAll(approximator.weakestInconsistentApproximation(expr, field, scope));
+					inconsistencies_.addAll(approximator.weakestInconsistentApproximation(expr, field, scope));
 
+				}
+				if (!approximations.containsKey(field)) {
+					approximations.put(field, new HashMap<>());
+					notApproximationedButInconsistent.put(field, new HashMap<>());
+				}
+				if (!approximations.get(field).containsKey(expr)) {
+					approximations.get(field).put(expr, new LinkedList<>());
+					notApproximationedButInconsistent.get(field).put(expr, new LinkedList<>());
+				}
+				approximations.get(field).get(expr).addAll(approximation_);
+				notApproximationedButInconsistent.get(field).get(expr).addAll(inconsistencies_);
+			} catch (Err e) {
+				e.printStackTrace();
+				logger.severe(Utils.threadName() + expr + " cannot be converted to an inorder form.");
+				throw new RuntimeException(e);
 			}
-			if (!approximations.containsKey(field)) {
-				approximations.put(field, new HashMap<>());
-				notApproximationedButInconsistent.put(field, new HashMap<>());
-			}
-			if (!approximations.get(field).containsKey(expr)) {
-				approximations.get(field).put(expr, new LinkedList<>());
-				notApproximationedButInconsistent.get(field).put(expr, new LinkedList<>());
-			}
-			approximations.get(field).get(expr).addAll(approximation_);
-			notApproximationedButInconsistent.get(field).get(expr).addAll(inconsistencies_);
-		} catch (Err e) {
-			e.printStackTrace();
-			logger.severe(Utils.threadName() + expr + " cannot be converted to an inorder form.");
-			throw new RuntimeException(e);
 		}
-
+		// fill the consistency
+		if (!(weakestConsistentProps.containsKey(field) && weakestConsistentProps.get(field).containsKey(modelExpr))) {
+			if (!weakestConsistentProps.containsKey(field))
+				weakestConsistentProps.put(field, new HashMap<>());
+			if (!weakestConsistentProps.get(field).containsKey(modelExpr))
+				weakestConsistentProps.get(field).put(modelExpr, new ArrayList<>());
+			// compute the weakest consistent properties with modelExpr
+			try {
+				weakestConsistentProps.get(field).get(modelExpr)
+						.addAll(approximator.weakestConsistentApproximation(modelExpr, field, scope));
+			} catch (Err e) {
+				logger.severe(
+						Utils.threadName() + " could not find incosistent properties for " + field + " " + modelExpr);
+				e.printStackTrace();
+			}
+		}
 		System.out.println("notApproximationedButInconsistent-->" + notApproximationedButInconsistent);
 
 	}
