@@ -304,6 +304,7 @@ public abstract class DebuggerAlgorithm {
 		while (!fieldsQueue.isEmpty()) {
 			DecisionQueueItem<Field> field = fieldsQueue.poll();
 			toBeingAnalyzedField = field.getItem().get();
+			checkIfModelIsInconsistent();
 			if (afterPickField())
 				break;
 
@@ -982,6 +983,17 @@ public abstract class DebuggerAlgorithm {
 
 	protected Optional<Field> pickField() {
 		return this.fields.size() > 0 ? Optional.of(this.fields.remove(0)) : Optional.empty();
+	}
+	
+	protected void checkIfModelIsInconsistent(){
+		// find out whether an expression is inconsistent by itself
+		try {
+			inconsistentExpressions = approximator.isInconsistent(modelExpr, toBeingAnalyzedField, scope);
+		} catch (Err e) {
+			e.printStackTrace();
+			logger.severe(Utils.threadName() + constraint + " cannot be converted to an inorder form.");
+			throw new RuntimeException(e);
+		}
 	}
 
 	/*

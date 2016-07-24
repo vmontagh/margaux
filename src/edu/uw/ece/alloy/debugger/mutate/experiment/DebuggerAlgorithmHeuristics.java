@@ -231,16 +231,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean afterPickField() {
-
-		// find out whether an expression is inconsistent by itself
-		try {
-			inconsistentExpressions = super.approximator.isInconsistent(modelExpr, toBeingAnalyzedField, scope);
-		} catch (Err e) {
-			e.printStackTrace();
-			logger.severe(Utils.threadName() + constraint + " cannot be converted to an inorder form.");
-			throw new RuntimeException(e);
-		}
-
 		// Heuristic: If a constraint is inconsistent with approximations of
 		// another constraint, then the former constraint might be
 		// overconstrained and need to be weakened. Hence, weakening the former

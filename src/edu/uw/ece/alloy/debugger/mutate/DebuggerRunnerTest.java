@@ -91,7 +91,7 @@ public class DebuggerRunnerTest {
 		listIsIncon.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt for 3", true);
 		listIsIncon.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) )nxt for 3", true);
 		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", false);
-		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", true);
+		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", false);
 
 
 		
