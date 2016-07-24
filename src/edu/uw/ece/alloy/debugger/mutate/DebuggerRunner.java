@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.infrastructure.Runner;
 import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByAlloy;
-import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByHolaTest;
+import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByHola;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
