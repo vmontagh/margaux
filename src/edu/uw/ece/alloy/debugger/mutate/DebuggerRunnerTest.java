@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -46,193 +45,182 @@ public class DebuggerRunnerTest {
 		System.out.println();
 	}
 
-	static Map<String, List<Pair<String, String>>> listWeakestIncon;
-	static Map<String, List<Pair<String, String>>> listStrongestImpl;
-	static Map<String, List<Pair<String, String>>> listAllCon;
-	static Map<String, List<Pair<String, String>>> listAllInCon;
-	static Map<String, List<Pair<String, String>>> listWeakestCon;
-	static Map<String, Boolean> listIsIncon;
-	static Map<String, List<Pair<String, String>>> binaryTreeStrongestImpl;
-	static Map<String, List<Pair<String, String>>> binaryTreeStrongestCon;
-	static Map<String, List<Pair<String, String>>> binaryWeakestIncon;
-	static Map<String, Boolean> binaryTreeIsIncon;
-	static Map<String, List<Pair<String, String>>> DPhStrongestImpl;
-	static Map<String, List<Pair<String, String>>> DPhStrongestCon;
-	static Map<String, List<Pair<String, String>>> DPhWeakestIncon;
-	static Map<String, Boolean> DPhIsIncon;
+	// a map from the cast-study name, to mocked approximation map and rest.
+	@SuppressWarnings("rawtypes")
+	static Map<String, Map<String, Map>> allMokedApproximations;
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		//@formatter:off		
-		listIsIncon = new HashMap<>();
-		listStrongestImpl = new HashMap<>();
-		listWeakestIncon = new HashMap<>();
-		listAllCon = new HashMap<>();
-		listAllInCon = new HashMap<>();
-		listWeakestCon = new HashMap<>();
 
-		listAllCon = new HashMap<>();
-		listAllInCon = new HashMap<>();
-		listWeakestCon = new HashMap<>();
-
-		listAllCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
-		listAllCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
-
-		listWeakestCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
-		listWeakestCon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
-
+		allMokedApproximations = new HashMap<>();
+		// mocking list
+		allMokedApproximations.put("list", new HashMap());
+		allMokedApproximations.get("list").put("allCon", new HashMap<>());
+		allMokedApproximations.get("list").put("weakestCon", new HashMap<>());
+		allMokedApproximations.get("list").put("isIncon", new HashMap<>());
+		allMokedApproximations.get("list").put("strongestImpl", new HashMap<>());
+		allMokedApproximations.get("list").put("weakestIncon", new HashMap<>());
+		allMokedApproximations.get("list").put("allInCon", new HashMap<>());
 		
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( allreachable[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( allreachable[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", false);
-		listIsIncon.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", false);
-		listIsIncon.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt for 3", true);
-		listIsIncon.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) )nxt for 3", true);
-		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", false);
-		listIsIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", false);
-
-
+		allMokedApproximations.get("list").get("allCon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		allMokedApproximations.get("list").get("allCon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
 		
-		listStrongestImpl.put(" lowerBound[ ]nxt", Arrays.asList());
-		listStrongestImpl.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listStrongestImpl.put(" noLoop[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" sorted[ ]nxt", Arrays.asList());
-		listStrongestImpl.put(" sorted[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" structuralConstraintNxt[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
-		listStrongestImpl.put(" structuralConstraintNxt[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" structuralConstraintNxtFixed[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
-		listStrongestImpl.put(" structuralConstraintNxtFixed[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" structuralConstraintVal[ ]nxt", Arrays.asList());
-		listStrongestImpl.put(" structuralConstraintVal[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" allreachable[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
-		listStrongestImpl.put(" allreachable[ ]nxt", Arrays.asList(new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]")));
-		listStrongestImpl.put(" declarativeFormulaForNext[ ]nxt for 3", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
-		listStrongestImpl.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listStrongestImpl.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
-		listStrongestImpl.put(" singleHead[ ]nxt for 3", Arrays.asList(new Pair<>("injective", "injective[nxt, Node]")));
-		listStrongestImpl.put(" declarativeFormulaForNext_fixed[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
-		listStrongestImpl.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
-
-		listWeakestIncon.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
-		listWeakestIncon.put(" noLoop[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("partialOrder", "partialOrder[nxt, Node, Node]"), new Pair<>("function", "function[nxt, Node]"), new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" sorted[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" structuralConstraintNxt[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listWeakestIncon.put(" structuralConstraintNxt[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]")));
-		listWeakestIncon.put(" structuralConstraintNxtFixed[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" structuralConstraintNxtFixed[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" structuralConstraintVal[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" structuralConstraintVal[ ]val", Arrays.asList(new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" allreachable[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" allreachable[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
-		listWeakestIncon.put(" declarativeFormulaForNext[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
-		listWeakestIncon.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
-		listWeakestIncon.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" singleHead[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put(" declarativeFormulaForNext_fixed[ ]nxt for 3", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		listWeakestIncon.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]")));
-		listWeakestIncon.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
-
+		allMokedApproximations.get("list").get("weakestCon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		allMokedApproximations.get("list").get("weakestCon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxt[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( allreachable[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", true);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( allreachable[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", true);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )nxt", false);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( !( ( ( ( noLoop[ ] ) and ( structuralConstraintNxtFixed[ ] ) and ( structuralConstraintVal[ ] ) and ( lowerBound[ ] ) and ( sorted[ ] ) )  =>   rootIsLowest[ ] ) ) ) )val", false);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt for 3", true);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( declarativeFormulaForNext[ ] ) and ( acyclic[ ] ) )nxt for 3", true);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) )nxt for 3", false);
+		allMokedApproximations.get("list").get("isIncon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", false);
+		
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" lowerBound[ ]nxt", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" noLoop[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" sorted[ ]nxt", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" sorted[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" structuralConstraintNxt[ ]nxt", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" structuralConstraintNxt[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" structuralConstraintNxtFixed[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" structuralConstraintNxtFixed[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" structuralConstraintVal[ ]nxt", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" structuralConstraintVal[ ]val", Arrays.asList(new Pair<>("function", "function[val, Node]"), new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" allreachable[ ]val", Arrays.asList(new Pair<>("acyclic", "acyclic[val, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" allreachable[ ]nxt", Arrays.asList(new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" declarativeFormulaForNext[ ]nxt for 3", Arrays.asList(new Pair<>("function", "function[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" singleHead[ ]nxt for 3", Arrays.asList(new Pair<>("injective", "injective[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" declarativeFormulaForNext_fixed[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
+		allMokedApproximations.get("list").get("strongestImpl")
+			.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
+		
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" lowerBound[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" lowerBound[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" noLoop[ ]nxt", Arrays.asList(new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" noLoop[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" sorted[ ]nxt", Arrays.asList(new Pair<>("partialOrder", "partialOrder[nxt, Node, Node]"), new Pair<>("function", "function[nxt, Node]"), new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" sorted[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" structuralConstraintNxt[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" structuralConstraintNxt[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" structuralConstraintNxtFixed[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" structuralConstraintNxtFixed[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" structuralConstraintVal[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" structuralConstraintVal[ ]val", Arrays.asList(new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("weaklyConnected", "weaklyConnected[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("surjective", "surjective[val, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" allreachable[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" allreachable[ ]val", Arrays.asList(new Pair<>("bijection", "bijection[val, Node, Int]"), new Pair<>("antisymmetric", "antisymmetric[val, Node, Int]"), new Pair<>("reflexive", "reflexive[val, Node]"), new Pair<>("irreflexive", "irreflexive[val, Node, Int]"), new Pair<>("symmetric", "symmetric[val, Node, Int]"), new Pair<>("transitive", "transitive[val, Node, Int]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" declarativeFormulaForNext[ ]nxt for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" acyclic[ ]nxt for 3", Arrays.asList(new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" singleHead[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put(" declarativeFormulaForNext_fixed[ ]nxt for 3", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+			.put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]")));
+		allMokedApproximations.get("list").get("weakestIncon")
+		.put(" connected[ ]nxt for 3", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
 		
 		
-		binaryTreeStrongestImpl = new HashMap<>();
-		binaryTreeStrongestImpl.put(" structuralConstraint[ ]right for 3", Arrays.asList(new Pair<>("functional", "functional[right, Node]")));
-		binaryTreeStrongestImpl.put(" acyclic[ ]right for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[right, Node]")));
-		binaryTreeStrongestImpl.put(" distinctChildren[ ]right for 3", Arrays.asList());
-		binaryTreeStrongestImpl.put(" lowerBoud[ ]right for 3", Arrays.asList());
-		binaryTreeStrongestImpl.put(" structuralConstraint[ ]left for 3", Arrays.asList(new Pair<>("functional", "functional[left, Node]")));
-		binaryTreeStrongestImpl.put(" acyclic[ ]left for 3", Arrays.asList(new Pair<>("acyclic", "acyclic[left, Node]")));
-		binaryTreeStrongestImpl.put(" distinctChildren[ ]left for 3", Arrays.asList());
-		binaryTreeStrongestImpl.put(" lowerBoud[ ]left for 3", Arrays.asList());
-		binaryTreeStrongestCon = new HashMap<>();
-		binaryWeakestIncon = new HashMap<>();
-		binaryWeakestIncon.put(" structuralConstraint[ ]right for 3", Arrays.asList(new Pair<>("empty", "empty[right]")));
-		binaryWeakestIncon.put(" acyclic[ ]right for 3", Arrays.asList(new Pair<>("stronglyConnected", "stronglyConnected[right, Node, Node]"), new Pair<>("symmetric", "symmetric[right, Node, Node]"), new Pair<>("total", "total[right, Node]"), new Pair<>("surjective", "surjective[right, Node]")));
-		binaryWeakestIncon.put(" distinctChildren[ ]right for 3", Arrays.asList(new Pair<>("empty", "empty[right]")));
-		binaryWeakestIncon.put(" lowerBoud[ ]right for 3", Arrays.asList(new Pair<>("empty", "empty[right]")));
-		binaryWeakestIncon.put(" structuralConstraint[ ]left for 3", Arrays.asList(new Pair<>("empty", "empty[left]")));
-		binaryWeakestIncon.put(" acyclic[ ]left for 3", Arrays.asList(new Pair<>("stronglyConnected", "stronglyConnected[left, Node, Node]"), new Pair<>("symmetric", "symmetric[left, Node, Node]"), new Pair<>("total", "total[left, Node]"), new Pair<>("surjective", "surjective[left, Node]")));
-		binaryWeakestIncon.put(" distinctChildren[ ]left for 3", Arrays.asList(new Pair<>("empty", "empty[left]")));
-		binaryWeakestIncon.put(" lowerBoud[ ]left for 3", Arrays.asList(new Pair<>("empty", "empty[left]")));
-		binaryTreeIsIncon = new HashMap<>();
-		binaryTreeIsIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )right for 3", true);
-		binaryTreeIsIncon.put("( ( !( ( ( ( structuralConstraint[ ] ) and ( acyclic[ ] ) and ( distinctChildren[ ] ) and ( lowerBoud[ ] ) )  =>   allReachable[ ] ) ) ) )left for 3", true);
-
-		DPhStrongestImpl = new HashMap<>();
-		DPhStrongestImpl.put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhStrongestImpl.put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhStrongestImpl.put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhStrongestImpl.put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhStrongestImpl.put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhStrongestImpl.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhStrongestCon = new HashMap<>();
-		DPhWeakestIncon = new HashMap<>();
-
-		DPhWeakestIncon.put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhWeakestIncon.put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptNon_", "SzGrwtStrc_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
-		DPhWeakestIncon.put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhWeakestIncon.put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
-		DPhWeakestIncon.put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
-		DPhWeakestIncon.put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptStrt_", "SzGrwt_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdIncrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptStrt_", "SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdIncrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
-
+		// mocking Dining philosophers 
+		allMokedApproximations.put("dph", new HashMap());
+		allMokedApproximations.get("dph").put("allCon", new HashMap<>());
+		allMokedApproximations.get("dph").put("weakestCon", new HashMap<>());
+		allMokedApproximations.get("dph").put("isIncon", new HashMap<>());
+		allMokedApproximations.get("dph").put("strongestImpl", new HashMap<>());
+		allMokedApproximations.get("dph").put("weakestIncon", new HashMap<>());
+		allMokedApproximations.get("dph").put("allInCon", new HashMap<>());
 		
+		allMokedApproximations.get("list").get("allCon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("allCon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+
+		allMokedApproximations.get("list").get("weakestCon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestCon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
 		
-		DPhIsIncon = new HashMap<>();
-		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
-		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
-		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", false);
-		DPhIsIncon.put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", false);
+		allMokedApproximations.get("list").get("strongestImpl").put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl").put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl").put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl").put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl").put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("strongestImpl").put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
 		
+		allMokedApproximations.get("list").get("weakestIncon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptNon_", "SzGrwt_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptNon_", "SzGrwt_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestIncon").put(" lowerBoundProcess[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptNon_", "SzGrwtStrc_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabOrRelease[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Glbl_SdMdl_EmptNon_", "SzGrwtStrc_Glbl_SdMdl_EmptNon_[waits,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[waits,State,Process,Mutex,so/first,so/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabbedInOrder[ ]waits for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestIncon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptNon_", "SzGrwt_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptNon_", "SzGrwt_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestIncon").put(" lowerBoundProcess[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList());
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabOrRelease[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzNChng_Glbl_SdEnd_EmptNon_", "SzNChng_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzNChng_Glbl_SdMdl_EmptNon_", "SzNChng_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwtStrc_Lcl_SdMdl_EmptNon_", "SzGrwtStrc_Lcl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdMdl_EmptNon_", "SzShrnk_Glbl_SdMdl_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzShrnk_Glbl_SdEnd_EmptNon_", "SzShrnk_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptStrt_", "SzGrwt_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdIncrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptStrt_", "SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdIncrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
+		allMokedApproximations.get("list").get("weakestIncon").put(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex", Arrays.asList(new Pair<>("SzGrwtStrc_Lcl_SdEnd_EmptNon_", "SzGrwtStrc_Lcl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdMdl_EmptStrt_", "SzGrwt_Glbl_SdMdl_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdDcrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdIncrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("SzGrwtStrc_Glbl_SdEnd_EmptNon_", "SzGrwtStrc_Glbl_SdEnd_EmptNon_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("SzGrwt_Glbl_SdEnd_EmptStrt_", "SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next]"), new Pair<>("OrdIncrs_SzGrwt_Lcl_SdMdl_EmptNon_", "OrdIncrs_SzGrwt_Lcl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]"), new Pair<>("OrdDcrs_SzGrwt_Glbl_SdMdl_EmptNon_", "OrdDcrs_SzGrwt_Glbl_SdEnd_EmptStrt_[holds,State,Process,Mutex,so/first,so/next,mo/first,mo/next]")));
+		
+		allMokedApproximations.get("list").get("isIncon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )holds for 5 State, 5 Process, 4 Mutex", false);
+		allMokedApproximations.get("list").get("isIncon").put("( ( lowerBoundProcess[ ] ) and ( GrabOrRelease[ ] ) and ( GrabbedInOrder[ ] ) )waits for 5 State, 5 Process, 4 Mutex", false);
+
 		//@formatter:on
-	}
-
-	@Test
-	public void test() {
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
-
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-
-		Map<String, List<String>> inconMap = new HashMap<>();
-		Map<String, List<String>> weakerMap = new HashMap<>();
-		Map<String, List<String>> strongMap = new HashMap<>();
-
-		// for (String key : DPhWeakestIncon.keySet()) {
-		for (Pair<String, String> incon : DPhWeakestIncon
-				.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")) {
-
-			inconMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")
-					.stream().map(a -> a.a).filter(a -> !a.equals(incon.a)).filter(a -> {
-						return runner.approximator.isInconsistent(a, incon.a);
-					}).collect(Collectors.toList()));
-			weakerMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")
-					.stream().map(a -> a.a).filter(a -> !a.equals(incon.a)).filter(a -> {
-						return runner.approximator.weakerPatterns(a).contains(incon.a);
-					}).collect(Collectors.toList()));
-			strongMap.put(incon.a, DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex")
-					.stream().map(a -> a.a).filter(a -> !a.equals(incon.a)).filter(a -> {
-						return runner.approximator.strongerPatterns(a).contains(incon.a);
-					}).collect(Collectors.toList()));
-
-			DPhWeakestIncon.get(" GrabbedInOrder[ ]holds for 5 State, 5 Process, 4 Mutex").stream()
-					.filter(a -> !a.a.equals(incon.a)).forEach(a -> {
-						System.out.printf(
-								"assert %1$s_implies_%2$s{%3$s implies %4$s}\ncheck %1$s_implies_%2$s for 5 State, 5 Process, 4 Mutex\n",
-								incon.a, a.a, incon.b, a.b);
-					});
-
-		}
-		// }
-
-		System.out.println(inconMap);
-		System.out.println(weakerMap);
-		System.out.println(strongMap);
 	}
 
 	@AfterClass
@@ -310,634 +298,264 @@ public class DebuggerRunnerTest {
 		runner.debuggerAlgorithm.run();
 	}
 
-	@Test
-	public void testStrongestRandomApproximationRandomListBug1() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
+	protected Approximator createdMockedApproximator(DebuggerRunner runner, String mockedName) {
+		return new Approximator(runner.approximator.interfacE, runner.approximator.processManager,
+				runner.approximator.tmpLocalDirectory, runner.approximator.toBeAnalyzedCode,
+				runner.approximator.dependentFiles) {
 
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestRandomApproximationListBug1Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
+			@SuppressWarnings("unchecked")
 			@Override
 			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
 					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return listStrongestImpl.get(statement + fieldLabel + scope);
+				return ((List<Pair<String, String>>) allMokedApproximations.get(mockedName).get("strongestImpl")
+						.get(statement + fieldLabel + scope));
 			}
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
 					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
+				return ((List<Pair<String, String>>) allMokedApproximations.get(mockedName).get("weakestIncon")
+						.get(statement + fieldLabel + scope));
 			}
 
 			@Override
 			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
+				return ((Boolean) allMokedApproximations.get(mockedName).get("isIncon")
+						.get(statement + fieldLabel + scope));
 			}
 
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationListBug1() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationList0() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationList0Bug1() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationList0Bug1Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationList0Bug2() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-	
-	protected Approximator createdMockedListApproximator(DebuggerRunner runner){
-		return new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
+			@SuppressWarnings("unchecked")
 			@Override
 			public List<Pair<String, String>> allConsistentApproximation(String statement, String fieldLabel,
 					String scope) {
-				return listAllCon.get(statement + fieldLabel + scope);
+				return ((List<Pair<String, String>>) allMokedApproximations.get(mockedName).get("allCon")
+						.get(statement + fieldLabel + scope));
 			}
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public List<Pair<String, String>> allInconsistentApproximation(String statement, String fieldLabel,
 					String scope) {
-				return listAllInCon.get(statement + fieldLabel + scope);
+				return ((List<Pair<String, String>>) allMokedApproximations.get(mockedName).get("allInCon")
+						.get(statement + fieldLabel + scope));
 			}
 
+			@SuppressWarnings("unchecked")
 			@Override
 			public List<Pair<String, String>> weakestConsistentApproximation(String statement, String fieldLabel,
 					String scope) {
-				return listWeakestCon.get(statement + fieldLabel + scope);
+				return ((List<Pair<String, String>>) allMokedApproximations.get(mockedName).get("weakestCon")
+						.get(statement + fieldLabel + scope));
 			}
 		};
 	}
 
-	@Test
-	public void testStrongestHeuristicApproximationList0Bug2Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug2.als");
+	protected DebuggerRunner createDebuggerRunner(File toBeAnalyzedCode, File correctedModel,
+			DebuggerAlgorithm algorithm) {
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+				testingHost, algorithm);
 		runner.start();
-
-		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
-		runner.debuggerAlgorithm.run();
+		return runner;
 	}
-	
-	@Test
-	public void testStrongestRandomApproximationList0Bug2Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
 
-		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
-		runner.debuggerAlgorithm.run();
+	protected void runDebuggerRunner(File toBeAnalyzedCode, File correctedModel, DebuggerAlgorithm algorithm) {
+		createDebuggerRunner(toBeAnalyzedCode, correctedModel, algorithm).debuggerAlgorithm.run();
 	}
-	
-	@Test
-	public void testStrongestHeuristicApproximationList0Bug3() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug3.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug3.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
 
-		runner.debuggerAlgorithm.run();
-	}
-	
-	@Test
-	public void testStrongestHeuristicApproximationList0Bug3Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug3.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug3.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
-		runner.debuggerAlgorithm.run();
-	}
-	
-	@Test
-	public void testStrongestRandomApproximationList0Bug3Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug3.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug3.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.approximator = createdMockedListApproximator(runner);
+	protected void runDebuggerRunnerWithMockedApproximator(File toBeAnalyzedCode, File correctedModel,
+			DebuggerAlgorithm algorithm, String mockedTestName) {
+		DebuggerRunner runner = createDebuggerRunner(toBeAnalyzedCode, correctedModel, algorithm);
+		runner.debuggerAlgorithm.approximator = createdMockedApproximator(runner, mockedTestName);
 		runner.debuggerAlgorithm.run();
 	}
 
+	protected void testHeuristic(File toBeAnalyzedCode, File correctedModel) {
+		runDebuggerRunner(toBeAnalyzedCode, correctedModel, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+	}
+
+	protected void testHeuristicMocked(File toBeAnalyzedCode, File correctedModel, String mockedTestName) {
+		runDebuggerRunnerWithMockedApproximator(toBeAnalyzedCode, correctedModel,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM, mockedTestName);
+	}
+
+	protected void testRandom(File toBeAnalyzedCode, File correctedModel) {
+		runDebuggerRunner(toBeAnalyzedCode, correctedModel, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+	}
+
+	protected void testRandomMocked(File toBeAnalyzedCode, File correctedModel, String mockedTestName) {
+		runDebuggerRunnerWithMockedApproximator(toBeAnalyzedCode, correctedModel,
+				DebuggerAlgorithmRandom.EMPTY_ALGORITHM, mockedTestName);
+	}
+
+	final static File testFolder = new File("models/debugger/casestudy/journal");
+
+	protected void testHeuristic(String toBeAnalyzedCode, String correctedModel) {
+		runDebuggerRunner(new LazyFile(testFolder, toBeAnalyzedCode), new LazyFile(testFolder, correctedModel),
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+	}
+
+	protected void testHeuristicMocked(String toBeAnalyzedCode, String correctedModel, String mockedTestName) {
+		runDebuggerRunnerWithMockedApproximator(new LazyFile(testFolder, toBeAnalyzedCode),
+				new LazyFile(testFolder, correctedModel), DebuggerAlgorithmRandom.EMPTY_ALGORITHM, mockedTestName);
+	}
+
+	protected void testRandom(String toBeAnalyzedCode, String correctedModel) {
+		runDebuggerRunner(new LazyFile(testFolder, toBeAnalyzedCode), new LazyFile(testFolder, correctedModel),
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
+	}
+
+	protected void testRandomMocked(String toBeAnalyzedCode, String correctedModel, String mockedTestName) {
+		runDebuggerRunnerWithMockedApproximator(new LazyFile(testFolder, toBeAnalyzedCode),
+				new LazyFile(testFolder, correctedModel), DebuggerAlgorithmRandom.EMPTY_ALGORITHM, mockedTestName);
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// linked list
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// bug 1
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 	@Test
-	public void testStrongestRandomApproximationList0Bug1Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
+	public void testHeuristicList1() {
+		testHeuristic("list.v0.bug1.als", "corrected.list.v0.bug1.als");
 	}
 
 	@Test
-	public void testStrongestHeuristicApproximationListBug1Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
+	public void testHeuristicMockedList1() {
+		testHeuristicMocked("list.v0.bug1.als", "corrected.list.v0.bug1.als", "list");
 	}
 
 	@Test
-	public void testStrongestRandomApproximationRandomListBug2() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestRandomApproximationListBug2Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationListBug2() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicListApproximationBug2Mocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug2.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug2.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestApproximationListConsistent() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		System.out
-				.println(runner.debuggerAlgorithm.approximator.weakestInconsistentApproximation("acyclic", "nxt", ""));
-
-		// runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestRandomApproximationListMocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v0.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return listStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return listWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return listIsIncon.get(statement + fieldLabel + scope);
-			}
-
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestHeuristicApproximationListMocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/list.v1.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v1.bug1.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-
-		// change the debugger algorithm in runner
-		runner.debuggerAlgorithm = DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM.createIt(runner.toBeAnalyzedCode,
-				runner.tmpLocalDirectory, runner.approximator, runner.oracle, runner.exampleFinder);
-
-		runner.start();
-
-		/*
-		 * Approximator approximatorMock = new Approximator(
-		 * runner.approximator.interfacE, runner.approximator.processManager,
-		 * runner.approximator.tmpLocalDirectory,
-		 * runner.approximator.toBeAnalyzedCode,
-		 * runner.approximator.dependentFiles) {
-		 * 
-		 * @Override public List<Pair<String, String>>
-		 * strongestImplicationApproximation( String statement, String
-		 * fieldLabel, String scope) { System.out.println(statement + fieldLabel
-		 * + scope); return listProperties.get(statement + fieldLabel + scope);
-		 * }
-		 * 
-		 * @Override public List<Pair<String, String>>
-		 * weakestInconsistentApproximation( String statement, String
-		 * fieldLabel, String scope) { return listWeakestIncon.get(statement +
-		 * fieldLabel + scope); }
-		 * 
-		 * @Override public Boolean isInconsistent(String statement, String
-		 * fieldLabel, String scope) { return listIsIncon.get(statement +
-		 * fieldLabel + scope); } };
-		 * 
-		 * runner.debuggerAlgorithm.approximator = approximatorMock;
-		 */
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestApproximationBinaryTreeRadonom() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/binary.tree.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.binary.tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestApproximationBinaryTreeHeuristicMocked() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/binary.tree.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.binary.tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return binaryTreeStrongestImpl.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return binaryWeakestIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return binaryTreeIsIncon.get(statement + fieldLabel + scope);
-			}
-
-			@Override
-			public List<Pair<String, String>> strongestConsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return binaryTreeStrongestCon.get(statement + fieldLabel + scope);
-			}
-		};
-
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testStrongestApproximationBinaryTreeHeuristic() throws Err {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/binary.tree.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.binary.tree.als");
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-
-		runner.debuggerAlgorithm.run();
-	}
-
-	@Test
-	public void testDikjstraBug1Random() {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
-
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM);
-		runner.start();
-		runner.debuggerAlgorithm.run();
+	public void testRandomList1() {
+		testRandom("list.v0.bug1.als", "corrected.list.v0.bug1.als");
 
 	}
 
 	@Test
-	public void testDikjstraBug1Heuristic() {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+	public void testRandomMockedList1() {
+		testRandomMocked("list.v0.bug1.als", "corrected.list.v0.bug1.als", "list");
+	}
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
-		runner.debuggerAlgorithm.run();
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// bug 2
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	@Test
+	public void testHeuristicList2() {
+		testHeuristic("list.v0.bug2.als", "corrected.list.v0.bug2.als");
 	}
 
 	@Test
-	public void testDikjstraBug1HeuristicMocked() {
-		File tmpLocalDirectory = new File("tmp/testing");
-		File toBeAnalyzedCode = new LazyFile("models/debugger/casestudy/journal/dijkstra.bug1.als");
-		File correctedModel = new File("models/debugger/casestudy/journal/corrected.dijkstra.bug1.als");
+	public void testHeuristicMockedList2() {
+		testHeuristicMocked("list.v0.bug2.als", "corrected.list.v0.bug2.als", "list");
+	}
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, Collections.emptyList(),
-				testingHost, DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM);
-		runner.start();
+	@Test
+	public void testRandomList2() {
+		testRandom("list.v0.bug2.als", "corrected.list.v0.bug2.als");
 
-		Approximator approximatorMock = new Approximator(runner.approximator.interfacE,
-				runner.approximator.processManager, runner.approximator.tmpLocalDirectory,
-				runner.approximator.toBeAnalyzedCode, runner.approximator.dependentFiles) {
-			@Override
-			public List<Pair<String, String>> strongestImplicationApproximation(String statement, String fieldLabel,
-					String scope) {
-				System.out.println(statement + fieldLabel + scope);
-				return DPhStrongestImpl.get(statement + fieldLabel + scope);
-			}
+	}
 
-			@Override
-			public List<Pair<String, String>> weakestInconsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return DPhWeakestIncon.get(statement + fieldLabel + scope);
-			}
+	@Test
+	public void testRandomMockedList2() {
+		testRandomMocked("list.v0.bug2.als", "corrected.list.v0.bug2.als", "list");
+	}
 
-			@Override
-			public Boolean isInconsistent(String statement, String fieldLabel, String scope) {
-				return DPhIsIncon.get(statement + fieldLabel + scope);
-			}
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// bug 3
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	@Test
+	public void testHeuristicList3() {
+		testHeuristic("list.v0.bug3.als", "corrected.list.v0.bug3.als");
+	}
 
-			@Override
-			public List<Pair<String, String>> strongestConsistentApproximation(String statement, String fieldLabel,
-					String scope) {
-				return DPhStrongestCon.get(statement + fieldLabel + scope);
-			}
-		};
+	@Test
+	public void testHeuristicMockedList3() {
+		testHeuristicMocked("list.v0.bug3.als", "corrected.list.v0.bug3.als", "list");
+	}
 
-		runner.debuggerAlgorithm.approximator = approximatorMock;
-		runner.debuggerAlgorithm.run();
+	@Test
+	public void testRandomList3() {
+		testRandom("list.v0.bug3.als", "corrected.list.v0.bug3.als");
 
+	}
+
+	@Test
+	public void testRandomMockedList3() {
+		testRandomMocked("list.v0.bug3.als", "corrected.list.v0.bug3.als", "list");
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// Dijkstra's Dining Philosophers: DPH
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// bug 1
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	@Test
+	public void testHeuristicDPH1() {
+		testHeuristic("dijkstra.bug1.als", "corrected.dijkstra.bug1.als");
+	}
+
+	@Test
+	public void testHeuristicMockedDPH1() {
+		testHeuristicMocked("dijkstra.bug1.als", "corrected.dijkstra.bug1.als", "dph");
+	}
+
+	@Test
+	public void testRandomDPH1() {
+		testRandom("dijkstra.bug1.als", "corrected.dijkstra.bug1.als");
+
+	}
+
+	@Test
+	public void testRandomMockedDPH1() {
+		testRandomMocked("dijkstra.bug1.als", "corrected.dijkstra.bug1.als", "dph");
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// bug 2
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	@Test
+	public void testHeuristicDPH2() {
+		testHeuristic("dijkstra.bug2.als", "corrected.dijkstra.bug2.als");
+	}
+
+	@Test
+	public void testHeuristicMockedDPH2() {
+		testHeuristicMocked("dijkstra.bug2.als", "corrected.dijkstra.bug2.als", "dph");
+	}
+
+	@Test
+	public void testRandomDPH2() {
+		testRandom("dijkstra.bug2.als", "corrected.dijkstra.bug2.als");
+
+	}
+
+	@Test
+	public void testRandomMockedDPH2() {
+		testRandomMocked("dijkstra.bug2.als", "corrected.dijkstra.bug2.als", "dph");
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	// bug 3
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	@Test
+	public void testHeuristicDPH3() {
+		testHeuristic("dijkstra.bug1.als", "corrected.dijkstra.bug1.als");
+	}
+
+	@Test
+	public void testHeuristicMockedDPH3() {
+		testHeuristicMocked("dijkstra.bug3.als", "corrected.dijkstra.bug3.als", "dph");
+	}
+
+	@Test
+	public void testRandomDPH3() {
+		testRandom("dijkstra.bug3.als", "corrected.dijkstra.bug3.als");
+
+	}
+
+	@Test
+	public void testRandomMockedDPH3() {
+		testRandomMocked("dijkstra.bug3.als", "corrected.dijkstra.bug3.als", "dph");
 	}
 
 }
