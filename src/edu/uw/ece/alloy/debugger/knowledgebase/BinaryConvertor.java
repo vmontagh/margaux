@@ -155,7 +155,7 @@ public class BinaryConvertor {
 		final Queue<String> patterns = new LinkedList<>();
 		final Set<String> visitedPatterns = new HashSet<>();
 		final StringBuilder result = new StringBuilder();
-		result.append("\\begin{table}[h]"+
+		result.append("\\begin{table}[h]\n"+
 				"\t\\center\n" +
 				"\t\\begin{tabular}{|c|c|}\n" +
 				"\t\t\\hline\n" +
@@ -182,10 +182,10 @@ public class BinaryConvertor {
 				} else {
 					final AtomicInteger i = new AtomicInteger(1);
 					final String implied = impliedPatterns.stream()
-							.map(s->sinks.contains(s)? "\\underline{\\code{"+s+"}}" : "\\code{"+s+"}")
+							.map(s->sinks.contains(s)? "\\sout{\\code{"+s+"}}" : "\\code{"+s+"}")
 							.map(s -> i.getAndIncrement()%2 == 0 ? s+"\\\\":s)
 							.collect(Collectors.joining(", ", "\\specialcell{", "}"));
-					result.append("\t\t").append(sources.contains(pattern)? "\\textoverline{\\code{"+pattern+"}" : "\\code{"+pattern).append("}&").append(implied).append("\\\\ \\hline\n");
+					result.append("\t\t").append(sources.contains(pattern)? "\\textbf{\\code{"+pattern+"}" : "\\code{"+pattern).append("}&").append(implied).append("\\\\ \\hline\n");
 				}
 			}
 			
