@@ -5,10 +5,17 @@ package edu.uw.ece.alloy.debugger.knowledgebase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.google.common.io.Files;
@@ -28,11 +35,7 @@ import edu.uw.ece.alloy.debugger.exec.A4CommandExecuter;
  */
 public class BinaryConvertor {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-
+	static void convertFRomAlloyToCSV() {
 		final File pathToKB = new File("models/debugger/knowledge_base/strutural_kb/csv");
 		if (!pathToKB.exists())
 			pathToKB.mkdirs();
@@ -144,6 +147,65 @@ public class BinaryConvertor {
 			tmpRelationalPatterns.deleteOnExit();
 		}
 
+	}
+
+	static void convertFromCSVToLatex() {
+		final BinaryImplicationLatticImperative bili = new BinaryImplicationLatticImperative();
+
+		final Queue<String> patterns = new LinkedList<>();
+		final Set<String> visitedPatterns = new HashSet<>();
+		final StringBuilder result = new StringBuilder();
+		result.append("\\begin{table}[h]"+
+				"\t\\center\n" +
+				"\t\\begin{tabular}{|c|c|}\n" +
+				"\t\t\\hline\n" +
+				"\t\\rowcolor{black!25}\n" +
+				"\t\t\\code{From} & \\code{To} \\\\\n"+
+				"\t\t\\hline\n"
+				);
+		try {
+			final Set<String> sinks = new HashSet<>(bili.getAllSinks());
+			final Set<String> sources = new HashSet<>(bili.getAllSources());
+
+			patterns.addAll(sources.stream().sorted().collect(Collectors.toList()));
+			while (!patterns.isEmpty()) {
+				final String pattern = patterns.poll();
+				if (visitedPatterns.contains(pattern)) {
+					continue;
+				}
+				visitedPatterns.add(pattern);
+				Collection<String> impliedPatterns = bili.getNextImpliedProperties(pattern).stream().sorted()
+						.collect(Collectors.toList());
+				patterns.addAll(impliedPatterns);
+				if (impliedPatterns.isEmpty()) {
+					sinks.add(pattern);
+				} else {
+					final AtomicInteger i = new AtomicInteger(1);
+					final String implied = impliedPatterns.stream()
+							.map(s->sinks.contains(s)? "\\underline{\\code{"+s+"}}" : "\\code{"+s+"}")
+							.map(s -> i.getAndIncrement()%2 == 0 ? s+"\\\\":s)
+							.collect(Collectors.joining(", ", "\\specialcell{", "}"));
+					result.append("\t\t").append(sources.contains(pattern)? "\\textoverline{\\code{"+pattern+"}" : "\\code{"+pattern).append("}&").append(implied).append("\\\\ \\hline\n");
+				}
+			}
+			
+			result.append("\t\\end{tabular}\n"+
+						"\\end{table}\n");
+			
+			System.out.println(result);
+		} catch (Err e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		// convertFRomAlloyToCSV();
+		convertFromCSVToLatex();
 	}
 
 }
