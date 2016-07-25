@@ -114,6 +114,12 @@ public abstract class DebuggerAlgorithm {
 	protected final static Logger logger = Logger
 			.getLogger(DebuggerAlgorithm.class.getName() + "--" + Thread.currentThread().getName());
 
+	final protected Map<Integer, Pair<Boolean, String>> resultInterpretaionMap;
+
+	public enum REC {
+		TRUE, FALSE, DONTCARE
+	};
+
 	/* The source of an Alloy file */
 	final public File sourceFile;
 	/* The mutation are stored in this directory. */
@@ -441,9 +447,10 @@ public abstract class DebuggerAlgorithm {
 								// The mutatedFile is global to be accessible
 								// within
 								// other functions.
-								mutatedFile = makeMutation(toBeingAnalyzedModelPartString,
-										toBeingWeakenOrStrengthenedApproximation.b, incon.b, strengthened, restModel)
-												.get();
+								strengthened = false;
+								mutatedFile = makeWeakeningModelPartMutationWithInconsistent(
+										toBeingAnalyzedModelPartString, restModel, incon.b).get();
+
 								System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
 								MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 								if (afterMutating())
@@ -456,8 +463,8 @@ public abstract class DebuggerAlgorithm {
 								afterCallingExampleFinder();
 								beforeInquiryOracle();
 
-								Pair<String, String> headerRow = Utils
-										.extractHeader(interpretMutationResult(approximationProperty + "_" + incon.a));
+								Pair<String, String> headerRow = Utils.extractHeader(
+										interpretMutationResultByMap(approximationProperty + "_" + incon.a));
 								reportHeader = headerRow.a;
 								report.append(headerRow.b).append("\n");
 								// store the answer
@@ -473,9 +480,11 @@ public abstract class DebuggerAlgorithm {
 
 							// The mutatedFile is global to be accessible within
 							// other functions.
-							mutatedFile = makeMutation(toBeingAnalyzedModelPartString,
-									toBeingWeakenOrStrengthenedApproximation.b, approximationProperty, strengthened,
-									restModel).get();
+							mutatedFile = (strengthened
+									? makeStrengtheningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
+											approximationProperty, toBeingWeakenOrStrengthenedApproximation.b)
+									: makeWeakeningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
+											approximationProperty, toBeingWeakenOrStrengthenedApproximation.b)).get();
 							System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
 							MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 							if (afterMutating())
@@ -490,7 +499,7 @@ public abstract class DebuggerAlgorithm {
 							// ask the user
 							// Interpreting the result
 							Pair<String, String> headerRow = Utils
-									.extractHeader(interpretMutationResult(approximationProperty));
+									.extractHeader(interpretMutationResultByMap(approximationProperty));
 							reportHeader = headerRow.a;
 							report.append(headerRow.b).append("\n");
 							// store the answer
@@ -521,7 +530,8 @@ public abstract class DebuggerAlgorithm {
 						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
 				for (Pair<String, String> weakestConsistentPropToModelExpr : weakestConsistentPropsToModelExpr) {
 					// mutate to out of bound
-					mutatedFile = makeMutation(modelString, "", weakestConsistentPropToModelExpr.b, true, "").get();
+					mutatedFile = makeStrengtheningModelMutation(modelString,
+							weakestConsistentPropToModelExpr.b, weakestConsistentPropToModelExpr.b).get();
 					MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 					inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 							mutatedFile.getName().replace(".als", ""),
@@ -536,8 +546,8 @@ public abstract class DebuggerAlgorithm {
 					for (Pair<String, String> strongerWeakestConsistentPropToModelExpr : approximator
 							.strongerProperties(weakestConsistentPropToModelExpr.a, toBeingAnalyzedField.label)) {
 						// mutate to out of bound
-						mutatedFile = makeMutation(strongerWeakestConsistentPropToModelExpr.b, "",
-								weakestConsistentPropToModelExpr.b, true, modelString).get();
+						mutatedFile = makeStrengtheningModelMutation(modelString,
+								weakestConsistentPropToModelExpr.b, strongerWeakestConsistentPropToModelExpr.b).get();
 						MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 						inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 								mutatedFile.getName().replace(".als", ""),
@@ -574,6 +584,150 @@ public abstract class DebuggerAlgorithm {
 		System.out.println("resultInterpretaionMap=" + resultInterpretaionMap);
 	}
 
+	protected Optional<File> makeStrengtheningModelPartMutation(String modelPart, String restModel, String property,
+			String approximation) {
+
+		interpretStrengtheningModelPartMutation();
+
+		String approximatedProperty = new String();
+		String notApproximatedProperty = new String();
+		final String restModels = !restModel.trim().isEmpty() ? " and " + restModel : "";
+		// The model is not approximated by any pattern. So that it will be
+		// weaken/strengthened by itself
+		if (modelPart.equals(property)) {
+			// The approximation is supposed to be the negation of the modelPart
+			approximatedProperty = "( " + approximation + " )" + restModels;
+			notApproximatedProperty = "( " + modelPart + ")";
+
+		} else
+		// the property cannot be strengthened to any stronger pattern
+		if (property.equals(approximation)) {
+			approximatedProperty = "(" + modelPart + ")" + restModels;
+			notApproximatedProperty = "( not(" + modelPart + "))" + restModels;
+		} else {
+			approximatedProperty = modelPart + " and (not(" + approximation + "))" + restModels;
+			notApproximatedProperty = modelPart + " and (" + approximation + ")" + restModels;
+		}
+		return makeMutation(approximatedProperty, notApproximatedProperty);
+	}
+
+	protected void interpretStrengtheningModelPartMutation() {
+		resultInterpretaionMap.clear();
+		// in/out, exampleExists?, intended?, strengthened?
+
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.TRUE, true, "correct");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.TRUE, false, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.TRUE, false, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.TRUE, true, "correct");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.TRUE, false, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.TRUE, false, "error-unsat");
+
+		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.FALSE, false, "error-noweaken");
+	}
+
+	protected Optional<File> makeWeakeningModelPartMutation(String modelPart, String restModel, String property,
+			String approximation) {
+
+		interpretWeakeningModelPartMutation();
+
+		String approximatedProperty = new String();
+		String notApproximatedProperty = new String();
+		final String restModels = !restModel.trim().isEmpty() ? " and " + restModel : "";
+
+		// The model is not approximated by any pattern. So that it will be
+		// weaken/strengthened by itself
+		if (modelPart.equals(property)) {
+			// The approximation is supposed to be the negation of the modelPart
+			approximatedProperty = "( " + modelPart + ")";
+			notApproximatedProperty = "( " + approximation + " )" + restModels;
+
+		} else
+		// the property cannot be strengthened to any stronger pattern
+		if (property.equals(approximation)) {
+			approximatedProperty = "(" + modelPart + " and not " + property + ")" + restModels;
+			notApproximatedProperty = "(not " + property + ")" + restModels;
+		} else {
+			approximatedProperty = "(" + modelPart + " and " + approximation + ")" + restModels;
+			notApproximatedProperty = "(not " + modelPart + " and " + approximation + ")" + restModels;
+		}
+		return makeMutation(approximatedProperty, notApproximatedProperty);
+	}
+
+	protected void interpretWeakeningModelPartMutation() {
+		resultInterpretaionMap.clear();
+		// in/out, exampleExists?, intended?, strengthened?
+
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, true, "correct");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, false, "overconstraint-random");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, true, "overconstraint");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, false, "correct");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
+
+		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.TRUE, false, "error-nostrengthen");
+	}
+
+	protected Optional<File> makeWeakeningModelPartMutationWithInconsistent(String modelPart, String restModel,
+			String inConProperty) {
+
+		interpretWeakeningModelPartMutationWithInconsistent();
+
+		String approximatedProperty = new String();
+		String notApproximatedProperty = new String();
+		final String restModels = !restModel.trim().isEmpty() ? " and " + restModel : "";
+
+		// The model is not approximated by any pattern. So that it will be
+		// weaken/strengthened by itself
+		if (inConProperty.isEmpty()) {
+			// The approximation is supposed to be the negation of the modelPart
+			approximatedProperty = "( " + modelPart + ")";
+			notApproximatedProperty = "( not " + modelPart + " )" + restModels;
+
+		} else {
+			approximatedProperty = "(" + modelPart + ")";
+			notApproximatedProperty = "(not " + modelPart + " and " + inConProperty + ")" + restModels;
+		}
+		return makeMutation(approximatedProperty, notApproximatedProperty);
+	}
+
+	protected void interpretWeakeningModelPartMutationWithInconsistent() {
+		resultInterpretaionMap.clear();
+		// in/out, exampleExists?, intended?, strengthened?
+
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, true, "overconstraint-opposite");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, false, "correct");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.FALSE, false, "correct-unsat");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, true, "overconstraint");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, false, "correct");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
+
+		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.TRUE, false, "error-nostrengthen");
+	}
+
+	protected Optional<File> makeStrengtheningModelMutation(String model, String property, String approximation) {
+
+		interpretStrengtheningModelPartMutation();
+
+		String approximatedProperty = new String();
+		String notApproximatedProperty = new String();
+		if (property.equals(approximation)) {
+			approximatedProperty = "( not " + property + " ) and " + model;
+			notApproximatedProperty = "( " + property + ") and" + model;
+		} else {
+			approximatedProperty = model + " and " + property + " and " + approximation;
+			notApproximatedProperty = model + " and " + property + " and not " + approximation;
+			;
+		}
+		interpretModelMutation();
+		return makeMutation(approximatedProperty, notApproximatedProperty);
+	}
+
 	protected void interpretModelMutation() {
 		resultInterpretaionMap.clear();
 		// in/out, exampleExists?, intended?, strengthened?
@@ -590,12 +744,6 @@ public abstract class DebuggerAlgorithm {
 
 		registerResultInterpretation(REC.DONTCARE, REC.FALSE, REC.DONTCARE, REC.DONTCARE, false, "error");
 	}
-
-	final protected Map<Integer, Pair<Boolean, String>> resultInterpretaionMap;
-
-	public enum REC {
-		TRUE, FALSE, DONTCARE
-	};
 
 	/**
 	 * @param in
@@ -621,23 +769,23 @@ public abstract class DebuggerAlgorithm {
 			Boolean accepted, String message) {
 
 		if (in.equals(REC.DONTCARE)) {
-			registerResultInterpretation(in.TRUE, exampleExists, intended, strengthened, accepted, message);
-			registerResultInterpretation(in.FALSE, exampleExists, intended, strengthened, accepted, message);
+			registerResultInterpretation(REC.TRUE, exampleExists, intended, strengthened, accepted, message);
+			registerResultInterpretation(REC.FALSE, exampleExists, intended, strengthened, accepted, message);
 		}
 
 		if (exampleExists.equals(REC.DONTCARE)) {
-			registerResultInterpretation(in, exampleExists.TRUE, intended, strengthened, accepted, message);
-			registerResultInterpretation(in, exampleExists.FALSE, intended, strengthened, accepted, message);
+			registerResultInterpretation(in, REC.TRUE, intended, strengthened, accepted, message);
+			registerResultInterpretation(in, REC.FALSE, intended, strengthened, accepted, message);
 		}
 
 		if (intended.equals(REC.DONTCARE)) {
-			registerResultInterpretation(in, exampleExists, intended.TRUE, strengthened, accepted, message);
-			registerResultInterpretation(in, exampleExists, intended.FALSE, strengthened, accepted, message);
+			registerResultInterpretation(in, exampleExists, REC.TRUE, strengthened, accepted, message);
+			registerResultInterpretation(in, exampleExists, REC.FALSE, strengthened, accepted, message);
 		}
 
 		if (strengthened.equals(REC.DONTCARE)) {
-			registerResultInterpretation(in, exampleExists, intended, strengthened.TRUE, accepted, message);
-			registerResultInterpretation(in, exampleExists, intended, strengthened.FALSE, accepted, message);
+			registerResultInterpretation(in, exampleExists, intended, REC.TRUE, accepted, message);
+			registerResultInterpretation(in, exampleExists, intended, REC.FALSE, accepted, message);
 		}
 
 		registerResultInterpretation(in.equals(REC.TRUE), exampleExists.equals(REC.TRUE), intended.equals(REC.TRUE),
@@ -700,82 +848,10 @@ public abstract class DebuggerAlgorithm {
 		return rowReport.toString().replaceAll("\n", " and ");
 	}
 
-	@Deprecated
-	protected String interpretMutationResult(String approximationProperty) {
-		// ask the user
-		// Interpreting the result
-		inExampleIsInteded = inAndOutExamples.a.isPresent() ? oracle.isIntended(inAndOutExamples.a.get()) : false;
-		outExampleIsInteded = inAndOutExamples.b.isPresent() ? oracle.isIntended(inAndOutExamples.b.get()) : false;
-		StringBuilder rowRoport = new StringBuilder();
-		rowRoport.append("toBeingAnalyzedModelPart=").append("\"" + convertModelPartToString() + "\"").append(",");
-		rowRoport.append("toBeingWeakenOrStrengthenedApproximation=")
-				.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"").append(",");
-		rowRoport.append("approximationProperty=").append("\"" + approximationProperty + "\"").append(",");
-
-		rowRoport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"").append(",");
-		rowRoport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
-
-		rowRoport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("").replaceAll("=", " eq ") + "\"").append(",");
-		rowRoport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
-
-		rowRoport.append("strengthened=").append(strengthened).append(",");
-		if (strengthened) {
-			if (inExampleIsInteded) {
-				logger.info("The model is correct so far.");
-				rowRoport.append("Error=correct,");
-				acceptedExamples.add(inAndOutExamples.a.get());
-			} else {
-				logger.info("The model has underconstraint issue.");
-				rowRoport.append("Error=underconstraint,");
-				rejectedExamples.add(inAndOutExamples.a.orElse(""));
-			}
-			if (outExampleIsInteded) {
-				logger.info("The model is overconstraint issue.");
-				rowRoport.append("Error=overconstraint,");
-				acceptedExamples.add(inAndOutExamples.b.get());
-			} else {
-				logger.info("The model is correct.");
-				rowRoport.append("Error=correct,");
-				rejectedExamples.add(inAndOutExamples.b.orElse(""));
-			}
-		} else {
-			if (inExampleIsInteded) {
-				logger.info("The model is in overconstraint issue");
-				rowRoport.append("Error=overconstraint,");
-				acceptedExamples.add(inAndOutExamples.a.get());
-			} else {
-				logger.info("The model is correct.");
-				rowRoport.append("Error=correct,");
-				rejectedExamples.add(inAndOutExamples.a.orElse(""));
-			}
-			if (outExampleIsInteded) {
-				logger.info("The model is overconstraint issue.");
-				rowRoport.append("Error=overconstraint,");
-				acceptedExamples.add(inAndOutExamples.b.get());
-			} else {
-				logger.info("The model is correct.");
-				rowRoport.append("Error=correct,");
-				rejectedExamples.add(inAndOutExamples.b.orElse(""));
-			}
-		}
-		return rowRoport.toString().replaceAll("\n", " and ");
-	}
-
 	/**
-	 * 
-	 * @param toBeingAnalyzedModelPart
-	 *            A part of the model that is being analyzed.
-	 * @param property
-	 *            A property that implied from toBeingAnalyzedModelPart
-	 * @param approximationProperty
-	 *            An approximation of property. It could be weaker or stronger.
-	 * @param strenghtened
-	 *            strengthened = (approximationProperty => property)
-	 * @param restModel
 	 * @return
 	 */
-	protected Optional<File> makeMutation(String toBeingAnalyzedModelPart, String property,
-			String approximationProperty, boolean strengthened, String restModel) {
+	protected Optional<File> makeMutation(String approximatedProperty, String notApproximatedProperty) {
 
 		// make sure the relationalPropModule and temporalPropModule files
 		// are tin the path.
@@ -799,34 +875,6 @@ public abstract class DebuggerAlgorithm {
 						+ " cannot be copied in destination folder: " + temporalPropModule);
 			}
 
-		String approximatedProperty = new String();
-		String notApproximatedProperty = new String();
-		final String restModels = !restModel.trim().isEmpty() ? " and " + restModel : "";
-		if (toBeingAnalyzedModelPart.equals(property)) {
-			approximatedProperty = "( " + toBeingAnalyzedModelPart + ")";
-			notApproximatedProperty = "( " + approximationProperty + " )" + restModels;
-		} else if (property.equals(approximationProperty)) {
-			if (strengthened) {
-				approximatedProperty = "(" + toBeingAnalyzedModelPart + " and not " + property + ")" + restModels;
-				notApproximatedProperty = "(" + property + ")" + restModels;
-			} else {
-				approximatedProperty = "(not " + toBeingAnalyzedModelPart + " and " + property + ")" + restModels;
-				// notApproximatedProperty = "(not " + approximatedProperty +
-				// ")";
-				notApproximatedProperty = "(not " + property + ")" + restModels;
-			}
-		} else {
-			if (strengthened) {
-				// need to be extended.
-				approximatedProperty = toBeingAnalyzedModelPart + " and " + approximationProperty + restModels;
-				notApproximatedProperty = "(not " + approximationProperty + " and " + toBeingAnalyzedModelPart + ")"
-						+ restModels;
-			} else {
-				approximatedProperty = "(not " + property + " and " + approximationProperty + ")" + restModels;
-				notApproximatedProperty = "(not " + approximationProperty + ")" + restModels;
-			}
-		}
-
 		final List<String> generatedExamples = new LinkedList<>();
 		final String acceptedGeneratedExamples = getAllNoAcceptedExamples();
 		if (!acceptedGeneratedExamples.isEmpty())
@@ -844,19 +892,9 @@ public abstract class DebuggerAlgorithm {
 
 		String notModelPartialApproximation = notApproximatedProperty + " some " + toBeingAnalyzedField.label;
 
-		System.out.println("*************");
-		System.out.println("toBeingAnalyzedModelPart=" + toBeingAnalyzedModelPart);
-		System.out.println("property=" + property);
-		System.out.println("approximationProperty=" + approximationProperty);
-		System.out.println("strengthened=" + strengthened);
-		System.out.println("modelPartialApproximation=" + modelPartialApproximation);
-		System.out.println("notModelPartialApproximation=" + notModelPartialApproximation);
-
-		System.out.println("*************");
-
 		// Make a new Model
 		String predName = "approximate_"
-				+ Math.abs(modelPartialApproximation.hashCode() + approximationProperty.hashCode());
+				+ Math.abs(modelPartialApproximation.hashCode() + notApproximatedProperty.hashCode());
 		String pred = String.format("pred %s[]{%s}\n", predName, modelPartialApproximation);
 
 		String predNameNot = "NOT_" + predName;
@@ -984,8 +1022,8 @@ public abstract class DebuggerAlgorithm {
 	protected Optional<Field> pickField() {
 		return this.fields.size() > 0 ? Optional.of(this.fields.remove(0)) : Optional.empty();
 	}
-	
-	protected void checkIfModelIsInconsistent(){
+
+	protected void checkIfModelIsInconsistent() {
 		// find out whether an expression is inconsistent by itself
 		try {
 			inconsistentExpressions = approximator.isInconsistent(modelExpr, toBeingAnalyzedField, scope);
