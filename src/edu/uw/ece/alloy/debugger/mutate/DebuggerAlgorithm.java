@@ -440,13 +440,12 @@ public abstract class DebuggerAlgorithm {
 
 						// The model part is not approximated.
 						if (!notApproximationedButInconsistent.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
-								.isEmpty()) {
+								.isEmpty() && inconsistentExpressions) {
 
 							for (Pair<String, String> incon : notApproximationedButInconsistent
 									.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)) {
 								// The mutatedFile is global to be accessible
-								// within
-								// other functions.
+								// within other functions.
 								strengthened = false;
 								mutatedFile = makeWeakeningModelPartMutationWithInconsistent(
 										toBeingAnalyzedModelPartString, restModel, incon.b).get();
@@ -463,8 +462,8 @@ public abstract class DebuggerAlgorithm {
 								afterCallingExampleFinder();
 								beforeInquiryOracle();
 
-								Pair<String, String> headerRow = Utils.extractHeader(
-										interpretMutationResultByMap(approximationProperty + "_" + incon.a));
+								Pair<String, String> headerRow = Utils
+										.extractHeader(interpretMutationResultByMap(approximationProperty, incon.a));
 								reportHeader = headerRow.a;
 								report.append(headerRow.b).append("\n");
 								// store the answer
@@ -482,9 +481,9 @@ public abstract class DebuggerAlgorithm {
 							// other functions.
 							mutatedFile = (strengthened
 									? makeStrengtheningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
-											approximationProperty, toBeingWeakenOrStrengthenedApproximation.b)
+											toBeingWeakenOrStrengthenedApproximation.b, approximationProperty)
 									: makeWeakeningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
-											approximationProperty, toBeingWeakenOrStrengthenedApproximation.b)).get();
+											toBeingWeakenOrStrengthenedApproximation.b, approximationProperty)).get();
 							System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
 							MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 							if (afterMutating())
@@ -498,8 +497,8 @@ public abstract class DebuggerAlgorithm {
 							beforeInquiryOracle();
 							// ask the user
 							// Interpreting the result
-							Pair<String, String> headerRow = Utils
-									.extractHeader(interpretMutationResultByMap(approximationProperty));
+							Pair<String, String> headerRow = Utils.extractHeader(interpretMutationResultByMap(
+									toBeingWeakenOrStrengthenedApproximation.b, approximationProperty));
 							reportHeader = headerRow.a;
 							report.append(headerRow.b).append("\n");
 							// store the answer
@@ -530,32 +529,32 @@ public abstract class DebuggerAlgorithm {
 						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
 				for (Pair<String, String> weakestConsistentPropToModelExpr : weakestConsistentPropsToModelExpr) {
 					// mutate to out of bound
-					mutatedFile = makeStrengtheningModelMutation(modelString,
-							weakestConsistentPropToModelExpr.b, weakestConsistentPropToModelExpr.b).get();
+					mutatedFile = makeStrengtheningModelMutation(modelString, weakestConsistentPropToModelExpr.b,
+							weakestConsistentPropToModelExpr.b).get();
 					MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 					inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 							mutatedFile.getName().replace(".als", ""),
 							"NOT_" + mutatedFile.getName().replace(".als", ""));
 					// ask the user
 					// Interpreting the result
-					Pair<String, String> headerRow = Utils
-							.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b));
+					Pair<String, String> headerRow = Utils.extractHeader(interpretMutationResultByMap(
+							weakestConsistentPropToModelExpr.b, weakestConsistentPropToModelExpr.b));
 					reportHeader = headerRow.a;
 					report.append(headerRow.b).append("\n");
 
 					for (Pair<String, String> strongerWeakestConsistentPropToModelExpr : approximator
 							.strongerProperties(weakestConsistentPropToModelExpr.a, toBeingAnalyzedField.label)) {
 						// mutate to out of bound
-						mutatedFile = makeStrengtheningModelMutation(modelString,
-								weakestConsistentPropToModelExpr.b, strongerWeakestConsistentPropToModelExpr.b).get();
+						mutatedFile = makeStrengtheningModelMutation(modelString, weakestConsistentPropToModelExpr.b,
+								strongerWeakestConsistentPropToModelExpr.b).get();
 						MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 						inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 								mutatedFile.getName().replace(".als", ""),
 								"NOT_" + mutatedFile.getName().replace(".als", ""));
 						// ask the user
 						// Interpreting the result
-						headerRow = Utils
-								.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b));
+						headerRow = Utils.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b,
+								strongerWeakestConsistentPropToModelExpr.b));
 						reportHeader = headerRow.a;
 						report.append(headerRow.b).append("\n");
 					}
@@ -640,8 +639,8 @@ public abstract class DebuggerAlgorithm {
 		// weaken/strengthened by itself
 		if (modelPart.equals(property)) {
 			// The approximation is supposed to be the negation of the modelPart
-			approximatedProperty = "( " + modelPart + ")";
-			notApproximatedProperty = "( " + approximation + " )" + restModels;
+			approximatedProperty = "( " + modelPart + ")" + restModels;
+			notApproximatedProperty = "( not " + approximation + " )" + restModels;
 
 		} else
 		// the property cannot be strengthened to any stronger pattern
@@ -809,12 +808,11 @@ public abstract class DebuggerAlgorithm {
 		return result;
 	}
 
-	protected String interpretMutationResultByMap(String approximationProperty) {
+	protected String interpretMutationResultByMap(String property, String approximation) {
 		StringBuilder rowReport = new StringBuilder();
 		rowReport.append("toBeingAnalyzedModelPart=").append("\"" + convertModelPartToString() + "\"").append(",");
-		rowReport.append("toBeingWeakenOrStrengthenedApproximation=")
-				.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"").append(",");
-		rowReport.append("approximationProperty=").append("\"" + approximationProperty + "\"").append(",");
+		rowReport.append("property=").append("\"" + property + "\"").append(",");
+		rowReport.append("approximationProperty=").append("\"" + approximation + "\"").append(",");
 
 		rowReport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"")
 				.append(",");

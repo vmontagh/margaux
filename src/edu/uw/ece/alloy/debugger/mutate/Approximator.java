@@ -411,6 +411,12 @@ public class Approximator {
 		return patternMap.values().stream().collect(Collectors.toList());
 	};
 
+	public List<Pair<String, String>> strongerNextProperties(String pattern, String fieldName) {
+		// property is in the form of A[r]. so that A is pattern
+		return convertPatternToProperty(nextStrongerPatterns(pattern), fieldName);
+
+	}
+	
 	public List<Pair<String, String>> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		return convertPatternToProperty(strongerPatterns(pattern), fieldName);
@@ -434,6 +440,7 @@ public class Approximator {
 		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getNextRevImpliedProperties(pattern));
+				System.out.println("REv of "+pattern +" is calculated as:"+result);
 			} catch (Throwable e) {
 				// e.printStackTrace();
 			}
