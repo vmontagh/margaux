@@ -46,4 +46,9 @@ public class SzShrnk extends SzPrpty {
 
 		return true;
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 2;
+	}
 }

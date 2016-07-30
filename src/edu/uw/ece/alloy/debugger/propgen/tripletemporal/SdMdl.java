@@ -54,4 +54,11 @@ public class SdMdl extends Sd implements SdOrd {
 		return MiddleConcreteNext;
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 3;
+	}
+
+
+	
 }

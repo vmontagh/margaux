@@ -18,4 +18,9 @@ public class EmptStrtAndEnd extends Emptnes {
 				+ ") \n";
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 2;
+	}
+
 }

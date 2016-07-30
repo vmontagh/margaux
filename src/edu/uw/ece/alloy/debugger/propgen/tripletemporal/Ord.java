@@ -100,5 +100,17 @@ public abstract class Ord extends Property {
 		}
 		return true;
 	}
+	
+	@Override
+	int getClassPriority() {
+		return 1;
+	}
+	
+	@Override
+	int getOtherComponentPriorities() {
+		return sizeProp.getPriority();
+	}
+	
+	
 
 }

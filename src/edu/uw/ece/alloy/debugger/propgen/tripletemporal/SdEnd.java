@@ -54,4 +54,15 @@ public class SdEnd extends Sd {
 		return this.EndConcreteNext;
 	}
 
+	@Override
+	public int getPriority() {
+		return 1<<super.getPriority() + 1;
+	}
+
+	@Override
+	int getPriorityInClass() {
+		return 2;
+	}
+
+	
 }

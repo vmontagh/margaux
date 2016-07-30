@@ -71,4 +71,11 @@ public class SdNon extends Sd implements SdOrd {
 		throw new RuntimeException("Invalid Procedure call");
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 4;
+	}
+
+
+	
 }

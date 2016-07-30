@@ -231,5 +231,16 @@ public abstract class Property {
 		}
 		return true;
 	}
+	
+	abstract int getClassPriority();
+	abstract int getPriorityInClass();
+	abstract int getOtherComponentPriorities();
+	/**
+	 * At each level, what is the priority of the property for being analyzed.
+	 * @return
+	 */
+	public  int getPriority(){
+		return  1<<(getClassPriority()*3) + getPriorityInClass() + getOtherComponentPriorities();
+	}
 
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.uw.ece.alloy.Configuration;
@@ -34,12 +35,10 @@ public class TripleBuilder {
 	public final String EndConcreteNext, EndConcreteFirst;
 	public final String MiddleConcreteNext, MiddleConcreteFirst;
 
-	public TripleBuilder(String rName, String sName, String sNext, String sFirst,
-			String middleName, String middleNext, String middleFirst, String endName,
-			String endNext, String endFirst, String rConcreteName,
-			String sConcreteName, String sConcreteNext, String sConcreteFirst,
-			String mConcreteName, String eConcreteName, String endConcreteNext,
-			String endConcreteFirst, String middleConcreteNext,
+	public TripleBuilder(String rName, String sName, String sNext, String sFirst, String middleName, String middleNext,
+			String middleFirst, String endName, String endNext, String endFirst, String rConcreteName,
+			String sConcreteName, String sConcreteNext, String sConcreteFirst, String mConcreteName,
+			String eConcreteName, String endConcreteNext, String endConcreteFirst, String middleConcreteNext,
 			String middleConcreteFirst) {
 		super();
 		RName = rName;
@@ -64,126 +63,100 @@ public class TripleBuilder {
 		MiddleConcreteFirst = middleConcreteFirst;
 	}
 
-	public TripleBuilder(String rConcreteName, String sConcreteName,
-			String sConcreteNext, String sConcreteFirst, String mConcreteName,
-			String eConcreteName, String endConcreteNext, String endConcreteFirst,
+	public TripleBuilder(String rConcreteName, String sConcreteName, String sConcreteNext, String sConcreteFirst,
+			String mConcreteName, String eConcreteName, String endConcreteNext, String endConcreteFirst,
 			String middleConcreteNext, String middleConcreteFirst) {
-		this("r", "s", "s_next", "s_first", "m", "m_next", "m_first", "e", "e_next",
-				"e_first", rConcreteName, sConcreteName, sConcreteNext, sConcreteFirst,
-				mConcreteName, eConcreteName, endConcreteNext, endConcreteFirst,
-				middleConcreteNext, middleConcreteFirst);
+		this("r", "s", "s_next", "s_first", "m", "m_next", "m_first", "e", "e_next", "e_first", rConcreteName,
+				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName, eConcreteName, endConcreteNext,
+				endConcreteFirst, middleConcreteNext, middleConcreteFirst);
 	}
 
-	public SzPrpty createSizeInstance(final Class<? extends SzPrpty> clazz,
-			final Lclty local, final Emptnes empty)
-					throws InstantiationException, IllegalAccessException,
-					IllegalArgumentException, InvocationTargetException {
+	public SzPrpty createSizeInstance(final Class<? extends SzPrpty> clazz, final Lclty local, final Emptnes empty)
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constrcutor for " + clazz);
+			throw new RuntimeException("There has to be only one constrcutor for " + clazz);
 
-		return (SzPrpty) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName, local, empty);
+		return (SzPrpty) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName, local, empty);
 	}
 
-	public Lclty createLocalityInstance(final Class<? extends Lclty> clazz,
-			final Sd side) throws InstantiationException, IllegalAccessException,
-					IllegalArgumentException, InvocationTargetException {
+	public Lclty createLocalityInstance(final Class<? extends Lclty> clazz, final Sd side)
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constructor for " + clazz);
+			throw new RuntimeException("There has to be only one constructor for " + clazz);
 
-		return (Lclty) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName, side, "", "");
+		return (Lclty) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName, side, "", "");
 	}
 
 	public Sd createSideInstance(final Class<? extends Sd> clazz)
-			throws InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException {
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constrcutor for " + clazz);
+			throw new RuntimeException("There has to be only one constrcutor for " + clazz);
 
-		return (Sd) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName, EndNext, EndFirst,
-				MiddleNext, MiddleFirst, EndConcreteNext, EndConcreteFirst,
-				MiddleConcreteNext, MiddleConcreteFirst);
+		return (Sd) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName, EndNext, EndFirst,
+				MiddleNext, MiddleFirst, EndConcreteNext, EndConcreteFirst, MiddleConcreteNext, MiddleConcreteFirst);
 
 	}
 
 	public Emptnes createEmptinessInstance(final Class<? extends Emptnes> clazz)
-			throws InstantiationException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException {
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constrcutor for " + clazz);
+			throw new RuntimeException("There has to be only one constrcutor for " + clazz);
 
-		return (Emptnes) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName);
+		return (Emptnes) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName);
 	}
 
-	public Ord createOrderInstance(final Class<? extends Ord> clazz,
-			final SzPrpty size) throws InstantiationException, IllegalAccessException,
-					IllegalArgumentException, InvocationTargetException {
+	public Ord createOrderInstance(final Class<? extends Ord> clazz, final SzPrpty size)
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constrcutor for " + clazz);
+			throw new RuntimeException("There has to be only one constrcutor for " + clazz);
 
-		return (Ord) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName, size);
+		return (Ord) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName, size);
 	}
 
-	public CmpstOrds createCompositeOrdersInstance(
-			final Class<? extends CmpstOrds> clazz, final Ord order1,
-			final Ord order2) throws InstantiationException, IllegalAccessException,
-					IllegalArgumentException, InvocationTargetException {
+	public CmpstOrds createCompositeOrdersInstance(final Class<? extends CmpstOrds> clazz, final Ord order1,
+			final Ord order2)
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constrcutor for " + clazz);
+			throw new RuntimeException("There has to be only one constrcutor for " + clazz);
 
-		return (CmpstOrds) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName, order1, order2);
+		return (CmpstOrds) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName, order1, order2);
 	}
 
-	public CmpstSz createCompositeSizesInstance(
-			final Class<? extends CmpstSz> clazz, final SzPrpty size1,
+	public CmpstSz createCompositeSizesInstance(final Class<? extends CmpstSz> clazz, final SzPrpty size1,
 			final SzPrpty size2)
-					throws InstantiationException, IllegalAccessException,
-					IllegalArgumentException, InvocationTargetException {
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Constructor<?>[] constructors = clazz.getConstructors();
 
 		if (constructors.length != 1)
-			throw new RuntimeException(
-					"There has to be only one constrcutor for " + clazz);
+			throw new RuntimeException("There has to be only one constrcutor for " + clazz);
 
-		return (CmpstSz) constructors[0].newInstance(RName, SName, SNext, SFirst,
-				MiddleName, EndName, RConcreteName, SConcreteName, SConcreteNext,
-				SConcreteFirst, MConcreteName, EConcreteName, size1, size2);
+		return (CmpstSz) constructors[0].newInstance(RName, SName, SNext, SFirst, MiddleName, EndName, RConcreteName,
+				SConcreteName, SConcreteNext, SConcreteFirst, MConcreteName, EConcreteName, size1, size2);
 	}
 
 	public Map<String, Set<String>> getAllFeatureNames() {
@@ -200,92 +173,87 @@ public class TripleBuilder {
 	 * @return output is the list of generated predicates.
 	 *         (predicateName->(PredicateCAll, PredicateFulBody))
 	 */
-	public Map<String, Pair<String, String>> getAllProperties() {
-		return getAllProperties(new TreeMap<String, Set<String>>());
+	public Map<String, Pair<String, String>> getAllPropertiesNamesAndContent() {
+		return getAllProperties(new TreeMap<String, Set<String>>()).stream()
+				.collect(Collectors.toMap(Property::genPredName, v -> new Pair<>(v.genPredCall(), v.generateProp())));
 	}
 
-	public Map<String, Pair<String, String>> getAllProperties(
-			Map<String, Set<String>> featureNames) {
+	protected Set<Property> getAllProperties() {
+		return getAllProperties(new TreeMap<String, Set<String>>());
+	}
+	
+	public Map<String, Integer> getAllPropertiesPriorities() {
+		return getAllProperties(new TreeMap<String, Set<String>>()).stream()
+				.collect(Collectors.toMap(Property::genPredName, Property::getPriority));
+	}
 
-		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(
-				this);
+	protected Set<Property> getAllProperties(Map<String, Set<String>> featureNames) {
+
+		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(this);
 
 		// A map from each call to the actual pred
-		Map<String, Pair<String, String>> preds = new TreeMap<>();
+		Set<Property> preds = new HashSet<>();
 		Set<String> revComposite = new HashSet<String>();
 
 		for (Sd side : iterators.new SideIterator(this)) {
 
 			if (!featureNames.containsKey(Sd.class.getSimpleName()))
 				featureNames.put(Sd.class.getSimpleName(), new TreeSet<String>());
-			featureNames.get(Sd.class.getSimpleName())
-					.add(side.getClass().getSimpleName());
+			featureNames.get(Sd.class.getSimpleName()).add(side.getClass().getSimpleName());
 
 			for (Lclty local : iterators.new LocalityIterator(this, side)) {
 
 				if (!featureNames.containsKey(Lclty.class.getSimpleName()))
 					featureNames.put(Lclty.class.getSimpleName(), new TreeSet<String>());
-				featureNames.get(Lclty.class.getSimpleName())
-						.add(local.getClass().getSimpleName());
+				featureNames.get(Lclty.class.getSimpleName()).add(local.getClass().getSimpleName());
 
 				for (Emptnes empty : iterators.new EmptinessIterator(this)) {
 
 					if (!featureNames.containsKey(Emptnes.class.getSimpleName()))
-						featureNames.put(Emptnes.class.getSimpleName(),
-								new TreeSet<String>());
-					featureNames.get(Emptnes.class.getSimpleName())
-							.add(empty.getClass().getSimpleName());
+						featureNames.put(Emptnes.class.getSimpleName(), new TreeSet<String>());
+					featureNames.get(Emptnes.class.getSimpleName()).add(empty.getClass().getSimpleName());
 
 					for (SzPrpty size : iterators.new SizeIterator(this, local, empty)) {
 
 						if (!featureNames.containsKey(SzPrpty.class.getSimpleName()))
-							featureNames.put(SzPrpty.class.getSimpleName(),
-									new TreeSet<String>());
-						featureNames.get(SzPrpty.class.getSimpleName())
-								.add(size.getClass().getSimpleName());
+							featureNames.put(SzPrpty.class.getSimpleName(), new TreeSet<String>());
+						featureNames.get(SzPrpty.class.getSimpleName()).add(size.getClass().getSimpleName());
 
 						if (!size.isConsistent())
 							continue;
-						preds.put(size.genPredName(),
-								new Pair<>(size.genPredCall(), size.generateProp()));
+						preds.add(size);
 
 						for (Ord order : iterators.new OrderIterator(this, size)) {
 
 							if (!featureNames.containsKey(Ord.class.getSimpleName()))
-								featureNames.put(Ord.class.getSimpleName(),
-										new TreeSet<String>());
-							featureNames.get(Ord.class.getSimpleName())
-									.add(order.getClass().getSimpleName());
+								featureNames.put(Ord.class.getSimpleName(), new TreeSet<String>());
+							featureNames.get(Ord.class.getSimpleName()).add(order.getClass().getSimpleName());
 
 							if (!order.isConsistent())
 								continue;
-							preds.put(order.genPredName(),
-									new Pair<>(order.genPredCall(), order.generateProp()));
+							preds.add(order);
 							if (IncludeCompostions) {
 								// Composite structures for two size and orders
-								for (SzPrpty size2 : iterators.new SizeIterator(this, local,
-										empty)) {
+								for (SzPrpty size2 : iterators.new SizeIterator(this, local, empty)) {
 									if (!size2.isConsistent())
 										continue;
 
 									// record the reverse in advance
-									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(
-											this, size2, size)) {
+									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(this, size2,
+											size)) {
 										if (!compositeSizes.isConsistent())
 											continue;
 										// Add to the list here
 										revComposite.add(compositeSizes.genPredName());
 									}
-									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(
-											this, size, size2)) {
+									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(this, size,
+											size2)) {
 										if (!compositeSizes.isConsistent())
 											continue;
 										if (revComposite.contains(compositeSizes.genPredName()))
 											break;
 										// Add to the list here
-										preds.put(compositeSizes.genPredName(),
-												new Pair<>(compositeSizes.genPredCall(),
-														compositeSizes.generateProp()));
+										preds.add(compositeSizes);
 									}
 
 									for (Ord order2 : iterators.new OrderIterator(this, size2)) {
@@ -293,24 +261,22 @@ public class TripleBuilder {
 											continue;
 
 										// record the reverse in advance
-										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(
-												this, order2, order)) {
+										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(this,
+												order2, order)) {
 											if (!compositeOrders.isConsistent())
 												continue;
 											// Add to the list here
 											revComposite.add(compositeOrders.genPredName());
 										}
 
-										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(
-												this, order, order2)) {
+										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(this,
+												order, order2)) {
 											if (!compositeOrders.isConsistent())
 												continue;
 											if (revComposite.contains(compositeOrders.genPredName()))
 												break;
 											// Add to the list here
-											preds.put(compositeOrders.genPredName(),
-													new Pair<>(compositeOrders.genPredCall(),
-															compositeOrders.generateProp()));
+											preds.add(compositeOrders);
 										}
 
 									}
@@ -332,7 +298,7 @@ public class TripleBuilder {
 
 		// System.exit(-1);
 
-		return Collections.unmodifiableMap(preds);
+		return Collections.unmodifiableSet(preds);
 	}
 
 	/**
@@ -342,8 +308,7 @@ public class TripleBuilder {
 	 */
 	public List<String> getAllPropertiesCSV() {
 
-		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(
-				this);
+		final TriplePorpertiesIterators iterators = new TriplePorpertiesIterators(this);
 
 		// A map from each call to the actual pred
 		List<String> preds = new LinkedList<>();
@@ -366,33 +331,32 @@ public class TripleBuilder {
 							if (!order.isConsistent())
 								continue;
 
-							final String orderCSV = order.getClass().getSimpleName()
-									+ sizeCSV;
+							final String orderCSV = order.getClass().getSimpleName() + sizeCSV;
 							preds.add(orderCSV + "," + order.genPredName());
 
 							if (IncludeCompostions) {
 								// Composite structures for two size and orders
-								for (SzPrpty size2 : iterators.new SizeIterator(this, local,
-										empty)) {
+								for (SzPrpty size2 : iterators.new SizeIterator(this, local, empty)) {
 									if (!size2.isConsistent())
 										continue;
 
 									// record the reverse in advance
-									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(
-											this, size2, size)) {
+									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(this, size2,
+											size)) {
 										if (!compositeSizes.isConsistent())
 											continue;
 										// Add to the list here
 										revComposite.add(compositeSizes.genPredName());
 									}
-									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(
-											this, size, size2)) {
+									for (CmpstSz compositeSizes : iterators.new CompositeSizesIterator(this, size,
+											size2)) {
 										if (!compositeSizes.isConsistent())
 											continue;
 										if (revComposite.contains(compositeSizes.genPredName()))
 											break;
 										// Add to the list here
-										// preds.put(compositeSizes.genPredName(), new
+										// preds.put(compositeSizes.genPredName(),
+										// new
 										// Pair(compositeSizes.genPredCall(),
 										// compositeSizes.generateProp()));
 										// make the CSV call here
@@ -403,22 +367,23 @@ public class TripleBuilder {
 											continue;
 
 										// record the reverse in advance
-										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(
-												this, order2, order)) {
+										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(this,
+												order2, order)) {
 											if (!compositeOrders.isConsistent())
 												continue;
 											// Add to the list here
 											revComposite.add(compositeOrders.genPredName());
 										}
 
-										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(
-												this, order, order2)) {
+										for (CmpstOrds compositeOrders : iterators.new CompositeOrdersIterator(this,
+												order, order2)) {
 											if (!compositeOrders.isConsistent())
 												continue;
 											if (revComposite.contains(compositeOrders.genPredName()))
 												break;
 											// Add to the list here
-											// preds.put(compositeOrders.genPredName(), new
+											// preds.put(compositeOrders.genPredName(),
+											// new
 											// Pair(compositeOrders.genPredCall(),
 											// compositeOrders.generateProp()));
 											// make the csv call here

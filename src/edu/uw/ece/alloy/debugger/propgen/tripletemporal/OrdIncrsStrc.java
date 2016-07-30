@@ -18,5 +18,10 @@ public class OrdIncrsStrc extends Ord {
 				+ "],relational_properties/min[" + sizeProp.getGrowthOrderedDelta()
 				+ "," + sideOrdered.getNext() + "]," + sideOrdered.getNext() + "] )";
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 1;
+	}
 
 }

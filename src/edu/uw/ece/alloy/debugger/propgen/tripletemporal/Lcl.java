@@ -33,4 +33,9 @@ public class Lcl extends Lclty {
 		return true;
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 1;
+	}
+
 }

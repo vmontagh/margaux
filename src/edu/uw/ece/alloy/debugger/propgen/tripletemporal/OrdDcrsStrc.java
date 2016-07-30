@@ -20,5 +20,10 @@ public class OrdDcrsStrc extends Ord {
 				+ sideOrdered.getNext() + "]," + sideOrdered.getNext() + "] ) )";
 
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 2;
+	}
 
 }

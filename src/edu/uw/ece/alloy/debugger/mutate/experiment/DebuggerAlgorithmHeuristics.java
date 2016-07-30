@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -46,7 +47,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	boolean breakApproximationSelection = false;
 
-
 	protected DebuggerAlgorithmHeuristics(File sourceFile, File destinationDir, Approximator approximator,
 			Oracle oracle, ExampleFinder exampleFinder) {
 		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
@@ -59,6 +59,9 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean afterInquiryOracle() {
+		
+		super.afterInquiryOracle();
+		
 		// RULE: if weakened and other approximation remained and the inExample
 		// is correct, then the expression's priority is degraded.
 
@@ -396,6 +399,14 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	public DebuggerAlgorithmHeuristics createIt(File sourceFile, File destinationDir, Approximator approximator,
 			Oracle oracle, ExampleFinder exampleFinder) {
 		return new DebuggerAlgorithmHeuristics(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+	}
+
+	@Override
+	protected Comparator<String> propertiesSorter() {
+		return (String propA, String propB) -> {
+			return approximator.encodePatterForPrioritization(propA)
+					- approximator.encodePatterForPrioritization(propB);
+		};
 	}
 
 }

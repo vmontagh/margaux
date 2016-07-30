@@ -7,14 +7,12 @@ public abstract class Lclty extends Property {
 	final public String quantifiedFirstForLet;
 	final public String quantifiedNextForLet;
 
-	public Lclty(String rName, String sName, String sNext, String sFirst,
-			String middleName, String endName, String rConcreteName,
-			String sConcreteName, String sConcreteNext, String sConcreteFirst,
-			String mConcreteName, String eConcreteName, Sd side,
-			String quantifiedFirstForLet, String quantifiedNextForLet) {
-		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName,
-				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
-				eConcreteName);
+	public Lclty(String rName, String sName, String sNext, String sFirst, String middleName, String endName,
+			String rConcreteName, String sConcreteName, String sConcreteNext, String sConcreteFirst,
+			String mConcreteName, String eConcreteName, Sd side, String quantifiedFirstForLet,
+			String quantifiedNextForLet) {
+		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName, sConcreteName, sConcreteNext,
+				sConcreteFirst, mConcreteName, eConcreteName);
 		this.side = side;
 		this.quantifiedFirstForLet = quantifiedFirstForLet;
 		this.quantifiedNextForLet = quantifiedNextForLet;
@@ -52,8 +50,7 @@ public abstract class Lclty extends Property {
 
 	protected String genBody(String q1, String q2) {
 		// Quantifier is like a body for Locality part of the predicate
-		return genQuantifier()
-				+ side.genLetforLocality(getLetVariable1(), getQunatifiedVar(), q1)
+		return genQuantifier() + side.genLetforLocality(getLetVariable1(), getQunatifiedVar(), q1)
 				+ side.genLetforLocality(getLetVariable2(), getQunatifiedVar(), q2);
 	}
 
@@ -78,10 +75,8 @@ public abstract class Lclty extends Property {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((quantifiedFirstForLet == null) ? 0
-				: quantifiedFirstForLet.hashCode());
-		result = prime * result + ((quantifiedNextForLet == null) ? 0
-				: quantifiedNextForLet.hashCode());
+		result = prime * result + ((quantifiedFirstForLet == null) ? 0 : quantifiedFirstForLet.hashCode());
+		result = prime * result + ((quantifiedNextForLet == null) ? 0 : quantifiedNextForLet.hashCode());
 		result = prime * result + ((side == null) ? 0 : side.hashCode());
 		return result;
 	}
@@ -125,6 +120,16 @@ public abstract class Lclty extends Property {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	int getClassPriority() {
+		return 8;
+	}
+
+	@Override
+	int getOtherComponentPriorities() {
+		return side.getPriority();
 	}
 
 }

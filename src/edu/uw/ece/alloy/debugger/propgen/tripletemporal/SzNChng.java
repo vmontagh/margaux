@@ -46,5 +46,10 @@ public class SzNChng extends SzPrpty {
 
 		return true;
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 5;
+	}
 
 }

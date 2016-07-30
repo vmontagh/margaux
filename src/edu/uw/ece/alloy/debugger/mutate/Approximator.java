@@ -41,6 +41,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternRequestMessage;
+import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TemporalPropertyGenerator;
 import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
@@ -77,6 +78,7 @@ public class Approximator {
 	final List<File> dependentFiles;
 	final List<ImplicationLattic> implications;
 	final List<InconsistencyGraph> inconsistencies;
+	final Map<String, Integer> patternToPriorityEncoder;
 
 	int approximationRequestCount = 1;
 
@@ -103,6 +105,13 @@ public class Approximator {
 		inconsistencies = new LinkedList<>();
 		inconsistencies.add(new TernaryInconsistencyGraph());
 		inconsistencies.add(new BinaryInconsistencyGraph());
+		
+		patternToPriorityEncoder = new HashMap<>();
+		try {
+			patternToPriorityEncoder.putAll(TemporalPropertyGenerator.generateAllPropertiesPiority());
+		} catch (Err e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -440,7 +449,6 @@ public class Approximator {
 		for (ImplicationLattic il : implications) {
 			try {
 				result.addAll(il.getNextRevImpliedProperties(pattern));
-				System.out.println("REv of "+pattern +" is calculated as:"+result);
 			} catch (Throwable e) {
 				// e.printStackTrace();
 			}
@@ -485,5 +493,11 @@ public class Approximator {
 			}
 		}).map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName))).collect(Collectors.toList());
 	}
+	
+	
+	public Integer encodePatterForPrioritization(String pattern){
+		return patternToPriorityEncoder.containsKey(pattern) ? patternToPriorityEncoder.get(pattern) : Integer.MAX_VALUE;
+	}
+	
 
 }

@@ -456,7 +456,7 @@ public class DebuggerRunnerTest {
 
 	protected void testHeuristicMocked(File toBeAnalyzedCode, File correctedModel, String mockedTestName) {
 		runDebuggerRunnerWithMockedApproximator(toBeAnalyzedCode, correctedModel,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM, mockedTestName);
+				DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM, mockedTestName);
 	}
 
 	protected void testRandom(File toBeAnalyzedCode, File correctedModel) {
@@ -477,7 +477,7 @@ public class DebuggerRunnerTest {
 
 	protected void testHeuristicMocked(String toBeAnalyzedCode, String correctedModel, String mockedTestName) {
 		runDebuggerRunnerWithMockedApproximator(new LazyFile(testFolder, toBeAnalyzedCode),
-				new LazyFile(testFolder, correctedModel), DebuggerAlgorithmRandom.EMPTY_ALGORITHM, mockedTestName);
+				new LazyFile(testFolder, correctedModel), DebuggerAlgorithmHeuristics.EMPTY_ALGORITHM, mockedTestName);
 	}
 
 	protected void testRandom(String toBeAnalyzedCode, String correctedModel) {

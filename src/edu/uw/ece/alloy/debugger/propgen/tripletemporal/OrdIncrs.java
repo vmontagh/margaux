@@ -22,4 +22,9 @@ public class OrdIncrs extends Ord {
 
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 3;
+	}
+
 }

@@ -157,5 +157,16 @@ public abstract class CmpstSz extends Property {
 	public String toString() {
 		return "CompositeSizes [size1=" + size1 + ", size2=" + size2 + "]";
 	}
+	
+	@Override
+	int getClassPriority() {
+		return 6;
+	}
+	
+	@Override
+	int getOtherComponentPriorities() {
+		// TODO Auto-generated method stub
+		return size1.getPriority() + size2.getPriority();
+	}
 
 }
