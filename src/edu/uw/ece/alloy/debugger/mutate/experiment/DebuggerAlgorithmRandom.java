@@ -17,8 +17,10 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	final public static DebuggerAlgorithmRandom EMPTY_ALGORITHM = new DebuggerAlgorithmRandom();
 
 	protected DebuggerAlgorithmRandom(File sourceFile, File destinationDir, Approximator approximator, Oracle oracle,
-			ExampleFinder exampleFinder) {
-		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+			ExampleFinder exampleFinder, final File reviewedExamples, final File newReviewedExamples,
+			final File skipTerms) {
+		super(sourceFile, destinationDir, approximator, oracle, exampleFinder, reviewedExamples, newReviewedExamples,
+				skipTerms);
 	}
 
 	public DebuggerAlgorithmRandom() {
@@ -186,9 +188,11 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	protected void onStartLoop() {
 	}
 
-	public DebuggerAlgorithmRandom createIt(final File sourceFile, final File destinationDir,
-			final Approximator approximator, final Oracle oracle, final ExampleFinder exampleFinder) {
-		return new DebuggerAlgorithmRandom(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+	public DebuggerAlgorithmRandom createIt(File sourceFile, File destinationDir, Approximator approximator,
+			Oracle oracle, ExampleFinder exampleFinder, final File reviewedExamples, final File newReviewedExamples,
+			final File skipTerms) {
+		return new DebuggerAlgorithmRandom(sourceFile, destinationDir, approximator, oracle, exampleFinder,
+				reviewedExamples, newReviewedExamples, skipTerms);
 	}
 
 	@Override

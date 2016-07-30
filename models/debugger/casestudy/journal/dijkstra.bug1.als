@@ -114,4 +114,4 @@ pred lowerBoundProcess{
 }
 check{ 
 (lowerBoundProcess && GrabOrRelease && GrabbedInOrder) => Not_Deadlock
-}for 5 State, 5 Process, 4 Mutex
+}for 4 State, 1 Process, 3 Mutex

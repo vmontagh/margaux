@@ -48,8 +48,10 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	boolean breakApproximationSelection = false;
 
 	protected DebuggerAlgorithmHeuristics(File sourceFile, File destinationDir, Approximator approximator,
-			Oracle oracle, ExampleFinder exampleFinder) {
-		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+			Oracle oracle, ExampleFinder exampleFinder, final File reviewedExamples, final File newReviewedExamples,
+			final File skipTerms) {
+		super(sourceFile, destinationDir, approximator, oracle, exampleFinder, reviewedExamples, newReviewedExamples,
+				skipTerms);
 	}
 
 	protected DebuggerAlgorithmHeuristics() {
@@ -59,9 +61,7 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean afterInquiryOracle() {
-		
-		super.afterInquiryOracle();
-		
+
 		// RULE: if weakened and other approximation remained and the inExample
 		// is correct, then the expression's priority is degraded.
 
@@ -397,8 +397,10 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	public DebuggerAlgorithmHeuristics createIt(File sourceFile, File destinationDir, Approximator approximator,
-			Oracle oracle, ExampleFinder exampleFinder) {
-		return new DebuggerAlgorithmHeuristics(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+			Oracle oracle, ExampleFinder exampleFinder, final File reviewedExamples, final File newReviewedExamples,
+			final File skipTerms) {
+		return new DebuggerAlgorithmHeuristics(sourceFile, destinationDir, approximator, oracle, exampleFinder,
+				reviewedExamples, newReviewedExamples, skipTerms);
 	}
 
 	@Override

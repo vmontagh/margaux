@@ -45,6 +45,7 @@ public class DebuggerRunner extends Runner {
 	protected final File correctModel;
 	protected List<File> dependentFiles;
 	protected final File tmpLocalDirectory;
+	protected final File reviewedExamples, newReviewedExamples, skipTerms;
 
 	/* Randomly assign a new socket */
 	protected final InetSocketAddress distributorSocket;
@@ -58,20 +59,32 @@ public class DebuggerRunner extends Runner {
 	final protected DebuggerAlgorithm debuggerAlgorithmCreator;
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel, List<File> dependentFiles,
-			File tmpLocalDirectory, InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator) {
+			File tmpLocalDirectory, InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
+			final File newReviewedExamples, final File skipTerms) {
 		this.toBeAnalyzedCode = toBeAnalyzedCode;
 		this.correctModel = correctModel;
 		this.distributorSocket = distributorSocket;
 		this.dependentFiles = dependentFiles;
 		this.tmpLocalDirectory = tmpLocalDirectory;
 		this.debuggerAlgorithmCreator = debuggerAlgorithmCreator;
+		this.reviewedExamples = reviewedExamples;
+		this.newReviewedExamples = newReviewedExamples;
+		this.skipTerms = skipTerms;
 		initiate();
 	}
 
-	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel, List<File> dependentFiles,
-			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator) {
+	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
+			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
+			final File newReviewedExamples, final File skipTerms) {
 		this(toBeAnalyzedCode, correctModel, Arrays.asList(RelationalPropModule, TemporalPropModule), TmpDirectoryRoot,
-				distributorSocket, debuggerAlgorithmCreator);
+				distributorSocket, debuggerAlgorithmCreator, reviewedExamples, newReviewedExamples, skipTerms);
+	}
+	
+	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
+			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator,
+			final File newReviewedExamples) {
+		this(toBeAnalyzedCode, correctModel, Arrays.asList(RelationalPropModule, TemporalPropModule), TmpDirectoryRoot,
+				distributorSocket, debuggerAlgorithmCreator, new File("!~@#"), newReviewedExamples, new File("!~@#"));
 	}
 
 	protected Consumer<RemoteProcess> processIsReady = (RemoteProcess process) -> {
@@ -139,7 +152,7 @@ public class DebuggerRunner extends Runner {
 		oracle = new CorrectModelOracle(correctModel);
 
 		debuggerAlgorithm = debuggerAlgorithmCreator.createIt(toBeAnalyzedCode, tmpLocalDirectory, approximator, oracle,
-				exampleFinder);
+				exampleFinder, reviewedExamples,newReviewedExamples, skipTerms);
 
 	}
 
