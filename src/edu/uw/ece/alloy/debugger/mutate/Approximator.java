@@ -275,7 +275,7 @@ public class Approximator {
 	private void makeNewRecordInCacheResult(StringBuilder sb, String name, String statement, String fieldLabel,
 			String scope, List<Pair<String, String>> approx) {
 		// Converting to Cache.
-		String key = statement + fieldLabel + scope;
+		String key = statement + fieldLabel;
 		sb.append(name + ".put(\"").append(key)
 				.append("\", Arrays.asList(").append(approx.stream()
 						.map(p -> "new Pair<>(\"" + p.a + "\", \"" + p.b + "\")").collect(Collectors.joining(", ")))
@@ -296,7 +296,7 @@ public class Approximator {
 		Boolean result = !findApproximation(statement, fieldLabel, scope, InconExpressionToAlloyCode.EMPTY_CONVERTOR,
 				Function.identity()).isEmpty();
 		// Converting to Cache.
-		String key = statement + fieldLabel + scope;
+		String key = statement + fieldLabel;
 		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ").append(result).append(");\n");
 
 		return result;
@@ -306,7 +306,7 @@ public class Approximator {
 		Boolean result = !findApproximation(toBeAnalyzedCode, statement, fieldLabel, scope,
 				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity()).isEmpty();
 		// Converting to Cache.
-		String key = statement + fieldLabel + scope;
+		String key = statement + fieldLabel;
 		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ").append(result).append(");\n");
 
 		return result;
