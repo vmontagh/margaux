@@ -68,18 +68,26 @@ public class TemporalPropertyGenerator {
 	public static Map<String, Integer> generateAllPropertiesPiority() throws Err{
 		return makeTemporalBuilder().getAllPropertiesPriorities();
 	}
+	
+	public static Set<Property> generateAllProperties() throws Err{
+		return makeTemporalBuilder().getAllProperties();
+	}
 
 
-	public void generateAndStoreAllTemporalProps() throws Err {
+	public void generateAndStoreAllTemporalPropsAndStore() throws Err {
 		generateAndStoreAllTemporalProps(this.relationalPropModuleOriginal,
 				this.temporalPropModuleOriginal);
 	}
 	
 	public static void main(String...args) throws Err{
-		Map<String, Integer> map = generateAllPropertiesPiority();
+		/*Map<String, Integer> map = generateAllPropertiesPiority();
 		map.keySet().stream()
         .sorted((e1,e2)->map.get(e1) - map.get(e2)) 
-        .forEach(e->System.out.println(e+" " + map.get(e)));
+        .forEach(e->System.out.println(e+" " + map.get(e) ));*/
+		
+		 generateAllProperties().stream().map(Property::generateProp).forEach(System.out::println);
+		
+		
 	}
 
 }

@@ -198,7 +198,8 @@ public abstract class DebuggerAlgorithm {
 
 	/* Examples that are reviewed by oracle are stored in the following sets */
 	final protected Set<String> acceptedExamples, rejectedExamples;
-	final Set<String> skipSequences, reviewedExamples;
+	final Set<String> skipSequences;
+	final List<String> reviewedExamples;
 
 	final File newReviewedExamples;
 
@@ -275,7 +276,7 @@ public abstract class DebuggerAlgorithm {
 		resultInterpretaionMap = new HashMap<>();
 
 		skipSequences = new HashSet<>();
-		this.reviewedExamples = new HashSet<>();
+		this.reviewedExamples = new ArrayList<>();
 		this.newReviewedExamples = newReviewedExamples;
 
 		if (reviewedExamples.exists())
@@ -703,6 +704,16 @@ public abstract class DebuggerAlgorithm {
 				if (!doneProps.contains(o))
 					stack.push(o);
 				donePairs.add(new Pair<>(p, o));
+				
+				// TODO
+				if (o.startsWith("Ord")){
+					o = o.replace("_SzShrnk_", "_SzShrnkNOP_");
+					o = o.replace("_SzNChng_", "_SzNChngNOP_");
+					o = o.replace("_SzShrnkStrc_", "_SzShrnkStrcNOP_");
+					o = o.replace("_SzGrwt_", "_SzGrwtNOP_");
+					o = o.replace("_SzGrwtStrc_", "_SzGrwtStrcNOP_");
+				}
+				
 				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint), p, o);
 				final Pair<String, String> strengthendPair = new Pair<>(p, o);
 				mutatedFile.ifPresent(m -> result.add(new Pair<>(strengthendPair, m)));
