@@ -125,7 +125,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 				MyReporter rep = new MyReporter();
 				A4CommandExecuter.getInstance().runThenGetAnswers(acceptedFile.getAbsolutePath(), rep,
 						acceptedPredName);
-				System.out.println("acceptedFile->" + acceptedFile);
 				result = rep.sat == -1;
 			} catch (Err e) {
 				e.printStackTrace();
@@ -152,12 +151,10 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 	@Override
 	protected void beforePickWeakenOrStrengthened() {
 
-		System.out.println("before strongerApproxQueues->" + strongerApproxQueues);
 
 		// RULE: if an expression is inconsistent by itself, then do not
 		// Strengthen it.
 
-		System.out.println("inconsistentExpressions->" + inconsistentExpressions);
 		if (inconsistentExpressions) {
 			// emptying the strongerApproxQueue prevents any strengthening
 			strongerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
@@ -171,8 +168,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 						.get(toBeingWeakenOrStrengthenedApproximation).stream()
 						.filter(prop -> !isInconsistentWithOtherStatments(prop.getItem().get()))
 						.collect(Collectors.toCollection(PriorityQueue::new)));
-
-		System.out.println("after strongerApproxQueues->" + strongerApproxQueues);
 
 		weakerApproxQueues.get(super.toBeingAnalyzedField).get(toBeingAnalyzedModelPart).put(
 				toBeingWeakenOrStrengthenedApproximation,
@@ -195,7 +190,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 	@Override
 	protected boolean beforePickApproximation() {
-		System.out.println("breakApproximationSelection?" + breakApproximationSelection);
 		if (breakApproximationSelection) {
 			breakApproximationSelection = false;
 			return true;
@@ -209,8 +203,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		try {
 			Set<Sig.Field> mentionedFields = FieldsExtractorVisitor.getReferencedFields(toBeingAnalyzedModelPart);
 			result = !mentionedFields.isEmpty() && !mentionedFields.contains(toBeingAnalyzedField);
-			System.out.println("Expr->" + toBeingAnalyzedModelPart + "\nfield->" + toBeingAnalyzedField
-					+ "\nmentionedFields->" + mentionedFields + "\nresult->" + result);
 		} catch (Err e) {
 			logger.severe(Utils.threadName() + " cannot extract the mentioned fields.");
 			e.printStackTrace();
@@ -221,8 +213,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 			result = convertModelPartToString().startsWith("ACCECPTED_INSTANCES_PRED_NAME")
 					|| toBeingAnalyzedModelPartString.startsWith("REJECTED_INSTANCES_PRED_NAME");
 		}
-
-		System.out.println("Continue on afterPickModelPart?" + result);
 
 		return result;
 	}
@@ -271,9 +261,9 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 
 		fieldToModelQueues.put(toBeingAnalyzedField, new PriorityQueue<DecisionQueueItem<Expr>>(changedPriorityList));
 
-		if (toBeingAnalyzedField.label.contains("waits")) {
+		/*if (toBeingAnalyzedField.label.contains("waits")) {
 			return true;
-		}
+		}*/
 
 		return false;
 
@@ -354,9 +344,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 			// lower priority compared to the expressions that could be
 			// approximated by one or more predefined patterns.
 
-			System.out.println("field->" + field);
-			System.out.println("fieldToModelQueues->" + fieldToModelQueues);
-			System.out.println("fieldToModelQueues.get(field)->" + fieldToModelQueues.get(field));
 			final int minPriority = super.fieldToModelQueues.get(field).stream().mapToInt(a -> a.getScore().get()).min()
 					.orElse(DecisionQueueItem.MinUniformScore);
 			final List<DecisionQueueItem<Expr>> toBeUpdated = new LinkedList<>();
@@ -369,11 +356,8 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 				toBeUpdated.add(modelPart);
 			}
 			fieldToModelQueues.get(field).addAll(toBeUpdated);
-			System.out.println("after fieldToModelQueues.get(" + field + ")->" + fieldToModelQueues.get(field));
 		}
 
-		System.out.println("after the loop");
-		System.out.println("before heurists:" + fieldsQueue);
 		// HEURISTIC: A field with more references should be picked first.
 		List<DecisionQueueItem<Sig.Field>> changedPriorityList = new LinkedList<>();
 		for (DecisionQueueItem<Sig.Field> field : fieldsQueue) {
@@ -390,8 +374,6 @@ public class DebuggerAlgorithmHeuristics extends DebuggerAlgorithm {
 		}
 		fieldsQueue.clear();
 		fieldsQueue.addAll(changedPriorityList);
-		System.out.println("fieldsQueue before exit->" + fieldsQueue);
-		System.out.println("End of OnStartLoop");
 
 	}
 

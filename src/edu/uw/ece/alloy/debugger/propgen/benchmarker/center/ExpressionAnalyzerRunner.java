@@ -197,29 +197,16 @@ public final class ExpressionAnalyzerRunner extends Runner {
 				ResponseMessage message;
 				try {
 					int generatedPropsCount = 0;
-					// System.out.println("before
-					// responseQueue.take()?"+responseQueue.size());
 					message = responseQueue.take();
-					// System.out.println("after
-					// responseQueue.take()?"+responseQueue.size());
-					// System.out.println("message.isEmptyResponseMessage()?"+message.isEmptyResponseMessage());
-					// System.out.println("sessions
-					// status->"+monitor.getStatusOnSessions());
-					// System.out.println("sessions
-					// status->"+monitor.getStatus());
+
 					if (message.isEmptyResponseMessage()) {
-						// System.out.println("responseQueue.isEmpty()?"+responseQueue.isEmpty());
 						if (responseQueue.isEmpty()) {
-							// System.out.println("done");
 							done();
-							// System.out.println("break");
 							break;
 						}
-						// System.out.println("continue");
 						continue;
 					}
 
-					// System.out.println("after");
 					AlloyProcessingParam param = (AlloyProcessingParam) message.getResult().getParam();
 
 					AlloyProcessedResult result = (AlloyProcessedResult) message.getResult();
@@ -235,8 +222,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					}
 
 					// second: find out whether more properties are required to
-					// be
-					// checked.
+					// be checked.
 					try {
 
 						Set<String> nextProperties = new HashSet<>(param.getAlloyCoder().get().createItself()
@@ -255,8 +241,6 @@ public final class ExpressionAnalyzerRunner extends Runner {
 					}
 
 				} catch (InterruptedException e1) {
-					// System.out.println("Errrorr->"+e1);
-					// e1.printStackTrace();
 					logger.log(Level.SEVERE, Utils.threadName() + "The thread is interrupted.", e1);
 				}
 			}
@@ -265,11 +249,7 @@ public final class ExpressionAnalyzerRunner extends Runner {
 		@Override
 		public void followUp(ResponseMessage message) {
 			try {
-				// System.out.print("resonse process in
-				// Session->"+message.getResult().getParam().hashCode());
 				responseQueue.put(message);
-				// System.out.println("System is
-				// done?"+monitor.sessionIsDone(getSessionID()));
 				if (monitor.sessionIsDone(getSessionID())) {
 					responseQueue.put(ResponseMessage.createEmptyResponseMessage());
 				}

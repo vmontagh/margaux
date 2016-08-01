@@ -105,7 +105,7 @@ public class PatternToProperty {
 			generateTemporalPropertyCalls(propertyCalls, fields, opens);
 
 			this.propertyCalls = Collections.unmodifiableMap(propertyCalls);
-
+			
 		} catch (Err e) {
 			logger.log(Level.WARNING, Utils.threadName() + "Failling to add make properties", e);
 			throw new RuntimeException(e);
@@ -127,7 +127,6 @@ public class PatternToProperty {
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(relationalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
 		for (Func func : world.getAllFunc()) {
-			String funcName = func.label.replace("this/", "");
 			final PropertyCallBuilder pcb = new PropertyCallBuilder();
 			try {
 				pcb.addPropertyDeclration(func);
@@ -139,7 +138,7 @@ public class PatternToProperty {
 			}
 			for (Field field : fields.stream().filter(f -> f.type().arity() == 2).collect(Collectors.toList())) {
 				for (String PropertyCall : pcb.makeAllBinaryProperties(field)) {
-					propertyCalls.put(new Pair<>(funcName, field.label), PropertyCall);
+					propertyCalls.put(new Pair<>(PropertyCall.substring(0,PropertyCall.indexOf("[")), field.label), PropertyCall);
 				}
 			}
 		}
@@ -149,12 +148,10 @@ public class PatternToProperty {
 			final List<Open> opens) throws Err {
 		CompModule world = (CompModule) A4CommandExecuter.getInstance()
 				.parse(temporalPropModuleOriginal.getAbsolutePath(), A4Reporter.NOP);
-		StringBuilder sb = new StringBuilder();
 		final PropertyCallBuilder pcb = new PropertyCallBuilder();
 
 		for (Func func : world.getAllFunc()) {
-			String funcName = func.label.replace("this/", "");
-			sb.append(funcName).append(", ");
+
 			try {
 				pcb.addPropertyDeclration(func);
 			} catch (IllegalArgumentException ia) {
@@ -165,7 +162,7 @@ public class PatternToProperty {
 			}
 			for (Field field : fields.stream().filter(f -> f.type().arity() == 3).collect(Collectors.toList())) {
 				for (String PropertyCall : pcb.makeAllTernaryProperties(field, opens)) {
-					propertyCalls.put(new Pair<>(funcName, field.label), PropertyCall);
+					propertyCalls.put(new Pair<>(PropertyCall.substring(0,PropertyCall.indexOf("[")), field.label), PropertyCall);
 				}
 			}
 		}
@@ -185,7 +182,7 @@ public class PatternToProperty {
 
 	public String getProperty(Pair<String, String> patternNamefieldName) {
 		if (!hasProperty(patternNamefieldName)) {
-			logger.warning(Utils.threadName() + "The pattern and field is not the chache:" + patternNamefieldName + " in->" + propertyCalls);
+			//logger.warning(Utils.threadName() + "The pattern and field is not the chache:" + patternNamefieldName + " in->" + propertyCalls);
 			throw new RuntimeException();
 		}
 

@@ -17,7 +17,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -200,6 +199,7 @@ public abstract class DebuggerAlgorithm {
 	final protected Set<String> acceptedExamples, rejectedExamples;
 	final Set<String> skipSequences;
 	final List<String> reviewedExamples;
+	final List<String> reviewedExamplesWithMutations;
 
 	final File newReviewedExamples;
 
@@ -278,7 +278,7 @@ public abstract class DebuggerAlgorithm {
 		skipSequences = new HashSet<>();
 		this.reviewedExamples = new ArrayList<>();
 		this.newReviewedExamples = newReviewedExamples;
-
+		this.reviewedExamplesWithMutations = new ArrayList<>();
 		if (reviewedExamples.exists())
 			this.reviewedExamples.addAll(Utils.readFileLines(reviewedExamples.getAbsolutePath()));
 		if (skipTerms.exists())
@@ -314,6 +314,7 @@ public abstract class DebuggerAlgorithm {
 		skipSequences = null;
 		reviewedExamples = null;
 		this.newReviewedExamples = null;
+		this.reviewedExamplesWithMutations = null;
 	}
 
 	/**
@@ -335,7 +336,6 @@ public abstract class DebuggerAlgorithm {
 		StringBuilder MutationsPath = new StringBuilder();
 		String reportHeader = new String();
 
-		System.out.println("fields->" + fields);
 		// The private fields are not considered. The Order/next fields are
 		// private.
 		fields.stream().filter(f -> f.isPrivate == null).forEach(field -> {
@@ -344,7 +344,6 @@ public abstract class DebuggerAlgorithm {
 					.collect(Collectors.toCollection(PriorityQueue::new)));
 
 		});
-		System.out.println("fieldsQueue->" + fieldsQueue);
 		onStartLoop();
 		beforePickField();
 		while (!fieldsQueue.isEmpty()) {
@@ -358,14 +357,9 @@ public abstract class DebuggerAlgorithm {
 			beforePickModelPart();
 			final PriorityQueue<DecisionQueueItem<Expr>> modelQueue = fieldToModelQueues.get(toBeingAnalyzedField);
 			while (!fieldToModelQueues.get(toBeingAnalyzedField).isEmpty()) {
-				System.out.println("before--->" + modelQueue);
-				System.out.println("before 2--->" + fieldToModelQueues.get(toBeingAnalyzedField));
 				DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(toBeingAnalyzedField).poll();
-				System.out.println("after--->" + modelQueue);
-				System.out.println("after 2--->" + fieldToModelQueues.get(toBeingAnalyzedField));
 
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-				System.out.println("picked model part before after is:" + toBeingAnalyzedModelPart);
 				if (afterPickModelPart())
 					continue;
 
@@ -374,21 +368,12 @@ public abstract class DebuggerAlgorithm {
 						.collect(Collectors.toList());
 				String restModel = restModelParts.stream().map(m -> m.toString()).collect(Collectors.joining(" and "));
 
-				System.out.println("Model part: " + toBeingAnalyzedModelPartString);
-				System.out.println("Rest: " + restModel);
-
 				fillApproximations(toBeingAnalyzedModelPart, toBeingAnalyzedField);
 				List<Pair<String, String>> approximation = approximations.get(toBeingAnalyzedField)
 						.get(toBeingAnalyzedModelPart);
 				logger.info(Utils.threadName() + "The approximations for Expr:<" + toBeingAnalyzedModelPart + "> is: "
 						+ approximation);
 
-				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-				System.out.println(toBeingAnalyzedModelPart);
-				System.out.println(toBeingAnalyzedField);
-				System.out.println(scope);
-				System.out.println(approximation);
-				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 				if (!approximationQueues.containsKey(toBeingAnalyzedField)) {
 					approximationQueues.put(toBeingAnalyzedField, new HashMap<>());
 				}
@@ -423,17 +408,6 @@ public abstract class DebuggerAlgorithm {
 												toBeingAnalyzedField.label)
 										.stream().map(s -> DecisionQueueItem.<String> createwithRandomPriority(s.b))
 										.collect(Collectors.toCollection(PriorityQueue::new)));
-						System.out.println("In stronger if: fld= " + toBeingAnalyzedField + ", part="
-								+ toBeingAnalyzedModelPart + " = " + approximator.strongerProperties(
-										toBeingWeakenOrStrengthenedApproximation.a, toBeingAnalyzedField.label));
-						System.out.println(approximator
-								.strongerProperties(toBeingWeakenOrStrengthenedApproximation.a,
-										toBeingAnalyzedField.label)
-								.stream().map(s -> DecisionQueueItem.<String> createwithRandomPriority(s.b))
-								.collect(Collectors.toCollection(PriorityQueue::new)));
-						System.out.println("strongerApproxQueues=" + strongerApproxQueues);
-						System.out.println("After=" + strongerApproxQueues.get(toBeingAnalyzedField)
-								.get(toBeingAnalyzedModelPart).get(toBeingWeakenOrStrengthenedApproximation));
 					}
 					if (!weakerApproxQueues.containsKey(toBeingAnalyzedField))
 						weakerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
@@ -490,7 +464,6 @@ public abstract class DebuggerAlgorithm {
 								mutatedFile = makeWeakeningModelPartMutationWithInconsistent(
 										toBeingAnalyzedModelPartString, restModel, incon.b).get();
 
-								System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
 								MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 								if (afterMutating())
 									continue;
@@ -524,7 +497,6 @@ public abstract class DebuggerAlgorithm {
 											toBeingWeakenOrStrengthenedApproximation.b, approximationProperty)
 									: makeWeakeningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
 											toBeingWeakenOrStrengthenedApproximation.b, approximationProperty)).get();
-							System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
 							MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 							if (afterMutating())
 								continue;
@@ -610,6 +582,9 @@ public abstract class DebuggerAlgorithm {
 		try {
 			Util.writeAll(newReviewedExamples.getAbsolutePath(),
 					reviewedExamples.stream().collect(Collectors.joining("\n")));
+			Util.writeAll(newReviewedExamples.getAbsolutePath() + ".detailed",
+					reviewedExamplesWithMutations.stream().collect(Collectors.joining("\n")));
+
 		} catch (Err e) {
 			e.printStackTrace();
 		}
@@ -623,11 +598,11 @@ public abstract class DebuggerAlgorithm {
 	 * @param row
 	 */
 	protected StringBuilder filterRow(StringBuilder report, String row) {
-		//if (!reviewedExamples.contains(inAndOutExamples.b.orElse(""))) {
-			//if (!row.contains("error"))
-				report.append(row).append("\n");
-			//inAndOutExamples.b.ifPresent(a -> reviewedExamples.add(a));
-		//}
+		// if (!reviewedExamples.contains(inAndOutExamples.b.orElse(""))) {
+		// if (!row.contains("error"))
+		report.append(row).append("\n");
+		// inAndOutExamples.b.ifPresent(a -> reviewedExamples.add(a));
+		// }
 		return report;
 	}
 
@@ -640,7 +615,8 @@ public abstract class DebuggerAlgorithm {
 			// the type incompatibility, it cannot be used here.
 			List<String> res = weakestConsistentProps.get(toBeingAnalyzedField).get(C).stream()
 					.sorted((p1, p2) -> porpertySorter.compare(p1.a, p2.a)).map(p -> p.b)
-					.filter((String s) -> skipSequences.stream().anyMatch(a -> !s.contains(a)))
+					.filter((String s) -> skipSequences.isEmpty()
+							|| skipSequences.stream().anyMatch(a -> !s.contains(a)))
 					.collect(Collectors.toList());
 			return res;
 		};
@@ -651,7 +627,8 @@ public abstract class DebuggerAlgorithm {
 		return (String P) -> {
 			List<String> res = approximator.strongerNextProperties(P.substring(0, P.indexOf("[")), fieldLabel).stream()
 					.sorted(((p1, p2) -> porpertySorter.compare(p1.a, p2.a))).map(p -> p.b)
-					.filter((String s) -> skipSequences.stream().anyMatch(a -> !s.contains(a)))
+					.filter((String s) -> skipSequences.isEmpty()
+							|| skipSequences.stream().anyMatch(a -> !s.contains(a)))
 					.collect(Collectors.toList());
 
 			if (P.contains("_Glbl_") && !res.contains(P.replace("_Glbl_", "_Lcl_"))) {
@@ -704,16 +681,16 @@ public abstract class DebuggerAlgorithm {
 				if (!doneProps.contains(o))
 					stack.push(o);
 				donePairs.add(new Pair<>(p, o));
-				
+
 				// TODO
-				if (o.startsWith("Ord")){
+				if (o.startsWith("Ord")) {
 					o = o.replace("_SzShrnk_", "_SzShrnkNOP_");
 					o = o.replace("_SzNChng_", "_SzNChngNOP_");
 					o = o.replace("_SzShrnkStrc_", "_SzShrnkStrcNOP_");
 					o = o.replace("_SzGrwt_", "_SzGrwtNOP_");
 					o = o.replace("_SzGrwtStrc_", "_SzGrwtStrcNOP_");
 				}
-				
+
 				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint), p, o);
 				final Pair<String, String> strengthendPair = new Pair<>(p, o);
 				mutatedFile.ifPresent(m -> result.add(new Pair<>(strengthendPair, m)));
@@ -963,18 +940,6 @@ public abstract class DebuggerAlgorithm {
 		rowReport.append("property=").append("\"" + property + "\"").append(",");
 		rowReport.append("approximationProperty=").append("\"" + approximation + "\"").append(",");
 
-		rowReport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"")
-				.append(",");
-		rowReport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
-
-		System.out.println("out example=" + inAndOutExamples.b);
-
-		rowReport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("").replaceAll("=", " eq ") + "\"")
-				.append(",");
-		rowReport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
-
-		rowReport.append("strengthened=").append(strengthened).append(",");
-
 		inExampleIsInteded = inAndOutExamples.a.isPresent() ? oracle.isIntended(inAndOutExamples.a.get()) : false;
 		Pair<REVIEW_RESPONSE, String> result = interpretResult(true, inAndOutExamples.a.isPresent(), inExampleIsInteded,
 				strengthened);
@@ -992,13 +957,23 @@ public abstract class DebuggerAlgorithm {
 			rejectedExamples.add(inAndOutExamples.b.get());
 		rowReport.append("Error=").append(result.b).append(",");
 
-		
+		rowReport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"")
+				.append(",");
+		rowReport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
+
+		rowReport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("").replaceAll("=", " eq ") + "\"")
+				.append(",");
+		rowReport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
+
+		rowReport.append("strengthened=").append(strengthened).append(",");
+
 		String example = inAndOutExamples.b.orElse("").replace("\n", " and ").replace(" eq ", " = ");
-		
+
 		// record until an error is detected
 		// only outexample matters.
 		if (!result.a.equals(REVIEW_RESPONSE.NA) && continueRecordingReviews && !reviewedExamples.contains(example)) {
 			reviewedExamples.add(example);
+			reviewedExamplesWithMutations.add(result.b + "," + property + "," + approximation + "," + example);
 			if (!(strengthened ^ result.a.equals(REVIEW_RESPONSE.REJECT))) {
 				// a bug is found
 				assert (!result.b.contains("correct")) : "An error should be detected! the result is:" + result;
@@ -1136,7 +1111,6 @@ public abstract class DebuggerAlgorithm {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("notApproximationedButInconsistent-->" + notApproximationedButInconsistent);
 
 	}
 
@@ -1232,8 +1206,8 @@ public abstract class DebuggerAlgorithm {
 	 * @return
 	 */
 	public abstract DebuggerAlgorithm createIt(final File sourceFile, final File destinationDir,
-			final Approximator approximator, final Oracle oracle, final ExampleFinder exampleFinder, final File reviewedExamples,
-			final File newReviewedExamples, final File skipTerms);
+			final Approximator approximator, final Oracle oracle, final ExampleFinder exampleFinder,
+			final File reviewedExamples, final File newReviewedExamples, final File skipTerms);
 
 	protected abstract boolean afterInquiryOracle();
 

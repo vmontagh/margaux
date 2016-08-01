@@ -48,7 +48,7 @@ public class InconExpressionToAlloyCode extends PropertyToAlloyCode {
 
 	@Override
 	public String commandOperator() {
-		return "and";
+		return "";
 	}
 
 	@Override
@@ -61,13 +61,14 @@ public class InconExpressionToAlloyCode extends PropertyToAlloyCode {
 		return "pred";
 	}
 	
+	
 	protected String generateAlloyCode() {
 		String source = "";
 
 		source += generatePrepend();
 		source += '\n' + generatePredicateBody(predBodyA);
 		source += '\n' + generatePredicateBody(predBodyB);
-		source += '\n' + commandStatement(predCallA, predCallB);
+		source += '\n' + commandStatement(predCallA, "");
 		source += scope;
 
 		return source;

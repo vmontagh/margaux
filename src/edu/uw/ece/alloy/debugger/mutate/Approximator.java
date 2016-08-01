@@ -2,6 +2,7 @@ package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
@@ -105,7 +107,7 @@ public class Approximator {
 		inconsistencies = new LinkedList<>();
 		inconsistencies.add(new TernaryInconsistencyGraph());
 		inconsistencies.add(new BinaryInconsistencyGraph());
-		
+
 		patternToPriorityEncoder = new HashMap<>();
 		try {
 			patternToPriorityEncoder.putAll(TemporalPropertyGenerator.generateAllPropertiesPiority());
@@ -276,17 +278,20 @@ public class Approximator {
 			String scope, List<Pair<String, String>> approx) {
 		// Converting to Cache.
 		String key = statement + fieldLabel;
-		sb.append(name + ".put(\"").append(key)
+		sb.append("allMokedApproximations.get(\"NAMENAME\").get(\""+name+"\").put(\"").append(key)
 				.append("\", Arrays.asList(").append(approx.stream()
 						.map(p -> "new Pair<>(\"" + p.a + "\", \"" + p.b + "\")").collect(Collectors.joining(", ")))
 				.append("));\n");
 	}
 
 	public String getAllChachedResults() {
-		return sb_allConsistentApproximation.toString() + sb_allInconsistentApproximation.toString()
-				+ sb_weakestConsistentApproximation.toString() + sb_strongestImplicationApproximation.toString()
-				+ sb_strongestConsistentApproximation.toString() + sb_weakestInconsistentApproximation.toString()
-				+ sb_isInconsistent.toString();
+		return Stream
+				.<String> of((sb_allConsistentApproximation.toString() + sb_allInconsistentApproximation.toString()
+						+ sb_weakestConsistentApproximation.toString() + sb_strongestImplicationApproximation.toString()
+						+ sb_strongestConsistentApproximation.toString()
+						+ sb_weakestInconsistentApproximation.toString() + sb_isInconsistent.toString()).split("\n"))
+				.sorted().collect(Collectors.partitioningBy(s -> s.startsWith("Map"))).entrySet().stream()
+				.flatMap(entry -> entry.getValue().stream()).collect(Collectors.joining("\n"));
 
 	}
 
@@ -297,7 +302,7 @@ public class Approximator {
 				Function.identity()).isEmpty();
 		// Converting to Cache.
 		String key = statement + fieldLabel;
-		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ").append(result).append(");\n");
+		sb_isInconsistent.append("allMokedApproximations.get(\"NAMENAME\").get(\"isIncon\").put(\"").append(key).append("\", ").append(result).append(");\n");
 
 		return result;
 	}
@@ -307,7 +312,7 @@ public class Approximator {
 				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity()).isEmpty();
 		// Converting to Cache.
 		String key = statement + fieldLabel;
-		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ").append(result).append(");\n");
+		sb_isInconsistent.append("allMokedApproximations.get(\"NAMENAME\").get(\"isIncon\").put(\"").append(key).append("\", ").append(result).append(");\n");
 
 		return result;
 	}
@@ -425,7 +430,7 @@ public class Approximator {
 		return convertPatternToProperty(nextStrongerPatterns(pattern), fieldName);
 
 	}
-	
+
 	public List<Pair<String, String>> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
 		return convertPatternToProperty(strongerPatterns(pattern), fieldName);
@@ -493,11 +498,10 @@ public class Approximator {
 			}
 		}).map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName))).collect(Collectors.toList());
 	}
-	
-	
-	public Integer encodePatterForPrioritization(String pattern){
-		return patternToPriorityEncoder.containsKey(pattern) ? patternToPriorityEncoder.get(pattern) : Integer.MAX_VALUE;
+
+	public Integer encodePatterForPrioritization(String pattern) {
+		return patternToPriorityEncoder.containsKey(pattern) ? patternToPriorityEncoder.get(pattern)
+				: Integer.MAX_VALUE;
 	}
-	
 
 }
