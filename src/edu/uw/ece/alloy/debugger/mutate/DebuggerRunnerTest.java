@@ -394,14 +394,15 @@ public class DebuggerRunnerTest {
 			DebuggerAlgorithm algorithm) {
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, testingHost, algorithm,
 				reviewedExamples, newReviewedExamples, skipTerms);
-		runner.start();
 		return runner;
 	}
 
 	protected void runDebuggerRunner(File toBeAnalyzedCode, File correctedModel, final File reviewedExamples,
 			final File newReviewedExamples, final File skipTerms, DebuggerAlgorithm algorithm) {
-		createDebuggerRunner(toBeAnalyzedCode, correctedModel, reviewedExamples, newReviewedExamples, skipTerms,
-				algorithm).debuggerAlgorithm.run();
+		DebuggerRunner runner = createDebuggerRunner(toBeAnalyzedCode, correctedModel, reviewedExamples, newReviewedExamples, skipTerms,
+				algorithm);
+		runner.start();
+		runner.debuggerAlgorithm.run();
 	}
 
 	protected void runDebuggerRunnerWithMockedApproximator(File toBeAnalyzedCode, File correctedModel,
@@ -661,7 +662,7 @@ public class DebuggerRunnerTest {
 	
 	@Test
 	public void benchmarkDijkstraHeuristcMock() {
-		benchmark("dijkstra", "heuristic", 5, 5, testHeuristicMocked);
+		benchmark("dijkstra", "heuristic", 5, 1, testHeuristicMocked);
 	}
 	
 	@Test

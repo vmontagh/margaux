@@ -29,6 +29,7 @@ import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprList;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprList.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
@@ -143,6 +144,7 @@ public abstract class DebuggerAlgorithm {
 	// In a model in the form of M => P, P is a conjunction of constraints.
 	// constraint = model => property
 	final protected List<Expr> property;// = Collections.emptyList();
+	final protected Expr propertyExpr;
 
 	// final
 	protected Approximator approximator;
@@ -244,6 +246,7 @@ public abstract class DebuggerAlgorithm {
 		model = Collections.unmodifiableList(propertyChecking.a);
 		modelExpr = ExprList.make(model.get(0).pos(), model.get(model.size() - 1).pos(), Op.AND, model);
 		property = Collections.unmodifiableList(propertyChecking.b);
+		propertyExpr = ExprList.make(property.get(0).pos(), property.get(property.size() - 1).pos(), Op.AND, property);
 		scope = ExtractorUtils.extractScopeFromCommand(command);
 		try {
 			fields = Collections.unmodifiableList(
@@ -296,6 +299,7 @@ public abstract class DebuggerAlgorithm {
 		model = null;
 		modelExpr = null;
 		property = null;
+		propertyExpr = null;
 		oracle = null;
 		exampleFinder = null;
 		fieldsQueue = null;
@@ -691,7 +695,7 @@ public abstract class DebuggerAlgorithm {
 					o = o.replace("_SzGrwtStrc_", "_SzGrwtStrcNOP_");
 				}
 
-				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint), p, o);
+				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint) , p, o);
 				final Pair<String, String> strengthendPair = new Pair<>(p, o);
 				mutatedFile.ifPresent(m -> result.add(new Pair<>(strengthendPair, m)));
 			}
