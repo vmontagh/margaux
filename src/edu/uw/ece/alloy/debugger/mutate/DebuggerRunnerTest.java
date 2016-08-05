@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.mutate;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +29,7 @@ import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmHeuristics;
 import edu.uw.ece.alloy.debugger.mutate.experiment.DebuggerAlgorithmRandom;
+import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByHola;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessorUtil;
 import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.Utils;
@@ -39,7 +42,8 @@ import edu.uw.ece.alloy.util.Utils;
  */
 public class DebuggerRunnerTest {
 
-	InetSocketAddress testingHost;
+	InetSocketAddress analyzerTestingHost;
+    InetSocketAddress exampleFinderTestingHost;
 	final static File testFolder = new File("models/debugger/casestudy/journal");
 	final static File tmpFolder = new File("tmp/testing");
 
@@ -268,7 +272,8 @@ public class DebuggerRunnerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		testingHost = ProcessorUtil.findEmptyLocalSocket();
+		analyzerTestingHost = ProcessorUtil.findEmptyLocalSocket();
+        exampleFinderTestingHost = ProcessorUtil.findEmptyLocalSocket();
 	}
 
 	@After
@@ -310,7 +315,7 @@ public class DebuggerRunnerTest {
 		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
 		File reviewed = new File(tmpFolder, "rviewedExamples.als");
 		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, dependentFiles, tmpFolder,
-				testingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM, new File("!~@#"), reviewed, new File("!~@#"));
+				analyzerTestingHost, exampleFinderTestingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM, new File("!~@#"), reviewed, new File("!~@#"));
 
 		runner.approximator = new Approximator(runner.approximator.interfacE, runner.approximator.processManager,
 				runner.approximator.patternToProperty, runner.approximator.tmpLocalDirectory, toBeAnalyzedCode,
@@ -330,13 +335,70 @@ public class DebuggerRunnerTest {
 				"sig A{r: one A}\n pred p[]{  some A and no A.r}\nrun {p implies some A}");
 		File correctedModel = new File("models/debugger/casestudy/journal/corrected.list.v0.als");
 
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, testingHost,
-				DebuggerAlgorithmRandom.EMPTY_ALGORITHM, reviewed);
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, analyzerTestingHost,
+		        exampleFinderTestingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM, reviewed);
 		runner.start();
 
 		runner.debuggerAlgorithm.run();
 	}
 
+
+    private void testExampleFinderByHolaIntegration(String content) {
+        File tmpLocalDirectory = new File("tmp/testing");
+        File testFile = new File(tmpLocalDirectory, "hola_testing.als");
+        try {
+            Util.writeAll(testFile.getAbsolutePath(), content);
+        } catch (Err e) {
+            e.printStackTrace();
+            fail("Source cannot be written on disk.");
+        }
+
+        try {
+            // Since the debugger algorithm is not executed, so
+            // the first and second element could be ignored.
+            DebuggerRunner runner = new DebuggerRunner(testFile, testFile, Collections.emptyList(), tmpFolder,
+                    analyzerTestingHost, exampleFinderTestingHost, DebuggerAlgorithmRandom.EMPTY_ALGORITHM, new File("!~@#"), new File("!~@#"), new File("!~@#"));
+            
+            runner.exampleFinderInterface.startThread();
+            runner.exampleFinderProcessManager.addAllProcesses();
+            runner.exampleFinder = new ExampleFinderByHola(runner.exampleFinderInterface,
+                    runner.exampleFinderProcessManager, tmpLocalDirectory);
+
+            runner.exampleFinder.findOnBorderExamples(testFile, "rootedOne", "Not_rootedOne");
+        } catch (Throwable t) {
+            t.printStackTrace();
+            fail(t.getMessage());
+        } finally {
+            testFile.deleteOnExit();
+        }
+    }
+
+    // TODO(Fiakyo): Without running the debugger algorithm, test the
+    // on-border example finder.
+    @Test
+    public void testExampleFinderByHolaIntegrationWithoutDependency() {
+        //@formatter:off
+        String content = "sig A{r: lone A}\n"
+                         + "pred rootedOne{one a:A | A = a.^r + a}\n"
+                         + "pred Not_rootedOne{not rootedOne}\n"
+                         + "run {}";
+        //@formatter:on
+        testExampleFinderByHolaIntegration(content);
+    }
+
+    // TODO(Fikayo): Are dependency files sent accordingly?
+    @Test
+    public void testExampleFinderByHolaIntegrationWithDependency() {
+        //@formatter:off
+        String content = "open relational_properties_tagged\n"
+                         + "sig A{r: lone A}\n"
+                         + "pred rootedOne{one a:A | A = a.^r + a}\n"
+                         + "pred Not_rootedOne{not rootedOne[r,A,A]}\n"
+                         + "run {rootedOne and Not_rootedOne}\n";
+        //@formatter:on
+        testExampleFinderByHolaIntegration(content);
+    }
+	
 	protected Approximator createdMockedApproximator(DebuggerRunner runner, String mockedName) {
 		return new Approximator(runner.approximator.interfacE, runner.approximator.processManager,
 				runner.approximator.tmpLocalDirectory, runner.approximator.toBeAnalyzedCode,
@@ -392,7 +454,7 @@ public class DebuggerRunnerTest {
 	protected DebuggerRunner createDebuggerRunner(File toBeAnalyzedCode, File correctedModel,
 			final File reviewedExamples, final File newReviewedExamples, final File skipTerms,
 			DebuggerAlgorithm algorithm) {
-		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, testingHost, algorithm,
+		DebuggerRunner runner = new DebuggerRunner(toBeAnalyzedCode, correctedModel, analyzerTestingHost, exampleFinderTestingHost, algorithm,
 				reviewedExamples, newReviewedExamples, skipTerms);
 		return runner;
 	}

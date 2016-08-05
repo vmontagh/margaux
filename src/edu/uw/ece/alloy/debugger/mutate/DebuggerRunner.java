@@ -76,7 +76,7 @@ public class DebuggerRunner extends Runner {
 	final protected DebuggerAlgorithm debuggerAlgorithmCreator;
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel, List<File> dependentFiles,
-			File tmpLocalDirectory, InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
+			File tmpLocalDirectory, InetSocketAddress distributorSocket, InetSocketAddress exampleFinderSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
 			final File newReviewedExamples, final File skipTerms) {
 		this.toBeAnalyzedCode = toBeAnalyzedCode;
 		this.correctModel = correctModel;
@@ -92,17 +92,17 @@ public class DebuggerRunner extends Runner {
 	}
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
-			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
+			InetSocketAddress distributorSocket, InetSocketAddress exampleFinderSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
 			final File newReviewedExamples, final File skipTerms) {
 		this(toBeAnalyzedCode, correctModel, Arrays.asList(RelationalPropModule, TemporalPropModule), TmpDirectoryRoot,
-				distributorSocket, debuggerAlgorithmCreator, reviewedExamples, newReviewedExamples, skipTerms);
+				distributorSocket, exampleFinderSocket, debuggerAlgorithmCreator, reviewedExamples, newReviewedExamples, skipTerms);
 	}
 	
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
-			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator,
+			InetSocketAddress distributorSocket, InetSocketAddress exampleFinderSocket, DebuggerAlgorithm debuggerAlgorithmCreator,
 			final File newReviewedExamples) {
 		this(toBeAnalyzedCode, correctModel, Arrays.asList(RelationalPropModule, TemporalPropModule), TmpDirectoryRoot,
-				distributorSocket, debuggerAlgorithmCreator, new File("!~@#"), newReviewedExamples, new File("!~@#"));
+				distributorSocket, exampleFinderSocket, debuggerAlgorithmCreator, new File("!~@#"), newReviewedExamples, new File("!~@#"));
 	}
 
 	protected Consumer<RemoteProcess> processIsReady = (RemoteProcess process) -> {
@@ -207,7 +207,7 @@ public class DebuggerRunner extends Runner {
                 }
 			}
 
-			// TODO(Fikayo): Implement the setup message to send the library
+			// TODO(Fikayo-Complete): Implement the setup message to send the library
 			// file before starting the remote process.
 			// The flow between DebuggerRunner(DR) and
 			// OnBorderAnalyzerRunner(OAR) is like:
