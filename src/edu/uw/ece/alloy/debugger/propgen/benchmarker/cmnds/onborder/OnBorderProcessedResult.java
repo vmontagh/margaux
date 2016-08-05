@@ -1,6 +1,5 @@
 package edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder;
 
-import java.util.HashMap;
 import java.util.Optional;
 
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.ProcessingParam;
@@ -14,24 +13,24 @@ public class OnBorderProcessedResult extends ProcessedResult {
 
 	private static final long serialVersionUID = -646344483367494297L;
 	
-	private final HashMap<String, String> results;
+	private final String result;
 	
-	public OnBorderProcessedResult(ProcessingParam param, Status status, HashMap<String, String> results) {
+	public OnBorderProcessedResult(ProcessingParam param, Status status, String result) {
 		super(param, status);
-		this.results = results;
+		this.result = result;
 	}
 
-	public OnBorderProcessedResult(ProcessingParam param, HashMap<String, String> results) {
-		this(param, Status.NORMAL, results);
+	public OnBorderProcessedResult(ProcessingParam param, String result) {
+		this(param, Status.NORMAL, result);
 	}
 
-	public Optional<HashMap<String, String>> getResults() {
-		return Optional.ofNullable(results);
+	public Optional<String> getResult() {
+		return Optional.ofNullable(result);
 	}
 
 	@Override
 	public String toString() {
-		return "OnBorderProcessedResult [results=" + results + ", param=" + param
+		return "OnBorderProcessedResult [result=" + result + ", param=" + param
 				+ ", status=" + status + ", sat=" + sat + "]";
 	}
 }
