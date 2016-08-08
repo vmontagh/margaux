@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.infrastructure.Runner;
 import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByAlloy;
+import edu.uw.ece.alloy.debugger.onborder.ExampleFinderByHola;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ExpressionAnalyzerRunner;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcess;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.RemoteProcessManager;
@@ -25,6 +26,7 @@ import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
+import edu.uw.ece.hola.agent.OnBorderAnalyzerRunner;
 
 /**
  * @author vajih
@@ -36,7 +38,15 @@ public class DebuggerRunner extends Runner {
 			.getLogger(DebuggerRunner.class.getName() + "--" + Thread.currentThread().getName());
 
 	final public static File TmpDirectoryRoot = new File(Configuration.getProp("temporary_directory"));
-	final static int ProccessNumber = Integer.parseInt(Configuration.getProp("analyzer_processes_number"));
+	final static int AnalyzerProccessNumber = Integer.parseInt(Configuration.getProp("analyzer_processes_number"));
+	// TODO(Fikayo): The number of example finder runner and its agents have to be
+	// configurable in debugger.experiment.config. HolaExampleFinerProccessNumber is 
+	// for the number of center runner. Apparently the number of agent has
+	// been set to '2'. The sources are not attached to the jar file so that
+	// I am not able to confirm it. Please remove such constant numbers
+	// and put them in the resource file
+	final static int HolaExampleFinerProccessNumber = Integer
+			.parseInt(Configuration.getProp("hola_example_finder_processes_number"));
 
 	final public static File RelationalPropModule = new File(Configuration.getProp("relational_properties_tagged"));
 	final public static File TemporalPropModule = new File(Configuration.getProp("temporal_properties_tagged"));
@@ -52,6 +62,13 @@ public class DebuggerRunner extends Runner {
 
 	protected ServerSocketInterface distributerInterface;
 	protected RemoteProcessManager analyzerProcessManager;
+
+	// All the communication interface and socket to connect with
+	// the Hola examplefinder.
+	protected final InetSocketAddress exampleFinderSocket;
+	protected ServerSocketInterface exampleFinderInterface;
+	protected RemoteProcessManager exampleFinderProcessManager;
+
 	protected Approximator approximator;
 	protected Oracle oracle;
 	protected ExampleFinder exampleFinder;
@@ -59,11 +76,12 @@ public class DebuggerRunner extends Runner {
 	final protected DebuggerAlgorithm debuggerAlgorithmCreator;
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel, List<File> dependentFiles,
-			File tmpLocalDirectory, InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
+			File tmpLocalDirectory, InetSocketAddress distributorSocket, InetSocketAddress exampleFinderSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
 			final File newReviewedExamples, final File skipTerms) {
 		this.toBeAnalyzedCode = toBeAnalyzedCode;
 		this.correctModel = correctModel;
 		this.distributorSocket = distributorSocket;
+		this.exampleFinderSocket = exampleFinderSocket;
 		this.dependentFiles = dependentFiles;
 		this.tmpLocalDirectory = tmpLocalDirectory;
 		this.debuggerAlgorithmCreator = debuggerAlgorithmCreator;
@@ -74,17 +92,17 @@ public class DebuggerRunner extends Runner {
 	}
 
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
-			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
+			InetSocketAddress distributorSocket, InetSocketAddress exampleFinderSocket, DebuggerAlgorithm debuggerAlgorithmCreator, final File reviewedExamples,
 			final File newReviewedExamples, final File skipTerms) {
 		this(toBeAnalyzedCode, correctModel, Arrays.asList(RelationalPropModule, TemporalPropModule), TmpDirectoryRoot,
-				distributorSocket, debuggerAlgorithmCreator, reviewedExamples, newReviewedExamples, skipTerms);
+				distributorSocket, exampleFinderSocket, debuggerAlgorithmCreator, reviewedExamples, newReviewedExamples, skipTerms);
 	}
 	
 	protected DebuggerRunner(final File toBeAnalyzedCode, final File correctModel,
-			InetSocketAddress distributorSocket, DebuggerAlgorithm debuggerAlgorithmCreator,
+			InetSocketAddress distributorSocket, InetSocketAddress exampleFinderSocket, DebuggerAlgorithm debuggerAlgorithmCreator,
 			final File newReviewedExamples) {
 		this(toBeAnalyzedCode, correctModel, Arrays.asList(RelationalPropModule, TemporalPropModule), TmpDirectoryRoot,
-				distributorSocket, debuggerAlgorithmCreator, new File("!~@#"), newReviewedExamples, new File("!~@#"));
+				distributorSocket, exampleFinderSocket, debuggerAlgorithmCreator, new File("!~@#"), newReviewedExamples, new File("!~@#"));
 	}
 
 	protected Consumer<RemoteProcess> processIsReady = (RemoteProcess process) -> {
@@ -99,13 +117,26 @@ public class DebuggerRunner extends Runner {
 	protected Consumer<RemoteProcess> processIsSetup = (RemoteProcess process) -> {
 		analyzerProcessManager.changeStatusToIDLE(process);
 	};
+	
+	protected Consumer<RemoteProcess> holaProcessIsReady = (RemoteProcess process) -> {
+	    exampleFinderInterface
+                .sendMessage(
+                        new AlloySetupMessage(exampleFinderInterface.getHostProcess(), dependentFiles.stream()
+                                .map(f -> (new LazyFile(f.getAbsolutePath())).load()).collect(Collectors.toList())),
+                        process);
+        exampleFinderProcessManager.changeStatusToSETUP(process);
+    };
+
+    protected Consumer<RemoteProcess> holaProcessIsSetup = (RemoteProcess process) -> {
+        exampleFinderProcessManager.changeStatusToIDLE(process);
+    };
 
 	@Override
 	protected void initiate() {
 
 		distributerInterface = new ServerSocketInterface(distributorSocket);
 		analyzerProcessManager = new RemoteProcessManager(distributorSocket, ExpressionAnalyzerRunner.class,
-				ProccessNumber);
+				AnalyzerProccessNumber);
 		// Livensess or readyness message message is received from a remote
 		// process.
 		distributerInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
@@ -145,10 +176,64 @@ public class DebuggerRunner extends Runner {
 			}
 		});
 
+		exampleFinderInterface = new ServerSocketInterface(exampleFinderSocket);
+		exampleFinderProcessManager = new RemoteProcessManager(exampleFinderSocket, OnBorderAnalyzerRunner.class,
+				HolaExampleFinerProccessNumber);
+		// Livensess or readyness message message is received from a remote
+		// process.
+		exampleFinderInterface.MessageReceived.addListener(new MessageEventListener<MessageReceivedEventArgs>() {
+
+			@Override
+			public void actionOn(LivenessMessage livenessMessage, MessageReceivedEventArgs event) {
+				System.out.println("Hola livenessMessage---->" + livenessMessage);
+				final Map<String, Object> context = new HashMap<>();
+                context.put("RemoteProcessLogger", exampleFinderProcessManager);
+                try {
+                    livenessMessage.onAction(context);
+                } catch (InvalidParameterException e) {
+                    e.printStackTrace();
+                }
+			}
+
+			@Override
+			public void actionOn(ReadyMessage readyMessage, MessageReceivedEventArgs event) {
+			    final Map<String, Object> context = new HashMap<>();
+                context.put("processIsReady", holaProcessIsReady);
+                try {
+                    System.out.println("DebuggerRunner actionOn " + readyMessage);
+                    readyMessage.onAction(context);
+                } catch (InvalidParameterException e) {
+                    e.printStackTrace();
+                }
+			}
+
+			// TODO(Fikayo-Complete): Implement the setup message to send the library
+			// file before starting the remote process.
+			// The flow between DebuggerRunner(DR) and
+			// OnBorderAnalyzerRunner(OAR) is like:
+			// DR boots a new OAR, OAR sends ready message, DR sends a setup
+			// message, and OAR sends back a Done message.
+			// Now OAR is ready to go.
+			@Override
+			public void actionOn(DoneMessage doneMessage, MessageReceivedEventArgs messageArgs) {
+			    final Map<String, Object> context = new HashMap<>();
+                context.put("processIsSetup", holaProcessIsSetup);
+                try {
+                    doneMessage.onAction(context);
+                } catch (InvalidParameterException e) {
+                    e.printStackTrace();
+                }
+			}
+
+		});
+
 		approximator = new Approximator(distributerInterface, analyzerProcessManager, tmpLocalDirectory,
 				toBeAnalyzedCode, dependentFiles);
 
-		exampleFinder = new ExampleFinderByAlloy();
+		// TODO(Fikayo): Once the all tests are passed, instantiate from
+		// ExampleFinderByHola
+		exampleFinder = new ExampleFinderByHola(exampleFinderInterface, exampleFinderProcessManager, tmpLocalDirectory);
+
 		oracle = new CorrectModelOracle(correctModel);
 
 		debuggerAlgorithm = debuggerAlgorithmCreator.createIt(toBeAnalyzedCode, tmpLocalDirectory, approximator, oracle,
@@ -160,6 +245,9 @@ public class DebuggerRunner extends Runner {
 	public void start() {
 		distributerInterface.startThread();
 		analyzerProcessManager.addAllProcesses();
+
+		exampleFinderInterface.startThread();
+		exampleFinderProcessManager.addAllProcesses();
 	}
 
 	/**
