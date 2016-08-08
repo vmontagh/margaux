@@ -81,9 +81,6 @@ public class ExtractorUtils {
 			if (isOrdering(sig))
 				continue;
 
-			if (isSubSig(sig))
-				continue;
-
 			String sigName = sig.label.replace("this/", "");
 
 			if (solution.eval(sig).size() == 0) {
@@ -93,7 +90,8 @@ public class ExtractorUtils {
 				for (A4Tuple tuple : solution.eval(sig)) {
 					atoms.add(tuple.toString().replace("$", "_").replace("/", "_"));
 				}
-				quantifiers.add("some disj " + atoms.stream().collect(Collectors.joining(", ")) + ": univ");
+				if (!isSubSig(sig))
+					quantifiers.add("some disj " + atoms.stream().collect(Collectors.joining(", ")) + ": univ");
 				constraints.add("\t((" + atoms.stream().collect(Collectors.joining("+")) + ") = " + sigName+")");
 			}
 		}

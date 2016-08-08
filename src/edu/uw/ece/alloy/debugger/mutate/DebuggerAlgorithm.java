@@ -35,6 +35,7 @@ import edu.mit.csail.sdg.alloy4compiler.ast.ExprList.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.ExtractorUtils;
@@ -578,6 +579,10 @@ public abstract class DebuggerAlgorithm {
 		try {
 			Util.writeAll("tmp/" + sourceFile.getName() + "." + this.getClass().getSimpleName() + ".csv",
 					reportHeader + "\n" + report);
+			Util.writeAll(
+					"tmp/" + sourceFile.getName() + "." + this.getClass().getSimpleName() + "."
+							+ Configuration.getProp("alloy_processes_number") + ".time.csv",
+					approximator.getApproximationTimeLog());
 		} catch (Err e) {
 			e.printStackTrace();
 		}
@@ -695,7 +700,7 @@ public abstract class DebuggerAlgorithm {
 					o = o.replace("_SzGrwtStrc_", "_SzGrwtStrcNOP_");
 				}
 
-				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint) , p, o);
+				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint), p, o);
 				final Pair<String, String> strengthendPair = new Pair<>(p, o);
 				mutatedFile.ifPresent(m -> result.add(new Pair<>(strengthendPair, m)));
 			}
@@ -970,6 +975,7 @@ public abstract class DebuggerAlgorithm {
 		rowReport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
 
 		rowReport.append("strengthened=").append(strengthened).append(",");
+		rowReport.append("mutated=").append(mutatedFile).append(",");
 
 		String example = inAndOutExamples.b.orElse("").replace("\n", " and ").replace(" eq ", " = ");
 

@@ -31,7 +31,7 @@ pred singleHead{
 check{
   ( declarativeFormulaForNext_fixed and
     acyclic and
-    connected //and
-//    singleHead
+    connected and
+    singleHead
 ) implies linearList   
 } for 3

@@ -102,16 +102,18 @@ public class DebuggerRunnerTest {
 		allMokedApproximations.get("list.v0").get("weakestIncon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]")));
 
 		
-		allMokedApproximations.get("list.v0").get("allCon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
-		allMokedApproximations.get("list.v0").get("isIncon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt", false);
+		allMokedApproximations.get("list.v0").get("allCon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("rootedOne", "rootedOne[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("acyclic", "acyclic[nxt, Node]"), new Pair<>("complete", "complete[nxt, Node, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		allMokedApproximations.get("list.v0").get("isIncon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt", false);
 		allMokedApproximations.get("list.v0").get("strongestImpl").put(" acyclic[ ]nxt", Arrays.asList(new Pair<>("acyclic", "acyclic[nxt, Node]")));
 		allMokedApproximations.get("list.v0").get("strongestImpl").put(" connected[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
 		allMokedApproximations.get("list.v0").get("strongestImpl").put(" declarativeFormulaForNext_fixed[ ]nxt", Arrays.asList(new Pair<>("functional", "functional[nxt, Node]")));
-		allMokedApproximations.get("list.v0").get("weakestCon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
+		allMokedApproximations.get("list.v0").get("strongestImpl").put(" singleHead[ ]nxt", Arrays.asList(new Pair<>("injective", "injective[nxt, Node]")));
+		allMokedApproximations.get("list.v0").get("weakestCon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt", Arrays.asList(new Pair<>("irreflexive", "irreflexive[nxt, Node, Node]"), new Pair<>("weaklyConnected", "weaklyConnected[nxt, Node, Node]"), new Pair<>("transitive", "transitive[nxt, Node, Node]"), new Pair<>("functional", "functional[nxt, Node]"), new Pair<>("injective", "injective[nxt, Node]"), new Pair<>("antisymmetric", "antisymmetric[nxt, Node, Node]")));
 		allMokedApproximations.get("list.v0").get("weakestIncon").put(" acyclic[ ]nxt", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]")));
 		allMokedApproximations.get("list.v0").get("weakestIncon").put(" connected[ ]nxt", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
 		allMokedApproximations.get("list.v0").get("weakestIncon").put(" declarativeFormulaForNext_fixed[ ]nxt", Arrays.asList(new Pair<>("empty", "empty[nxt]")));
-		allMokedApproximations.get("list.v0").get("weakestIncon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) )nxt", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]")));
+		allMokedApproximations.get("list.v0").get("weakestIncon").put(" singleHead[ ]nxt", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]"), new Pair<>("empty", "empty[nxt]")));
+		allMokedApproximations.get("list.v0").get("weakestIncon").put("( ( declarativeFormulaForNext_fixed[ ] ) and ( acyclic[ ] ) and ( connected[ ] ) and ( singleHead[ ] ) )nxt", Arrays.asList(new Pair<>("total", "total[nxt, Node]"), new Pair<>("surjective", "surjective[nxt, Node]"), new Pair<>("symmetric", "symmetric[nxt, Node, Node]"), new Pair<>("stronglyConnected", "stronglyConnected[nxt, Node, Node]")));
 
 		// mocking Dining philosophers 
 		allMokedApproximations.put("dijkstra", new HashMap());
@@ -648,11 +650,16 @@ public class DebuggerRunnerTest {
 			}
 		}
 
+	}	
+	
+	@Test
+	public void benchmarkListHeuristc() {
+		benchmark("list.v0", "heuristic", 4, 1, testHeuristic);
 	}
 	
 	@Test
 	public void benchmarkListHeuristcMock() {
-		benchmark("list.v0", "heuristic", 4, 5, testHeuristicMocked);
+		benchmark("list.v0", "heuristic", 4, 1, testHeuristicMocked);
 	}
 	
 	@Test
