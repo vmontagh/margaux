@@ -1,6 +1,5 @@
 //open general_properties
 
-
 /*
  * Models how mutexes are grabbed and released by processes, and
  * how Dijkstra's mutex ordering criterion can prevent deadlocks.

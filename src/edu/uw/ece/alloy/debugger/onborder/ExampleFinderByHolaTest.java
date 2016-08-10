@@ -119,14 +119,14 @@ public class ExampleFinderByHolaTest {
     @Test
     public void testExampleFinder() throws Exception {
 
-    	String parentDir = "./models/debugger/min_dist/";
-        File toBeAnalyzedCode = new File(parentDir, "bare_linked_list.als");
+    	String parentDir = "./models/debugger/";
+//        File toBeAnalyzedCode = new File(parentDir, "bare_linked_list.als");
 //        String parentDir = "./models/examples/toys/";
-//        File toBeAnalyzedCode = new File(parentDir, "birthday.als");
+        File toBeAnalyzedCode = new File(parentDir, "dijkstra.als");
 
         System.out.println("\n======= Going In =======\n");
         ExampleFinder finder = prepareExampleFinder(toBeAnalyzedCode, tmpLocalDirectory);        
-        Pair<Optional<String>, Optional<String>> result = finder.findOnBorderExamples(toBeAnalyzedCode, "", "");
+        Pair<Optional<String>, Optional<String>> result = finder.findOnBorderExamples(toBeAnalyzedCode, "ShowDijkstra", "not ShowDijkstra");
         System.out.println("\n======= I'm out =======\n");
         System.out.println("result: " + result);
     }
