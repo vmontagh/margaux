@@ -33,7 +33,7 @@ public class ExampleFinderByHolaTest {
     private ServerSocketInterface testingInterface;
     private InetSocketAddress testingHost;
     private InetSocketAddress runnerHost;
-    private final File tmpLocalDirectory = new File("tmp/");
+    private final File tmpLocalDirectory = new File("./tmp/");
     private final NotifiableInteger readynessReceived = new NotifiableInteger();
 
     final long startTime = System.currentTimeMillis();
@@ -119,12 +119,14 @@ public class ExampleFinderByHolaTest {
     @Test
     public void testExampleFinder() throws Exception {
 
-        String parentDir = "/home/ooodunay/workspace/alloy4/models/debugger/min_dist/";
+    	String parentDir = "./models/debugger/min_dist/";
         File toBeAnalyzedCode = new File(parentDir, "bare_linked_list.als");
+//        String parentDir = "./models/examples/toys/";
+//        File toBeAnalyzedCode = new File(parentDir, "birthday.als");
 
         System.out.println("\n======= Going In =======\n");
         ExampleFinder finder = prepareExampleFinder(toBeAnalyzedCode, tmpLocalDirectory);        
-        Pair<Optional<String>, Optional<String>> result = finder.findOnBorderExamples(toBeAnalyzedCode, "hello", "hi");
+        Pair<Optional<String>, Optional<String>> result = finder.findOnBorderExamples(toBeAnalyzedCode, "", "");
         System.out.println("\n======= I'm out =======\n");
         System.out.println("result: " + result);
     }

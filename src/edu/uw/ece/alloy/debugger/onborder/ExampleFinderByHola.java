@@ -1,10 +1,13 @@
 package edu.uw.ece.alloy.debugger.onborder;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.Optional;
 import java.util.UUID;
 
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.mutate.ExampleFinder;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.center.ProcessDistributer;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
@@ -12,6 +15,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder.OnBorderProc
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder.OnBorderProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.onborder.OnBorderRequestMessage;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
+import edu.uw.ece.alloy.util.Utils;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
 import edu.uw.ece.alloy.util.events.MessageReceivedEventArgs;
 
@@ -75,7 +79,7 @@ public class ExampleFinderByHola implements ExampleFinder {
 		}
 
 		interfacE.MessageReceived.removeListener(receiveListener);
-		System.out.println("result: " + result.getResult().get().getResult());
+		System.out.println("result: " + result.getResult().get().getResult().get());
 
 		// Right now, the result is the same for both
 		if (result.getResult().get().getResult().isPresent()) {
