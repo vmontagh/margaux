@@ -29,6 +29,10 @@ import edu.mit.csail.sdg.alloy4.ConstList.TempList;
 
 public final class AlloyTuple implements Comparable<AlloyTuple> {
 
+   /**The number of occurrences of this tuple. This is only used for counting the number of times this edge
+    * occurs in a composite of a projection. Must be >=1*/
+	int occurrences = 1;
+	
    /** The unmodifiable list of atoms in this tuple. */
    private final ConstList<AlloyAtom> atoms;
 

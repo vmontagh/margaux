@@ -38,7 +38,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -56,6 +60,7 @@ import edu.mit.csail.sdg.alloy4.OurPDFWriter;
 import edu.mit.csail.sdg.alloy4.OurPNGWriter;
 import edu.mit.csail.sdg.alloy4.OurUtil;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
 
 /** This class displays a graph of the current projection.
  *
@@ -121,24 +126,53 @@ public final strictfp class GraphViewer extends JPanel {
         if (c!=null) { c.invalidate(); c.repaint(); c.validate(); } else { invalidate(); repaint(); validate(); }
     }
 
-    public GraphViewer(final Graph graph)
+    /** Gets a map of atoms that can not be on the same layer of the graph.*/
+    private Map<AlloyAtom, ArrayList<AlloyAtom>> edgePairings(Graph comp)
     {
-    	this(graph, false, -1, -1);
+    	Map<AlloyAtom, ArrayList<AlloyAtom>> map = new HashMap<AlloyAtom, ArrayList<AlloyAtom>>();
+    	if (comp==null) return map;
+    	List<GraphNode> nodes = comp.getGraphNodes();
+    	for (GraphNode node : nodes)
+    	{
+    		if (node.shape()==null||node.getAtom()==null) continue;
+    		ArrayList<AlloyAtom> tos = new ArrayList<AlloyAtom>();
+    		for (GraphEdge edge : node.outs)
+    		{
+    			GraphNode to = edge.b();
+    			AlloyAtom atom = null;
+    			while (to.shape()==null)
+    			{
+    				to = to.outEdges().get(0).b();
+    			}
+    			if (to.getAtom()!=null&&!tos.contains(to.getAtom())) tos.add(to.getAtom());
+    		}
+    		map.put(node.getAtom(), tos);
+    	}
+    	return map;
+    }
+    
+    public GraphViewer(final Graph graph, final Graph comp)
+    {
+    	this(graph, comp, false, -1, -1);
     }
     
     /** Construct a GraphViewer that displays the given graph. 
      * @return */
-    public GraphViewer(final Graph graph, boolean layedOut, int left, int top) {
+    public GraphViewer(final Graph graph, final Graph comp, boolean layedOut, int left, int top) {
     	OurUtil.make(this, BLACK, WHITE, new EmptyBorder(0,0,0,0));
         setBorder(null);
         this.scale = graph.defaultScale;
         this.graph = graph;
         if (!layedOut)
         {
+        	//Pass in the a map of nodes detailing pairs of nodes that can not occupy the same layer.
+        	this.graph.setIncompatibleNodes(edgePairings(comp));
+        	//Layout the graph for the first time.
         	this.graph.layout();
         }
         else
         {
+        	//This calculates a new frame when the nodes have already been layed out.
         	this.graph.calcFrame(left, top);
         }
         final JMenuItem zoomIn = new JMenuItem("Zoom In");

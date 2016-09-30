@@ -17,12 +17,18 @@ package edu.mit.csail.sdg.alloy4viz;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import edu.mit.csail.sdg.alloy4.ErrorFatal;
+import edu.mit.csail.sdg.alloy4graph.Graph;
+import edu.mit.csail.sdg.alloy4graph.GraphViewer;
+import edu.mit.csail.sdg.alloy4graph.LayoutStrategy;
 
 /** This utility class performs projection of AlloyModel and AlloyInstance.
  *
@@ -112,10 +118,10 @@ public final class StaticProjector {
     * <br> If rule (2) is violated, then some tuples may not show up in the return value.
     */
    public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection) {
-	   return project(oldInstance, projection, true);
+	   return project(oldInstance, projection, true, true);
    }
    
-   public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection, boolean checkAtom) {
+   public static AlloyInstance project(AlloyInstance oldInstance, AlloyProjection projection, boolean checkAtom, boolean oneInstance) {
       Map<AlloyRelation,List<Integer>> data=new LinkedHashMap<AlloyRelation,List<Integer>>();
       Map<AlloyAtom,Set<AlloySet>> atom2sets = new LinkedHashMap<AlloyAtom,Set<AlloySet>>();
       Map<AlloyRelation,Set<AlloyTuple>> rel2tuples = new LinkedHashMap<AlloyRelation,Set<AlloyTuple>>();
@@ -124,41 +130,63 @@ public final class StaticProjector {
       for(AlloyAtom atom:oldInstance.getAllAtoms()) {
          atom2sets.put(atom, new LinkedHashSet<AlloySet>(oldInstance.atom2sets(atom)));
       }
-      // Now, decide what tuples to generate
-      for(AlloyRelation r:oldInstance.model.getRelations()) {
-         List<Integer> list=data.get(r);
-         if (list==null) continue; // This means that relation was deleted entirely
-         tupleLabel:
-            for(AlloyTuple oldTuple:oldInstance.relation2tuples(r)) {
-               if (checkAtom)
-               {
-            	   for (Integer i:list) {
-                  // If an atom in the original tuple should be projected, but it doesn't match the
-                  // chosen atom for that type, then this tuple must not be included in the new instance
-                  AlloyAtom a=oldTuple.getAtoms().get(i);
-                  AlloyType bt=r.getTypes().get(i);
-                  bt=oldInstance.model.getTopmostSuperType(bt);
-                  if (!a.equals(projection.getProjectedAtom(bt))) continue tupleLabel;
-            	  }
-               }
-               List<AlloyAtom> newTuple=oldTuple.project(list);
-               List<AlloyType> newObj=r.project(list);
-               if (newObj.size()>1 && newTuple.size()>1) {
-                  AlloyRelation r2=new AlloyRelation(r.getName(), r.isPrivate, r.isMeta, newObj);
-                  Set<AlloyTuple> answer=rel2tuples.get(r2);
-                  if (answer==null) rel2tuples.put(r2, answer=new LinkedHashSet<AlloyTuple>());
-                  answer.add(new AlloyTuple(newTuple));
-               } else if (newObj.size()==1 && newTuple.size()==1) {
-                  AlloyAtom a=newTuple.get(0);
-                  Set<AlloySet> answer=atom2sets.get(a);
-                  if (answer==null) atom2sets.put(a, answer=new LinkedHashSet<AlloySet>());
-                  answer.add(new AlloySet(r.getName(), r.isPrivate, r.isMeta, newObj.get(0)));
-               }
-            }
-      }
+      
+      projectionHelper(oldInstance, data, projection, checkAtom, oneInstance, rel2tuples, atom2sets);
       // Here, we don't have to explicitly filter out "illegal" atoms/tuples/...
       // (that is, atoms that belong to types that no longer exist, etc).
       // That's because AlloyInstance's constructor must do the check too, so there's no point in doing that twice.
       return new AlloyInstance(oldInstance.originalA4, oldInstance.filename, oldInstance.commandname, newModel, atom2sets, rel2tuples, oldInstance.isMetamodel);
+   }
+   
+   private static void projectionHelper(AlloyInstance oldInstance,
+		   Map<AlloyRelation,List<Integer>> data, AlloyProjection projection, boolean checkAtom, boolean oneInstance,
+		   Map<AlloyRelation,Set<AlloyTuple>> rel2tuples,
+		   Map<AlloyAtom,Set<AlloySet>> atom2sets)
+   {
+	// Now, decide what tuples to generate
+	      for(AlloyRelation r:oldInstance.model.getRelations()) {
+	         List<Integer> list=data.get(r);
+	         if (list==null) continue; // This means that relation was deleted entirely
+	         tupleLabel:
+	            for(AlloyTuple oldTuple:oldInstance.relation2tuples(r)) {
+	               if (checkAtom)
+	               {
+	            	   for (Integer i:list) {
+	                  // If an atom in the original tuple should be projected, but it doesn't match the
+	                  // chosen atom for that type, then this tuple must not be included in the new instance
+	                  AlloyAtom a=oldTuple.getAtoms().get(i);
+	                  AlloyType bt=r.getTypes().get(i);
+	                  bt=oldInstance.model.getTopmostSuperType(bt);
+	                  if (!a.equals(projection.getProjectedAtom(bt))) continue tupleLabel;
+	            	  }
+	               }
+	               List<AlloyAtom> newTuple=oldTuple.project(list);
+	               List<AlloyType> newObj=r.project(list);
+	               if (newObj.size()>1 && newTuple.size()>1) {
+	                  AlloyRelation r2=new AlloyRelation(r.getName(), r.isPrivate, r.isMeta, newObj);
+	                  Set<AlloyTuple> answer=rel2tuples.get(r2);
+	                  if (answer==null) rel2tuples.put(r2, answer=new LinkedHashSet<AlloyTuple>());
+	                  AlloyTuple tuple = new AlloyTuple(newTuple);
+	                  boolean exists = answer.contains(tuple);
+	                  //If the tuple already exists and we are supposed to take into account multiple instances
+	                  //then increase the number of occurrences of that tuple.
+	                  if (exists&&!oneInstance)
+	                  {
+	                	  for (AlloyTuple scannedTuple : answer)
+	                		  if (tuple.equals(scannedTuple))
+	                			  scannedTuple.occurrences++;
+	                  }
+	                  else if (!exists)
+	                  {
+	                	  answer.add(new AlloyTuple(newTuple));
+	                  }
+	               } else if (newObj.size()==1 && newTuple.size()==1) {
+	                  AlloyAtom a=newTuple.get(0);
+	                  Set<AlloySet> answer=atom2sets.get(a);
+	                  if (answer==null) atom2sets.put(a, answer=new LinkedHashSet<AlloySet>());
+	                  answer.add(new AlloySet(r.getName(), r.isPrivate, r.isMeta, newObj.get(0)));
+	               }
+	            }
+	      }
    }
 }

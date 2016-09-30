@@ -481,13 +481,15 @@ public final strictfp class GraphNode {
 
    private void calcHeightWidth(List<String> tempLabels)
    {
+	   int tempHeight = 0;
 	   for(int i=0; i<tempLabels.size(); i++) {
 	         String t = tempLabels.get(i);
 	         Rectangle2D rect = getBounds(fontBold, t);
 	         int ww = ((int)(rect.getWidth())) + 1; // Round it up
 	         if (width<ww) width=ww;
-	         height=height+ad;
-	  }
+	         tempHeight+=ad;
+	  } 
+	  if (tempHeight>height) height = tempHeight;
    }
    /** (Re-)calculate this node's bounds. */
    void calcBounds() {
@@ -500,14 +502,10 @@ public final strictfp class GraphNode {
       
       if (labelSize!=null)
       {
-    	  int maxHeight = 0;
     	  for (List<String> tempLabels : labelSize)
     	  {
-    		  if (height>maxHeight) maxHeight = height;
-    		  height = 0;
     		  calcHeightWidth(tempLabels);
     	  }
-    	  height = maxHeight;
       }
       else if (labels!=null) calcHeightWidth(labels);
       

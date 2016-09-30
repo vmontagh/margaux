@@ -87,12 +87,16 @@ public final strictfp class GraphEdge {
 
    /** The actual path corresponding to this edge; initially null until it's computed. */
    private Curve path = null;
+   
+   /** The number of occurrences of this edge in the whole projection. */
+   private final int numOccurrences;
 
    // =========================================================================s====================================================
 
    /** Construct an edge from "from" to "to" with the given arrow head settings, then add the edge to the graph. */
-   GraphEdge(GraphNode from, GraphNode to, Object uuid, String label, boolean drawArrowHeadOnFrom, boolean drawArrowHeadOnTo, DotStyle style, Color color, Object group) {
-      if (group instanceof GraphNode) throw new IllegalArgumentException("group cannot be a GraphNode");
+   GraphEdge(GraphNode from, GraphNode to, Object uuid, String label, boolean drawArrowHeadOnFrom, boolean drawArrowHeadOnTo, DotStyle style, Color color, Object group, int occurrences) {
+      numOccurrences = occurrences;
+	  if (group instanceof GraphNode) throw new IllegalArgumentException("group cannot be a GraphNode");
       if (group instanceof GraphEdge) throw new IllegalArgumentException("group cannot be a GraphEdge");
       if (group == null) { group = new Object(); }
       a = from;
@@ -116,8 +120,8 @@ public final strictfp class GraphEdge {
    }
 
    /** Construct an edge from "from" to "to", then add the edge to the graph. */
-   public GraphEdge(GraphNode from, GraphNode to, Object uuid, String label, Object group) {
-      this(from, to, uuid, label, false, true, null, null, group);
+   public GraphEdge(GraphNode from, GraphNode to, Object uuid, String label, Object group, int occurrences) {
+      this(from, to, uuid, label, false, true, null, null, group, occurrences);
    }
 
    /** Returns whether to draw arrow head on from */
@@ -153,7 +157,7 @@ public final strictfp class GraphEdge {
       if (b.graph != newTo.graph) throw new IllegalArgumentException("You cannot draw an edge between two different graphs.");
       if (a==b) a.selfs.remove(this); else { a.outs.remove(this); b.ins.remove(this); }
       b = newTo;
-      if (a==b) a.selfs.add(this); else { a.outs.add(this); b.ins.add(this); }
+      if (a==b) a.selfs.add(this); else a.outs.add(this);b.ins.add(this);
    }
 
    /** Return the X coordinate of the top-left corner of the label box. */
@@ -167,6 +171,9 @@ public final strictfp class GraphEdge {
 
    /** Return the height of the label box. */
    public int getLabelH() { return labelbox.h; }
+   
+   /** Return the number of occurrences of the edge. */
+   public int getNumOccurrences() { return numOccurrences; }
 
    /** Returns the edge weight (which is always between 1 and 10000 inclusively). */
    public int weight() { return weight; }

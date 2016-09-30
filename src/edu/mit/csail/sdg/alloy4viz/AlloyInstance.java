@@ -186,7 +186,7 @@ public final class AlloyInstance {
       List<AlloyAtom> answer=type2atoms.get(type);
       return answer!=null ? answer : noAtom;
    }
-
+   
    /** Returns an unmodifiable sorted list of AlloyAtom(s) in this set; answer can be an empty list. */
    public List<AlloyAtom> set2atoms(AlloySet set) {
       List<AlloyAtom> answer=set2atoms.get(set);

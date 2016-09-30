@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import java.io.PrintWriter;
 
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
+import edu.mit.csail.sdg.alloy4viz.AlloyAtom;
 import edu.mit.csail.sdg.alloy4viz.AlloyType;
 import static edu.mit.csail.sdg.alloy4graph.Artist.getBounds;
 
@@ -97,6 +99,11 @@ public final strictfp class Graph {
     
     /** This variables indicates the layout strategy that should be used.*/
     private LayoutStrategy strat = LayoutStrategy.BySink;
+    
+    /** For each node, this map details which nodes can not be on the same layer.
+     * NOTE: This is used to avoid horizontal edges in the graph.
+     * This must be in sync with nodelist. */
+    public Map<AlloyAtom, ArrayList<AlloyAtom>> incompatibleNodes = null;
 
    /** The list of layers;  must stay in sync with GraphNode.graph and GraphNode.layer
     * (empty iff there are no nodes; every node is always in exactly one layer, and appears exactly once in that layer)
@@ -126,7 +133,13 @@ public final strictfp class Graph {
 
    /** Constructs an empty Graph object. */
    public Graph(double defaultScale, LayoutStrategy lay)  { this.defaultScale = defaultScale; this.strat = lay; }
-
+   
+   /** Receives a map of nodes that should not be on the same layer. */
+   void setIncompatibleNodes(Map<AlloyAtom, ArrayList<AlloyAtom>> edgeMap)
+   {
+	   incompatibleNodes = edgeMap;
+   }
+	
    /** Assuming layout() has been called, this returns the left edge. */
    public int getLeft() { return left; }
 
@@ -185,8 +198,8 @@ public final strictfp class Graph {
 
    //============================================================================================================================//
 
-   /** Layout step #1: assign a total order on the nodes. */
-   private void layout_assignOrder() {
+   /** Layout step #1: assign a total order on the nodes for Sink based layout. */
+   private void layout_assignOrderBySink() {
       // This is an implementation of the GR algorithm described by Peter Eades, Xuemin Lin, and William F. Smyth
       // in "A Fast & Effective Heuristic for the Feedback Arc Set Problem"
       // in Information Processing Letters, Volume 47, Number 6, Pages 319-323, 1993
@@ -240,18 +253,20 @@ public final strictfp class Graph {
       }
       sortNodes(Util.fastJoin(s1,s2));
    }
-
+   
    //============================================================================================================================//
 
-   /** Layout step #2: reverses all backward edges. */
+   /** Layout step #2: for Sink layout and #3 for Type layout: reverses all backward edges. */
    private void layout_backEdges() {
-      for(GraphEdge e: edges) if (e.a().pos() < e.b().pos()) e.set(e.bhead(), e.ahead()).reverse();
+      for(GraphEdge e: edges)
+    	  if (e.a().pos() < e.b().pos())
+    		  e.set(e.bhead(), e.ahead()).reverse();
    }
 
    //============================================================================================================================//
 
-   /** Layout step #3: assign the nodes into one or more layers, then return the number of layers. */
-   private int layout_decideLayer() {
+   /** Layout step #3 for Sink: assign the nodes into one or more layers, then return the number of layers. */
+   private void layout_decideLayer() {
       // Here, for each node X, I compute its maximum length to a sink; if X is a sink, its length to sink is 0.
       final int n = nodes.size();
       int[] len = new int[n];
@@ -281,14 +296,12 @@ public final strictfp class Graph {
          }
          if (!changed) break;
       }
-     
       // All done!
-      return layers();
    }
 
-   /**This method assigns each type its own layer. 
+   /**Layout step #1 for Type: This method assigns each type its own layer. 
  * @return */
-   private int layout_assignTypeToLayer()
+   private void layout_assignTypeToLayer()
    {
 	   //Assign an initial layer to each type.
 	      Map<String, List<GraphNode>> typeList = new HashMap<String, List<GraphNode>>();
@@ -355,7 +368,162 @@ public final strictfp class Graph {
 	    		  l.get(0).setLayer(maxLayer);
 	    	  }
 	      }
-	      return layers();
+   }
+   
+   //TODO thoroughly tested function?
+   private void separateSameLayerEdges()
+   {
+	   if (incompatibleNodes==null||incompatibleNodes.isEmpty()) return;
+	   for (int i = 0;i<layerlist.size();i++)
+	   {
+		   List<GraphNode> layer = layerlist.get(i);
+		   List<GraphNode> newLayer = new ArrayList<GraphNode>();
+		   for (int j = 0;j<layer.size();j++)
+		   {
+			   GraphNode from = layer.get(j);
+			   if (newLayer.contains(from)) continue;
+			   List<AlloyAtom> incompNodes = incompatibleNodes.get(from.getAtom());
+			   if (incompNodes==null||incompNodes.isEmpty()) continue;
+			   for (AlloyAtom incompNode : incompNodes)
+			   {
+				   for (int k = 0;k<layer.size();k++)
+				   {
+					   GraphNode to = layer.get(k);
+					   if (to==from) continue;
+					   if (incompNode.equals(to.getAtom())&&!newLayer.contains(to))
+					   {
+						   newLayer.add(to);
+					   }
+				   }
+				   
+			   }
+		   }
+		   if (newLayer.size()>0)
+		   {
+			   for (int j = layerlist.size()-1;j>i;j--)
+			   {
+				   List<GraphNode> lay = layerlist.get(j);
+				   while (lay.size()>0)
+				   {
+					   GraphNode node = lay.get(0);
+					   node.setLayer(j+1);
+				   }
+			   }
+			   ArrayList<Integer> positions = new ArrayList<Integer>();
+			   for (int j = 0;j<layer.size();j++)
+			   {
+				   positions.add(layer.get(j).pos);
+			   }
+			   java.util.Arrays.sort(positions.toArray(new Integer[0]));
+			   for (GraphNode node : newLayer)
+			   {
+				   node.setLayer(i+1);
+			   }
+			   for (int j = 0;j<layer.size();j++)
+			   {
+				   layer.get(j).pos = positions.remove(0);
+			   }
+			   for (GraphNode node : newLayer)
+			   {
+				   node.pos = positions.remove(0);
+			   }
+		   }
+	   }
+   }
+   
+   
+   public static void main(String [] args)
+   {
+	   Map<GraphNode, ArrayList<GraphNode>> incompNodes = new HashMap<GraphNode, ArrayList<GraphNode>>();
+	   List<List<GraphNode>> layerlist = new ArrayList<List<GraphNode>>();
+	   Graph g = new Graph(1, LayoutStrategy.ByType);
+	   
+	   ArrayList<AlloyType> types = new ArrayList<AlloyType>();
+	   for (int i =0;i<3;i++)
+	   {
+		   types.add(new AlloyType("type"+i, false, false, false, false, false, false));
+	   }
+	   ArrayList<AlloyAtom> atoms = new ArrayList<AlloyAtom>();
+	   for (int i =0;i<12;i++)
+	   {
+		   atoms.add(new AlloyAtom(types.get(i%3), i));
+	   }
+	   
+	   GraphNode node1 = new GraphNode(g, 1, atoms.get(0), 1, 1, 0, 0, true);
+	   GraphNode node2 = new GraphNode(g, 1, atoms.get(1), 1, 1, 0, 1, true);
+	   GraphNode node3 = new GraphNode(g, 1, atoms.get(2), 1, 1, 1, 2, true);
+	   GraphNode node4 = new GraphNode(g, 1, atoms.get(3), 1, 1, 1, 3, true);
+	   GraphNode node5 = new GraphNode(g, 1, atoms.get(4), 1, 1, 1, 4, true);
+	   GraphNode node6 = new GraphNode(g, 1, atoms.get(5), 1, 1, 2, 5, true);
+	   GraphNode node7 = new GraphNode(g, 1, atoms.get(6), 1, 1, 2, 6, true);
+	   GraphNode node8 = new GraphNode(g, 1, atoms.get(7), 1, 1, 2, 7, true);
+	   GraphNode node9 = new GraphNode(g, 1, atoms.get(8), 1, 1, 3, 8, true);
+	   GraphNode node10 = new GraphNode(g, 1, atoms.get(9), 1, 1,3, 9, true);
+	   GraphNode node11 = new GraphNode(g, 1, atoms.get(10), 1, 1, 4, 10, true);
+	   GraphNode node12 = new GraphNode(g, 1, atoms.get(11), 1, 1, 4, 11, true);
+	   
+
+	   
+	   ArrayList<GraphNode> incomp = new ArrayList<GraphNode>();
+	   incomp.add(node2);
+	   ArrayList<GraphNode> incomp2 = new ArrayList<GraphNode>();
+	   incomp2.add(node1);
+	   ArrayList<GraphNode> incomp3 = new ArrayList<GraphNode>();
+	   incomp3.add(node5);
+	   ArrayList<GraphNode> incomp4 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp5 = new ArrayList<GraphNode>();
+	   incomp5.add(node3);
+	   incomp5.add(node4);
+	   ArrayList<GraphNode> incomp6 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp7 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp8 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp9 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp10 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp11 = new ArrayList<GraphNode>();
+	   ArrayList<GraphNode> incomp12 = new ArrayList<GraphNode>();
+
+	   incompNodes.put(node1, incomp);
+	   incompNodes.put(node2, incomp2);
+	   incompNodes.put(node3, incomp3);
+	   incompNodes.put(node4, incomp4);
+	   incompNodes.put(node5, incomp5);
+	   incompNodes.put(node6, incomp6);
+	   incompNodes.put(node7, incomp7);
+	   incompNodes.put(node8, incomp8);
+	   incompNodes.put(node9, incomp9);
+	   incompNodes.put(node10, incomp10);
+	   incompNodes.put(node11, incomp11);
+	   incompNodes.put(node12, incomp12);
+	   
+	   Map<AlloyAtom, ArrayList<AlloyAtom>> map = new HashMap<AlloyAtom, ArrayList<AlloyAtom>>();
+	   for (GraphNode node : incompNodes.keySet())
+	   {
+		   ArrayList<GraphNode> alloyAtom = incompNodes.get(node);
+		   ArrayList<AlloyAtom> list = new ArrayList<AlloyAtom>();
+		   for (GraphNode n : alloyAtom)
+		   {
+			   list.add(n.getAtom());
+		   }
+		   map.put(node.getAtom(), list);
+	   }
+	   g.incompatibleNodes = map;
+	   g.separateSameLayerEdges();
+	   int i = 0;
+	   int k = i;
+   }
+   
+   /** Layout step #2: assign a total order on the nodes for Type based layout. */
+   private void layout_assignOrderByType()
+   {
+	   int position = 0;
+	   for (List<GraphNode> layer : layerlist)
+	   {
+		   for (GraphNode node : layer)
+		   {
+			   node.pos = position;
+			   position++;
+		   }
+	   }
    }
    
    //============================================================================================================================//
@@ -363,14 +531,14 @@ public final strictfp class Graph {
    private void layout_dummyNodesIfNeeded() {
       for(final GraphEdge edge: new ArrayList<GraphEdge>(edges)) {
          GraphEdge e = edge;
-         GraphNode a = e.a(), b=e.b();
-         while(a.layer() - b.layer() > 1) {
-            GraphNode tmp = a;
+         GraphNode a = e.a(), b =e.b();
+         while(a.layer()-b.layer() > 1) {
+            GraphNode tmp = e.a();
             a = new GraphNode(a.graph, e.uuid, null, true).set((DotShape)null);
             a.setLayer(tmp.layer()-1);
             // now we have three nodes in the vertical order of "tmp", "a", then "b"
             e.change(a);                                                                           // let old edge go from "tmp" to "a"
-            e = new GraphEdge(a, b, e.uuid, "", e.ahead(), e.bhead(), e.style(), e.color(), e.group); // let new edge go from "a" to "b"
+            e = new GraphEdge(a, b, e.uuid, "", e.ahead(), e.bhead(), e.style(), e.color(), e.group, e.getNumOccurrences()); // let new edge go from "a" to "b"
          }
       }
    }
@@ -378,7 +546,7 @@ public final strictfp class Graph {
    //============================================================================================================================//
 
    /** Layout step #5: decide the order of the nodes within each layer. */
-   private void layout_reorderPerLayer() {
+   private void layout_reorderPerLayer(boolean onlyDummies) {
       // This uses the original Barycenter heuristic
       final IdentityHashMap<GraphNode,Object> map = new IdentityHashMap<GraphNode,Object>();
       final double[] bc = new double[nodes.size()+1];
@@ -390,18 +558,85 @@ public final strictfp class Graph {
             double sum = 0;
             for(GraphEdge e: n.outs) {
                GraphNode nn=e.b();
-               if (map.put(nn,nn)==null) { count++; sum += bc[nn.pos()]; }
+               if (map.put(nn,nn)==null) { count+=e.getNumOccurrences(); sum += e.getNumOccurrences()*bc[nn.pos()]; }
             }
             bc[n.pos()] = count==0 ? 0 : (sum/count);
          }
-         sortLayer(layer+1, new Comparator<GraphNode>() {
-            public int compare(GraphNode o1, GraphNode o2) {
-               // If the two nodes have the same barycenter, we use their ordering that was established during layout_assignOrder()
-               if (o1==o2) return 0;
-               int n = Double.compare(bc[o1.pos()], bc[o2.pos()]); if (n!=0) return n; else if (o1.pos()<o2.pos()) return -1; else return 1;
-            }
-         });
-         int j=1; for(GraphNode n:layer(layer+1)) { bc[n.pos()]=j; j++; }
+         if (!onlyDummies)
+         {
+	         sortLayer(layer+1, new Comparator<GraphNode>() {
+	            public int compare(GraphNode o1, GraphNode o2) {
+	               // If the two nodes have the same barycenter, we use their ordering that was established during layout_assignOrder()
+	               if (o1==o2) return 0;
+	               int n = Double.compare(bc[o1.pos()], bc[o2.pos()]); if (n!=0) return n; else if (o1.pos()<o2.pos()) return -1; else return 1;
+	            }
+	         });
+         }
+         else
+         {
+        	 //Here we want to preserve the order of the non-dummy nodes while sorting the dummy nodes around the original Nodes.
+        	 List<GraphNode> list = layerlist.get(layer+1);
+        	 List<GraphNode> dummies = new ArrayList<GraphNode>();
+        	 List<GraphNode> nonDummies = new ArrayList<GraphNode>();
+        	 
+        	 for (GraphNode node : list)
+        	 {
+        		 if (node.shape()==null)
+        		 {
+        			 if (dummies.size()==0)
+        			 {
+        				 dummies.add(node);
+        				 continue;
+        			 }
+        			 int count = 0;
+        			 for (count = 0;count<dummies.size();count++)
+        			 {
+        				 GraphNode n = dummies.get(count);
+        				 if (bc[n.pos()]>bc[node.pos()])
+        				 {
+        					 dummies.add(count, node);
+        					 break;
+        				 }
+        			 }
+        			 if (count==dummies.size())
+        			 {
+        				 dummies.add(node);
+        			 }
+        		 }
+        		 else
+        		 {
+        			 nonDummies.add(node);
+        		 }
+        	 }
+        	 List<GraphNode> newList = new ArrayList<GraphNode>();
+        	 layerlist.remove(layer+1);
+        	 while(dummies.size()>0||nonDummies.size()>0)
+        	 {
+        		 if(dummies.size()==0)
+        		 {
+        			 newList.addAll(nonDummies);
+        			 break;
+        		 }
+        		 else if (nonDummies.size()==0)
+        		 {
+        			 newList.addAll(dummies);
+        			 break;
+        		 }
+        		 else
+        		 {
+        			 if (bc[nonDummies.get(0).pos()]>bc[dummies.get(0).pos()])
+        			 {
+        				 newList.add(dummies.remove(0));
+        			 }
+        			 else
+        			 {
+        				 newList.add(nonDummies.remove(0));
+        			 }
+        		 }
+        	 }
+        	 layerlist.add(layer+1, newList);
+         }
+	     int j=1; for(GraphNode n:layer(layer+1)) { bc[n.pos()]=j; j++; }
       }
    }
 
@@ -428,17 +663,13 @@ public final strictfp class Graph {
       while(true) {
          Block b = block[i];
          double tmp = b.posn + (nodes.get(b.first-1).getWidth() + nodes.get(b.first-1).getReserved() + xJump)/2D;
-         //if (!layedOut||nodes.get(i-1).shape()==null)
-         {	 
-        	 GraphNode node = nodes.get(i-1);
-        	 nodes.get(i-1).setX((int)tmp);
-		     for(i=i+1; i<=b.last; i++) {
-		        GraphNode v1 = nodes.get(i-1);
-		        GraphNode v2 = nodes.get(i-2);
-		        int xsep = (v1.getWidth() + v1.getReserved() + v2.getWidth() + v2.getReserved())/2 + xJump;	        
-		        v1.setX(v2.x() + xsep);
-		     }
-         }
+         nodes.get(i-1).setX((int)tmp);
+		 for(i=i+1; i<=b.last; i++) {
+	         GraphNode v1 = nodes.get(i-1);
+		     GraphNode v2 = nodes.get(i-2);
+		     int xsep = (v1.getWidth() + v1.getReserved() + v2.getWidth() + v2.getReserved())/2 + xJump;	        
+		     v1.setX(v2.x() + xsep);
+		 }
          i=b.last+1;
          if (i>n) break;
       }
@@ -559,32 +790,52 @@ public final strictfp class Graph {
       for(GraphNode n:nodes) n.calcBounds();
       
       // Layout the nodes
-      layout_assignOrder();
-      layout_backEdges();
+
 	  int layers;
 	  if (strat == LayoutStrategy.BySink)
 	  {
-		  layers = layout_decideLayer();
+	      layout_assignOrderBySink();
+	      layout_backEdges();
+		  layout_decideLayer();
+		  separateSameLayerEdges();
+		  layers = layers();
 	  }
 	  else
 	  {
-		  layers = layout_assignTypeToLayer();
+		  layout_assignTypeToLayer();
+		  layout_assignOrderByType();
+		  separateSameLayerEdges();
+		  layers = layers();
+		  layout_backEdges();
 	  }
       layout_dummyNodesIfNeeded();
-      layout_reorderPerLayer();
+      layout_reorderPerLayer(false);
   
       // For each layer, this array stores the height of its tallest node
       layerPH = new int[layers];
 
-      layerYCoord(true, layers);
+      layerYCoord(layers, true);
         
       // If there are more than one layer, then iteratively refine the X position of each component 3 times; 4 is a good number
       if (layers>1) {
          // It's important to NOT DO THIS when layers<=1, because without edges the nodes will overlap each other into the center
          for(int i=0; i<3; i++) for(int layer=0; layer<layers; layer++) layout_xAssignment(layer(layer));
       }
+      
       // Calculate each node's y; we start at y==5 so that we're not touching the top-edge of the window
       int pytemp=py;
+      ArrayList<ArrayList<Integer>> xList = new ArrayList<ArrayList<Integer>>();
+    /*  for (int i = 0;i<layerlist.size();i++)
+      {
+    	  ArrayList<Integer> x = new ArrayList<Integer>();
+    	  List<GraphNode> nodes = layerlist.get(i);
+    	  for (GraphNode node : nodes)
+    	  {
+    		  x.add(node.x());
+    		  System.out.print(node.getAtom()+" "+node.x());
+    	  }
+    	  System.out.println();
+      }*/
       for(int layer=layers-1; layer>=0; layer--) {
          final int ph = layerPH[layer];
          for(GraphNode n:layer(layer))
@@ -597,14 +848,30 @@ public final strictfp class Graph {
       // Since we're doing layout for the first time, we need to explicitly set top and bottom, since
       // otherwise "recalcBound" will merely "extend top and bottom" as needed.
       recalcBound(true);
+      
+      for (List<GraphNode> list : layerlist)
+      {
+    	  System.out.println("-----------------");
+    	  for (GraphNode node : list)
+    		  System.out.println(node.getAtom()+": "+node.x()+", "+node.y());
+      }
 }
    
    public void calcFrame(int left, int top)
    {
 	  if (nodes.size()==0) return;
 	  for(GraphNode n:nodes) n.calcBounds();
+	  if (strat==LayoutStrategy.BySink)
+	  {
+		  layout_assignOrderBySink();
+	  }
+	  else
+	  {
+		  layout_assignOrderByType();
+	  }
+	  layout_backEdges();
 	  layerPH=new int[layerlist.size()];
- 	  layerYCoord(false, layerlist.size());
+	  layerYCoord(layerlist.size(), false);
  	  layoutNewFrameOfProjection();
  	  relayout_edges(true, true);
  	  recalcBound(true);
@@ -626,19 +893,16 @@ public final strictfp class Graph {
    }
    //============================================================================================================================//
 
-	/** figure out the Y position of each layer, and also give each component an initial X position, if the node position has not been determined.*/
-   private void layerYCoord(boolean xCoord, int layers)
+	/** figure out the Y position of each layer, and also give each component an initial X position.*/
+   private void layerYCoord(int layers, boolean setInitX)
    {
 	      for(int layer=layers-1; layer>=0; layer--) {
 	         int x=5; // So that we're not touching the left-edge of the window
 	         int h=0;
 	         for(GraphNode n: layer(layer)) {
 	            int nHeight = n.getHeight(), nWidth = n.getWidth();
-	            if (xCoord)
-	            {
-	            	n.setX(x + nWidth/2);
-		            x = x + nWidth + n.getReserved() + 20;
-	            }
+	            if (setInitX) n.setX(x + nWidth/2);
+		        x = x + nWidth + n.getReserved() + 20;
 	            if (h < nHeight) h = nHeight;
 	         }
 	         layerPH[layer] = h;
@@ -649,215 +913,22 @@ public final strictfp class Graph {
    private void layoutNewFrameOfProjection()
    {
  	   layout_dummyNodesIfNeeded();
- 	   setDummyLayer();
- 	   setDummyNodeCoords();
-   }
-   
-   /** Set the layer of the dummy nodes for new frame of current projection */
-   private void setDummyLayer()
-   {
-	   for (GraphNode n: nodelist)
-	   {
-		   if (n.shape()==null)
-		   {
-			   n.setLayer(0);
-		   }
-	   }
-	   for (GraphNode n: nodelist)
-  	   {
-  		 if (n.shape()!=null)
-  		 {
-  			 for (GraphEdge e : n.outEdges())
-  			 {
-  				 int i = 0;
-  				 GraphNode to = e.b();
-  				 //Determine the destination node and how many dummies are in between.
-  				 while(to.shape()==null && to.layer()==0)
-  				 {
-  					 i++;
-  					 to = to.outEdges().get(0).b();
-  				 }
-  				 GraphNode dummy = e.b();
-  				 //Set one dummy on each layer in between the two nodes.
-  				 for (int j = 0;j<i;j++)
-  				 {
-	  				 if (to.layer()-n.layer()>1)
-	  				 {
-	  					 dummy.setLayer(n.layer()+j+1);
-	  				 }
-	  				 else if (n.layer()-to.layer()>1)
-	  				 {
-	  					 dummy.setLayer(n.layer()-j-1);
-	  				 }
-	  				 dummy = dummy.outEdges().get(0).b();
-  				 }
-  			 }
-  		 }
-  	   }
-   }
-   
-   /** Set dummy node coords for new frame of current projection*/
-   private void setDummyNodeCoords()
-   {
-	   setRelOrderOfDummies();
-	   int y = py;
-	   for (int k = layerlist.size()-1;k>=0;k--)
-	   {
-		   List<GraphNode> layer = layerlist.get(k);
-		   int lastNodeNum = -1;
-	  	   for (int i = 0;i < layer.size(); i++)
-		   {
-	  		   //Set the dummy nodes in order up to the last non-dummy node.
-			   if (layer.get(i).shape()!=null)
-			   {
-				   for (int j = i-1;j>lastNodeNum;j--)
-				   {
-					    layNode(layer.get(j), layer.get(j+1), y, k);
-				   }
-				   lastNodeNum = i;	
-			   }
-	       }
-		   if (lastNodeNum==-1&&layer.size()>0)
-		   {
-			   GraphNode node = layer.get(0);
-			   node.setX(0);
-			   node.setY(y + layerPH[k]/2);
-			   lastNodeNum++;
-		   }
-		   for (int i = lastNodeNum + 1;i<layer.size();i++)
-		   {
-			   layNode(layer.get(i), layer.get(i-1), y, k);
-		   }
-	  	   y+=yJump+layerPH[k];
-   	    } 
-   }
-   
-   /** Lays out a node relative to another node on the same layer */
-   private void layNode(GraphNode newNode, GraphNode prev, int y, int layer)
-   {
-	   int xsep = (newNode.getWidth() + newNode.getReserved() + prev.getWidth() + prev.getReserved())/2 + xJump;	        
-       newNode.setX(prev.x() + xsep);
-       checkWidth(newNode);
-       newNode.setY(y + layerPH[layer]/2);
-   }
-   
-   /** Set total width if node goes over boundary*/
-   private void checkWidth(GraphNode v1)
-   {
-	   if (v1.x()+v1.getWidth()>left+totalWidth)
-       {
-       		totalWidth = v1.x() + v1.getWidth();
-       }
-   }
-   
-   /** Set the relative order of the dummies. */
-   private void setRelOrderOfDummies()
-   {
-	   int start = layerlist.size()-1;
-	   for (int c = 0; c<4;c++)
-	   {
-		   if (start == 0)
-		   {
-			   start = layerlist.size() - 1;
-		   }
-		   else
-		   {
-			   start = 0;
-		   }
-		   for (int l = start;l>=0&&l<layerlist.size();)
-		   {
-			   //Calculate BaryCenter.
-			   List<GraphNode> layer = layerlist.get(l);
-			   ArrayList<Integer> bc;
-			   if (start==0)
-			   {
-				   bc = calcBaryForDummies(layer, true);
-			   }
-			   else
-			   {
-				   bc = calcBaryForDummies(layer, false);
-			   }
-			   boolean sorted = false;
-			   //Bubble sort the dummy nodes. Assuming the inefficiency of bubble sort is negligible for any graph.
-			   while (!sorted)
-			   {
-				   sorted = true;
-				   for (int i = 0;i<layer.size()-1;)
-				   {
-					   while (i<layer.size()-1&&layer.get(i).shape()!=null)
-					   {
-						   i++;
-					   }
-					   int j = i+1;
-					   while (j<layer.size()&&layer.get(j).shape()!=null)
-					   {
-						   j++;
-					   }
-					   if (j>=layer.size())
-					   {
-						   break;
-					   }
-					   else
-					   {
-						   if (bc.get(j)<bc.get(i))
-						   {
-							   int temp = bc.remove(j);
-							   int temp2 = bc.remove(i);
-							   bc.add(i, temp);
-							   bc.add(j, temp2);
-							   GraphNode tempnode = layer.remove(j);
-							   GraphNode tempnode2 = layer.remove(i);
-							   layer.add(i, tempnode);
-							   layer.add(j, tempnode2);						   
-							   sorted = false;
-						   }
-					   }
-					   i=j;
-				   }
-				   if(start == 0) {l++;} else {l--;}
-			   }
-		   }
-	   }
-   }
-   
-   private ArrayList<Integer> calcBaryForDummies(List<GraphNode> layer, boolean outEdges)
-   {
-	   ArrayList<Integer> bc = new ArrayList<Integer>();
-	   for (GraphNode n : layer)
-	   {
-			   int count = 0;
-			   int sum = 0;
-			   List<GraphEdge> edges;
-			   if (outEdges)
-			   {
-				   edges = n.outEdges();
-			   }
-			   else
-			   {
-				   edges = n.inEdges();
-			   }
-			   for (GraphEdge e : edges)
-			   {
-				   if (outEdges)
-				   {
-					   sum+=e.b().pos;
-				   }
-				   else
-				   {
-					   sum+=e.a().pos;
-				   }
-				   count++;
-			   }
-			   if (count!=0)
-			   {
-				   bc.add((int)(sum/count));
-			   }
-			   else
-			   {
-				   bc.add(0);
-			   }
-	   }
-	   return bc;
+ 	   for (int i = 0;i<layerPH.length;i++)
+ 	   {
+ 		   List<GraphNode> list = layer(i);
+ 		   int yCoord = -1;
+ 		   for (GraphNode node : list)
+ 		   {
+ 			   if (node.shape()!=null)
+ 				   yCoord=node.y();
+ 		   }
+ 		   for (GraphNode node : list)
+ 		   {
+ 			   if (node.shape()==null)
+ 				   node.setY(yCoord);
+ 		   }
+ 	   }
+ 	   layout_reorderPerLayer(true);
    }
    
    /** Re-establish top/left/width/height. */
@@ -963,44 +1034,46 @@ public final strictfp class Graph {
       drawEdges();
    }
    
+   /** This function calculates the number of edge crossings in the layout. */
    public int calculateEdgeCrossings()
    {
 	   int readability = 0;
 	   for (int i = 0;i<layerlist.size()-1;i++)
 	   {
 		   List<GraphNode> layer1 = layerlist.get(i);
-		   List<GraphNode> layer2 = layerlist.get(i+1);
 		   List<GraphEdge> AcrossSameLayers = new ArrayList<GraphEdge>();
-		   AcrossSameLayers.addAll(getEdgesBetweenLayers(layer1, i));
-		   AcrossSameLayers.addAll(getEdgesBetweenLayers(layer2, i));
-		   for (GraphEdge e1 : AcrossSameLayers)
+		   AcrossSameLayers.addAll(getEdgesWithinLayers(layer1, i));
+		   for (int m = 0;m<AcrossSameLayers.size()-1;m++)
 		   {
-			   for (GraphEdge e2 : AcrossSameLayers)
+			   GraphEdge e1 = AcrossSameLayers.get(m);
+			   for (int n = m+1;n<AcrossSameLayers.size();n++)
 			   {
 				   int high1;
 				   int high2;
 				   int low1;
 				   int low2;
+				   GraphEdge e2 = AcrossSameLayers.get(n);
 				   if (e1.a().layer()==i)
 				   {
-					   high1 = e1.a().pos;
-					   low1 = e1.b().pos;
+					   high1 = e1.a().x();
+					   low1 = e1.b().x();
 				   }
 				   else
 				   {
-					   high1 = e1.b().pos;
-					   low1 = e1.a().pos;
+					   high1 = e1.b().x();
+					   low1 = e1.a().x();
 				   }
 				   if (e2.a().layer()==i)
 				   {
-					   high2 = e1.a().pos;
-					   low2 = e1.b().pos;
+					   high2 = e2.a().x();
+					   low2 = e2.b().x();
 				   }
 				   else
 				   {
-					   high2 = e1.b().pos;
-					   low2 = e1.a().pos;
+					   high2 = e2.b().x();
+					   low2 = e2.a().x();
 				   }
+				   
 				   if ((high1<high2&&low1>low2)||(high2<high1&&low2>low1))
 				   {
 					   readability++;
@@ -1011,7 +1084,8 @@ public final strictfp class Graph {
 	   return readability;
    }
    
-   private List<GraphEdge> getEdgesBetweenLayers(List<GraphNode> layer, int i)
+   /** Gets all of the edges that are within the same layer.*/
+   private List<GraphEdge> getEdgesWithinLayers(List<GraphNode> layer, int i)
    {
 	   List<GraphEdge> AcrossSameLayers = new ArrayList<GraphEdge>();
 	   for (int j = 0;j<layer.size();j++)
