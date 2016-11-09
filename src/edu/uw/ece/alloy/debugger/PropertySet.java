@@ -83,7 +83,7 @@ public final class PropertySet {
 			try (BufferedReader reader = new BufferedReader(
 					new FileReader(mapFiles.get(operator)))) {
 
-				reader.lines().skip(0).map(line -> Arrays.asList(line.split("(,)")))
+				reader.lines().substream(0).map(line -> Arrays.asList(line.split("(,)")))
 						// .flatMap(l -> l.stream())
 						// .map(line -> Arrays.asList(line.split("_")))
 						// .flatMap(l -> l.stream())

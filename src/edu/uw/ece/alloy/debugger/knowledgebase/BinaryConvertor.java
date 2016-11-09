@@ -149,7 +149,7 @@ public class BinaryConvertor {
 
 	}
 
-	static void convertFromCSVToLatex() {
+	static void convertFromCSVToLatexImplication() {
 		final BinaryImplicationLatticImperative bili = new BinaryImplicationLatticImperative();
 
 		final Queue<String> patterns = new LinkedList<>();
@@ -194,10 +194,15 @@ public class BinaryConvertor {
 			
 			System.out.println(result);
 		} catch (Err e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+	}
+	
+	static public void convertCSVToLatexInconsistencies(){
+		BinaryInconsistencyGraph big = new BinaryInconsistencyGraph();
+		for (String pattern: big.getAllPatterns()){
+			System.out.println(pattern + "->"+big.getAllInconsistecies(pattern));
+		}
 	}
 
 	/**
@@ -205,7 +210,8 @@ public class BinaryConvertor {
 	 */
 	public static void main(String[] args) {
 		// convertFRomAlloyToCSV();
-		convertFromCSVToLatex();
+		//convertFromCSVToLatexImplication();
+		convertCSVToLatexInconsistencies();
 	}
 
 }

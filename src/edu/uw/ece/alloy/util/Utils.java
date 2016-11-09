@@ -331,7 +331,7 @@ public class Utils {
 	public static void readFile(final File file, final Consumer<List<String>> toMaps) {
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-			reader.lines().skip(1).map(line -> Arrays.asList(line.split(","))).forEach(toMaps);
+			reader.lines().substream(1).map(line -> Arrays.asList(line.split(","))).forEach(toMaps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
