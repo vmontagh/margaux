@@ -35,7 +35,7 @@ public class Field2ConstraintMapper extends VisitReturn<Object> {
 		StringBuilder allSigs = new StringBuilder();
 		for(Sig sig: sol.getAllReachableSigs()) {
 			
-			if(sig.builtin) continue;
+			if(sig.builtin || sig.isAbstract != null || sig.isOne != null) continue;
 			allSigs.append("sig " + Utils.readSnippet(sig.span()) + "\n");
 		}
 		

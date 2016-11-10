@@ -48,5 +48,10 @@ public class SzShrnkStrc extends SzShrnk {
 
 		return true;
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 4;
+	}
 
 }

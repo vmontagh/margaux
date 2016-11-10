@@ -15,5 +15,11 @@ public class CmpstOrdStrcOR extends CmpstOrdStrct {
 	protected String compositeOperator() {
 		return " or ";
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 1;
+	}
+
 
 }

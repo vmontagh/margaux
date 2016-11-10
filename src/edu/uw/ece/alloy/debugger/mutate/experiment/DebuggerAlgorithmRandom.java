@@ -1,6 +1,7 @@
 package edu.uw.ece.alloy.debugger.mutate.experiment;
 
 import java.io.File;
+import java.util.Comparator;
 
 import edu.uw.ece.alloy.debugger.mutate.Approximator;
 import edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm;
@@ -14,10 +15,12 @@ import edu.uw.ece.alloy.debugger.mutate.Oracle;
 public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 
 	final public static DebuggerAlgorithmRandom EMPTY_ALGORITHM = new DebuggerAlgorithmRandom();
-	
-	protected DebuggerAlgorithmRandom(File sourceFile, File destinationDir,
-			Approximator approximator, Oracle oracle, ExampleFinder exampleFinder) {
-		super(sourceFile, destinationDir, approximator, oracle, exampleFinder);
+
+	protected DebuggerAlgorithmRandom(File sourceFile, File destinationDir, Approximator approximator, Oracle oracle,
+			ExampleFinder exampleFinder, final File reviewedExamples, final File newReviewedExamples,
+			final File skipTerms) {
+		super(sourceFile, destinationDir, approximator, oracle, exampleFinder, reviewedExamples, newReviewedExamples,
+				skipTerms);
 	}
 
 	public DebuggerAlgorithmRandom() {
@@ -32,7 +35,7 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 */
 	@Override
 	protected boolean afterInquiryOracle() {
-	    return false;
+		return false;
 	}
 
 	/*
@@ -118,7 +121,8 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#afterPickApproximation()
+	 * edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#afterPickApproximation
+	 * ()
 	 */
 	@Override
 	protected void afterPickApproximation() {
@@ -127,13 +131,12 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#beforePickApproximation(
-	 * )
+	 * @see edu.uw.ece.alloy.debugger.mutate.DebuggerAlgorithm#
+	 * beforePickApproximation( )
 	 */
 	@Override
 	protected boolean beforePickApproximation() {
-	    return false;
+		return false;
 	}
 
 	/*
@@ -185,11 +188,18 @@ public class DebuggerAlgorithmRandom extends DebuggerAlgorithm {
 	protected void onStartLoop() {
 	}
 
-	public DebuggerAlgorithmRandom createIt(final File sourceFile,
-			final File destinationDir, final Approximator approximator,
-			final Oracle oracle, final ExampleFinder exampleFinder) {
-		return new DebuggerAlgorithmRandom(sourceFile, destinationDir, approximator,
-				oracle, exampleFinder);
+	public DebuggerAlgorithmRandom createIt(File sourceFile, File destinationDir, Approximator approximator,
+			Oracle oracle, ExampleFinder exampleFinder, final File reviewedExamples, final File newReviewedExamples,
+			final File skipTerms) {
+		return new DebuggerAlgorithmRandom(sourceFile, destinationDir, approximator, oracle, exampleFinder,
+				reviewedExamples, newReviewedExamples, skipTerms);
+	}
+
+	@Override
+	protected Comparator<String> propertiesSorter() {
+		return (String propA, String propB) -> {
+			return 0;
+		};
 	}
 
 }

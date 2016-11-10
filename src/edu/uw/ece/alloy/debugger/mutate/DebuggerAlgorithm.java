@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,11 +29,13 @@ import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Command;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
+import edu.mit.csail.sdg.alloy4compiler.ast.ExprBinary;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprList;
 import edu.mit.csail.sdg.alloy4compiler.ast.ExprList.Op;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompModule;
 import edu.mit.csail.sdg.alloy4compiler.parser.CompUtil;
+import edu.uw.ece.alloy.Configuration;
 import edu.uw.ece.alloy.debugger.PrettyPrintExpression;
 import edu.uw.ece.alloy.debugger.filters.Decompose;
 import edu.uw.ece.alloy.debugger.filters.ExtractorUtils;
@@ -114,10 +118,14 @@ public abstract class DebuggerAlgorithm {
 	protected final static Logger logger = Logger
 			.getLogger(DebuggerAlgorithm.class.getName() + "--" + Thread.currentThread().getName());
 
-	final protected Map<Integer, Pair<Boolean, String>> resultInterpretaionMap;
+	final protected Map<Integer, Pair<REVIEW_RESPONSE, String>> resultInterpretaionMap;
 
 	public enum REC {
 		TRUE, FALSE, DONTCARE
+	};
+
+	public enum REVIEW_RESPONSE {
+		ACCEPT, REJECT, NA
 	};
 
 	/* The source of an Alloy file */
@@ -137,6 +145,7 @@ public abstract class DebuggerAlgorithm {
 	// In a model in the form of M => P, P is a conjunction of constraints.
 	// constraint = model => property
 	final protected List<Expr> property;// = Collections.emptyList();
+	final protected Expr propertyExpr;
 
 	// final
 	protected Approximator approximator;
@@ -191,9 +200,31 @@ public abstract class DebuggerAlgorithm {
 
 	/* Examples that are reviewed by oracle are stored in the following sets */
 	final protected Set<String> acceptedExamples, rejectedExamples;
+	final Set<String> skipSequences;
+	final List<String> reviewedExamples;
+	final List<String> reviewedExamplesWithMutations;
 
+	final File newReviewedExamples;
+
+	/**
+	 * 
+	 * @param sourceFile
+	 * @param destinationDir
+	 * @param approximator
+	 * @param oracle
+	 * @param exampleFinder
+	 * @param reviewedExamples
+	 *            A file containing all examples that have been reviewed
+	 *            previously and are used for killing
+	 * @param newREviewedExamples
+	 *            A file for storing the reviewed examples. New reviewed files
+	 *            plus previous ones.
+	 * @param skipTerms
+	 *            The terms should be skipped due to incomplete implementation.
+	 */
 	public DebuggerAlgorithm(final File sourceFile, final File destinationDir, final Approximator approximator,
-			final Oracle oracle, final ExampleFinder exampleFinder) {
+			final Oracle oracle, final ExampleFinder exampleFinder, final File reviewedExamples,
+			final File newReviewedExamples, final File skipTerms) {
 		this.sourceFile = sourceFile;
 		this.sourceCode = Utils.readFile(sourceFile.getAbsolutePath());
 		CompModule world;
@@ -216,6 +247,7 @@ public abstract class DebuggerAlgorithm {
 		model = Collections.unmodifiableList(propertyChecking.a);
 		modelExpr = ExprList.make(model.get(0).pos(), model.get(model.size() - 1).pos(), Op.AND, model);
 		property = Collections.unmodifiableList(propertyChecking.b);
+		propertyExpr = ExprList.make(property.get(0).pos(), property.get(property.size() - 1).pos(), Op.AND, property);
 		scope = ExtractorUtils.extractScopeFromCommand(command);
 		try {
 			fields = Collections.unmodifiableList(
@@ -247,6 +279,15 @@ public abstract class DebuggerAlgorithm {
 		allInconsistentProps = new HashMap<>();
 		resultInterpretaionMap = new HashMap<>();
 
+		skipSequences = new HashSet<>();
+		this.reviewedExamples = new ArrayList<>();
+		this.newReviewedExamples = newReviewedExamples;
+		this.reviewedExamplesWithMutations = new ArrayList<>();
+		if (reviewedExamples.exists())
+			this.reviewedExamples.addAll(Utils.readFileLines(reviewedExamples.getAbsolutePath()));
+		if (skipTerms.exists())
+			this.skipSequences.addAll(Utils.readFileLines(skipTerms.getAbsolutePath()));
+
 	}
 
 	protected DebuggerAlgorithm() {
@@ -259,6 +300,7 @@ public abstract class DebuggerAlgorithm {
 		model = null;
 		modelExpr = null;
 		property = null;
+		propertyExpr = null;
 		oracle = null;
 		exampleFinder = null;
 		fieldsQueue = null;
@@ -274,6 +316,10 @@ public abstract class DebuggerAlgorithm {
 		weakestConsistentProps = null;
 		allInconsistentProps = null;
 		resultInterpretaionMap = null;
+		skipSequences = null;
+		reviewedExamples = null;
+		this.newReviewedExamples = null;
+		this.reviewedExamplesWithMutations = null;
 	}
 
 	/**
@@ -295,7 +341,6 @@ public abstract class DebuggerAlgorithm {
 		StringBuilder MutationsPath = new StringBuilder();
 		String reportHeader = new String();
 
-		System.out.println("fields->" + fields);
 		// The private fields are not considered. The Order/next fields are
 		// private.
 		fields.stream().filter(f -> f.isPrivate == null).forEach(field -> {
@@ -304,7 +349,6 @@ public abstract class DebuggerAlgorithm {
 					.collect(Collectors.toCollection(PriorityQueue::new)));
 
 		});
-		System.out.println("fieldsQueue->" + fieldsQueue);
 		onStartLoop();
 		beforePickField();
 		while (!fieldsQueue.isEmpty()) {
@@ -318,14 +362,9 @@ public abstract class DebuggerAlgorithm {
 			beforePickModelPart();
 			final PriorityQueue<DecisionQueueItem<Expr>> modelQueue = fieldToModelQueues.get(toBeingAnalyzedField);
 			while (!fieldToModelQueues.get(toBeingAnalyzedField).isEmpty()) {
-				System.out.println("before--->" + modelQueue);
-				System.out.println("before 2--->" + fieldToModelQueues.get(toBeingAnalyzedField));
 				DecisionQueueItem<Expr> modelPart = fieldToModelQueues.get(toBeingAnalyzedField).poll();
-				System.out.println("after--->" + modelQueue);
-				System.out.println("after 2--->" + fieldToModelQueues.get(toBeingAnalyzedField));
 
 				toBeingAnalyzedModelPart = modelPart.getItem().get();
-				System.out.println("picked model part before after is:" + toBeingAnalyzedModelPart);
 				if (afterPickModelPart())
 					continue;
 
@@ -334,21 +373,12 @@ public abstract class DebuggerAlgorithm {
 						.collect(Collectors.toList());
 				String restModel = restModelParts.stream().map(m -> m.toString()).collect(Collectors.joining(" and "));
 
-				System.out.println("Model part: " + toBeingAnalyzedModelPartString);
-				System.out.println("Rest: " + restModel);
-
 				fillApproximations(toBeingAnalyzedModelPart, toBeingAnalyzedField);
 				List<Pair<String, String>> approximation = approximations.get(toBeingAnalyzedField)
 						.get(toBeingAnalyzedModelPart);
 				logger.info(Utils.threadName() + "The approximations for Expr:<" + toBeingAnalyzedModelPart + "> is: "
 						+ approximation);
 
-				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-				System.out.println(toBeingAnalyzedModelPart);
-				System.out.println(toBeingAnalyzedField);
-				System.out.println(scope);
-				System.out.println(approximation);
-				System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 				if (!approximationQueues.containsKey(toBeingAnalyzedField)) {
 					approximationQueues.put(toBeingAnalyzedField, new HashMap<>());
 				}
@@ -383,17 +413,6 @@ public abstract class DebuggerAlgorithm {
 												toBeingAnalyzedField.label)
 										.stream().map(s -> DecisionQueueItem.<String> createwithRandomPriority(s.b))
 										.collect(Collectors.toCollection(PriorityQueue::new)));
-						System.out.println("In stronger if: fld= " + toBeingAnalyzedField + ", part="
-								+ toBeingAnalyzedModelPart + " = " + approximator.strongerProperties(
-										toBeingWeakenOrStrengthenedApproximation.a, toBeingAnalyzedField.label));
-						System.out.println(approximator
-								.strongerProperties(toBeingWeakenOrStrengthenedApproximation.a,
-										toBeingAnalyzedField.label)
-								.stream().map(s -> DecisionQueueItem.<String> createwithRandomPriority(s.b))
-								.collect(Collectors.toCollection(PriorityQueue::new)));
-						System.out.println("strongerApproxQueues=" + strongerApproxQueues);
-						System.out.println("After=" + strongerApproxQueues.get(toBeingAnalyzedField)
-								.get(toBeingAnalyzedModelPart).get(toBeingWeakenOrStrengthenedApproximation));
 					}
 					if (!weakerApproxQueues.containsKey(toBeingAnalyzedField))
 						weakerApproxQueues.put(toBeingAnalyzedField, new HashMap<>());
@@ -440,18 +459,16 @@ public abstract class DebuggerAlgorithm {
 
 						// The model part is not approximated.
 						if (!notApproximationedButInconsistent.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)
-								.isEmpty()) {
+								.isEmpty() && inconsistentExpressions) {
 
 							for (Pair<String, String> incon : notApproximationedButInconsistent
 									.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart)) {
 								// The mutatedFile is global to be accessible
-								// within
-								// other functions.
+								// within other functions.
 								strengthened = false;
 								mutatedFile = makeWeakeningModelPartMutationWithInconsistent(
 										toBeingAnalyzedModelPartString, restModel, incon.b).get();
 
-								System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
 								MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 								if (afterMutating())
 									continue;
@@ -463,10 +480,10 @@ public abstract class DebuggerAlgorithm {
 								afterCallingExampleFinder();
 								beforeInquiryOracle();
 
-								Pair<String, String> headerRow = Utils.extractHeader(
-										interpretMutationResultByMap(approximationProperty + "_" + incon.a));
+								Pair<String, String> headerRow = Utils
+										.extractHeader(interpretMutationResultByMap(approximationProperty, incon.a));
 								reportHeader = headerRow.a;
-								report.append(headerRow.b).append("\n");
+								report = filterRow(report, headerRow.b);
 								// store the answer
 								// if (afterInquiryOracle())
 								// break;
@@ -482,10 +499,9 @@ public abstract class DebuggerAlgorithm {
 							// other functions.
 							mutatedFile = (strengthened
 									? makeStrengtheningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
-											approximationProperty, toBeingWeakenOrStrengthenedApproximation.b)
+											toBeingWeakenOrStrengthenedApproximation.b, approximationProperty)
 									: makeWeakeningModelPartMutation(toBeingAnalyzedModelPartString, restModel,
-											approximationProperty, toBeingWeakenOrStrengthenedApproximation.b)).get();
-							System.out.println("mutation:--->" + mutatedFile.getAbsolutePath());
+											toBeingWeakenOrStrengthenedApproximation.b, approximationProperty)).get();
 							MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 							if (afterMutating())
 								continue;
@@ -498,10 +514,10 @@ public abstract class DebuggerAlgorithm {
 							beforeInquiryOracle();
 							// ask the user
 							// Interpreting the result
-							Pair<String, String> headerRow = Utils
-									.extractHeader(interpretMutationResultByMap(approximationProperty));
+							Pair<String, String> headerRow = Utils.extractHeader(interpretMutationResultByMap(
+									toBeingWeakenOrStrengthenedApproximation.b, approximationProperty));
 							reportHeader = headerRow.a;
-							report.append(headerRow.b).append("\n");
+							report = filterRow(report, headerRow.b);
 							// store the answer
 							if (afterInquiryOracle())
 								break;
@@ -522,45 +538,31 @@ public abstract class DebuggerAlgorithm {
 			// check the whole statement
 			// The model is sat
 			if (!inconsistentExpressions) {
-				interpretModelMutation();
 				strengthened = true;
 				toBeingAnalyzedModelPart = modelExpr;
-				String modelString = convertModelPartToString();
-				List<Pair<String, String>> weakestConsistentPropsToModelExpr = weakestConsistentProps
-						.get(toBeingAnalyzedField).get(toBeingAnalyzedModelPart);
-				for (Pair<String, String> weakestConsistentPropToModelExpr : weakestConsistentPropsToModelExpr) {
-					// mutate to out of bound
-					mutatedFile = makeStrengtheningModelMutation(modelString,
-							weakestConsistentPropToModelExpr.b, weakestConsistentPropToModelExpr.b).get();
+
+				for (Pair<Pair<String, String>, File> file : DFSOnProperties(toBeingAnalyzedModelPart,
+						getWeakestPropertiesConsistetWithConstraint(toBeingAnalyzedField, propertiesSorter()),
+						getStrongerPropertiesConsistentWithConstraintOfAProperty(toBeingAnalyzedField.label,
+								propertiesSorter()))) {
+					mutatedFile = file.b;
 					MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
 					inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
 							mutatedFile.getName().replace(".als", ""),
 							"NOT_" + mutatedFile.getName().replace(".als", ""));
+					afterCallingExampleFinder();
+					beforeInquiryOracle();
 					// ask the user
 					// Interpreting the result
 					Pair<String, String> headerRow = Utils
-							.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b));
+							.extractHeader(interpretMutationResultByMap(file.a.a, file.a.b));
 					reportHeader = headerRow.a;
-					report.append(headerRow.b).append("\n");
-
-					for (Pair<String, String> strongerWeakestConsistentPropToModelExpr : approximator
-							.strongerProperties(weakestConsistentPropToModelExpr.a, toBeingAnalyzedField.label)) {
-						// mutate to out of bound
-						mutatedFile = makeStrengtheningModelMutation(modelString,
-								weakestConsistentPropToModelExpr.b, strongerWeakestConsistentPropToModelExpr.b).get();
-						MutationsPath.append(mutatedFile.getAbsolutePath()).append("\n");
-						inAndOutExamples = exampleFinder.findOnBorderExamples(mutatedFile,
-								mutatedFile.getName().replace(".als", ""),
-								"NOT_" + mutatedFile.getName().replace(".als", ""));
-						// ask the user
-						// Interpreting the result
-						headerRow = Utils
-								.extractHeader(interpretMutationResultByMap(weakestConsistentPropToModelExpr.b));
-						reportHeader = headerRow.a;
-						report.append(headerRow.b).append("\n");
-					}
+					report = filterRow(report, headerRow.b);
+					if (afterInquiryOracle())
+						break;
 
 				}
+
 			}
 
 			if (!fieldsQueue.isEmpty())
@@ -577,11 +579,134 @@ public abstract class DebuggerAlgorithm {
 		try {
 			Util.writeAll("tmp/" + sourceFile.getName() + "." + this.getClass().getSimpleName() + ".csv",
 					reportHeader + "\n" + report);
+			Util.writeAll(
+					"tmp/" + sourceFile.getName() + "." + this.getClass().getSimpleName() + "."
+							+ Configuration.getProp("alloy_processes_number") + ".time.csv",
+					approximator.getApproximationTimeLog());
 		} catch (Err e) {
 			e.printStackTrace();
 		}
 		System.out.println("--------------------------");
 		System.out.println("resultInterpretaionMap=" + resultInterpretaionMap);
+		try {
+			Util.writeAll(newReviewedExamples.getAbsolutePath(),
+					reviewedExamples.stream().collect(Collectors.joining("\n")));
+			Util.writeAll(newReviewedExamples.getAbsolutePath() + ".detailed",
+					reviewedExamplesWithMutations.stream().collect(Collectors.joining("\n")));
+
+		} catch (Err e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Given a row, the function filters them based on some criteria and add the
+	 * passed rows to report.
+	 * 
+	 * @param report
+	 * @param row
+	 */
+	protected StringBuilder filterRow(StringBuilder report, String row) {
+		// if (!reviewedExamples.contains(inAndOutExamples.b.orElse(""))) {
+		// if (!row.contains("error"))
+		report.append(row).append("\n");
+		// inAndOutExamples.b.ifPresent(a -> reviewedExamples.add(a));
+		// }
+		return report;
+	}
+
+	protected abstract Comparator<String> propertiesSorter();
+
+	protected Function<Expr, List<String>> getWeakestPropertiesConsistetWithConstraint(Field toBeingAnalyzedField,
+			Comparator<String> porpertySorter) {
+		return (Expr C) -> {
+			// TODO is already stored in weakestConsistentProps but because of
+			// the type incompatibility, it cannot be used here.
+			List<String> res = weakestConsistentProps.get(toBeingAnalyzedField).get(C).stream()
+					.sorted((p1, p2) -> porpertySorter.compare(p1.a, p2.a)).map(p -> p.b)
+					.filter((String s) -> skipSequences.isEmpty()
+							|| skipSequences.stream().anyMatch(a -> !s.contains(a)))
+					.collect(Collectors.toList());
+			return res;
+		};
+	}
+
+	protected Function<String, List<String>> getStrongerPropertiesConsistentWithConstraintOfAProperty(String fieldLabel,
+			Comparator<String> porpertySorter) {
+		return (String P) -> {
+			List<String> res = approximator.strongerNextProperties(P.substring(0, P.indexOf("[")), fieldLabel).stream()
+					.sorted(((p1, p2) -> porpertySorter.compare(p1.a, p2.a))).map(p -> p.b)
+					.filter((String s) -> skipSequences.isEmpty()
+							|| skipSequences.stream().anyMatch(a -> !s.contains(a)))
+					.collect(Collectors.toList());
+
+			if (P.contains("_Glbl_") && !res.contains(P.replace("_Glbl_", "_Lcl_"))) {
+				ArrayList<String> tmpResult = new ArrayList<>();
+				tmpResult.add(P.replace("_Glbl_", "_Lcl_"));
+				tmpResult.addAll(res);
+				res = tmpResult;
+			}
+			return res;
+		};
+	}
+
+	protected List<Pair<Pair<String, String>, File>> DFSOnProperties(Expr constraint,
+			Function<Expr, List<String>> getWeakestPropertiesConsistetWithConstraint,
+			Function<String, List<String>> getStrongerPropertiesConsistentWithConstraintOfAProperty) {
+		final Stack<String> stack = new Stack<>();
+		// storing all the properties that their children are mutated.
+		final Set<Pair<String, String>> donePairs = new HashSet<>();
+		final Set<String> doneProps = new HashSet<>();
+		final List<Pair<Pair<String, String>, File>> result = new LinkedList<>();
+		stack.push(convertModelPartToString(constraint));
+		while (!stack.isEmpty()) {
+			String p = stack.peek();
+			String o = "";
+			if (stack.size() == 1) {
+				assert p.equals(convertModelPartToString(constraint));
+				for (String weakestConsistentProperty : getWeakestPropertiesConsistetWithConstraint.apply(constraint)) {
+					if (!donePairs.contains(new Pair<>(p, weakestConsistentProperty))) {
+						o = weakestConsistentProperty;
+						break;
+					}
+				}
+			} else {
+				for (String weakestConsistentProperty : getStrongerPropertiesConsistentWithConstraintOfAProperty
+						.apply(p)) {
+					if (!donePairs.contains(new Pair<>(p, weakestConsistentProperty))) {
+						o = weakestConsistentProperty;
+						break;
+					}
+				}
+			}
+
+			System.out.println("<p=" + p + ", o=" + o + ">");
+
+			if (o.isEmpty()) {
+				// all outgoing edges are done
+				doneProps.add(p);
+				stack.pop();
+			} else {
+				if (!doneProps.contains(o))
+					stack.push(o);
+				donePairs.add(new Pair<>(p, o));
+
+				// TODO
+				if (o.startsWith("Ord")) {
+					o = o.replace("_SzShrnk_", "_SzShrnkNOP_");
+					o = o.replace("_SzNChng_", "_SzNChngNOP_");
+					o = o.replace("_SzShrnkStrc_", "_SzShrnkStrcNOP_");
+					o = o.replace("_SzGrwt_", "_SzGrwtNOP_");
+					o = o.replace("_SzGrwtStrc_", "_SzGrwtStrcNOP_");
+				}
+
+				Optional<File> mutatedFile = makeStrengtheningModelMutation(convertModelPartToString(constraint), p, o);
+				final Pair<String, String> strengthendPair = new Pair<>(p, o);
+				mutatedFile.ifPresent(m -> result.add(new Pair<>(strengthendPair, m)));
+			}
+		}
+
+		return Collections.unmodifiableList(result);
 	}
 
 	protected Optional<File> makeStrengtheningModelPartMutation(String modelPart, String restModel, String property,
@@ -615,16 +740,19 @@ public abstract class DebuggerAlgorithm {
 		resultInterpretaionMap.clear();
 		// in/out, exampleExists?, intended?, strengthened?
 
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.TRUE, true, "correct");
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
-		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.TRUE, false, "error-unsat");
-		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.TRUE, false, "error-unsat");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.TRUE, true, "correct");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
-		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.TRUE, false, "error-unsat");
-		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.TRUE, false, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.TRUE, REVIEW_RESPONSE.NA, "correct");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.TRUE, REVIEW_RESPONSE.NA, "underconstraint");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.TRUE, REVIEW_RESPONSE.NA, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.TRUE, REVIEW_RESPONSE.NA, "error-unsat");
 
-		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.FALSE, false, "error-noweaken");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.TRUE, REVIEW_RESPONSE.ACCEPT, "correct");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.TRUE, REVIEW_RESPONSE.REJECT,
+				"underconstraint");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.TRUE, REVIEW_RESPONSE.NA, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.TRUE, REVIEW_RESPONSE.NA, "error-unsat");
+
+		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.FALSE, REVIEW_RESPONSE.NA,
+				"error-noweaken");
 	}
 
 	protected Optional<File> makeWeakeningModelPartMutation(String modelPart, String restModel, String property,
@@ -640,16 +768,14 @@ public abstract class DebuggerAlgorithm {
 		// weaken/strengthened by itself
 		if (modelPart.equals(property)) {
 			// The approximation is supposed to be the negation of the modelPart
-			approximatedProperty = "( " + modelPart + ")";
-			notApproximatedProperty = "( " + approximation + " )" + restModels;
+			approximatedProperty = "( " + modelPart + ")" + restModels;
+			notApproximatedProperty = "( not " + approximation + " )" + restModels;
 
-		} else
-		// the property cannot be strengthened to any stronger pattern
-		if (property.equals(approximation)) {
-			approximatedProperty = "(" + modelPart + " and not " + property + ")" + restModels;
-			notApproximatedProperty = "(not " + property + ")" + restModels;
+		} else if (property.equals(approximation)) {
+			approximatedProperty = "(" + modelPart + ")";
+			notApproximatedProperty = "(not " + modelPart + " and " + property + ")" + restModels;
 		} else {
-			approximatedProperty = "(" + modelPart + " and " + approximation + ")" + restModels;
+			approximatedProperty = "(" + modelPart + ")";
 			notApproximatedProperty = "(not " + modelPart + " and " + approximation + ")" + restModels;
 		}
 		return makeMutation(approximatedProperty, notApproximatedProperty);
@@ -659,16 +785,20 @@ public abstract class DebuggerAlgorithm {
 		resultInterpretaionMap.clear();
 		// in/out, exampleExists?, intended?, strengthened?
 
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, true, "correct");
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, false, "overconstraint-random");
-		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.FALSE, false, "error-unsat");
-		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, true, "overconstraint");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, false, "correct");
-		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.FALSE, false, "error-unsat");
-		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "correct");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA,
+				"overconstraint-random");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
 
-		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.TRUE, false, "error-nostrengthen");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.ACCEPT,
+				"overconstraint");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.REJECT, "correct");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
+
+		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.TRUE, REVIEW_RESPONSE.NA,
+				"error-nostrengthen");
 	}
 
 	protected Optional<File> makeWeakeningModelPartMutationWithInconsistent(String modelPart, String restModel,
@@ -698,51 +828,53 @@ public abstract class DebuggerAlgorithm {
 		resultInterpretaionMap.clear();
 		// in/out, exampleExists?, intended?, strengthened?
 
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, true, "overconstraint-opposite");
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, false, "correct");
-		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.FALSE, false, "correct-unsat");
-		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, true, "overconstraint");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, false, "correct");
-		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.FALSE, false, "error-unsat");
-		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.FALSE, false, "error-unsat");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA,
+				"overconstraint-opposite");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "correct");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "correct-unsat");
+		registerResultInterpretation(REC.TRUE, REC.FALSE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
 
-		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.TRUE, false, "error-nostrengthen");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.ACCEPT,
+				"overconstraint");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.REJECT, "correct");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
+		registerResultInterpretation(REC.FALSE, REC.FALSE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "error-unsat");
+
+		registerResultInterpretation(REC.DONTCARE, REC.DONTCARE, REC.DONTCARE, REC.TRUE, REVIEW_RESPONSE.NA,
+				"error-nostrengthen");
 	}
 
 	protected Optional<File> makeStrengtheningModelMutation(String model, String property, String approximation) {
 
-		interpretStrengtheningModelPartMutation();
-
 		String approximatedProperty = new String();
 		String notApproximatedProperty = new String();
-		if (property.equals(approximation)) {
-			approximatedProperty = "( not " + property + " ) and " + model;
-			notApproximatedProperty = "( " + property + ") and" + model;
+		if (model.equals(property)) {
+			approximatedProperty = "( " + approximation + " ) and " + model;
+			notApproximatedProperty = "( not " + approximation + ") and" + model;
 		} else {
 			approximatedProperty = model + " and " + property + " and " + approximation;
 			notApproximatedProperty = model + " and " + property + " and not " + approximation;
-			;
 		}
-		interpretModelMutation();
+		interpretStrengtheningModelMutation();
 		return makeMutation(approximatedProperty, notApproximatedProperty);
 	}
 
-	protected void interpretModelMutation() {
+	protected void interpretStrengtheningModelMutation() {
 		resultInterpretaionMap.clear();
 		// in/out, exampleExists?, intended?, strengthened?
 
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.TRUE, true, "correct");
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, false, "error");
-		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, false, "error");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.TRUE, REVIEW_RESPONSE.NA, "correct");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.TRUE, REVIEW_RESPONSE.NA, "underconstraint");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "error");
+		registerResultInterpretation(REC.TRUE, REC.TRUE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "error");
 
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.TRUE, false, "underconstraint");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, false, "error");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.TRUE, false, "correct");
-		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, false, "error");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.TRUE, REVIEW_RESPONSE.REJECT,
+				"underconstraint");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.FALSE, REC.FALSE, REVIEW_RESPONSE.NA, "error");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.TRUE, REVIEW_RESPONSE.ACCEPT, "correct");
+		registerResultInterpretation(REC.FALSE, REC.TRUE, REC.TRUE, REC.FALSE, REVIEW_RESPONSE.NA, "error");
 
-		registerResultInterpretation(REC.DONTCARE, REC.FALSE, REC.DONTCARE, REC.DONTCARE, false, "error");
+		registerResultInterpretation(REC.DONTCARE, REC.FALSE, REC.DONTCARE, REC.DONTCARE, REVIEW_RESPONSE.NA, "error");
 	}
 
 	/**
@@ -766,7 +898,7 @@ public abstract class DebuggerAlgorithm {
 	}
 
 	protected void registerResultInterpretation(REC in, REC exampleExists, REC intended, REC strengthened,
-			Boolean accepted, String message) {
+			REVIEW_RESPONSE accepted, String message) {
 
 		if (in.equals(REC.DONTCARE)) {
 			registerResultInterpretation(REC.TRUE, exampleExists, intended, strengthened, accepted, message);
@@ -794,56 +926,70 @@ public abstract class DebuggerAlgorithm {
 	}
 
 	protected void registerResultInterpretation(boolean in, boolean exampleExists, boolean intended,
-			boolean strengthened, Boolean accepted, String message) {
+			boolean strengthened, REVIEW_RESPONSE accepted, String message) {
 		int encoded = encodeInterpretation(in, exampleExists, intended, strengthened);
 		resultInterpretaionMap.put(encoded, new Pair<>(accepted, message + "-" + Integer.toString(encoded, 2)));
 	}
 
-	protected Pair<Boolean, String> interpretResult(boolean in, boolean exampleExists, boolean intended,
+	protected Pair<REVIEW_RESPONSE, String> interpretResult(boolean in, boolean exampleExists, boolean intended,
 			boolean strengthened) {
-		Pair<Boolean, String> result = new Pair<>(false, "UNINTERPRETED4-in=" + in + "-exists=" + exampleExists
-				+ "-intended=" + intended + "-strength=" + strengthened);
+		Pair<REVIEW_RESPONSE, String> result = new Pair<>(REVIEW_RESPONSE.NA, "UNINTERPRETED4-in=" + in + "-exists="
+				+ exampleExists + "-intended=" + intended + "-strength=" + strengthened);
 		if (resultInterpretaionMap.containsKey(encodeInterpretation(in, exampleExists, intended, strengthened))) {
 			result = resultInterpretaionMap.get(encodeInterpretation(in, exampleExists, intended, strengthened));
 		}
 		return result;
 	}
 
-	protected String interpretMutationResultByMap(String approximationProperty) {
+	boolean continueRecordingReviews = true;
+
+	protected String interpretMutationResultByMap(String property, String approximation) {
 		StringBuilder rowReport = new StringBuilder();
 		rowReport.append("toBeingAnalyzedModelPart=").append("\"" + convertModelPartToString() + "\"").append(",");
-		rowReport.append("toBeingWeakenOrStrengthenedApproximation=")
-				.append("\"" + toBeingWeakenOrStrengthenedApproximation + "\"").append(",");
-		rowReport.append("approximationProperty=").append("\"" + approximationProperty + "\"").append(",");
+		rowReport.append("property=").append("\"" + property + "\"").append(",");
+		rowReport.append("approximationProperty=").append("\"" + approximation + "\"").append(",");
+
+		inExampleIsInteded = inAndOutExamples.a.isPresent() ? oracle.isIntended(inAndOutExamples.a.get()) : false;
+		Pair<REVIEW_RESPONSE, String> result = interpretResult(true, inAndOutExamples.a.isPresent(), inExampleIsInteded,
+				strengthened);
+		if (inAndOutExamples.a.isPresent() && result.a.equals(REVIEW_RESPONSE.ACCEPT))
+			acceptedExamples.add(inAndOutExamples.a.get());
+		if (inAndOutExamples.a.isPresent() && result.a.equals(REVIEW_RESPONSE.REJECT))
+			rejectedExamples.add(inAndOutExamples.a.get());
+		rowReport.append("Error=").append(result.b).append(",");
+
+		outExampleIsInteded = inAndOutExamples.b.isPresent() ? oracle.isIntended(inAndOutExamples.b.get()) : false;
+		result = interpretResult(false, inAndOutExamples.b.isPresent(), outExampleIsInteded, strengthened);
+		if (inAndOutExamples.b.isPresent() && result.a.equals(REVIEW_RESPONSE.ACCEPT))
+			acceptedExamples.add(inAndOutExamples.b.get());
+		if (inAndOutExamples.b.isPresent() && result.a.equals(REVIEW_RESPONSE.REJECT))
+			rejectedExamples.add(inAndOutExamples.b.get());
+		rowReport.append("Error=").append(result.b).append(",");
 
 		rowReport.append("inExamples=").append("\"" + inAndOutExamples.a.orElse("").replaceAll("=", " eq ") + "\"")
 				.append(",");
 		rowReport.append("inExampleIsInteded=").append(inExampleIsInteded).append(",");
-
-		System.out.println("out example=" + inAndOutExamples.b);
 
 		rowReport.append("outExamples=").append("\"" + inAndOutExamples.b.orElse("").replaceAll("=", " eq ") + "\"")
 				.append(",");
 		rowReport.append("outExampleIsInteded=").append(outExampleIsInteded).append(",");
 
 		rowReport.append("strengthened=").append(strengthened).append(",");
+		rowReport.append("mutated=").append(mutatedFile).append(",");
 
-		inExampleIsInteded = inAndOutExamples.a.isPresent() ? oracle.isIntended(inAndOutExamples.a.get()) : false;
-		Pair<Boolean, String> result = interpretResult(true, inAndOutExamples.a.isPresent(), inExampleIsInteded,
-				strengthened);
-		if (inAndOutExamples.a.isPresent() && result.a)
-			acceptedExamples.add(inAndOutExamples.a.get());
-		if (inAndOutExamples.a.isPresent() && !result.a)
-			rejectedExamples.add(inAndOutExamples.a.get());
-		rowReport.append("Error=").append(result.b).append(",");
+		String example = inAndOutExamples.b.orElse("").replace("\n", " and ").replace(" eq ", " = ");
 
-		outExampleIsInteded = inAndOutExamples.b.isPresent() ? oracle.isIntended(inAndOutExamples.b.get()) : false;
-		result = interpretResult(false, inAndOutExamples.b.isPresent(), outExampleIsInteded, strengthened);
-		if (inAndOutExamples.b.isPresent() && result.a)
-			acceptedExamples.add(inAndOutExamples.b.get());
-		if (inAndOutExamples.b.isPresent() && !result.a)
-			rejectedExamples.add(inAndOutExamples.b.get());
-		rowReport.append("Error=").append(result.b).append(",");
+		// record until an error is detected
+		// only outexample matters.
+		if (!result.a.equals(REVIEW_RESPONSE.NA) && continueRecordingReviews && !reviewedExamples.contains(example)) {
+			reviewedExamples.add(example);
+			reviewedExamplesWithMutations.add(result.b + "," + property + "," + approximation + "," + example);
+			if (!(strengthened ^ result.a.equals(REVIEW_RESPONSE.REJECT))) {
+				// a bug is found
+				assert (!result.b.contains("correct")) : "An error should be detected! the result is:" + result;
+				continueRecordingReviews = false;
+			}
+		}
 
 		return rowReport.toString().replaceAll("\n", " and ");
 	}
@@ -975,7 +1121,6 @@ public abstract class DebuggerAlgorithm {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("notApproximationedButInconsistent-->" + notApproximationedButInconsistent);
 
 	}
 
@@ -1071,7 +1216,8 @@ public abstract class DebuggerAlgorithm {
 	 * @return
 	 */
 	public abstract DebuggerAlgorithm createIt(final File sourceFile, final File destinationDir,
-			final Approximator approximator, final Oracle oracle, final ExampleFinder exampleFinder);
+			final Approximator approximator, final Oracle oracle, final ExampleFinder exampleFinder,
+			final File reviewedExamples, final File newReviewedExamples, final File skipTerms);
 
 	protected abstract boolean afterInquiryOracle();
 

@@ -127,5 +127,14 @@ public abstract class SzPrpty extends Property {
 		}
 		return true;
 	}
+	
+	@Override
+	int getClassPriority() {
+		return 5;
+	}
+	@Override
+	int getOtherComponentPriorities() {
+		return empty.getPriority() + growthLocality.getPriority();
+	}
 
 }

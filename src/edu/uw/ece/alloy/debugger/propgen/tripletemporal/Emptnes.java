@@ -1,6 +1,6 @@
 package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
-public class Emptnes extends Property {
+public abstract class Emptnes extends Property {
 
 	public Emptnes(String rName, String sName, String sNext, String sFirst,
 			String middleName, String endName, String rConcreteName,
@@ -35,4 +35,13 @@ public class Emptnes extends Property {
 		return true;
 	}
 
+	@Override
+	int getClassPriority() {
+		return 9;
+	}
+
+	@Override
+	int getOtherComponentPriorities() {
+		return 0;
+	}
 }

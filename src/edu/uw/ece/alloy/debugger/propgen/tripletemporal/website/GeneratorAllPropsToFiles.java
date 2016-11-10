@@ -74,7 +74,7 @@ public class GeneratorAllPropsToFiles {
 
 	public void genPropsBodyAasHTML() {
 
-		Map<String, Pair<String, String>> props = builder.getAllProperties();
+		Map<String, Pair<String, String>> props = builder.getAllPropertiesNamesAndContent();
 
 		for (String pred : props.keySet()) {
 			for (final PropertyToAlloyCode alloyCodeGenerator : propertyBuilder.createObjects(props.get(pred).b,

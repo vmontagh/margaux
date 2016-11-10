@@ -16,5 +16,10 @@ public class CmpstSzOR extends CmpstSz {
 	protected String compositeOperator() {
 		return " or ";
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 0;
+	}
 
 }

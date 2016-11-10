@@ -2,18 +2,14 @@ package edu.uw.ece.alloy.debugger.propgen.tripletemporal;
 
 public class SdBth extends Sd {
 
-	public SdBth(String rName, String sName, String sNext, String sFirst,
-			String middleName, String endName, String rConcreteName,
-			String sConcreteName, String sConcreteNext, String sConcreteFirst,
-			String mConcreteName, String eConcreteName, String endNext,
-			String endFirst, String middleNext, String middleFirst,
-			String endConcreteNext, String endConcreteFirst,
-			String middleConcreteNext, String middleConcreteFirst) {
-		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName,
-				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
-				eConcreteName, endNext, endFirst, middleNext, middleFirst,
-				endConcreteNext, endConcreteFirst, middleConcreteNext,
-				middleConcreteFirst);
+	public SdBth(String rName, String sName, String sNext, String sFirst, String middleName, String endName,
+			String rConcreteName, String sConcreteName, String sConcreteNext, String sConcreteFirst,
+			String mConcreteName, String eConcreteName, String endNext, String endFirst, String middleNext,
+			String middleFirst, String endConcreteNext, String endConcreteFirst, String middleConcreteNext,
+			String middleConcreteFirst) {
+		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName, sConcreteName, sConcreteNext,
+				sConcreteFirst, mConcreteName, eConcreteName, endNext, endFirst, middleNext, middleFirst,
+				endConcreteNext, endConcreteFirst, middleConcreteNext, middleConcreteFirst);
 	}
 
 	@Override
@@ -47,8 +43,7 @@ public class SdBth extends Sd {
 	}
 
 	@Override
-	public String genLetforLocality(String letVar, String quantifiedVar,
-			final String quanitifiedOrderedVar) {
+	public String genLetforLocality(String letVar, String quantifiedVar, final String quanitifiedOrderedVar) {
 		final String letExpression = "let %1$s = (%2$s.%3$s) |";
 		return String.format(letExpression, letVar, quanitifiedOrderedVar, RName);
 	}
@@ -109,6 +104,11 @@ public class SdBth extends Sd {
 
 		return true;
 
+	}
+
+	@Override
+	int getPriorityInClass() {
+		return 1;
 	}
 
 }

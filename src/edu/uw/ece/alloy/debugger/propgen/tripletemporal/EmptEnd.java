@@ -17,4 +17,9 @@ public class EmptEnd extends Emptnes {
 				+ " \n";
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 3;
+	}
+
 }

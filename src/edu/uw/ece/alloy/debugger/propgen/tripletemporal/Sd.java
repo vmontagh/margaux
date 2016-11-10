@@ -8,16 +8,13 @@ public abstract class Sd extends Property implements SdOrd {
 	public final String EndConcreteNext, EndConcreteFirst;
 	public final String MiddleConcreteNext, MiddleConcreteFirst;
 
-	public Sd(String rName, String sName, String sNext, String sFirst,
-			String middleName, String endName, String rConcreteName,
-			String sConcreteName, String sConcreteNext, String sConcreteFirst,
-			String mConcreteName, String eConcreteName, String endNext,
-			String endFirst, String middleNext, String middleFirst,
-			String endConcreteNext, String endConcreteFirst,
-			String middleConcreteNext, String middleConcreteFirst) {
-		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName,
-				sConcreteName, sConcreteNext, sConcreteFirst, mConcreteName,
-				eConcreteName);
+	public Sd(String rName, String sName, String sNext, String sFirst, String middleName, String endName,
+			String rConcreteName, String sConcreteName, String sConcreteNext, String sConcreteFirst,
+			String mConcreteName, String eConcreteName, String endNext, String endFirst, String middleNext,
+			String middleFirst, String endConcreteNext, String endConcreteFirst, String middleConcreteNext,
+			String middleConcreteFirst) {
+		super(rName, sName, sNext, sFirst, middleName, endName, rConcreteName, sConcreteName, sConcreteNext,
+				sConcreteFirst, mConcreteName, eConcreteName);
 		EndNext = endNext;
 		EndFirst = endFirst;
 		MiddleNext = middleNext;
@@ -67,21 +64,19 @@ public abstract class Sd extends Property implements SdOrd {
 
 	final protected String letExpression = "let %1$s = %2$s(%3$s.%4$s) |";
 
-	public abstract String genLetforLocality(final String letVar,
-			final String quantifiedVar, final String quanitifiedOrderedVar);
+	public abstract String genLetforLocality(final String letVar, final String quantifiedVar,
+			final String quanitifiedOrderedVar);
 
 	@Override
 	public String getOderedParameters() {
 		StringBuilder result = new StringBuilder();
 
 		try {
-			result.append(getFirst()).append(": univ, ").append(getNext())
-					.append(": univ->univ");
+			result.append(getFirst()).append(": univ, ").append(getNext()).append(": univ->univ");
 		} catch (RuntimeException e) {
 		}
 		try {
-			result.append(getOtherFirst()).append(": univ, ").append(getOtherNext())
-					.append(": univ->univ");
+			result.append(getOtherFirst()).append(": univ, ").append(getOtherNext()).append(": univ->univ");
 		} catch (RuntimeException e) {
 		}
 
@@ -97,8 +92,7 @@ public abstract class Sd extends Property implements SdOrd {
 		} catch (RuntimeException e) {
 		}
 		try {
-			result.append(getConcreteOtherFirst()).append(", ")
-					.append(getConcreteOtherNext());
+			result.append(getConcreteOtherFirst()).append(", ").append(getConcreteOtherNext());
 		} catch (RuntimeException e) {
 		}
 
@@ -152,22 +146,15 @@ public abstract class Sd extends Property implements SdOrd {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result
-				+ ((EndConcreteFirst == null) ? 0 : EndConcreteFirst.hashCode());
-		result = prime * result
-				+ ((EndConcreteNext == null) ? 0 : EndConcreteNext.hashCode());
+		result = prime * result + ((EndConcreteFirst == null) ? 0 : EndConcreteFirst.hashCode());
+		result = prime * result + ((EndConcreteNext == null) ? 0 : EndConcreteNext.hashCode());
 		result = prime * result + ((EndFirst == null) ? 0 : EndFirst.hashCode());
 		result = prime * result + ((EndNext == null) ? 0 : EndNext.hashCode());
-		result = prime * result
-				+ ((MiddleConcreteFirst == null) ? 0 : MiddleConcreteFirst.hashCode());
-		result = prime * result
-				+ ((MiddleConcreteNext == null) ? 0 : MiddleConcreteNext.hashCode());
-		result = prime * result
-				+ ((MiddleFirst == null) ? 0 : MiddleFirst.hashCode());
-		result = prime * result
-				+ ((MiddleNext == null) ? 0 : MiddleNext.hashCode());
-		result = prime * result
-				+ ((letExpression == null) ? 0 : letExpression.hashCode());
+		result = prime * result + ((MiddleConcreteFirst == null) ? 0 : MiddleConcreteFirst.hashCode());
+		result = prime * result + ((MiddleConcreteNext == null) ? 0 : MiddleConcreteNext.hashCode());
+		result = prime * result + ((MiddleFirst == null) ? 0 : MiddleFirst.hashCode());
+		result = prime * result + ((MiddleNext == null) ? 0 : MiddleNext.hashCode());
+		result = prime * result + ((letExpression == null) ? 0 : letExpression.hashCode());
 		return result;
 	}
 
@@ -252,6 +239,16 @@ public abstract class Sd extends Property implements SdOrd {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	int getClassPriority() {
+		return 3;
+	}
+
+	@Override
+	int getOtherComponentPriorities() {
+		return 0;
 	}
 
 }

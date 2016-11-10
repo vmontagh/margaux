@@ -21,5 +21,10 @@ public class OrdDcrs extends Ord {
 				+ sideOrdered.getNext() + "]," + sideOrdered.getNext() + "] ) )";
 
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 4;
+	}
 
 }

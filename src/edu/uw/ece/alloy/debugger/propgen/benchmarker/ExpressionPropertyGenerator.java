@@ -244,9 +244,14 @@ public class ExpressionPropertyGenerator implements Runnable, ThreadToBeMonitore
 	 */
 	int generatePatternCheckers(Map<Pair<String, String>, String> propertyCalls, Set<String> patternNames,
 			Publisher<AlloyProcessingParam> result) {
+		
+		
+		
 		int numberOfGeneratedParams = 0;
 		for (Pair<String, String> key : propertyCalls.keySet()) {
+			
 			final String pattern = key.a;
+			
 			final String property = propertyCalls.get(key);
 			if (!patternNames.contains(pattern)) {
 				if (Configuration.IsInDeubbungMode)

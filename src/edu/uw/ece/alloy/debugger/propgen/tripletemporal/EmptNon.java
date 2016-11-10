@@ -15,5 +15,9 @@ public class EmptNon extends Emptnes {
 	protected String genEmpty() {
 		return "";
 	}
-
+	
+	@Override
+	int getPriorityInClass() {
+		return 1;
+	}
 }

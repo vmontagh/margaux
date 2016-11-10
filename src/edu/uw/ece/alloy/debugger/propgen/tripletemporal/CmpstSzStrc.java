@@ -17,5 +17,9 @@ public abstract class CmpstSzStrc extends CmpstSz {
 				+ size1.growthLocality.getLetVariable1() + " = "
 				+ size1.growthLocality.getLetVariable2() + ") ";
 	}
+	@Override
+	int getPriorityInClass() {
+		return 0;
+	}
 
 }

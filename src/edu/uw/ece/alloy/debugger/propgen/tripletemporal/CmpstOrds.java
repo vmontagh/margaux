@@ -154,5 +154,15 @@ public abstract class CmpstOrds extends Property {
 		}
 		return true;
 	}
+	
+	@Override
+	int getClassPriority() {
+		return 7;
+	}
+	
+	@Override
+	int getOtherComponentPriorities() {
+		return order1.getPriority() +  order2.getPriority();
+	}
 
 }

@@ -43,5 +43,10 @@ public class SzGrwtStrc extends SzGrwt {
 
 		return true;
 	}
+	
+	@Override
+	int getPriorityInClass() {
+		return 3;
+	}
 
 }

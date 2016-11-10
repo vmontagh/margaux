@@ -2,6 +2,7 @@ package edu.uw.ece.alloy.debugger.mutate;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,9 +16,11 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Pair;
+import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4compiler.ast.Expr;
 import edu.mit.csail.sdg.alloy4compiler.ast.Sig.Field;
 import edu.uw.ece.alloy.Configuration;
@@ -41,6 +44,7 @@ import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.ResponseMessage;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessedResult;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternProcessingParam;
 import edu.uw.ece.alloy.debugger.propgen.benchmarker.cmnds.debugger.PatternRequestMessage;
+import edu.uw.ece.alloy.debugger.propgen.tripletemporal.TemporalPropertyGenerator;
 import edu.uw.ece.alloy.util.LazyFile;
 import edu.uw.ece.alloy.util.ServerSocketInterface;
 import edu.uw.ece.alloy.util.events.MessageEventListener;
@@ -77,6 +81,7 @@ public class Approximator {
 	final List<File> dependentFiles;
 	final List<ImplicationLattic> implications;
 	final List<InconsistencyGraph> inconsistencies;
+	final Map<String, Integer> patternToPriorityEncoder;
 
 	int approximationRequestCount = 1;
 
@@ -103,6 +108,13 @@ public class Approximator {
 		inconsistencies = new LinkedList<>();
 		inconsistencies.add(new TernaryInconsistencyGraph());
 		inconsistencies.add(new BinaryInconsistencyGraph());
+
+		patternToPriorityEncoder = new HashMap<>();
+		try {
+			patternToPriorityEncoder.putAll(TemporalPropertyGenerator.generateAllPropertiesPiority());
+		} catch (Err e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -266,19 +278,26 @@ public class Approximator {
 	private void makeNewRecordInCacheResult(StringBuilder sb, String name, String statement, String fieldLabel,
 			String scope, List<Pair<String, String>> approx) {
 		// Converting to Cache.
-		String key = statement + fieldLabel + scope;
-		sb.append(name + ".put(\"").append(key)
+		String key = statement + fieldLabel;
+		sb.append("allMokedApproximations.get(\"NAMENAME\").get(\"" + name + "\").put(\"").append(key)
 				.append("\", Arrays.asList(").append(approx.stream()
 						.map(p -> "new Pair<>(\"" + p.a + "\", \"" + p.b + "\")").collect(Collectors.joining(", ")))
 				.append("));\n");
 	}
 
 	public String getAllChachedResults() {
-		return sb_allConsistentApproximation.toString() + sb_allInconsistentApproximation.toString()
-				+ sb_weakestConsistentApproximation.toString() + sb_strongestImplicationApproximation.toString()
-				+ sb_strongestConsistentApproximation.toString() + sb_weakestInconsistentApproximation.toString()
-				+ sb_isInconsistent.toString();
+		return Stream
+				.<String> of((sb_allConsistentApproximation.toString() + sb_allInconsistentApproximation.toString()
+						+ sb_weakestConsistentApproximation.toString() + sb_strongestImplicationApproximation.toString()
+						+ sb_strongestConsistentApproximation.toString()
+						+ sb_weakestInconsistentApproximation.toString() + sb_isInconsistent.toString()).split("\n"))
+				.sorted().collect(Collectors.partitioningBy(s -> s.startsWith("Map"))).entrySet().stream()
+				.flatMap(entry -> entry.getValue().stream()).collect(Collectors.joining("\n"));
 
+	}
+	
+	public String getApproximationTimeLog() {
+		return timeOfApproximation.toString()+cacheKey.toString();
 	}
 
 	public StringBuilder sb_isInconsistent = new StringBuilder("Map<String, Boolean > isIncon = new HashMap<>();\n");
@@ -287,8 +306,9 @@ public class Approximator {
 		Boolean result = !findApproximation(statement, fieldLabel, scope, InconExpressionToAlloyCode.EMPTY_CONVERTOR,
 				Function.identity()).isEmpty();
 		// Converting to Cache.
-		String key = statement + fieldLabel + scope;
-		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ").append(result).append(");\n");
+		String key = statement + fieldLabel;
+		sb_isInconsistent.append("allMokedApproximations.get(\"NAMENAME\").get(\"isIncon\").put(\"").append(key)
+				.append("\", ").append(result).append(");\n");
 
 		return result;
 	}
@@ -297,8 +317,9 @@ public class Approximator {
 		Boolean result = !findApproximation(toBeAnalyzedCode, statement, fieldLabel, scope,
 				InconExpressionToAlloyCode.EMPTY_CONVERTOR, Function.identity()).isEmpty();
 		// Converting to Cache.
-		String key = statement + fieldLabel + scope;
-		sb_isInconsistent.append("isIncon.put(\"").append(key).append("\", ").append(result).append(");\n");
+		String key = statement + fieldLabel;
+		sb_isInconsistent.append("allMokedApproximations.get(\"NAMENAME\").get(\"isIncon\").put(\"").append(key)
+				.append("\", ").append(result).append(");\n");
 
 		return result;
 	}
@@ -307,6 +328,23 @@ public class Approximator {
 			PropertyToAlloyCode coder, Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
 		return findApproximation(this.toBeAnalyzedCode, statement, fieldLabel, scope, coder, filter);
 	}
+
+	final Map<Integer, PatternProcessedResult> cacheApproximation = new HashMap<>();
+	final StringBuilder cacheKey = new StringBuilder();
+
+	protected Integer computeKey(File toBeAnalyzedCode, String statement, String fieldLabel, String scope,
+			PropertyToAlloyCode coder) {
+		Integer key = (toBeAnalyzedCode.getAbsoluteFile() + statement + fieldLabel + scope).hashCode()
+				+ coder.hashCode() + coder.getClass().getName().hashCode();
+
+		cacheKey.append("key,").append(key).append(",").append(toBeAnalyzedCode.getAbsoluteFile()).append(",").append(statement)
+				.append(",").append(fieldLabel).append(",").append(scope).append(",").append(coder.getClass().getName())
+				.append(",").append(coder.getPredName()).append("\n");
+
+		return key;
+	}
+
+	final StringBuilder timeOfApproximation = new StringBuilder();
 
 	/**
 	 * 
@@ -322,59 +360,75 @@ public class Approximator {
 			String scope, PropertyToAlloyCode coder,
 			Function<List<Pair<String, String>>, List<Pair<String, String>>> filter) {
 
-		if (approximationRequestCount % 6 == 0) {
-			((RemoteProcessManager) processManager).replaceAllProcesses();
-			while (!((RemoteProcessManager) processManager).allProcessesIDLE()) {
+		long startTime = System.currentTimeMillis();
+
+		Integer cacheKey = computeKey(toBeAnalyzedCode, statement, fieldLabel, scope, coder);
+		if (!cacheApproximation.containsKey(cacheKey)) {
+
+			if (approximationRequestCount % 60 == 0) {
+				((RemoteProcessManager) processManager).replaceAllProcesses();
+				while (!((RemoteProcessManager) processManager).allProcessesIDLE()) {
+					try {
+						Thread.sleep(30);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+
+			// Creating a request message
+			Map<String, LazyFile> files = new HashMap<>();
+
+			files.put("toBeAnalyzedCode", new LazyFile(toBeAnalyzedCode.getAbsolutePath()));
+			files.put("relationalPropModuleOriginal", new LazyFile(relationalPropModule.getAbsolutePath()));
+			files.put("temporalPropModuleOriginal", new LazyFile(temporalPropModule.getAbsolutePath()));
+			for (File file : dependentFiles)
+				files.put("relationalLib", new LazyFile(file.getAbsolutePath()));
+
+			PatternProcessingParam param = new PatternProcessingParam(0, tmpLocalDirectory, UUID.randomUUID(),
+					Long.MAX_VALUE, fieldLabel, coder, statement, scope, files);
+			PatternRequestMessage message = new PatternRequestMessage(interfacE.getHostProcess(), param);
+
+			// Wait until the result is sent back
+			final SynchronizedResult<PatternProcessedResult> result = new SynchronizedResult<>();
+			MessageEventListener<MessageReceivedEventArgs> receiveListener = new MessageEventListener<MessageReceivedEventArgs>() {
+				@Override
+				public void actionOn(ResponseMessage responseMessage, MessageReceivedEventArgs messageArgs) {
+					result.result = (PatternProcessedResult) responseMessage.getResult();
+					synchronized (result) {
+						result.notify();
+					}
+				}
+			};
+			interfacE.MessageReceived.addListener(receiveListener);
+			interfacE.sendMessage(message, processManager.getActiveRandomeProcess());
+			synchronized (result) {
 				try {
-					Thread.sleep(30);
+					do {
+						result.wait();
+						// Wait until the response for the same session is
+						// arrived.
+					} while (!result.getResult().get().getParam().getAnalyzingSessionID()
+							.equals(param.getAnalyzingSessionID()));
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
+			interfacE.MessageReceived.removeListener(receiveListener);
+
+			approximationRequestCount++;
+			cacheApproximation.put(cacheKey, result.getResult().get());
 		}
 
-		// Creating a request message
-		Map<String, LazyFile> files = new HashMap<>();
+		timeOfApproximation.append("time,")
+				.append(toBeAnalyzedCode.getName()).append(",")
+				.append(statement).append(",")
+				.append(coder.getClass().getSimpleName()).append(",")
+				.append(System.currentTimeMillis() - startTime).append(",")
+				.append(Configuration.getProp("alloy_processes_number"))
+				.append("\n");
 
-		files.put("toBeAnalyzedCode", new LazyFile(toBeAnalyzedCode.getAbsolutePath()));
-		files.put("relationalPropModuleOriginal", new LazyFile(relationalPropModule.getAbsolutePath()));
-		files.put("temporalPropModuleOriginal", new LazyFile(temporalPropModule.getAbsolutePath()));
-		for (File file : dependentFiles)
-			files.put("relationalLib", new LazyFile(file.getAbsolutePath()));
-
-		PatternProcessingParam param = new PatternProcessingParam(0, tmpLocalDirectory, UUID.randomUUID(),
-				Long.MAX_VALUE, fieldLabel, coder, statement, scope, files);
-		PatternRequestMessage message = new PatternRequestMessage(interfacE.getHostProcess(), param);
-
-		// Wait until the result is sent back
-		final SynchronizedResult<PatternProcessedResult> result = new SynchronizedResult<>();
-		MessageEventListener<MessageReceivedEventArgs> receiveListener = new MessageEventListener<MessageReceivedEventArgs>() {
-			@Override
-			public void actionOn(ResponseMessage responseMessage, MessageReceivedEventArgs messageArgs) {
-				result.result = (PatternProcessedResult) responseMessage.getResult();
-				synchronized (result) {
-					result.notify();
-				}
-			}
-		};
-		interfacE.MessageReceived.addListener(receiveListener);
-		interfacE.sendMessage(message, processManager.getActiveRandomeProcess());
-		synchronized (result) {
-			try {
-				do {
-					result.wait();
-					// Wait until the response for the same session is arrived.
-				} while (!result.getResult().get().getParam().getAnalyzingSessionID()
-						.equals(param.getAnalyzingSessionID()));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		interfacE.MessageReceived.removeListener(receiveListener);
-
-		approximationRequestCount++;
-
-		return filter.apply(result.getResult().get().getResults().get().stream()
+		return filter.apply(cacheApproximation.get(cacheKey).getResults().get().stream()
 				.map(b -> new Pair<>(b.getParam().getAlloyCoder().get().predNameB,
 						b.getParam().getAlloyCoder().get().predCallB))
 				.collect(Collectors.toList()));
@@ -410,6 +464,12 @@ public class Approximator {
 		}
 		return patternMap.values().stream().collect(Collectors.toList());
 	};
+
+	public List<Pair<String, String>> strongerNextProperties(String pattern, String fieldName) {
+		// property is in the form of A[r]. so that A is pattern
+		return convertPatternToProperty(nextStrongerPatterns(pattern), fieldName);
+
+	}
 
 	public List<Pair<String, String>> strongerProperties(String pattern, String fieldName) {
 		// property is in the form of A[r]. so that A is pattern
@@ -477,6 +537,11 @@ public class Approximator {
 				return false;
 			}
 		}).map(a -> new Pair<>(a, patternToProperty.getProperty(a, fieldName))).collect(Collectors.toList());
+	}
+
+	public Integer encodePatterForPrioritization(String pattern) {
+		return patternToPriorityEncoder.containsKey(pattern) ? patternToPriorityEncoder.get(pattern)
+				: Integer.MAX_VALUE;
 	}
 
 }

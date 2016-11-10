@@ -16,4 +16,9 @@ public class EmptStrt extends Emptnes {
 		return "no " + SFirst + "." + RName + " \n";
 	}
 
+	@Override
+	int getPriorityInClass() {
+		return 3;
+	}
+
 }

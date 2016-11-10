@@ -208,7 +208,7 @@ public class TriplePropsTester {
 	public void test_generate_all_properties()
 			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
-		System.out.println(builder.getAllProperties().size());
+		System.out.println(builder.getAllPropertiesNamesAndContent().size());
 	}
 
 	/**

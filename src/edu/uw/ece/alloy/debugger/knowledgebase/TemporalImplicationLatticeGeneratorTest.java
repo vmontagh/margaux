@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.mit.csail.sdg.alloy4.Err;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.uw.ece.alloy.Configuration;
 
@@ -68,6 +69,14 @@ public class TemporalImplicationLatticeGeneratorTest {
 				Arrays.asList( "D", "B", "C", "E", "F" ).stream().sorted().collect(Collectors.toList()).equals(
 				generator.findAllRevReachable().get("G").stream().sorted().collect(Collectors.toList()) ));
 
+	}
+	
+	@Test
+	public void testTernatyLattice() throws Err{
+		TernaryImplicationLatticImperative til = new TernaryImplicationLatticImperative();
+		System.out.println(til.getNextImpliedProperties("OrdIncrs_SzGrwt_Glbl_SdEnd_EmptStrt_"));
+		System.out.println(til.getNextRevImpliedProperties("SzGrwt_Glbl_SdEnd_EmptNon_"));
+		System.out.println(til.getNextImpliedProperties("OrdIncrs_SzGrwt_Glbl_SdEnd_EmptNon_"));
 	}
 
 }

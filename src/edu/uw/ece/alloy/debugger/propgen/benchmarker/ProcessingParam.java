@@ -16,8 +16,8 @@ import java.util.UUID;
 public abstract class ProcessingParam
 		implements Comparable<ProcessingParam>, Serializable {
 
-	private static final long serialVersionUID = 1L;
-	protected final Integer priority;
+    private static final long serialVersionUID = 7809806517111380954L;
+    protected final Integer priority;
 	protected final File tmpLocalDirectory;
 	protected final UUID analyzingSessionID;
 	protected final Long timeout;

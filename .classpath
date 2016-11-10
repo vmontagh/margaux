@@ -8,11 +8,15 @@
 	<classpathentry kind="lib" path="lib/functionaljava-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/reflections-0.10-SNAPSHOT-jar-with-dependencies.jar"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.36-bin.jar"/>
+<<<<<<< HEAD
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+=======
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+>>>>>>> dfddba872049a3534164edea4be122ac8641e9e4
 	<classpathentry kind="lib" path="lib/args4j-2.32.jar"/>
 	<classpathentry kind="lib" path="lib/c3p0-0.9.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/mchange-commons-java-0.2.10.jar"/>
 	<classpathentry kind="lib" path="lib/alloy4.2_2014-05-16.jar"/>
-	<classpathentry kind="lib" path="lib/hola-uw-2.0.jar" sourcepath="lib/hola-uw-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/hola-uw-2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

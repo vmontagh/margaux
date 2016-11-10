@@ -212,7 +212,7 @@ public class RemoteProcessManager /*
 
 	@Override
 	public void DecreaseDoingTasks(final RemoteProcess process, int doingTasks) {
-		changeDoingTasks(process, activeProcesses.get(process).doingTasks - doingTasks);
+		changeDoingTasks(process, activeProcesses.get(process) != null ?  activeProcesses.get(process).doingTasks - doingTasks: 0);
 	}
 
 	@Override
@@ -229,7 +229,7 @@ public class RemoteProcessManager /*
 
 	@Override
 	public void IncreaseDoneTasks(final RemoteProcess process, int doneTasks) {
-		changeDoneTasks(process, activeProcesses.get(process).doingTasks + doneTasks);
+		changeDoneTasks(process, activeProcesses.get(process) != null ? activeProcesses.get(process).doingTasks + doneTasks : 0);
 	}
 
 	@Override
