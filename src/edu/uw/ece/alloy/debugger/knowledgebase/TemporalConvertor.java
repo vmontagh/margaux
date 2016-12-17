@@ -128,7 +128,7 @@ public class TemporalConvertor {
 				+ "An edge of the lattice encodes an implication relation between two patterns.\n"
 				+ "The strongest patterns, i.e. sources in the lattice, are distinguished in bold with overline.\n"
 				+ "Patterns in italic with underline on them are the weakest patterns or sinks of the lattice.}\n\\label{tbl:ternary:lattice}\n";
-		String restCpation = "\\begin{table}\n\\caption{Continue Table~\\ref{tbl:ternary:lattice}}\n";
+		String restCpation = "\\begin{table}\n\\caption[]{Continue Table~\\ref{tbl:ternary:lattice}}\n";
 		
 		String tablesLatex = "";
 		
